@@ -86,8 +86,11 @@ cdx.py tools [QUERY] [--detail summary]   list tools, timeouts and native-lock u
 cdx.py sig TOOL...                        print one or more generated signatures
 cdx.py call TOOL --json '{...}' | --args FILE [--out NEW.json] [--accel auto|on|off]
 cdx.py render A.cdxml [B.cdxml ...] [--out-dir DIR] [--replace]
-cdx.py build SPEC.json NEW.cdxml [--render] [--allow-draft]
+cdx.py build SPEC.json OUT.cdxml [--render] [--replace] [--allow-draft]   rebuilds its own earlier output in place
 cdx.py scientific nmr|plot|tlc|apparatus|mechanism|stack_nmr|lcms_plate SPEC.json OUTPUT [--render]
+cdx.py scientific energy_profile|energy_cycle|jablonski|mo_diagram|electron_configuration|crystal_field|lewis|unit_cell|flowchart|electrochemical_cell|periodic_table|huckel_mo|phase_diagram|compose SPEC.json NEW.cdxml [--render] [--report NEW.json]
+cdx.py check A.cdxml [B.cdxml ...] [--palette any|#RRGGBB,...] [--allow-sizes 8,6] [--ignore CODE]   house-rule check, no ChemDraw needed
+cdx.py circles IN.cdxml NEW.cdxml [--fragment ID] [--render]   Kekule aromatic rings redrawn with circles
 cdx.py draw BRIEF.json [OUTPUT] [--render] [--style PRESET] [--out NEW.json]   checked scheme, scope panel or mechanism from a brief
 cdx.py styles [PRESET] [--json]          built-in journal style presets (ChemDraw stock style sheets)
 cdx.py decimer IMAGE [--hand-drawn] [--preflight] [--timeout S] [--out NEW.json]
@@ -109,7 +112,7 @@ cdx.py py ARGS...                         run the runtime Python (helper scripts
 
 `call` prints results up to about 6 KB directly; larger results go to a new file under the temp folder's `chemdraw-cdx` directory (or `--out`) and a short summary with the path is printed. `ok` means the tool ran without error. Existing result files are never overwritten.
 
-`render` writes to a temporary name and publishes the PNG only after a successful render, so a failed render keeps the previous image. It replaces an existing PNG only when it rendered that exact file before; any other PNG of the same name is refused with its path unless `--replace` is given, and two inputs that would share one PNG are refused. `build` never replaces an existing CDXML. `draw` runs the `draw_figure` tool from a brief file and never replaces an existing output ([scheme drawing](scheme-drawing.md)). `markush` and `office-edit` are described in [Markush structures](markush.md) and [operations](operations.md#macos).
+`render` writes to a temporary name and publishes the PNG only after a successful render, so a failed render keeps the previous image. It replaces an existing PNG only when it rendered that exact file before; any other PNG of the same name is refused with its path unless `--replace` is given, and two inputs that would share one PNG are refused. `build` replaces an existing CDXML only when it is the command's own earlier output and unchanged since (recorded with its SHA-256 beside the render log), so an edited spec is simply rebuilt; a hand-edited or foreign file is refused unless `--replace` is given, and a failed build keeps the previous file. `check` and `circles` are described in [chemistry diagrams](diagrams.md). `draw` runs the `draw_figure` tool from a brief file and never replaces an existing output ([scheme drawing](scheme-drawing.md)). `markush` and `office-edit` are described in [Markush structures](markush.md) and [operations](operations.md#macos).
 
 On a shell that does not pass JSON quotes through intact (Windows PowerShell 5, `cmd.exe`), write the arguments to a file and use `--args`.
 

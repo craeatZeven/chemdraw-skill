@@ -6,6 +6,7 @@ Reports dependency availability, runs the test suite, and prints
 ChemScript setup instructions when needed.
 """
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import os
 import json
 import subprocess
@@ -41,7 +42,7 @@ def _check_chemdraw_com():
     try:
         import winreg
         key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT,
-                             "ChemDraw.Application\\CLSID")
+                             chemdraw_progid() + "\\CLSID")
         winreg.CloseKey(key)
         return True, "registered"
     except Exception:

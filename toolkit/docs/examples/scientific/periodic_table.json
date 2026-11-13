@@ -1,0 +1,14 @@
+{
+ "periods": [
+  1,
+  4
+ ],
+ "show_number": true,
+ "highlight": [
+  {
+   "group": 17,
+   "color": "blue",
+   "label": "halogens"
+  }
+ ]
+}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 from contextlib import redirect_stdout
 import importlib.metadata
@@ -250,7 +251,7 @@ def _has_windows_office_com() -> dict[str, bool]:
     return {
         "word": _progid_registered("Word.Application"),
         "powerpoint": _progid_registered("PowerPoint.Application"),
-        "chemdraw": _progid_registered("ChemDraw.Application"),
+        "chemdraw": _progid_registered(chemdraw_progid()),
     }
 
 

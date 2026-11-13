@@ -1,4 +1,4 @@
-"""MCP wrapper for the scientific workflows: TLC plates, apparatus, NMR, plots and mechanisms."""
+"""MCP wrapper for the scientific workflows: TLC plates, apparatus, NMR, plots, mechanisms and diagrams."""
 
 from __future__ import annotations
 
@@ -16,12 +16,27 @@ OPERATIONS = {
     "lcms_plate": ".cdxml",
     "nmr": None,
     "plot": None,
+    # diagrams (cdxml_toolkit.scientific.diagrams)
+    "energy_profile": ".cdxml",
+    "energy_cycle": ".cdxml",
+    "jablonski": ".cdxml",
+    "mo_diagram": ".cdxml",
+    "electron_configuration": ".cdxml",
+    "crystal_field": ".cdxml",
+    "lewis": ".cdxml",
+    "unit_cell": ".cdxml",
+    "flowchart": ".cdxml",
+    "electrochemical_cell": ".cdxml",
+    "periodic_table": ".cdxml",
+    "huckel_mo": ".cdxml",
+    "phase_diagram": ".cdxml",
+    "compose": ".cdxml",
 }
 MAX_SPEC_BYTES = 5 * 1024 * 1024
 
 
 def scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, Any]:
-    """Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr or plot.
+    """Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr, plot or a diagram.
 
     tlc, apparatus and mechanism write one editable .cdxml at output_path; nmr and plot write
     a new directory (figures, the full data as CSV and a JSON analysis with the source file's
@@ -31,6 +46,16 @@ def scientific_workflow(operation: str, spec_path: str, output_path: str) -> dic
     processed spectrum, plots from the supplied columns. Output is written to a staging
     location and published only when the workflow succeeds; an existing output_path is never
     replaced.
+
+    Diagram operations also write one .cdxml and return a report of what the drawing implies:
+    energy_profile (barriers, overall change), energy_cycle (step sums, checked against Hess's
+    law), jablonski, mo_diagram (bond order, unpaired electrons), electron_configuration,
+    crystal_field (configuration, spin-only moment, stabilisation energy), lewis (electron
+    count per atom), unit_cell (atoms per cell, formula, coordination numbers), flowchart,
+    electrochemical_cell (polarity and electron flow), periodic_table, huckel_mo (pi orbitals,
+    HOMO/LUMO, aromaticity), phase_diagram and compose (several
+    CDXML files merged on one page). Electrons, charges and energies that contradict each
+    other are rejected rather than drawn. The spec formats are in the diagrams reference.
     """
     if operation not in OPERATIONS:
         raise ValueError(f"operation must be one of: {', '.join(OPERATIONS)}")

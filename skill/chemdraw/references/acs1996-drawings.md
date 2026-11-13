@@ -26,16 +26,23 @@ This is [assets/acs1996/example.json](../assets/acs1996/example.json); its nativ
 
 This build spec is not the figure manifest of [publication figures](publication-figures.md), although both list typed objects: the build spec places objects with `at` and rich text with `{sub:...}` markup, while the manifest uses `position`, `runs` and a `version` field. Do not mix fields between them.
 
+A key an object does not read is an error that names the keys it does read; the aliases above are the only other names accepted. Before this check an unknown key (a conformer `kind`, an orbital `angle`) was ignored and the figure came out unchanged, byte for byte.
+
 | Object | Fields |
 | --- | --- |
-| `molecule` | `smiles`; `at` (centre); `labels` map from dummy-atom map number to abbreviation; optional `rotate` (degrees), `flip`, `displays` (bond index → `WedgeBegin`/`WedgedHashBegin`/`Bold`/…), `radicals` (atom indices), `lone_pairs` (`[atom, "left"|"right"|"up"|"down"]`), `hide_charge_label`, `ring_fills`, `atom_halos`, `multi_attachments` |
-| `conformer` | `"type": "conformer"`, `kind` (`"chair"`, `"newman"`, `"haworth"`, `"fischer"`, `"norbornane"`), `at`, plus template parameters (`substituents`, `flip`, `front`, `back`, `dihedral_deg`, `ring_size`, `anomeric`, `top`, `bottom`, `chiral_centers`, `bridge`) |
-| `ts_bracket` | `from`, `to` corners (or `bbox`), optional `charge` / `label` (renders square brackets `[...]‡` with superscript double-dagger `\u2021`) |
-| `orbital` | `at`, `kind` (`"p"`, `"sp3"`, `"s"`, `"dz2"`, `"lobe"`), `angle`, `size`, `shaded` (`"filled"`/`"shaded"`/`"unfilled"`), `color` |
+| `molecule` | `smiles`; `at` (centre); `labels` map from dummy-atom map number to abbreviation; optional `rotate` (degrees), `flip`, `displays` (bond index → `WedgeBegin`/`WedgedHashBegin`/`Bold`/…), `radicals` (atom indices), `lone_pairs` (`[atom, "left"|"right"|"up"|"down"]`), `hide_charge_label`, `ring_fills`, `atom_halos`, `multi_attachments`, `carbon_labels` (`auto` labels the carbon of one- and two-atom molecules such as CH{sub:4}, `all`, `none`), `aromatic_circles` |
+| `conformer` | `template` (`chair`, `newman`, `haworth`, `fischer`, `norbornane`, `bicyclo_222`, `adamantane`; alias `kind`), `at`, plus template parameters: `substituents`, `flip`, `bond_length`; Newman `conformation`, `dihedral_offset` (alias `dihedral_deg`), `front`, `rear` (alias `back`); Haworth `anomer` (alias `anomeric`); Fischer `centers` (alias `chiral_centers`), `top`, `bottom`. `"type": "chair"` etc. is a shorthand |
+| `ts_bracket` | `box` `[x1, y1, x2, y2]` (alias `bbox`) or `from`/`to` corners; optional `superscript` (default `\u2021`; alias `label`), `bracket_type`, `lip_size` |
+| `polymer_bracket` | `box` or `from`/`to`; `label` (default `n`) set as a subscript after the closing bracket; visual only |
+| `orbital` | `at`, `kind` (`s`, `p`, `sp3`/`sp2`/`sp`/`hybrid`, `hybrid_minus`, `dz2`, `dz2_minus`, `dxy`, `lobe`, `oval`), `shaded` (`filled`/`shaded`/`unfilled`; hybrid and d lobes have no shaded form and use filled), `angle_deg` (alias `angle`; 0 points right, −90 up), `length` (alias `size`), `width`, `color` (default #336699). A native `orbital_type` such as `pShaded` replaces `kind`/`shaded` |
 | `interaction` | `from`, `to`, optional `label` (e.g. `"2.8 Å"`), `color`, `style` (dashed non-covalent H-bond / $\pi$-stacking line) |
-| `text` | `at`, `text` (markup), optional `size`, `align` (`Left`/`Center`/`Right`), `bold` |
-| `arrow` | `from`, `to`, optional `kind`: `forward` or `resonance` (double-headed) |
-| `box` | `from`, `to` corners, optional `round` |
+| `text` | `at`, `text` (markup), optional `size`, `align` (`Left`/`Center`/`Right`), `bold`, `color` |
+| `arrow` | `from`, `to`, optional `kind`: `forward`, `resonance` (double-headed), `equilibrium` (two half arrows), `retro` (open double shaft), `dashed`, `failed` (crossed out), `line` (no head); `color` |
+| `curved_arrow` | `from`, `to` and `bend` (points the curve bows to the left of its direction; negative bows right), or four Bezier `points`; `electrons`: 2 (full head) or 1 (fishhook); `color`. The builder writes the native curve points |
+| `line` | `from`, `to`, optional `dashed`, `color` |
+| `circle` | `at`, `radius`, optional `fill` (solid disc), `color`, `dashed` |
+| `symbol` | `at`, `symbol` (`LonePair`, `Electron`, `RadicalCation`, `RadicalAnion`, `CirclePlus`, `CircleMinus`, `Dagger`, `DoubleDagger`, `Plus`, `Minus`), `size`, `color` |
+| `box` | `from`, `to` corners, optional `round`, `dashed`, `color` |
 | `label_box` | `at`, `text`, optional `width`: bold Arial code in a rounded box |
 
 ## JACS / Angew palette, organometallics & 3D conformers

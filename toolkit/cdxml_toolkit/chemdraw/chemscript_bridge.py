@@ -28,6 +28,7 @@ Python API:
     cs.convert_file("input.cdx", "output.cdxml")
 """
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 import json
 import os
@@ -91,7 +92,7 @@ def _find_chemdraw_root() -> Optional[str]:
     # Step 1: ProgID → CLSID
     try:
         key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT,
-                             "ChemDraw.Application\\CLSID")
+                             chemdraw_progid() + "\\CLSID")
         clsid = winreg.QueryValue(key, "")
         winreg.CloseKey(key)
     except OSError:

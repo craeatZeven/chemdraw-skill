@@ -6,8 +6,10 @@ draw_molecule does not: abbreviation nodes (C10H21, OMe...) with correct
 subscripts and label direction, rich-text markup ({i:}{b:}{bi:}{sub:}{sup:}),
 Chinese text (SimSun font 5), arrows, boxes, bold compound codes, JACS/Angew
 pastel ring fills, atom halos, multi-center organometallic attachments,
-transition-state brackets, orbital lobes, non-covalent interactions and
-3D conformer/projection templates.
+transition-state brackets, orbital lobes, non-covalent interactions,
+3D conformer/projection templates, equilibrium/retrosynthetic/dashed/failed
+arrows, curved electron arrows, native charge and electron symbols, polymer
+brackets and aromatic ring circles.
 
 Library use:  fig = Fig(); fig.mol('[*:1]CC(=O)O', at=(100, 80), labels={1: 'C10H21'}); fig.write('a.cdxml')
 CLI use:      cdx.py build spec.json out.cdxml --render   (spec format: build_from_spec)
@@ -61,6 +63,42 @@ _EXTRA_NAMED_COLORS = {
     "gray": "#808080",
     "grey": "#808080",
 }
+
+
+# Spec objects without a colour use the house palette's blue (black, #FF6600, #336699).
+HOUSE_BLUE = '#336699'
+ARROW_KINDS = ('forward', 'resonance', 'equilibrium', 'retro', 'dashed', 'failed', 'line')
+SYMBOLS = ('LonePair', 'Electron', 'RadicalCation', 'RadicalAnion', 'CirclePlus', 'CircleMinus', 'Dagger',
+           'DoubleDagger', 'Plus', 'Minus')
+# Spec "kind" of an orbital -> native OrbitalType; Shaded exists only for the first four.
+ORBITAL_KINDS = {'s': 's', 'oval': 'oval', 'lobe': 'lobe', 'p': 'p', 'sp3': 'hybridPlus', 'sp2': 'hybridPlus',
+                 'sp': 'hybridPlus', 'hybrid': 'hybridPlus', 'hybrid_minus': 'hybridMinus', 'dz2': 'dz2Plus',
+                 'dz2_minus': 'dz2Minus', 'dxy': 'dxy'}
+_SHADEABLE = ('s', 'oval', 'lobe', 'p')
+CARBON_LABELS = ('auto', 'all', 'none')
+
+
+def orbital_type(kind='p', shaded='shaded'):
+    """Native OrbitalType for a spec ``kind`` (s, p, sp3, dz2, dxy, lobe, oval) and fill
+    (``"filled"``, ``"shaded"`` or ``"unfilled"``). A native name such as ``pShaded`` passes through."""
+    text = str(kind)
+    for base in ORBITAL_KINDS.values():
+        if text in (base, base + 'Filled') or (text == base + 'Shaded' and base in _SHADEABLE):
+            return text
+    if text.lower() not in ORBITAL_KINDS:
+        raise ValueError(f'Unknown orbital kind {kind!r}; use one of: {", ".join(ORBITAL_KINDS)}')
+    base = ORBITAL_KINDS[text.lower()]
+    fill = str(shaded).lower() if shaded is not None else 'unfilled'
+    if isinstance(shaded, bool):
+        fill = 'shaded' if shaded else 'unfilled'
+    if fill in ('unfilled', 'none', 'open'):
+        return base
+    if fill == 'filled':
+        return base + 'Filled'
+    if fill == 'shaded':
+        # ChemDraw has no shaded form of the hybrid and d orbitals; the filled form is the nearest.
+        return base + ('Shaded' if base in _SHADEABLE else 'Filled')
+    raise ValueError(f'orbital "shaded" must be "filled", "shaded" or "unfilled", not {shaded!r}')
 
 
 def _is_cjk(ch):
@@ -211,14 +249,19 @@ class Fig:
     def mol(self, smiles, at=(100, 100), labels=None, coords=None, rotate=0.0, flip=False, scale=BL,
             displays=None, radicals=(), wedge=True, explicitH=None, center=True, hide_charge_label=False,
             lone_pairs=(), double_pos=None, label_text=None, ring_fills=None, atom_halos=None,
-            multi_attachments=None):
+            multi_attachments=None, carbon_labels='auto'):
         """smiles may contain [*:n] dummy atoms; labels maps n -> label text (e.g. 'C10H21').
         coords: optional list of (x,y) in drawing units (y down) per atom index (overrides layout).
         displays: dict bond_idx -> CDXML Display (WedgeBegin etc., B = bond begin atom).
         label_text: dict atom_idx -> explicit label markup.
         ring_fills: optional list of {'ring_index': 0, 'color': 'pastel_blue', 'style': 'polygon'|'spline', 'inset': 1.0}.
         atom_halos: optional list of {'atoms': [0, 1], 'color': 'pastel_yellow', 'radius': 8.0}.
-        multi_attachments: optional list of {'metal_atom': 0, 'ligand_atoms': [1..5], 'bond_display': 'Dash', 'bond_order': 'dative'}."""
+        multi_attachments: optional list of {'metal_atom': 0, 'ligand_atoms': [1..5], 'bond_display': 'Dash', 'bond_order': 'dative'}.
+        carbon_labels: 'auto' writes CH4, H3C-, H2C= on the carbons of one- and two-atom molecules (a bare
+            carbon there would render as nothing or as a dangling bond end), 'all' labels every carbon,
+            'none' keeps the plain skeletal drawing."""
+        if carbon_labels not in CARBON_LABELS:
+            raise ValueError(f'carbon_labels must be one of: {", ".join(CARBON_LABELS)}')
         labels = labels or {}
         if isinstance(smiles, str):
             ps = Chem.SmilesParserParams(); ps.removeHs = False
@@ -269,6 +312,16 @@ class Fig:
         for b in m.GetBonds():
             nb[b.GetBeginAtomIdx()].append(b.GetEndAtomIdx()); nb[b.GetEndAtomIdx()].append(b.GetBeginAtomIdx())
         ring = m.GetRingInfo()
+        # Carbons that need a written label: methane, methanal, bromomethane and the like have no
+        # skeleton to carry them. Explicit hydrogen atoms already draw the carbon's bonds.
+        heavy = [a for a in m.GetAtoms() if a.GetAtomicNum() != 1]
+        show_carbon = set()
+        if carbon_labels != 'none':
+            for a in heavy:
+                if a.GetAtomicNum() != 6 or any(n.GetAtomicNum() == 1 for n in a.GetNeighbors()):
+                    continue
+                if carbon_labels == 'all' or len(heavy) <= 2:
+                    show_carbon.add(a.GetIdx())
 
         # Background decorations (inserted into <page> BEFORE <fragment> so black bonds stay crisp on top)
         bg_elements = []
@@ -347,7 +400,7 @@ class Fig:
             else:
                 chg = a.GetFormalCharge()
                 nh = a.GetTotalNumHs()
-                if sym != 'C' or chg or (label_text and i in label_text):
+                if sym != 'C' or chg or i in show_carbon or (label_text and i in label_text):
                     attrs += f' Element="{ELEM.get(sym, a.GetAtomicNum())}" NumHydrogens="{nh}"'
                     if chg:
                         attrs += f' Charge="{chg}"'
@@ -355,7 +408,7 @@ class Fig:
                         attrs += ' Radical="Doublet"'
                     if label_text and i in label_text:
                         text = label_text[i]
-                    elif sym != 'C' or chg:
+                    elif sym != 'C' or chg or i in show_carbon:
                         hpart = '' if nh == 0 else ('H' if nh == 1 else 'H{sub:%d}' % nh)
                         cs = '' if not chg or hide_charge_label else ('{sup:+}' if chg == 1 else '{sup:\u2212}' if chg == -1 else '{sup:%d%s}' % (abs(chg), '+' if chg > 0 else '\u2212'))
                         if sym == 'C' and chg:
@@ -473,16 +526,135 @@ class Fig:
         self.items.append(f'<t id="{self._id()}" p="{x:.2f} {y:.2f}"{j}{c_attr} InterpretChemically="no">'
                           f'{runs(markup, font, size, base, color=c_idx)}</t>')
 
-    def arrow(self, x1, y1, x2, y2, kind='forward'):
-        self._bb(x1, y1); self._bb(x2, y2)
-        tail = ' ArrowheadTail="Full"' if kind == 'resonance' else ''
-        self.items.append(f'<arrow id="{self._id()}" FillType="None" ArrowheadHead="Full"{tail} ArrowheadType="Solid" '
-                          f'HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" '
-                          f'Head3D="{x2:.2f} {y2:.2f} 0" Tail3D="{x1:.2f} {y1:.2f} 0"/>')
+    def arrow(self, x1, y1, x2, y2, kind='forward', color=None):
+        """Straight arrow: forward, resonance (double-headed), equilibrium (two half arrows),
+        retro (open double-shaft), dashed, failed (crossed out) or line (no head)."""
+        if kind not in ARROW_KINDS:
+            raise ValueError(f'Unknown arrow kind {kind!r}; use one of: {", ".join(ARROW_KINDS)}')
+        length = math.hypot(x2 - x1, y2 - y1)
+        if length < 1e-6:
+            raise ValueError('An arrow needs two different points')
+        c_idx = self.resolve_color(color)
+        c_attr = f' color="{c_idx}"' if c_idx is not None else ''
 
-    def box(self, x1, y1, x2, y2, round_=True):
+        def emit(ax, ay, bx, by, head='Full', extra=''):
+            self._bb(ax, ay); self._bb(bx, by)
+            self.items.append(
+                f'<arrow id="{self._id()}" FillType="None" ArrowheadHead="{head}" ArrowheadType="Solid" '
+                f'HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250"{extra}{c_attr} '
+                f'Head3D="{bx:.2f} {by:.2f} 0" Tail3D="{ax:.2f} {ay:.2f} 0"/>')
+
+        if kind == 'equilibrium':
+            # Two half arrows, the reverse one shifted 4 pt to the right of the forward direction.
+            sx, sy = -(y2 - y1) / length * 4.0, (x2 - x1) / length * 4.0
+            emit(x1, y1, x2, y2, head='HalfLeft')
+            emit(x2 + sx, y2 + sy, x1 + sx, y1 + sy, head='HalfLeft')
+        elif kind == 'retro':
+            self._bb(x1, y1); self._bb(x2, y2)
+            self.items.append(
+                f'<arrow id="{self._id()}" FillType="None" ArrowheadHead="Full" ArrowheadType="Angle" '
+                f'HeadSize="1000" ArrowheadWidth="250" ArrowShaftSpacing="300" LineType="Double"{c_attr} '
+                f'Head3D="{x2:.2f} {y2:.2f} 0" Tail3D="{x1:.2f} {y1:.2f} 0"/>')
+        else:
+            extra = {'resonance': ' ArrowheadTail="Full"', 'dashed': ' LineType="Dashed"',
+                     'failed': ' NoGo="Cross"'}.get(kind, '')
+            emit(x1, y1, x2, y2, head='None' if kind == 'line' else 'Full', extra=extra)
+
+    def line(self, x1, y1, x2, y2, dashed=False, color=None):
+        """Plain line, optionally dashed."""
+        self._bb(x1, y1, 2); self._bb(x2, y2, 2)
+        c_idx = self.resolve_color(color)
+        c_attr = f' color="{c_idx}"' if c_idx is not None else ''
+        d_attr = ' LineType="Dashed"' if dashed else ''
+        gid = self._id()
+        self.items.append(f'<graphic id="{gid}" GraphicType="Line"{d_attr}{c_attr} '
+                          f'BoundingBox="{x1:.2f} {y1:.2f} {x2:.2f} {y2:.2f}"/>')
+        return gid
+
+    def circle(self, x, y, radius, fill=None, color=None, dashed=False):
+        """Circle outline; with ``fill`` a solid disc is drawn first, behind the outline."""
+        r = float(radius)
+        if r <= 0:
+            raise ValueError('A circle needs a positive radius')
+        self._bb(x, y, r + 2)
+        geometry = (f'BoundingBox="{x - r:.2f} {y - r:.2f} {x + r:.2f} {y + r:.2f}" Center3D="{x:.2f} {y:.2f} 0" '
+                    f'MajorAxisEnd3D="{x + r:.2f} {y:.2f} 0" MinorAxisEnd3D="{x:.2f} {y + r:.2f} 0"')
+        if fill is not None:
+            self.items.append(f'<graphic id="{self._id()}" GraphicType="Oval" OvalType="Circle Filled" '
+                              f'color="{self.resolve_color(fill)}" {geometry}/>')
+        c_idx = self.resolve_color(color)
+        c_attr = f' color="{c_idx}"' if c_idx is not None else ''
+        d_attr = ' LineType="Dashed"' if dashed else ''
+        gid = self._id()
+        self.items.append(f'<graphic id="{gid}" GraphicType="Oval" OvalType="Circle"{d_attr}{c_attr} {geometry}/>')
+        return gid
+
+    def add_symbol(self, x, y, symbol, size=6.0, color=None):
+        """Native electron or charge symbol centred at (x, y): LonePair, Electron, CirclePlus, ..."""
+        if symbol not in SYMBOLS:
+            raise ValueError(f'Unknown symbol {symbol!r}; use one of: {", ".join(SYMBOLS)}')
+        h = float(size) / 2
+        if h <= 0:
+            raise ValueError('A symbol needs a positive size')
+        self._bb(x, y, h + 2)
+        c_idx = self.resolve_color(color)
+        c_attr = f' color="{c_idx}"' if c_idx is not None else ''
+        gid = self._id()
+        self.items.append(f'<graphic id="{gid}" GraphicType="Symbol" SymbolType="{symbol}"{c_attr} '
+                          f'BoundingBox="{x - h:.2f} {y - h:.2f} {x + h:.2f} {y + h:.2f}"/>')
+        return gid
+
+    def curved_arrow(self, points=None, start=None, end=None, bend=None, electrons=2, color=None):
+        """Curved electron-pushing arrow: a full head for an electron pair, a fishhook for one electron.
+
+        Give the four cubic Bezier ``points`` (start, control, control, end), or ``start`` and ``end``
+        with an optional ``bend`` (how far the curve bows to the left of its direction, in points;
+        negative bows to the right)."""
+        if electrons not in (1, 2):
+            raise ValueError('"electrons" is 1 (fishhook) or 2 (full arrowhead)')
+        if points is None:
+            if start is None or end is None:
+                raise ValueError('A curved arrow needs four "points", or "from" and "to"')
+            (x1, y1), (x2, y2) = start, end
+            length = math.hypot(x2 - x1, y2 - y1)
+            if length < 1e-6:
+                raise ValueError('A curved arrow needs two different end points')
+            sag = 0.35 * length if bend is None else float(bend)
+            nx, ny = (y2 - y1) / length, -(x2 - x1) / length      # left of the direction (y is down)
+            off = sag * 4.0 / 3.0
+            points = [(x1, y1), (x1 + (x2 - x1) / 3 + nx * off, y1 + (y2 - y1) / 3 + ny * off),
+                      (x1 + 2 * (x2 - x1) / 3 + nx * off, y1 + 2 * (y2 - y1) / 3 + ny * off), (x2, y2)]
+        pts = [(float(px), float(py)) for px, py in points]
+        if len(pts) != 4:
+            raise ValueError('A curved arrow takes exactly four Bezier points')
+        for px, py in pts:
+            self._bb(px, py, 3)
+        native = [pts[0], *pts, pts[-1]]          # (handle, point, handle) for each end
+        c_idx = self.resolve_color(color)
+        c_attr = f' color="{c_idx}"' if c_idx is not None else ''
+        gid = self._id()
+        self.items.append(
+            f'<curve id="{gid}" CurvePoints="{" ".join(f"{px:.2f} {py:.2f}" for px, py in native)}" FillType="None" '
+            f'ArrowheadHead="{"HalfLeft" if electrons == 1 else "Full"}" ArrowheadType="Solid"{c_attr}/>')
+        return gid
+
+    def add_bracket(self, box, label='n', bracket_type='Square', lip_size=5.0):
+        """Bracket pair with a subscript at the lower right: a polymer repeat unit ``[...]n``.
+        A visual bracket only; it does not make the enclosed atoms a machine-readable repeat unit."""
+        x2, y2 = max(float(box[0]), float(box[2])), max(float(box[1]), float(box[3]))
+        group = self.add_ts_bracket(box, superscript=None, bracket_type=bracket_type, lip_size=lip_size)
+        if label:
+            self.text(x2 + 3.0, y2 + 3.0, '{sub:%s}' % label if '{' not in str(label) else str(label), align='Left')
+        return group
+
+    def box(self, x1, y1, x2, y2, round_=True, dashed=False, color=None):
         self._bb(x1, y1, 2); self._bb(x2, y2, 2)
         rt = ' RectangleType="RoundEdge"' if round_ else ''
+        if dashed:
+            rt += ' LineType="Dashed"'
+        c_idx = self.resolve_color(color)
+        if c_idx is not None:
+            rt += f' color="{c_idx}"'
         self.items.append(f'<graphic id="{self._id()}" BoundingBox="{x2:.2f} {y2:.2f} {x1:.2f} {y1:.2f}" GraphicType="Rectangle"{rt}/>')
 
     def label_box(self, x, y, markup, w=None):
@@ -640,10 +812,34 @@ class Fig:
 
         for a in res.get('atoms', ()):
             self._bb(float(a['x']), float(a['y']), 12)
-        for g_xml in reversed(res.get('graphics_xml', ())):
+        # Template XML numbers its objects from 1001; give them this figure's ids so that a conformer
+        # next to other objects never shares an id with them.
+        graphics, fragment = self._renumber(list(res.get('graphics_xml', ())), res['fragment_xml'])
+        for g_xml in reversed(graphics):
             self.page.insert(0, g_xml)
-        self.items.append(res['fragment_xml'])
+        self.items.append(fragment)
+        res = {**res, 'graphics_xml': graphics, 'fragment_xml': fragment}
         return res
+
+    _REF_ATTRS = ('B', 'E', 'Attachments', 'BracketedObjectIDs', 'GraphicID', 'CrossingBonds', 'BondOrdering',
+                  'SupersededBy', 'BasisObjects')
+
+    def _renumber(self, graphics, fragment):
+        """Fresh ids for template XML strings, with every reference to them updated."""
+        chunks = graphics + [fragment]
+        mapping = {}
+        for chunk in chunks:
+            for old in re.findall(r'\bid="(\d+)"', chunk):
+                if old not in mapping:
+                    mapping[old] = str(self._id())
+        refs = '|'.join(('id',) + self._REF_ATTRS)
+
+        def swap(match):
+            values = ' '.join(mapping.get(v, v) for v in match.group(2).split())
+            return f'{match.group(1)}="{values}"'
+
+        out = [re.sub(rf'\b({refs})="([^"]*)"', swap, chunk) for chunk in chunks]
+        return out[:-1], out[-1]
 
     def to_cdxml(self):
         b = self.bbox
@@ -667,6 +863,69 @@ class Fig:
 Doc = Fig
 
 
+_COMMON_KEYS = {'type', 'id', 'note', '_note'}
+_CONFORMER_KEYS = {'template', 'scaffold', 'at', 'center', 'cx', 'cy', 'flip', 'substituents', 'bond_length',
+                   'conformation', 'dihedral_offset', 'front', 'rear', 'anomer', 'centers', 'top', 'bottom'}
+# Keys each object type reads. A key outside its list used to be ignored without a word (a
+# conformer "kind", an orbital "angle"): it is now an error, so a figure never differs from its spec
+# in silence.
+SPEC_KEYS = {
+    'molecule': {'smiles', 'at', 'labels', 'coords', 'rotate', 'flip', 'displays', 'radicals', 'lone_pairs',
+                 'hide_charge_label', 'ring_fills', 'atom_halos', 'multi_attachments', 'carbon_labels',
+                 'aromatic_circles'},
+    'text': {'at', 'text', 'size', 'align', 'bold', 'color'},
+    'arrow': {'from', 'to', 'kind', 'color'},
+    'curved_arrow': {'points', 'from', 'to', 'bend', 'electrons', 'color'},
+    'line': {'from', 'to', 'dashed', 'color'},
+    'circle': {'at', 'radius', 'fill', 'color', 'dashed'},
+    'symbol': {'at', 'symbol', 'size', 'color'},
+    'box': {'from', 'to', 'round', 'dashed', 'color'},
+    'label_box': {'at', 'text', 'width'},
+    'ts_bracket': {'box', 'from', 'to', 'superscript', 'bracket_type', 'lip_size', 'object_ids'},
+    'polymer_bracket': {'box', 'from', 'to', 'label', 'bracket_type', 'lip_size'},
+    'orbital': {'at', 'cx', 'cy', 'orbital_type', 'kind', 'shaded', 'angle_deg', 'length', 'width', 'color'},
+    'interaction': {'from', 'to', 'p1', 'p2', 'style', 'color', 'label', 'clip_margin'},
+    'conformer': _CONFORMER_KEYS,
+}
+for _name in ('chair', 'newman', 'haworth', 'fischer', 'norbornane', 'bicyclo_222', 'adamantane'):
+    SPEC_KEYS[_name] = _CONFORMER_KEYS
+# Names people reach for -> the key the builder reads.
+SPEC_ALIASES = {
+    'orbital': {'angle': 'angle_deg', 'center': 'at', 'position': 'at', 'size': 'length'},
+    'conformer': {'kind': 'template', 'name': 'template', 'back': 'rear', 'dihedral_deg': 'dihedral_offset',
+                  'anomeric': 'anomer', 'chiral_centers': 'centers'},
+    'ts_bracket': {'bbox': 'box', 'label': 'superscript'},
+    'text': {'position': 'at', 'justification': 'align'},
+    'arrow': {'start': 'from', 'end': 'to', 'tail': 'from', 'head': 'to', 'style': 'kind'},
+    'curved_arrow': {'start': 'from', 'end': 'to', 'tail': 'from', 'head': 'to'},
+    'line': {'start': 'from', 'end': 'to'},
+    'circle': {'center': 'at', 'r': 'radius'},
+    'symbol': {'center': 'at', 'kind': 'symbol'},
+    'polymer_bracket': {'subscript': 'label'},
+}
+
+
+def normalize_object(obj):
+    """Spec object with aliases renamed; raises ValueError on an unknown type or key."""
+    if not isinstance(obj, Mapping) or 'type' not in obj:
+        raise ValueError('every object needs a "type"')
+    kind = obj['type']
+    if kind not in SPEC_KEYS:
+        raise ValueError(f'Unknown object type {kind!r}; available: {", ".join(sorted(SPEC_KEYS))}')
+    aliases = SPEC_ALIASES.get('conformer' if SPEC_KEYS[kind] is _CONFORMER_KEYS else kind, {})
+    out, source = {}, {}
+    for key, value in obj.items():
+        target = aliases.get(key, key)
+        if target in out:
+            raise ValueError(f'{kind}: "{source[target]}" and "{key}" both set "{target}"; give one')
+        out[target], source[target] = value, key
+    unknown = sorted(set(out) - SPEC_KEYS[kind] - _COMMON_KEYS)
+    if unknown:
+        raise ValueError(f'{kind}: unknown key(s) {", ".join(unknown)}; {kind} reads '
+                         f'{", ".join(sorted(SPEC_KEYS[kind]))}')
+    return out
+
+
 def build_from_spec(spec_path, output_path=None):
     """Build a CDXML from a JSON spec (or dict); coordinates are points, x right, y down.
 
@@ -677,14 +936,23 @@ def build_from_spec(spec_path, output_path=None):
        "atom_halos": [{"atoms": [0, 1], "color": "pastel_yellow", "radius": 8.0}],
        "multi_attachments": [{"metal_atom": 0, "ligand_atoms": [1, 2, 3, 4, 5], "bond_display": "Dash", "bond_order": "dative"}]},
       {"type": "ts_bracket", "box": [60, 40, 140, 120], "superscript": "\u2021"},
-      {"type": "orbital", "cx": 100, "cy": 80, "orbital_type": "pShaded", "angle_deg": -90, "color": "jacs_blue"},
-      {"type": "interaction", "from": [120, 80], "to": [170, 80], "style": "dashed", "color": "jacs_blue", "label": "2.1 A"},
+      {"type": "orbital", "cx": 100, "cy": 80, "kind": "p", "shaded": "shaded", "angle_deg": -90, "color": "#336699"},
+      {"type": "interaction", "from": [120, 80], "to": [170, 80], "style": "dashed", "color": "#336699", "label": "2.1 A"},
       {"type": "conformer", "template": "chair", "flip": false, "at": [180, 160]},
       {"type": "text", "at": [100, 130], "text": "{b:A} (note)", "size": 10, "align": "Center", "bold": false},
       {"type": "arrow", "from": [150, 80], "to": [200, 80], "kind": "forward"},
+         (kind: forward, resonance, equilibrium, retro, dashed, failed, line)
+      {"type": "curved_arrow", "from": [100, 70], "to": [130, 70], "bend": 12, "electrons": 2},
+      {"type": "line", "from": [10, 10], "to": [60, 10], "dashed": true},
+      {"type": "circle", "at": [80, 80], "radius": 6, "fill": "black"},
+      {"type": "symbol", "at": [90, 70], "symbol": "CirclePlus"},
+      {"type": "polymer_bracket", "box": [60, 40, 140, 90], "label": "n"},
       {"type": "box", "from": [10, 10], "to": [60, 40], "round": true},
       {"type": "label_box", "at": [100, 150], "text": "B"}
     ], "style": "acs1996"}
+
+    Unknown keys are an error (see SPEC_KEYS); a few common names are accepted as aliases
+    (SPEC_ALIASES: an orbital "angle", a conformer "kind").
 
     The optional "style" names a built-in journal preset from ChemDraw's stock style
     sheets (acs1996, wiley, rsc, nature, ...; `cdx.py styles` lists them).  The figure
@@ -701,7 +969,12 @@ def build_from_spec(spec_path, output_path=None):
         from cdxml_toolkit.chemdraw.style_presets import style_preset_slug
         style = style_preset_slug(str(style))  # refuse an unknown preset before building
     fig = Fig()
-    for o in spec['objects']:
+    circled = []
+    for index, raw in enumerate(spec['objects'], start=1):
+        try:
+            o = normalize_object(raw)
+        except ValueError as exc:
+            raise ValueError(f'object {index}: {exc}') from None
         kind = o['type']
         if kind == 'molecule':
             fig.mol(o['smiles'], at=tuple(o.get('at', (100, 100))),
@@ -713,14 +986,32 @@ def build_from_spec(spec_path, output_path=None):
                     hide_charge_label=o.get('hide_charge_label', False),
                     ring_fills=o.get('ring_fills'),
                     atom_halos=o.get('atom_halos'),
-                    multi_attachments=o.get('multi_attachments'))
+                    multi_attachments=o.get('multi_attachments'),
+                    carbon_labels=o.get('carbon_labels', 'auto'))
+            if o.get('aromatic_circles'):
+                circled.append(fig.last_fragment_id)
         elif kind == 'text':
             fig.text(*o['at'], o['text'], size=o.get('size', 10), align=o.get('align', 'Center'),
                      bold=o.get('bold', False), color=o.get('color'))
         elif kind == 'arrow':
-            fig.arrow(*o['from'], *o['to'], kind=o.get('kind', 'forward'))
+            fig.arrow(*o['from'], *o['to'], kind=o.get('kind', 'forward'), color=o.get('color'))
+        elif kind == 'curved_arrow':
+            fig.curved_arrow(points=o.get('points'), start=o.get('from'), end=o.get('to'), bend=o.get('bend'),
+                             electrons=int(o.get('electrons', 2)), color=o.get('color'))
+        elif kind == 'line':
+            fig.line(*o['from'], *o['to'], dashed=o.get('dashed', False), color=o.get('color'))
+        elif kind == 'circle':
+            fig.circle(*o['at'], o.get('radius', 3.0), fill=o.get('fill'), color=o.get('color'),
+                       dashed=o.get('dashed', False))
+        elif kind == 'symbol':
+            fig.add_symbol(*o['at'], o['symbol'], size=o.get('size', 6.0), color=o.get('color'))
+        elif kind == 'polymer_bracket':
+            box = o.get('box') or (*o['from'], *o['to'])
+            fig.add_bracket(box, label=o.get('label', 'n'), bracket_type=o.get('bracket_type', 'Square'),
+                            lip_size=o.get('lip_size', 5.0))
         elif kind == 'box':
-            fig.box(*o['from'], *o['to'], round_=o.get('round', True))
+            fig.box(*o['from'], *o['to'], round_=o.get('round', True), dashed=o.get('dashed', False),
+                    color=o.get('color'))
         elif kind == 'label_box':
             fig.label_box(*o['at'], o['text'], w=o.get('width'))
         elif kind == 'ts_bracket':
@@ -734,13 +1025,17 @@ def build_from_spec(spec_path, output_path=None):
             )
         elif kind == 'orbital':
             at = o.get('at', (o.get('cx', 100.0), o.get('cy', 100.0)))
+            if 'orbital_type' in o and ('kind' in o or 'shaded' in o):
+                raise ValueError(f'object {index}: give "orbital_type" or "kind"/"shaded", not both')
+            native = (orbital_type(o['orbital_type'], 'shaded') if 'orbital_type' in o
+                      else orbital_type(o.get('kind', 'p'), o.get('shaded', 'shaded')))
             fig.add_orbital(
                 at[0], at[1],
-                orbital_type=o.get('orbital_type', 'pShaded'),
+                orbital_type=native,
                 angle_deg=o.get('angle_deg', -90.0),
                 length=o.get('length', 18.0),
                 width=o.get('width', 7.5),
-                color=o.get('color', 'jacs_blue'),
+                color=o.get('color', HOUSE_BLUE),
             )
         elif kind == 'interaction':
             p1 = o.get('from') or o['p1']
@@ -748,7 +1043,7 @@ def build_from_spec(spec_path, output_path=None):
             fig.add_interaction(
                 p1, p2,
                 style=o.get('style', 'dashed'),
-                color=o.get('color', 'jacs_blue'),
+                color=o.get('color', HOUSE_BLUE),
                 label=o.get('label'),
                 clip_margin=o.get('clip_margin', 3.5),
             )
@@ -757,15 +1052,15 @@ def build_from_spec(spec_path, output_path=None):
             if kind != 'conformer' and 'template' not in conf_spec:
                 conf_spec['template'] = kind
             fig.add_conformer(conf_spec)
-        else:
-            raise ValueError(f'Unknown object type {kind!r}')
+    text = fig.to_cdxml()
+    if circled:
+        # Kekule rings of these molecules are redrawn with circles (a depiction: see cdxml_compose).
+        from cdxml_toolkit.cdxml_compose import add_ring_circles
+        text = add_ring_circles(text, fragment_ids=[str(f) for f in circled])['cdxml']
     if style not in (None, 'acs1996'):
         from cdxml_toolkit.chemdraw.style_presets import apply_style_preset
-        text = apply_style_preset(fig.to_cdxml(), style, rescale=True)
-        if output_path is not None:
-            Path(output_path).write_text(text, encoding='utf-8')
-            return Path(output_path)
-        return text
+        text = apply_style_preset(text, style, rescale=True)
     if output_path is not None:
-        return fig.write(output_path)
-    return fig.to_cdxml()
+        Path(output_path).write_text(text, encoding='utf-8')
+        return Path(output_path)
+    return text

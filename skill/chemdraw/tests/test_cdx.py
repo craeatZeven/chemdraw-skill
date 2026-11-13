@@ -974,3 +974,115 @@ def test_build_applies_a_style_preset(tmp_path):
     assert root.get('BondLength') == '10.8'
     with pytest.raises(ValueError, match='acs1996'):
         acs_builder.build_from_spec({**spec, 'style': 'no-such-journal'})
+
+
+# ---------------------------------------------------------------- build, check, circles, diagrams
+def _text_spec(tmp_path, text='A'):
+    spec = tmp_path / 's.json'
+    spec.write_text(json.dumps({'objects': [{'type': 'text', 'at': [10, 10], 'text': text}]}), encoding='utf-8')
+    return spec
+
+
+def test_build_rebuilds_its_own_output_in_place(tmp_path, monkeypatch):
+    monkeypatch.setattr(cdx, 'build_log_path', lambda: tmp_path / 'state' / 'build-log.json')
+    out = tmp_path / 'o.cdxml'
+    assert cdx.main(['build', str(_text_spec(tmp_path, 'A')), str(out)]) == 0
+    assert cdx.main(['build', str(_text_spec(tmp_path, 'B')), str(out)]) == 0
+    assert '>B<' in out.read_text(encoding='utf-8')
+    out.write_text(out.read_text(encoding='utf-8') + ' ')          # edited by hand: kept
+    with pytest.raises(SystemExit, match='--replace'):
+        cdx.main(['build', str(_text_spec(tmp_path, 'C')), str(out)])
+    assert cdx.main(['build', str(_text_spec(tmp_path, 'C')), str(out), '--replace']) == 0
+    assert '>C<' in out.read_text(encoding='utf-8')
+    assert sorted(p.name for p in tmp_path.iterdir()) == ['o.cdxml', 's.json', 'state']
+
+
+def test_build_keeps_the_previous_file_when_the_spec_is_bad(tmp_path, monkeypatch):
+    monkeypatch.setattr(cdx, 'build_log_path', lambda: tmp_path / 'build-log.json')
+    out = tmp_path / 'o.cdxml'
+    cdx.main(['build', str(_text_spec(tmp_path, 'A')), str(out)])
+    before = out.read_bytes()
+    bad = tmp_path / 'bad.json'
+    bad.write_text(json.dumps({'objects': [{'type': 'orbital', 'at': [0, 0], 'angel': 30}]}), encoding='utf-8')
+    with pytest.raises(SystemExit, match='angel'):
+        cdx.main(['build', str(bad), str(out)])
+    assert out.read_bytes() == before
+    assert not [p for p in tmp_path.iterdir() if p.name.startswith('.')]
+
+
+@pytest.mark.parametrize('obj,needle', [
+    ({'type': 'arrow', 'from': [0, 0], 'to': [40, 0], 'kind': 'equilibrium'}, 'ArrowheadHead="HalfLeft"'),
+    ({'type': 'arrow', 'from': [0, 0], 'to': [40, 0], 'kind': 'retro'}, 'ArrowShaftSpacing'),
+    ({'type': 'arrow', 'from': [0, 0], 'to': [40, 0], 'kind': 'failed'}, 'NoGo="Cross"'),
+    ({'type': 'curved_arrow', 'from': [0, 0], 'to': [30, 0], 'electrons': 1}, '<curve'),
+    ({'type': 'symbol', 'at': [0, 0], 'symbol': 'LonePair'}, 'SymbolType="LonePair"'),
+    ({'type': 'circle', 'at': [0, 0], 'radius': 4, 'fill': 'black'}, 'OvalType="Circle Filled"'),
+    ({'type': 'polymer_bracket', 'box': [0, 0, 40, 30]}, 'GraphicType="Bracket"'),
+    ({'type': 'orbital', 'at': [0, 0], 'kind': 'sp3', 'shaded': 'filled', 'angle': 30}, 'OrbitalType="hybridPlusFilled"'),
+])
+def test_builder_draws_the_new_objects(obj, needle):
+    text = acs_builder.build_from_spec({'objects': [obj]})
+    assert needle in text
+
+
+def test_builder_curves_are_whole_native_triples():
+    text = acs_builder.build_from_spec({'objects': [{'type': 'curved_arrow', 'from': [0, 0], 'to': [30, 0]}]})
+    points = re.search(r'CurvePoints="([^"]+)"', text).group(1).split()
+    assert len(points) % 6 == 0 and len(points) >= 12
+
+
+def test_builder_rejects_unknown_keys_and_accepts_documented_aliases():
+    with pytest.raises(ValueError, match='angel'):
+        acs_builder.build_from_spec({'objects': [{'type': 'orbital', 'at': [0, 0], 'angel': 30}]})
+    with pytest.raises(ValueError, match='both set'):
+        acs_builder.build_from_spec({'objects': [{'type': 'conformer', 'kind': 'chair', 'template': 'chair'}]})
+    turned = [acs_builder.build_from_spec({'objects': [{'type': 'orbital', 'at': [0, 0], 'angle': a}]}) for a in (0, 90)]
+    assert turned[0] != turned[1]
+    kinds = [acs_builder.build_from_spec({'objects': [{'type': 'conformer', 'kind': k, 'at': [0, 0]}]})
+             for k in ('chair', 'newman')]
+    assert kinds[0] != kinds[1]
+
+
+def test_conformer_next_to_other_objects_keeps_ids_unique():
+    text = acs_builder.build_from_spec({'objects': [{'type': 'text', 'at': [0, 0], 'text': 'A'},
+                                                    {'type': 'chair', 'at': [100, 0]}]})
+    ids = re.findall(r'<(?!font)\w+ [^>]*?\bid="(\d+)"', text)
+    assert len(ids) == len(set(ids))
+    root = ET.fromstring(text.split('\n', 2)[2])
+    atoms = {n.get('id') for n in root.iter('n')}
+    assert all(b.get('B') in atoms and b.get('E') in atoms for b in root.iter('b'))
+
+
+def test_check_command_reports_and_ignores(tmp_path, capsys):
+    good = tmp_path / 'g.cdxml'
+    good.write_text(acs_builder.build_from_spec({'objects': [{'type': 'text', 'at': [0, 0], 'text': 'A'}]}),
+                    encoding='utf-8')
+    assert cdx.main(['check', str(good)]) == 0
+    bad = tmp_path / 'b.cdxml'
+    bad.write_text(good.read_text(encoding='utf-8').replace('BondLength="14.4"', 'BondLength="30"'), encoding='utf-8')
+    assert cdx.main(['check', str(bad)]) == 1
+    assert cdx.main(['check', str(bad), '--ignore', 'setting']) == 0
+    assert '"setting"' in capsys.readouterr().out
+
+
+def test_scientific_diagram_writes_cdxml_and_report(tmp_path, capsys):
+    spec = tmp_path / 'mo.json'
+    spec.write_text(json.dumps({'preset': 'O2'}), encoding='utf-8')
+    out, report = tmp_path / 'mo.cdxml', tmp_path / 'mo-report.json'
+    assert cdx.main(['scientific', 'mo_diagram', str(spec), str(out), '--report', str(report)]) == 0
+    assert out.is_file() and json.loads(report.read_text(encoding='utf-8'))['bond_order'] == 2
+    bad = tmp_path / 'bad.json'
+    bad.write_text(json.dumps({'points': [{'label': 'A', 'energy': 0}, {'label': 'T', 'energy': -1, 'kind': 'ts'},
+                                          {'label': 'B', 'energy': 2}]}), encoding='utf-8')
+    with pytest.raises(SystemExit, match='transition state'):
+        cdx.main(['scientific', 'energy_profile', str(bad), str(tmp_path / 'e.cdxml')])
+    assert not (tmp_path / 'e.cdxml').exists()
+
+
+def test_broken_venv_is_named(tmp_path, monkeypatch):
+    venv = tmp_path / 'shared'
+    venv.mkdir()
+    (venv / 'pyvenv.cfg').write_text('home = C:\\gone\\Python312\nversion = 3.12.0\n', encoding='utf-8')
+    monkeypatch.setattr(cdx, 'default_runtime_dir', lambda: venv)
+    broken = cdx.broken_venvs()
+    assert [b['venv'] for b in broken] == [str(venv)] and 'Python312' in broken[0]['missing_base_python']
