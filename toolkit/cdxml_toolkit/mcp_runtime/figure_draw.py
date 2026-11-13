@@ -537,8 +537,10 @@ def _apply_decorations(cdxml: str, brief: dict, grounded: list[dict]) -> str:
                 f'<graphic id="{right_id}" BoundingBox="{bx2:.2f} {by1:.2f} {bx2 - lip:.2f} {by2:.2f}" '
                 f'GraphicType="Bracket" BracketType="{bracket_type}" LipSize="{lip:g}"/>'
             )
+            # 3.10 不允许 f-string 花括号内嵌同名引号（PEP 701 是 3.12 才放宽的）
+            _ids_joined = ' '.join(node_ids)
             fg_xml.append(
-                f'<bracketedgroup id="{bg_id}" BracketedObjectIDs="{' '.join(node_ids)}" BracketType="{bracket_type}">'
+                f'<bracketedgroup id="{bg_id}" BracketedObjectIDs="{_ids_joined}" BracketType="{bracket_type}">'
                 f'<bracketattachment id="{att1_id}" GraphicID="{left_id}"/>'
                 f'<bracketattachment id="{att2_id}" GraphicID="{right_id}"/>'
                 f'</bracketedgroup>'
