@@ -281,6 +281,17 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     reach = lead if style == 'smooth' else half
     pad_left = max([reach + 6.0] + [text_width(p['points'][0]['label']) / 2 + 6.0 for p in paths])
     pad_right = max([reach + 6.0] + [text_width(p['points'][-1]['label']) / 2 + 6.0 for p in paths])
+    # A gap arrow beside the first species stands in the left margin; widen it to hold the
+    # arrow and its label on the outer side, clear of the axis. (The right side is open.)
+    for arrow in spec.get('arrows') or []:
+        if arrow.get('x') is not None or arrow.get('label') in (None, ''):
+            continue
+        try:
+            first = paths[int(arrow.get('pathway', 0))]['points'][0]
+        except (IndexError, ValueError, TypeError):
+            continue
+        if str(arrow.get('to')) == str(first['id']):
+            pad_left = max(pad_left, reach + 8.0 + 5.0 + text_width(str(arrow['label'])) + 6.0)
     axis_x = 20.0
     plot_w = pad_left + span + pad_right
     for p in paths:

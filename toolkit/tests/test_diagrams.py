@@ -553,6 +553,30 @@ def test_species_list_profile_builds_and_reports_barriers():
     assert result['warnings'] == [] and check_cdxml(result['cdxml'], allow_sizes=[8, 6])['ok']
 
 
+@pytest.mark.parametrize('end', ['first', 'last'])
+def test_gap_arrow_beside_an_end_point_gets_room_for_its_label(end):
+    # A torsion scan: the barrier arrow stands beside the first (or last) minimum, where the
+    # page margin, not the curve, has to hold the label.
+    species = [{'id': 'A', 'label': 'coplanar 0°', 'energy': 28},
+               {'id': 'B', 'label': 'perpendicular ±90°', 'energy': 0},
+               {'id': 'C', 'label': 'coplanar 180°', 'energy': 26}]
+    target = 'A' if end == 'first' else 'C'
+    result = energy_profile({'style': 'smooth', 'unit': 'kJ/mol', 'species': species,
+                             'annotations': [{'from': 'B', 'to': target, 'label': 'rotation barrier'}]})
+    assert result['warnings'] == []
+    assert check_cdxml(result['cdxml'])['ok']
+
+
+@pytest.mark.parametrize('name', ['energy-profile.spec.json', 'levels.json'])
+def test_preview_energy_profiles_build_cleanly(name):
+    preview = Path(__file__).resolve().parents[2] / 'skill' / 'chemdraw' / 'assets' / 'preview' / name
+    if not preview.exists():
+        pytest.skip('the Skill previews are not beside this toolkit checkout')
+    result = energy_profile(json.loads(preview.read_text(encoding='utf-8')))
+    assert result['warnings'] == []
+    assert check_cdxml(result['cdxml'], ignore=['palette'])['ok']
+
+
 def test_profile_accepts_a_conformer_template_as_structure():
     result = energy_profile({'points': [{'label': 'A', 'energy': 0, 'structure': {'template': 'chair'}},
                                         {'label': 'TS', 'energy': 40},
