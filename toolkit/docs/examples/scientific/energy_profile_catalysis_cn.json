@@ -1,0 +1,105 @@
+{
+ "style": "smooth",
+ "pathways": [
+  {
+   "points": [
+    {
+     "id": "R",
+     "label": "\u53cd\u5e94\u7269",
+     "energy": 0.0,
+     "x": 0.0,
+     "kind": "minimum"
+    },
+    {
+     "id": "TS",
+     "label": "\u8fc7\u6e21\u6001",
+     "energy": 100.0,
+     "x": 0.5,
+     "kind": "ts"
+    },
+    {
+     "id": "P",
+     "label": "\u751f\u6210\u7269",
+     "energy": -30.0,
+     "x": 1.0,
+     "kind": "minimum"
+    }
+   ],
+   "label": "\u65e0\u50ac\u5316\u5242",
+   "color": "blue"
+  },
+  {
+   "points": [
+    {
+     "id": "R",
+     "label": "\u53cd\u5e94\u7269",
+     "energy": 0.0,
+     "x": 0.0,
+     "kind": "minimum"
+    },
+    {
+     "id": "TSc1",
+     "label": "",
+     "energy": 55.0,
+     "x": 0.3,
+     "kind": "ts"
+    },
+    {
+     "id": "Ic",
+     "label": "",
+     "energy": 25.0,
+     "x": 0.5,
+     "kind": "minimum"
+    },
+    {
+     "id": "TSc2",
+     "label": "",
+     "energy": 45.0,
+     "x": 0.7,
+     "kind": "ts"
+    },
+    {
+     "id": "P",
+     "label": "\u751f\u6210\u7269",
+     "energy": -30.0,
+     "x": 1.0,
+     "kind": "minimum"
+    }
+   ],
+   "label": "\u6709\u50ac\u5316\u5242",
+   "color": "#336699"
+  }
+ ],
+ "arrows": [
+  {
+   "from": "R",
+   "to": "TS",
+   "pathway": 0,
+   "heads": "both",
+   "label": "{i:E}{sub:a}"
+  },
+  {
+   "from": "R",
+   "to": "TSc1",
+   "pathway": 1,
+   "heads": "both",
+   "label": "{i:E}{sub:a}\u2032"
+  },
+  {
+   "from": "R",
+   "to": "P",
+   "pathway": 0,
+   "heads": "to",
+   "label": "\u0394{i:H}",
+   "x": 1.1375
+  }
+ ],
+ "show_values": false,
+ "value_format": "{:.1f}",
+ "value_brackets": false,
+ "ts_marker": false,
+ "label_bold": true,
+ "y_label": "\u80fd\u91cf",
+ "x_label": "\u53cd\u5e94\u8fdb\u7a0b",
+ "unit": "kJ/mol"
+}

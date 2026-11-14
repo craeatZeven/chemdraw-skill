@@ -12,7 +12,7 @@ every image can be regenerated.
 | Mechanism (curved arrows) | `mechanism.png` | `mechanism.json` | `cdx.py draw mechanism.json out.cdxml --render` |
 | Catalytic cycle | `catalytic-cycle.png` | `cycle.json` | `cdx.py draw cycle.json out.cdxml --render` |
 | ACS 1996 structure | `acs1996-structure.png` | `build.json` | `cdx.py build build.json out.cdxml --render` |
-| Energy profile | `energy-profile.png` | `energy-profile.spec.json` | `cdx.py py <skill>/scripts/energy_profile/energy_profile.py spec.json -o out.cdxml` |
+| Energy profile | — | `energy-profile.spec.json` | `cdx.py scientific energy_profile energy-profile.spec.json out.cdxml --render` |
 
 ## What each one exercises
 
@@ -36,8 +36,9 @@ Exercises the exam/lecture style: bond length 14.4, Arial 10 labels, SimSun for 
 run, and text that stays legible at the printed size.
 
 **Energy profile** — a torsion profile with three stationary points, a y-axis carrying unit
-and symbol, and a gap annotation. Exercises the curve coming from ChemDraw's own plot
-output rather than hand-computed points.
+and symbol, and a gap annotation. Exercises the curve written by the toolkit's own curve
+writer, label placement clear of the curve, and the barrier report. Its native PNG is made
+with the command in the table.
 
 ## Notes for whoever picks this up
 
@@ -49,4 +50,4 @@ output rather than hand-computed points.
   exactly that regression.
 - `substrate-scope.png` is the first page of a project folder (`out/page-001.cdxml`), not a
   single file — that is how `kind: "scope"` works.
-- The energy profile needs the toolkit runtime: run it through `cdx.py py`, not a bare Python.
+- The energy profile runs inside the toolkit runtime that `cdx.py scientific` selects.

@@ -70,6 +70,129 @@ def _kinds(points, name):
     return warnings
 
 
+_UNIT_MARKUP = {'kj/mol': 'kJ mol{sup:\u22121}', 'kcal/mol': 'kcal mol{sup:\u22121}', 'ev': 'eV',
+                'kj mol-1': 'kJ mol{sup:\u22121}', 'kcal mol-1': 'kcal mol{sup:\u22121}'}
+# Keys of the species-list format that only tuned its fixed layout; this builder places text itself.
+_LEGACY_LAYOUT_KEYS = {'unit_width', 'energy_height', 'curve_width', 'bars', 'bar_width', 'tail', 'y_tick_decimals',
+                       'label_layout', 'max_width', 'annotation_color', 'unit_markup'}
+
+
+def _energy_axis_label(symbol, unit, style):
+    """'{i:E} (kJ mol{sup:-1})' from an energy symbol such as E, G or \u0394G and a unit."""
+    symbol = str(symbol or 'E')
+    head = '\u0394' if symbol.startswith(('\u0394', 'Delta')) else ''
+    letter = symbol[1:] if symbol.startswith('\u0394') else symbol[5:] if symbol.startswith('Delta') else symbol
+    text = f'{head}{{i:{letter}}}' if letter else head
+    if not unit:
+        return text
+    unit_text = _UNIT_MARKUP.get(str(unit).strip().lower(), str(unit))
+    return f'{text} / ({unit_text})' if style == 'slash' else f'{text} ({unit_text})'
+
+
+def from_species_spec(spec: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Translate the species-list energy-profile format into this builder's pathway format.
+
+    That format lists ``species`` (``id``, ``energy``, ``label``, ``ts``, ``x``,
+    ``label_position``, ``show_value``, ``structure``), ``pathways`` (``nodes``: species ids)
+    and ``annotations`` (``type: gap``, ``from``, ``to``, ``label`` with ``{value}``, ``x``,
+    ``heads``), with ``reference``, ``decimals``, ``show_plus``, ``value_brackets``,
+    ``label_face``, ``energy_symbol``, ``y_label_style`` and ``ts_marker`` at the top. Returns
+    the translated spec and the layout keys that were dropped.
+    """
+    ignored = sorted(k for k in spec if k in _LEGACY_LAYOUT_KEYS)
+    species = spec.get('species')
+    if not isinstance(species, list) or len(species) < 2:
+        raise ValueError('"species" needs at least two entries')
+    by_id = {}
+    for i, item in enumerate(species):
+        sid = str(item.get('id', ''))
+        if not sid or sid in by_id:
+            raise ValueError(f'species {i + 1}: id missing or repeated')
+        by_id[sid] = dict(item, _order=i)
+    base = 0.0
+    if spec.get('reference') is not None:
+        ref = str(spec['reference'])
+        if ref not in by_id:
+            raise ValueError(f'reference {ref!r} is not a species id')
+        base = float(by_id[ref]['energy'])
+    xs = {sid: float(item['x']) if item.get('x') is not None else float(item['_order']) for sid, item in by_id.items()}
+    x0, x1 = min(xs.values()), max(xs.values())
+    span = (x1 - x0) or 1.0
+
+    def frac(value):
+        return (float(value) - x0) / span
+
+    decimals = int(spec.get('decimals', 1))
+    sign = '+' if spec.get('show_plus') else ''
+    value_format = '{:%s.%df}' % (sign, decimals)
+    raw_paths = spec.get('pathways') or [{'nodes': [s['id'] for s in species]}]
+    pathways = []
+    for k, raw in enumerate(raw_paths):
+        nodes = [str(n) for n in raw.get('nodes', [])]
+        if len(nodes) < 2 or any(n not in by_id for n in nodes):
+            raise ValueError(f'pathway {k + 1}: "nodes" must list at least two species ids')
+        points = []
+        for n in nodes:
+            item = by_id[n]
+            label = str(item.get('label', n))
+            side = item.get('label_position')
+            if side == 'none':
+                label = ''
+            point = {'id': n, 'label': label, 'energy': float(item['energy']) - base, 'x': frac(xs[n]),
+                     'kind': 'ts' if item.get('ts') else 'minimum'}
+            if side in ('above', 'below'):
+                point['label_side'] = side
+            if item.get('show_value') is not None:
+                point['show_value'] = bool(item['show_value'])
+            if item.get('structure') is not None:
+                point['structure'] = item['structure']
+            ignored += [f'species.{key}' for key in ('dx', 'dy', 'color', 'value') if key in item]
+            points.append(point)
+        path = {'points': points}
+        for key in ('label', 'color', 'dashed'):
+            if raw.get(key) is not None:
+                path[key] = raw[key]
+        ignored += [f'pathways.{key}' for key in ('width', 'label_x', 'label_position', 'label_dy') if key in raw]
+        pathways.append(path)
+    arrows = []
+    for k, note in enumerate(spec.get('annotations') or []):
+        if note.get('type', 'gap') != 'gap':
+            raise ValueError(f'annotation {k + 1}: only "gap" annotations exist')
+        src, dst = str(note.get('from')), str(note.get('to'))
+        if src not in by_id or dst not in by_id:
+            raise ValueError(f'annotation {k + 1}: from/to must be species ids')
+        owner = next((i for i, path in enumerate(pathways) if {src, dst} <= {pt['id'] for pt in path['points']}), None)
+        if owner is None:
+            raise ValueError(f'annotation {k + 1}: no pathway contains both {src} and {dst}')
+        delta = float(by_id[dst]['energy']) - float(by_id[src]['energy'])
+        label = note.get('label')
+        if label is not None and '{value}' in str(label):
+            label = str(label).replace('{value}', _fmt(delta, value_format))
+        heads = str(note.get('heads', 'both'))
+        if heads == 'from':
+            src, dst, heads = dst, src, 'to'
+        arrow = {'from': src, 'to': dst, 'pathway': owner, 'heads': heads}
+        if label is not None:
+            arrow['label'] = label
+        if note.get('color') is not None:
+            arrow['color'] = note['color']
+        if note.get('x') is not None:
+            arrow['x'] = frac(xs[str(note['x'])]) if str(note['x']) in by_id else frac(note['x'])
+        ignored += [f'annotations.{key}' for key in ('side', 'at', 'ref', 'label_dx', 'label_dy') if key in note]
+        arrows.append(arrow)
+    style = spec.get('y_label_style', 'paren')
+    out = {'style': spec.get('style', 'smooth'), 'pathways': pathways, 'arrows': arrows,
+           'show_values': spec.get('show_values', True), 'value_format': value_format,
+           'value_brackets': bool(spec.get('value_brackets', False)),
+           'ts_marker': spec.get('ts_marker', 'none') == 'dagger',
+           'label_bold': spec.get('label_face', 'bold') == 'bold',
+           'y_label': spec.get('y_label') or _energy_axis_label(spec.get('energy_symbol', 'E'), spec.get('unit'), style),
+           'x_label': spec.get('x_label', 'Reaction coordinate'), 'unit': spec.get('unit')}
+    if spec.get('y_ticks'):
+        out['y_ticks'] = True
+    return out, sorted(set(ignored))
+
+
 def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     """Reaction energy profile (potential energy against reaction coordinate).
 
@@ -77,8 +200,13 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     ``"levels"`` (a bar per species joined by dashed lines). ``pathways`` is a list of
     ``{"label", "color", "dashed", "points": [{"label", "energy", "id", "kind", "x"}]}``;
     a point with no ``kind`` is a transition state when it lies above both neighbours.
-    ``arrows`` mark energy differences: ``{"from", "to", "label", "pathway", "heads"}``.
+    ``arrows`` mark energy differences: ``{"from", "to", "label", "pathway", "heads", "x"}``.
+    A spec in the species-list format (``species``, ``pathways.nodes``, ``annotations``) is
+    translated first (:func:`from_species_spec`).
     """
+    legacy_ignored = None
+    if spec.get('species') is not None:
+        spec, legacy_ignored = from_species_spec(spec)
     style = str(spec.get('style', 'smooth')).lower()
     if style not in ('smooth', 'levels'):
         raise ValueError('style must be "smooth" or "levels"')
@@ -118,7 +246,13 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         for pt in p['points']:
             if pt['structure']:
                 from ..cdxml_compose import content_box, parse_cdxml
-                root = parse_cdxml(str(pt['structure']))
+                if isinstance(pt['structure'], Mapping):
+                    # A conformer template (chair, newman, haworth, fischer, norbornane, ...).
+                    from ..templates.conformers import build_conformer_cdxml
+                    pt['structure_text'] = build_conformer_cdxml(pt['structure'])
+                else:
+                    pt['structure_text'] = Path(str(pt['structure'])).read_text(encoding='utf-8-sig')
+                root = parse_cdxml(pt['structure_text'])
                 box = content_box([child for page in root.findall('page') for child in page])
                 pt['structure_size'] = (box[2] - box[0] + 6.0, box[3] - box[1] + 6.0)
                 structures.append(pt)
@@ -234,7 +368,9 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             raise ValueError(f'arrow {a_idx + 1}: {src["id"]} and {dst["id"]} have the same energy')
         pts = paths[p_idx]['points']
         color = resolve_color(arrow.get('color'), paths[p_idx]['color'])
-        if dst is pts[-1]:
+        if arrow.get('x') is not None:
+            ax = axis_x + pad_left + number(arrow['x'], f'arrow {a_idx + 1} x', -0.2, 1.2) * span
+        elif dst is pts[-1]:
             ax = dst['px'] + reach + 8.0
         elif dst is pts[0]:
             ax = dst['px'] - reach - 8.0
@@ -292,7 +428,8 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             show = show_values if pt['show_value'] is None else bool(pt['show_value'])
             if show:
                 value = _fmt(pt['energy'], pattern)
-                text = f'{text}\n({value})' if text else value
+                shown = f'({value})' if spec.get('value_brackets', True) else value
+                text = f'{text}\n{shown}' if text else value
             if not text:
                 continue
             key = (round(pt['px'], 1), round(pt['py'], 1), text)
@@ -324,7 +461,8 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                         side = 1.0 if x > pt['px'] else -1.0
                         for dy in (-dist, dist):
                             extra.append(((x + side * 4.0, y + dy), align, valign))
-            box, clear = c.place(order + extra, text, color=p['color'] if len(paths) > 1 else None)
+            box, clear = c.place(order + extra, text, color=p['color'] if len(paths) > 1 else None,
+                                 bold=bool(spec.get('label_bold', False)))
             if not clear:
                 warnings.append(f'the label of {pt["id"]} in {p["name"]} overlaps other ink; set "label_side" '
                                 'or move the point with "x"')
@@ -383,6 +521,9 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         })
     report = {'diagram': 'energy_profile', 'style': style, 'unit': unit, 'pathways': report_paths,
               'arrows': arrow_report, 'warnings': warnings}
+    if legacy_ignored is not None:
+        report['translated_from'] = 'species-list format'
+        report['layout_keys_ignored'] = legacy_ignored
     if not structures:
         return _result(c, output, report)
     from ..cdxml_compose import content_box, merge_cdxml, parse_cdxml
@@ -394,7 +535,7 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     origin = content_box(list(parse_cdxml(base).find('page')))
     parts = [{'cdxml': base, 'at': [origin[0], origin[1]], 'anchor': 'top-left'}]
     for pt in structures:
-        parts.append({'file': str(pt['structure']), 'anchor': pt['structure_anchor'],
+        parts.append({'cdxml': pt['structure_text'], 'anchor': pt['structure_anchor'],
                       'at': [pt['structure_at'][0] + shift[0], pt['structure_at'][1] + shift[1]]})
     merged = merge_cdxml(parts, margin=margin)
     report['structures'] = [pt['id'] for pt in structures]

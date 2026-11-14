@@ -1,0 +1,76 @@
+{
+ "style": "smooth",
+ "pathways": [
+  {
+   "points": [
+    {
+     "id": "R",
+     "label": "\u53cd\u5e94\u7269 R",
+     "energy": 0.0,
+     "x": 0.0,
+     "kind": "minimum"
+    },
+    {
+     "id": "TS1",
+     "label": "TS1",
+     "energy": 75.0,
+     "x": 0.25,
+     "kind": "ts"
+    },
+    {
+     "id": "I",
+     "label": "\u4e2d\u95f4\u4f53 I",
+     "energy": 30.0,
+     "x": 0.5,
+     "kind": "minimum"
+    },
+    {
+     "id": "TS2",
+     "label": "TS2",
+     "energy": 60.0,
+     "x": 0.75,
+     "kind": "ts"
+    },
+    {
+     "id": "P",
+     "label": "\u4ea7\u7269 P",
+     "energy": -40.0,
+     "x": 1.0,
+     "kind": "minimum"
+    }
+   ]
+  }
+ ],
+ "arrows": [
+  {
+   "from": "R",
+   "to": "TS1",
+   "pathway": 0,
+   "heads": "both",
+   "label": "{i:E}{sub:a1}"
+  },
+  {
+   "from": "I",
+   "to": "TS2",
+   "pathway": 0,
+   "heads": "both",
+   "label": "{i:E}{sub:a2}"
+  },
+  {
+   "from": "R",
+   "to": "P",
+   "pathway": 0,
+   "heads": "to",
+   "label": "\u0394{i:H}",
+   "x": 1.1375
+  }
+ ],
+ "show_values": true,
+ "value_format": "{:.0f}",
+ "value_brackets": false,
+ "ts_marker": false,
+ "label_bold": true,
+ "y_label": "{i:E} / (kJ mol{sup:\u22121})",
+ "x_label": "\u53cd\u5e94\u8fdb\u7a0b",
+ "unit": "kJ/mol"
+}

@@ -516,3 +516,46 @@ def test_band_fit_recovers_delta_for_d3():
     fit = tanabe_sugano({'d_electrons': 3, 'bands': [17400, 24500], 'samples': 60})['band_fit'][0]
     assert fit['Delta'] == pytest.approx(17400, abs=1) and fit['assignment'] == ['4T{sub:2g}', '4T{sub:1g}']
     assert 600 < fit['B'] < 900
+
+
+# ---------------------------------------------------------------- species-list energy-profile format
+_TWO_STEP = {'style': 'smooth', 'unit': 'kJ/mol', 'energy_symbol': 'E', 'y_label_style': 'slash', 'decimals': 0,
+             'show_plus': True, 'reference': 'R',
+             'species': [{'id': 'R', 'label': 'R', 'energy': 10}, {'id': 'TS1', 'energy': 85, 'ts': True},
+                         {'id': 'I', 'energy': 40}, {'id': 'TS2', 'energy': 70, 'ts': True},
+                         {'id': 'P', 'energy': -30, 'label_position': 'below'}],
+             'annotations': [{'from': 'R', 'to': 'TS1', 'label': 'E{sub:a} = {value}'},
+                             {'from': 'P', 'to': 'R', 'heads': 'from', 'x': 4.5, 'label': 'ΔH'}],
+             'unit_width': 60}
+
+
+def test_species_list_format_is_translated():
+    from cdxml_toolkit.scientific.energy import from_species_spec
+    spec, ignored = from_species_spec(_TWO_STEP)
+    points = spec['pathways'][0]['points']
+    assert [p['energy'] for p in points] == [0, 75, 30, 60, -40]                 # relative to the reference
+    assert [p['kind'] for p in points] == ['minimum', 'ts', 'minimum', 'ts', 'minimum']
+    assert [p['x'] for p in points] == [0, 0.25, 0.5, 0.75, 1.0]
+    assert points[-1]['label_side'] == 'below'
+    assert spec['arrows'][0]['label'] == 'E{sub:a} = +75'                         # {value}, signed, 0 decimals
+    assert (spec['arrows'][1]['from'], spec['arrows'][1]['to'], spec['arrows'][1]['heads']) == ('R', 'P', 'to')
+    assert spec['arrows'][1]['x'] == pytest.approx(1.125)
+    assert spec['y_label'] == '{i:E} / (kJ mol{sup:−1})' and spec['label_bold'] and not spec['ts_marker']
+    assert ignored == ['unit_width']
+
+
+def test_species_list_profile_builds_and_reports_barriers():
+    result = energy_profile(_TWO_STEP)
+    barriers = result['pathways'][0]['barriers']
+    assert [b['forward_barrier'] for b in barriers] == [75, 30]
+    assert result['translated_from'] == 'species-list format' and result['layout_keys_ignored'] == ['unit_width']
+    assert result['warnings'] == [] and check_cdxml(result['cdxml'], allow_sizes=[8, 6])['ok']
+
+
+def test_profile_accepts_a_conformer_template_as_structure():
+    result = energy_profile({'points': [{'label': 'A', 'energy': 0, 'structure': {'template': 'chair'}},
+                                        {'label': 'TS', 'energy': 40},
+                                        {'label': 'B', 'energy': 5, 'structure': {'template': 'chair', 'flip': True}}]})
+    assert result['structures'] == ['A', 'B']
+    root = ET.fromstring(result['cdxml'].split('\n', 2)[2])
+    assert len(list(root.iter('fragment'))) == 2 and check_cdxml(result['cdxml'], allow_sizes=[8, 6])['ok']

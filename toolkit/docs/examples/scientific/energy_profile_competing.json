@@ -1,0 +1,81 @@
+{
+ "style": "levels",
+ "pathways": [
+  {
+   "points": [
+    {
+     "id": "A",
+     "label": "1",
+     "energy": 0.0,
+     "x": 0.0,
+     "kind": "minimum"
+    },
+    {
+     "id": "TS1",
+     "label": "TS1",
+     "energy": 18.2,
+     "x": 0.23809523809523808,
+     "kind": "ts"
+    },
+    {
+     "id": "INT",
+     "label": "INT1",
+     "energy": -4.5,
+     "x": 0.47619047619047616,
+     "kind": "minimum"
+    },
+    {
+     "id": "TS2",
+     "label": "TS2",
+     "energy": 12.7,
+     "x": 0.7619047619047619,
+     "kind": "ts"
+    },
+    {
+     "id": "P",
+     "label": "2",
+     "energy": -15.3,
+     "x": 1.0,
+     "kind": "minimum"
+    }
+   ],
+   "color": "#000000"
+  },
+  {
+   "points": [
+    {
+     "id": "INT",
+     "label": "INT1",
+     "energy": -4.5,
+     "x": 0.47619047619047616,
+     "kind": "minimum"
+    },
+    {
+     "id": "TS2b",
+     "label": "TS2\u2032",
+     "energy": 16.9,
+     "x": 0.6190476190476191,
+     "kind": "ts"
+    },
+    {
+     "id": "Pb",
+     "label": "3",
+     "energy": -9.8,
+     "x": 0.8571428571428571,
+     "kind": "minimum"
+    }
+   ],
+   "color": "blue",
+   "dashed": true
+  }
+ ],
+ "arrows": [],
+ "show_values": true,
+ "value_format": "{:.1f}",
+ "value_brackets": false,
+ "ts_marker": false,
+ "label_bold": true,
+ "y_label": "\u0394{i:G} (kcal mol{sup:\u22121})",
+ "x_label": "Reaction coordinate",
+ "unit": "kcal/mol"
+}

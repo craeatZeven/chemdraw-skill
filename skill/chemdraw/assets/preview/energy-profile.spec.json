@@ -1,34 +1,47 @@
 {
  "style": "smooth",
- "unit": "kJ/mol",
- "energy_symbol": "E",
- "y_label_style": "slash",
- "x_label": "\u4e8c\u9762\u89d2 φ / °",
- "decimals": 0,
- "ts_marker": "none",
- "species": [
+ "pathways": [
   {
-   "id": "A",
-   "label": "\u5171\u5e73\u9762 0°",
-   "energy": 28
-  },
-  {
-   "id": "B",
-   "label": "\u5782\u76f4 ±90°",
-   "energy": 0
-  },
-  {
-   "id": "C",
-   "label": "\u5171\u5e73\u9762 180°",
-   "energy": 26
+   "points": [
+    {
+     "id": "A",
+     "label": "\u5171\u5e73\u9762 0\u00b0",
+     "energy": 28.0,
+     "x": 0.0,
+     "kind": "minimum"
+    },
+    {
+     "id": "B",
+     "label": "\u5782\u76f4 \u00b190\u00b0",
+     "energy": 0.0,
+     "x": 0.5,
+     "kind": "minimum"
+    },
+    {
+     "id": "C",
+     "label": "\u5171\u5e73\u9762 180\u00b0",
+     "energy": 26.0,
+     "x": 1.0,
+     "kind": "minimum"
+    }
+   ]
   }
  ],
- "annotations": [
+ "arrows": [
   {
    "from": "B",
    "to": "A",
-   "label": "\u65cb\u8f6c\u80fd\u5792",
-   "side": "left"
+   "pathway": 0,
+   "heads": "both",
+   "label": "\u65cb\u8f6c\u80fd\u5792"
   }
- ]
+ ],
+ "show_values": true,
+ "value_format": "{:.0f}",
+ "value_brackets": false,
+ "ts_marker": false,
+ "label_bold": true,
+ "y_label": "{i:E} / (kJ mol{sup:\u22121})",
+ "x_label": "\u4e8c\u9762\u89d2 \u03c6 / \u00b0",
+ "unit": "kJ/mol"
 }

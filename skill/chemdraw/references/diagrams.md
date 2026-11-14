@@ -62,10 +62,23 @@ legibility, a not-to-scale note) are listed in `warnings`; read them before deli
 `style` is `smooth` (one curve) or `levels` (a bar per species, dashed connectors). A single
 pathway may be given as `"points"`. Per point: `id` (needed when labels repeat), `kind`
 (`ts` or `minimum`, inferred when omitted), `x` (0–1 along the coordinate), `label_side`
-(`above`, `below`, `left`, `right`), `show_value`, and `structure`: a CDXML file drawn beside
-the point (the stationary-point structure; relative to the spec). Arrows: `pathway` (index),
-`heads` (`both`, `to`, `none`), `show_value`, `dx`. Also `x_label`, `y_label`, `y_ticks`,
-`value_format` (`"{:.1f}"`), `ts_marker` (the ‡), `width`, `height`, `step`, `legend`.
+(`above`, `below`, `left`, `right`), `show_value`, and `structure`: the stationary-point
+structure drawn beside the point, either a CDXML file (relative to the spec; e.g. drawn with
+`cdx.py build`) or a conformer template such as `{"template": "chair", "flip": true}` (`chair`,
+`newman`, `haworth`, `fischer`, `norbornane`, `bicyclo_222`, `adamantane`, with the template's
+own keys). Arrows: `pathway` (index), `heads` (`both`, `to`, `none`), `show_value`, `x` (0–1
+along the coordinate) or `dx`. Also `x_label`, `y_label`, `y_ticks`, `value_format`
+(`"{:.1f}"`), `value_brackets` (default true), `label_bold`, `ts_marker` (the ‡), `width`,
+`height`, `step`, `legend`.
+
+The species-list format is accepted as well and translated on the way in: `species`
+(`id`, `energy`, `label`, `ts`, `x`, `label_position`, `show_value`, `structure`), `pathways`
+with `nodes` (species ids), `annotations` (`type: gap`, `from`, `to`, `label` in which `{value}`
+becomes the signed difference, `heads` including `from`, `x` as a species id or position), and
+`reference`, `decimals`, `show_plus`, `value_brackets`, `label_face`, `energy_symbol`,
+`y_label_style` (`paren` or `slash`) and `ts_marker` (`none` or `dagger`) at the top. Keys that
+only tuned a fixed layout (`unit_width`, `bar_width`, `tail`, per-label `dx`/`dy`, ...) are listed
+in the report's `layout_keys_ignored`, because labels are placed automatically here.
 
 ## energy_cycle (Born–Haber, Hess)
 
