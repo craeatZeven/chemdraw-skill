@@ -1,0 +1,19 @@
+{
+ "triple": [
+  273.16,
+  0.006
+ ],
+ "critical": [
+  647.1,
+  218
+ ],
+ "melting_slope": "negative",
+ "marks": [
+  {
+   "P": 1,
+   "label": "1 atm"
+  }
+ ],
+ "supercritical": "supercritical fluid",
+ "title": "H{sub:2}O (schematic)"
+}

@@ -1,4 +1,4 @@
-"""MCP wrapper for the scientific workflows: TLC plates, apparatus, NMR, plots and mechanisms."""
+"""MCP wrapper for the scientific workflows: TLC plates, apparatus, NMR, plots, mechanisms and diagrams."""
 
 from __future__ import annotations
 
@@ -16,12 +16,36 @@ OPERATIONS = {
     "lcms_plate": ".cdxml",
     "nmr": None,
     "plot": None,
+    # diagrams (cdxml_toolkit.scientific.diagrams)
+    "energy_profile": ".cdxml",
+    "energy_cycle": ".cdxml",
+    "jablonski": ".cdxml",
+    "mo_diagram": ".cdxml",
+    "electron_configuration": ".cdxml",
+    "crystal_field": ".cdxml",
+    "lewis": ".cdxml",
+    "unit_cell": ".cdxml",
+    "flowchart": ".cdxml",
+    "electrochemical_cell": ".cdxml",
+    "periodic_table": ".cdxml",
+    "huckel_mo": ".cdxml",
+    "phase_diagram": ".cdxml",
+    "binary_phase_diagram": ".cdxml",
+    "pourbaix": ".cdxml",
+    "latimer": ".cdxml",
+    "frost": ".cdxml",
+    "ellingham": ".cdxml",
+    "correlation_diagram": ".cdxml",
+    "walsh_diagram": ".cdxml",
+    "potential_surface": ".cdxml",
+    "tanabe_sugano": ".cdxml",
+    "compose": ".cdxml",
 }
 MAX_SPEC_BYTES = 5 * 1024 * 1024
 
 
 def scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, Any]:
-    """Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr or plot.
+    """Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr, plot or a diagram.
 
     tlc, apparatus and mechanism write one editable .cdxml at output_path; nmr and plot write
     a new directory (figures, the full data as CSV and a JSON analysis with the source file's
@@ -31,6 +55,22 @@ def scientific_workflow(operation: str, spec_path: str, output_path: str) -> dic
     processed spectrum, plots from the supplied columns. Output is written to a staging
     location and published only when the workflow succeeds; an existing output_path is never
     replaced.
+
+    Diagram operations also write one .cdxml and return a report of what the drawing implies:
+    energy_profile (barriers, overall change), energy_cycle (step sums, checked against Hess's
+    law), jablonski, mo_diagram (bond order, unpaired electrons), electron_configuration,
+    crystal_field (configuration, spin-only moment, stabilisation energy), lewis (electron
+    count per atom), unit_cell (cubic and hexagonal: atoms per cell, formula, coordination
+    numbers, packing fraction), flowchart,
+    electrochemical_cell (polarity and electron flow), periodic_table, huckel_mo (pi orbitals,
+    HOMO/LUMO, aromaticity), phase_diagram, binary_phase_diagram (fields and the
+    lever rule at marked points), pourbaix (stable species from Gibbs energies), latimer and
+    frost (derived couples, disproportionation), ellingham (reduction temperatures),
+    correlation_diagram (Woodward-Hoffmann allowed or forbidden), walsh_diagram,
+    potential_surface (contours, minima and saddle points), tanabe_sugano (d2-d8 levels from
+    the full ligand-field Hamiltonian, spin crossover, Delta and B from two bands) and compose (several
+    CDXML files merged on one page). Electrons, charges and energies that contradict each
+    other are rejected rather than drawn. The spec formats are in the diagrams reference.
     """
     if operation not in OPERATIONS:
         raise ValueError(f"operation must be one of: {', '.join(OPERATIONS)}")

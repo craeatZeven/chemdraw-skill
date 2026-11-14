@@ -1,0 +1,91 @@
+{
+ "nodes": [
+  {
+   "id": "ore",
+   "text": "\u9ec4\u94dc\u77ff\u7c89",
+   "shape": "plain"
+  },
+  {
+   "id": "leach",
+   "text": "\u9178\u6d78"
+  },
+  {
+   "id": "ox",
+   "text": "\u6c27\u5316"
+  },
+  {
+   "id": "ph",
+   "text": "\u8c03 pH"
+  },
+  {
+   "id": "filt",
+   "text": "\u8fc7\u6ee4"
+  },
+  {
+   "id": "cryst",
+   "text": "\u84b8\u53d1\u6d53\u7f29\n\u51b7\u5374\u7ed3\u6676"
+  },
+  {
+   "id": "prod",
+   "text": "CuSO{sub:4}\u00b75H{sub:2}O",
+   "shape": "plain"
+  }
+ ],
+ "edges": [
+  {
+   "from": "ore",
+   "to": "leach"
+  },
+  {
+   "from": "leach",
+   "to": "ox",
+   "label": "\u6ee4\u6db2"
+  },
+  {
+   "from": "ox",
+   "to": "ph"
+  },
+  {
+   "from": "ph",
+   "to": "filt"
+  },
+  {
+   "from": "filt",
+   "to": "cryst",
+   "label": "\u6ee4\u6db2"
+  },
+  {
+   "from": "cryst",
+   "to": "prod"
+  },
+  {
+   "from": "cryst",
+   "to": "leach",
+   "label": "\u6bcd\u6db2\u5faa\u73af"
+  }
+ ],
+ "inputs": [
+  {
+   "to": "leach",
+   "text": "\u7a00 H{sub:2}SO{sub:4}"
+  },
+  {
+   "to": "ox",
+   "text": "H{sub:2}O{sub:2}"
+  },
+  {
+   "to": "ph",
+   "text": "CuO"
+  }
+ ],
+ "outputs": [
+  {
+   "from": "leach",
+   "text": "\u6ee4\u6e23 1"
+  },
+  {
+   "from": "filt",
+   "text": "Fe(OH){sub:3}"
+  }
+ ]
+}

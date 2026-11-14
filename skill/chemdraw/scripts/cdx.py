@@ -117,6 +117,27 @@ def runtime_candidates():
     return found
 
 
+def broken_venvs():
+    """Venvs the runtime search looks in whose base Python is gone (``pyvenv.cfg`` ``home``).
+
+    Such a venv is a shell: every interpreter in it fails with "No Python at ...". It is skipped,
+    and named here so the user learns why instead of only that no runtime was found."""
+    out = []
+    for env_root in (SKILL_ROOT.parent / 'chemdraw-venv', default_runtime_dir()):
+        cfg = Path(env_root) / 'pyvenv.cfg'
+        try:
+            lines = cfg.read_text(encoding='utf-8', errors='ignore').splitlines()
+        except OSError:
+            continue
+        home = next((line.split('=', 1)[1].strip() for line in lines
+                     if line.split('=', 1)[0].strip().lower() == 'home' and '=' in line), '')
+        if home and not Path(home).is_dir():
+            out.append({'venv': str(env_root), 'missing_base_python': home,
+                        'fix': 'recreate the venv from an installed Python 3.10-3.13, or set CHEMDRAW_MCP_PYTHON '
+                               'to an interpreter that has cdxml_toolkit installed'})
+    return out
+
+
 def _baseline():
     try:
         value = json.loads(BASELINE.read_text(encoding='utf-8'))
@@ -158,13 +179,15 @@ def _ensure_runtime(argv):
                 str(default_runtime_dir()), 'conda env "cdxml"']
     if argv[:1] == ['doctor']:
         print(json.dumps({'runtime': 'missing', 'python': sys.version.split()[0], 'searched': searched,
-                          'install': install_help(),
+                          'broken_venvs': broken_venvs(), 'install': install_help(),
                           'note': 'The runtime needs a 64-bit Python 3.10-3.13; cdx.py itself runs on 3.9+.'},
                          ensure_ascii=False, indent=2))
         raise SystemExit(2)
     sys.stderr.write(
         'cdx.py: no working cdxml-toolkit runtime found.\n'
         f'Looked for: {", ".join(searched)} (candidates whose interpreter does not start are skipped).\n'
+        + ''.join(f'Broken venv {b["venv"]}: its base Python {b["missing_base_python"]} no longer exists; '
+                  f'{b["fix"]}.\n' for b in broken_venvs())
         + ''.join(f'- {line}\n' for line in install_help()))
     raise SystemExit(2)
 
@@ -407,18 +430,60 @@ def cmd_render(ns):
     return status
 
 
+def build_log_path():
+    """CDXML files written by `cdx.py build` and their SHA-256; only these are rebuilt in place."""
+    return default_runtime_dir().parent / 'build-log.json'
+
+
+def _build_log():
+    try:
+        value = json.loads(build_log_path().read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _record_build(cdxml):
+    log = _build_log()
+    log.pop(str(cdxml), None)
+    log[str(cdxml)] = _sha256(cdxml)
+    path = build_log_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    staged = path.with_name(f'.{path.name}.{os.getpid()}')
+    staged.write_text(json.dumps(dict(list(log.items())[-5000:]), indent=0), encoding='utf-8')
+    os.replace(staged, path)
+
+
 def cmd_build(ns):
     sys.path.insert(0, str(Path(__file__).parent))
     import acs_builder
-    if Path(ns.output).exists():
-        raise SystemExit(f'Refusing to overwrite existing {Path(ns.output).resolve()}; choose a new output name')
+    target = Path(ns.output).resolve()
+    replaced = False
+    if target.exists():
+        # A spec is edited and rebuilt many times: rebuild in place when the existing file is this
+        # command's own, unchanged output. Anything else (a hand-edited or foreign file) is kept.
+        own = target.is_file() and _build_log().get(str(target)) == _sha256(target)
+        if not own and not getattr(ns, 'replace', False):
+            raise SystemExit(f'Refusing to overwrite existing {target}: it was not written by cdx.py build, or was '
+                             'changed since. Choose a new output name, or pass --replace if it is safe to overwrite')
+        replaced = True
+    staged = target.with_name(f'.{target.stem}.{os.getpid()}.building{target.suffix}')
+    staged.unlink(missing_ok=True)
     try:
-        out = acs_builder.build_from_spec(ns.spec, ns.output)
+        acs_builder.build_from_spec(ns.spec, staged)
     except ValueError as exc:
+        staged.unlink(missing_ok=True)
         raise SystemExit(f'{ns.spec} is not valid JSON: {exc}' if isinstance(exc, json.JSONDecodeError)
                          else f'{ns.spec}: {exc}') from None
     except KeyError as exc:
+        staged.unlink(missing_ok=True)
         raise SystemExit(f'{ns.spec}: an object is missing {exc}') from None
+    except BaseException:
+        staged.unlink(missing_ok=True)
+        raise
+    os.replace(staged, target)       # the previous file survives a failed build
+    _record_build(target)
+    out = target
     if ns.render and getattr(ns, 'allow_draft', False):
         source = Path(out).resolve()
         png = source.with_suffix('.png')
@@ -437,13 +502,18 @@ def cmd_build(ns):
             print(json.dumps({'cdxml': str(out), 'png': None, 'ok': True, 'status': 'unrendered_draft',
                               'native_render': 'unavailable'}, ensure_ascii=False))
         return 0
-    print(json.dumps({'cdxml': str(out), 'ok': True}))
+    print(json.dumps({'cdxml': str(out), 'ok': True, **({'replaced': True} if replaced else {})}))
     if ns.render:
         return cmd_render(argparse.Namespace(files=[str(out)], out_dir=None, replace=False))
     return 0
 
 
-SCIENTIFIC_OPERATIONS = ('nmr', 'plot', 'tlc', 'apparatus', 'mechanism', 'stack_nmr', 'lcms_plate')
+DIAGRAM_OPERATIONS = ('energy_profile', 'energy_cycle', 'jablonski', 'mo_diagram', 'electron_configuration',
+                      'crystal_field', 'lewis', 'unit_cell', 'flowchart', 'electrochemical_cell', 'periodic_table',
+                      'huckel_mo', 'phase_diagram', 'binary_phase_diagram',
+                      'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'tanabe_sugano', 'compose')
+SCIENTIFIC_OPERATIONS = ('nmr', 'plot', 'tlc', 'apparatus', 'mechanism', 'stack_nmr', 'lcms_plate',
+                         *DIAGRAM_OPERATIONS)
 
 
 def cmd_scientific(ns):
@@ -451,14 +521,64 @@ def cmd_scientific(ns):
     output = getattr(ns, 'output_opt', None) or getattr(ns, 'output_pos', None)
     if not spec or not output:
         raise SystemExit('scientific requires SPEC.json and OUTPUT')
+    report_path = getattr(ns, 'report', None)
+    if report_path and Path(report_path).exists():
+        raise SystemExit(f'Refusing to overwrite existing {Path(report_path).resolve()}; choose a new report name')
     from cdxml_toolkit.scientific import __main__ as sci_main
-    main_fn = getattr(sci_main, 'main', None)
-    if callable(main_fn):
-        rc = main_fn([ns.operation, '--spec', str(spec), '--output', str(output)])
-        return int(rc) if isinstance(rc, int) else 0
-    out = sci_main.run(ns.operation, spec, output)
-    print(json.dumps(out, ensure_ascii=False, indent=2))
+    try:
+        out = sci_main.run(ns.operation, spec, output)
+    except (ValueError, FileExistsError) as exc:
+        # A spec that contradicts itself (a transition state below its neighbours, electrons that
+        # do not add up) is reported, not drawn.
+        raise SystemExit(f'{spec}: {exc}') from None
+    text = json.dumps(out, ensure_ascii=False, indent=2)
+    print(text)
+    if report_path:
+        Path(report_path).write_text(text + '\n', encoding='utf-8')
+    produced = out.get('output_path') if isinstance(out, dict) else None
+    if getattr(ns, 'render', False) and produced and str(produced).lower().endswith('.cdxml'):
+        return cmd_render(argparse.Namespace(files=[str(produced)], out_dir=None, replace=False))
     return 0
+
+
+def cmd_check(ns):
+    """House-rule check of saved CDXML files (settings, fonts, palette, references); no ChemDraw needed."""
+    from cdxml_toolkit.cdxml_check import check_cdxml
+    palette = 'profile'
+    if ns.palette:
+        palette = None if ns.palette.strip().lower() == 'any' else [c for c in re.split(r'[,\s]+', ns.palette) if c]
+    sizes = [float(v) for v in re.split(r'[,\s]+', ns.allow_sizes) if v] if ns.allow_sizes else []
+    status = 0
+    for name in ns.files:
+        if not Path(name).is_file():
+            print(json.dumps({'file': name, 'ok': False, 'errors': [{'code': 'not_found', 'message': f'{name} not found'}]},
+                             ensure_ascii=False))
+            status = 1
+            continue
+        try:
+            result = check_cdxml(str(Path(name).resolve()), palette=palette, allow_sizes=sizes,
+                                 ignore=ns.ignore or ())
+        except ValueError as exc:
+            raise SystemExit(f'check: {exc}') from None
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        status |= 0 if result['ok'] else 1
+    return status
+
+
+def cmd_circles(ns):
+    """Redraw the Kekule aromatic rings of a CDXML with circles, in a new file."""
+    from cdxml_toolkit.cdxml_compose import add_ring_circles
+    if not Path(ns.source).is_file():
+        raise SystemExit(f'{ns.source} not found')
+    if Path(ns.output).exists():
+        raise SystemExit(f'Refusing to overwrite existing {Path(ns.output).resolve()}; choose a new output name')
+    result = add_ring_circles(str(Path(ns.source).resolve()), ns.output,
+                              fragment_ids=ns.fragment or None, ratio=ns.ratio)
+    result.pop('cdxml', None)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if ns.render and result['circles']:
+        return cmd_render(argparse.Namespace(files=[str(ns.output)], out_dir=None, replace=False))
+    return 0 if result['circles'] else 1
 
 
 def cmd_draw(ns):
@@ -1058,21 +1178,44 @@ def main(argv=None):
     s.add_argument('--out-dir')
     s.add_argument('--replace', action='store_true', help='also replace a same-named PNG this command did not write')
     s.set_defaults(fn=cmd_render)
-    s = sub.add_parser('build', help='ACS Document 1996 (or a "style" preset) CDXML from a JSON spec (acs_builder)')
+    s = sub.add_parser('build', help='ACS Document 1996 (or a "style" preset) CDXML from a JSON spec (acs_builder); '
+                                     'rebuilds its own earlier output in place')
     s.add_argument('spec')
     s.add_argument('output')
     s.add_argument('--render', action='store_true')
+    s.add_argument('--replace', action='store_true',
+                   help='also replace an existing output this command did not write (its own earlier, unchanged '
+                        'output is rebuilt in place without this)')
     s.add_argument('--allow-draft', action='store_true',
                    help='succeed with unrendered_draft status when native ChemDraw rendering is unavailable')
     s.set_defaults(fn=cmd_build)
-    s = sub.add_parser('scientific', help='scientific figure or spectrum workflow: '
-                                          'cdx.py scientific <nmr|plot|tlc|apparatus|mechanism|stack_nmr|lcms_plate> SPEC.json OUTPUT')
+    s = sub.add_parser('scientific', help='scientific figure, spectrum or diagram workflow: '
+                                          'cdx.py scientific <nmr|plot|tlc|apparatus|mechanism|stack_nmr|lcms_plate|'
+                                          'energy_profile|mo_diagram|lewis|unit_cell|flowchart|...> SPEC.json OUTPUT')
     s.add_argument('operation', choices=list(SCIENTIFIC_OPERATIONS))
     s.add_argument('spec_pos', nargs='?', metavar='SPEC.json')
     s.add_argument('output_pos', nargs='?', metavar='OUTPUT')
     s.add_argument('--spec', dest='spec_opt')
     s.add_argument('--output', dest='output_opt')
+    s.add_argument('--render', action='store_true', help='also render a native PNG of a .cdxml output')
+    s.add_argument('--report', help='also save the JSON report to this new file')
     s.set_defaults(fn=cmd_scientific)
+    s = sub.add_parser('check', help='house-rule check of saved CDXML: settings, fonts, text sizes, palette, '
+                                     'bond length, references (no ChemDraw needed; does not judge chemistry)')
+    s.add_argument('files', nargs='+')
+    s.add_argument('--palette', help='allowed colours as #RRGGBB,#RRGGBB,... or "any" '
+                                     '(default: black, white, #FF6600, #336699)')
+    s.add_argument('--allow-sizes', help='text sizes accepted besides 10 pt, e.g. "8,6"')
+    s.add_argument('--ignore', action='append', metavar='CODE',
+                   help='skip one issue code (repeatable), e.g. bond_length for a Newman projection')
+    s.set_defaults(fn=cmd_check)
+    s = sub.add_parser('circles', help='redraw Kekule aromatic rings with circles: cdx.py circles IN.cdxml OUT.cdxml')
+    s.add_argument('source')
+    s.add_argument('output')
+    s.add_argument('--fragment', action='append', help='only this fragment id (repeatable)')
+    s.add_argument('--ratio', type=float, default=0.62, help='circle radius as a fraction of the ring inradius')
+    s.add_argument('--render', action='store_true')
+    s.set_defaults(fn=cmd_circles)
     s = sub.add_parser('draw', help='checked reaction scheme, scope panel or mechanism from a brief (JSON file or -): '
                                     'cdx.py draw BRIEF [OUTPUT] [--render]')
     s.add_argument('brief')

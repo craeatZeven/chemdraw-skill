@@ -1,0 +1,35 @@
+{
+ "style": "levels",
+ "y_label": "\u0394G / (kcal\u00b7mol{sup:\u22121})",
+ "show_values": true,
+ "value_format": "{:.1f}",
+ "points": [
+  {
+   "label": "{b:1}",
+   "energy": 0
+  },
+  {
+   "label": "{b:TS1}",
+   "energy": 18.4
+  },
+  {
+   "label": "{b:2}",
+   "energy": 5.2
+  },
+  {
+   "label": "{b:TS2}",
+   "energy": 22.7
+  },
+  {
+   "label": "{b:3}",
+   "energy": -12.3
+  }
+ ],
+ "arrows": [
+  {
+   "from": "1",
+   "to": "TS2",
+   "show_value": true
+  }
+ ]
+}

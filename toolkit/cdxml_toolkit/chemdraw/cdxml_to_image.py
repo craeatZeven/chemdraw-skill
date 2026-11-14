@@ -16,6 +16,7 @@ Usage
   python cdxml_to_image.py --batch f1.cdxml f2.cdxml   # batch render (one COM session)
 """
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 import json
 import sys
@@ -36,10 +37,10 @@ def _get_chemdraw():
     """
     import win32com.client as win32
     try:
-        app = win32.GetActiveObject("ChemDraw.Application")
+        app = win32.GetActiveObject(chemdraw_progid())
         launched = False
     except Exception:
-        app = win32.Dispatch("ChemDraw.Application")
+        app = win32.Dispatch(chemdraw_progid())
         launched = True
     return app, launched
 

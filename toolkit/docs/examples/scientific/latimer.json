@@ -1,0 +1,46 @@
+{
+ "medium": "acid",
+ "species": [
+  {
+   "name": "MnO{sub:4}{sup:\u2212}",
+   "oxidation_state": 7
+  },
+  {
+   "name": "MnO{sub:4}{sup:2\u2212}",
+   "oxidation_state": 6
+  },
+  {
+   "name": "MnO{sub:2}",
+   "oxidation_state": 4
+  },
+  {
+   "name": "Mn{sup:3+}",
+   "oxidation_state": 3
+  },
+  {
+   "name": "Mn{sup:2+}",
+   "oxidation_state": 2
+  },
+  {
+   "name": "Mn",
+   "oxidation_state": 0
+  }
+ ],
+ "potentials": [
+  0.56,
+  2.26,
+  0.95,
+  1.51,
+  -1.18
+ ],
+ "derived": [
+  [
+   "MnO{sub:4}{sup:\u2212}",
+   "MnO{sub:2}"
+  ],
+  [
+   "MnO{sub:4}{sup:\u2212}",
+   "Mn{sup:2+}"
+  ]
+ ]
+}

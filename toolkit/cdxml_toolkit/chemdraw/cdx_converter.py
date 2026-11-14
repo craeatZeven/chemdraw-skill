@@ -18,6 +18,7 @@ Python API:
     convert_file("input.cdx", "output.cdxml")
 """
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 import json
 import os
@@ -128,10 +129,10 @@ def _get_chemdraw():
     Always sets Visible=False to suppress flashing.
     """
     try:
-        app = win32com.client.GetActiveObject("ChemDraw.Application")
+        app = win32com.client.GetActiveObject(chemdraw_progid())
         launched = False
     except Exception:
-        app = win32com.client.Dispatch("ChemDraw.Application")
+        app = win32com.client.Dispatch(chemdraw_progid())
         launched = True
     return app, launched
 

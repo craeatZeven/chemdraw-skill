@@ -1,0 +1,61 @@
+{
+ "unit": "kJ/mol",
+ "show_values": true,
+ "pathways": [
+  {
+   "label": "uncatalysed",
+   "points": [
+    {
+     "label": "Reactants",
+     "energy": 0
+    },
+    {
+     "label": "TS",
+     "energy": 120
+    },
+    {
+     "label": "Products",
+     "energy": -45
+    }
+   ]
+  },
+  {
+   "label": "catalysed",
+   "dashed": true,
+   "points": [
+    {
+     "label": "Reactants",
+     "energy": 0
+    },
+    {
+     "label": "TS1",
+     "energy": 62
+    },
+    {
+     "label": "Int",
+     "energy": 18
+    },
+    {
+     "label": "TS2",
+     "energy": 48
+    },
+    {
+     "label": "Products",
+     "energy": -45
+    }
+   ]
+  }
+ ],
+ "arrows": [
+  {
+   "from": "Reactants",
+   "to": "TS",
+   "label": "E{sub:a}"
+  },
+  {
+   "from": "Reactants",
+   "to": "Products",
+   "label": "\u0394H"
+  }
+ ]
+}

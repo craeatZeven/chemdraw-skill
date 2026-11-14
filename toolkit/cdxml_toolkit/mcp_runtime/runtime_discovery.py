@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 from dataclasses import asdict, dataclass
 import json
@@ -228,7 +229,7 @@ def _registry_local_server_command() -> str | None:
         return None
     try:
         with winreg.OpenKey(
-            winreg.HKEY_CLASSES_ROOT, r"ChemDraw.Application\CLSID"
+            winreg.HKEY_CLASSES_ROOT, chemdraw_progid() + "\\CLSID"
         ) as clsid_key:
             clsid = winreg.QueryValueEx(clsid_key, "")[0]
         with winreg.OpenKey(

@@ -7,6 +7,7 @@ terminates the application process.
 
 from __future__ import annotations
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 from contextlib import contextmanager
 from pathlib import Path
 import sys
@@ -46,7 +47,7 @@ def _get_active_com_application() -> Any | None:
     if get_active is None:
         return None
     try:
-        return get_active("ChemDraw.Application")
+        return get_active(chemdraw_progid())
     except Exception:
         return None
 

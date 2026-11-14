@@ -28,6 +28,7 @@ Python API:
     cleanup_eln_cdx("KL-CC-001.cdx", "KL-CC-001-cleaned.cdxml", scale_factor=0.5)
 """
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 import json
 import os
@@ -192,10 +193,10 @@ def _get_chemdraw():
     """
     import win32com.client
     try:
-        cdApp = win32com.client.GetActiveObject('ChemDraw.Application')
+        cdApp = win32com.client.GetActiveObject(chemdraw_progid())
         return cdApp, False
     except:
-        cdApp = win32com.client.Dispatch('ChemDraw.Application')
+        cdApp = win32com.client.Dispatch(chemdraw_progid())
         return cdApp, True
 
 

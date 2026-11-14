@@ -14,6 +14,15 @@ Observed failures and the fix that worked. Read only the relevant row.
 | Condition text collides with a molecule | Leave about 25 pt between the molecule box and the text; long abbreviations widen the box. |
 | Figures look inconsistent in a Word document | Insert every 300 dpi PNG at native size (px / 300 × 2.54 cm) so bond length and font size match across figures. |
 | A figure "looked fine" in the log but was wrong | Open every rendered PNG and look at it before reporting. |
+| An SVG preview shows objects the native render does not | An SVG or other non-native preview draws objects ChemDraw drops (a curve with hand-computed points, an unknown attribute value). Accept a figure on the native `cdx.py render` PNG only. |
+| A `<curve>` vanished from the native render | ChemDraw silently drops curves whose `CurvePoints` are not whole (handle, point, handle) triples. Let a tool write them (`curved_arrow` in `cdx.py build`, the diagram generators); `cdx.py check` reports malformed curves. |
+| Edited a build spec, the figure did not change | Older `cdx.py build` refused to replace any existing output, so a stale file survived next to the error. It now rebuilds its own unchanged output in place and still refuses a hand-edited or foreign file (`--replace` to force). |
+| A spec parameter seemed to do nothing | Compare PNG (or CDXML) hashes before and after the change, not the spec. Unknown keys are now an error naming the keys an object reads; older builds ignored a conformer `kind` and an orbital `angle` without a word. |
+| Methane, methanal or bromomethane came out blank or as a bare bond end | A one- or two-atom molecule whose carbon has no label has no skeleton to draw. `acs_builder` labels such carbons (`carbon_labels`, default `auto`); in hand-written CDXML give the carbon a label (CH{sub:3}, H{sub:2}C). `cdx.py check` reports lone unlabelled carbons. |
+| A molecule from SMILES has the right connectivity but a poor layout | SMILES fixes topology, not the 2D layout. For a textbook layout give `coords` (one point per heavy atom) or a conformer template. |
+| `Invalid class string` when ChemDraw starts | Some installations register only `ChemDraw_x64.Application`. The toolkit tries both ProgIDs; set `CHEMDRAW_PROGID` to force one. |
+| A diagram generator refused the spec | It found a contradiction (a transition state below its neighbours, a cycle that breaks Hess's law, electrons that do not add up). Fix the numbers; see [chemistry diagrams](diagrams.md). |
+| The house-rule check passed but the figure is chemically wrong | `cdx.py check` sees settings, fonts, colours and references only. Ring sizes, electron counts and isomers need a person to look at the native render. |
 
 ## Reconstruction
 

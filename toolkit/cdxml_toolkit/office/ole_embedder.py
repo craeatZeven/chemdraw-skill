@@ -27,6 +27,7 @@ Requirements:
     - lxml
 """
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 import io
 import json
@@ -112,7 +113,7 @@ def batch_convert(cdxml_paths):
     results = []
     app = None
     try:
-        app = win32.DispatchEx("ChemDraw.Application")
+        app = win32.DispatchEx(chemdraw_progid())
         app.Visible = False
 
         for cdxml_path in cdxml_paths:
