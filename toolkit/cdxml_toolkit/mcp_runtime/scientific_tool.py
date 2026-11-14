@@ -30,6 +30,7 @@ OPERATIONS = {
     "periodic_table": ".cdxml",
     "huckel_mo": ".cdxml",
     "phase_diagram": ".cdxml",
+    "binary_phase_diagram": ".cdxml",
     "compose": ".cdxml",
 }
 MAX_SPEC_BYTES = 5 * 1024 * 1024
@@ -51,9 +52,11 @@ def scientific_workflow(operation: str, spec_path: str, output_path: str) -> dic
     energy_profile (barriers, overall change), energy_cycle (step sums, checked against Hess's
     law), jablonski, mo_diagram (bond order, unpaired electrons), electron_configuration,
     crystal_field (configuration, spin-only moment, stabilisation energy), lewis (electron
-    count per atom), unit_cell (atoms per cell, formula, coordination numbers), flowchart,
+    count per atom), unit_cell (cubic and hexagonal: atoms per cell, formula, coordination
+    numbers, packing fraction), flowchart,
     electrochemical_cell (polarity and electron flow), periodic_table, huckel_mo (pi orbitals,
-    HOMO/LUMO, aromaticity), phase_diagram and compose (several
+    HOMO/LUMO, aromaticity), phase_diagram, binary_phase_diagram (fields and the
+    lever rule at marked points) and compose (several
     CDXML files merged on one page). Electrons, charges and energies that contradict each
     other are rejected rather than drawn. The spec formats are in the diagrams reference.
     """

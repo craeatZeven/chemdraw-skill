@@ -2,7 +2,7 @@
 
 Generators for the diagrams that are not reaction schemes: energy profiles, enthalpy cycles,
 Jablonski diagrams, MO diagrams, Hückel pi orbitals, orbital boxes, crystal-field splitting,
-Lewis structures, unit cells, phase diagrams, flow charts, electrochemical cells and the
+Lewis structures, cubic and hexagonal unit cells, one-component and binary phase diagrams, flow charts, electrochemical cells and the
 periodic table. Each one reads a JSON
 spec, writes one editable ACS 1996 CDXML and prints a report of what the drawing implies.
 
@@ -33,6 +33,7 @@ feature: fix the spec rather than looking for a way around them.
 | `unit_cell` | atoms per cell (corner 1/8, edge 1/4, face 1/2), formula, coordination numbers | the same site listed twice |
 | `huckel_mo` | pi energies (alpha + x beta), coefficients, nodes, HOMO/LUMO/SOMO, pi and delocalisation energy, 4n+2 rule | more electrons than orbitals can hold |
 | `phase_diagram` | (schematic) | a critical point not above the triple point |
+| `binary_phase_diagram` | the phase field of each marked point; tie line, phase compositions and amounts (lever rule) | an eutectic above a melting point, solubility limits on the wrong side of the eutectic, a liquidus below the solidus |
 | `electrochemical_cell` | polarity, electron flow, ion migration from the cell type | (nothing to contradict: none of it is stated) |
 
 Warnings in the report (an incomplete octet, a label that sits on other ink, levels spread for
@@ -113,6 +114,10 @@ to right, each bracketed with its charge when charged (an ionic compound: `Na+ [
 `perovskite`; rename species with `"elements": {"A": "K", "B": "Br"}`. A custom basis:
 `"sites": [{"element": "Ti", "frac": [0.5, 0.5, 0.5]}, ...]`, one entry per site; boundary copies
 are added. `bonds` joins nearest unlike neighbours; `style.radius` and `style.fill` per element.
+Hexagonal presets (`hcp`, `wurtzite`, `simple_hexagonal`; `c_over_a`, default ideal 1.633) are drawn
+as the textbook hexagonal prism of three primitive cells (prism corner 1/6, face 1/2), so hcp
+shows 6 atoms. One-element structures also report the packing fraction (fcc and hcp 0.74, bcc
+0.68, sc 0.52, diamond 0.34).
 
 ## huckel_mo
 
@@ -130,6 +135,22 @@ delocalisation energy is measured against electrons/2 isolated ethene bonds.
 "1 atm"}], "supercritical": "supercritical fluid"}`. Schematic: the triple and critical points
 sit at fixed places and other values are placed piecewise between them, so a mark keeps its order
 against both points but distances are not to scale. `labels` renames the regions.
+
+## binary_phase_diagram
+
+```json
+{"type": "eutectic", "components": ["Pb", "Sn"], "melting": [327, 232], "eutectic": [0.619, 183],
+ "solubility": [0.183, 0.977], "basis": "mass", "points": [{"x": 0.4, "T": 230, "label": "P"}]}
+```
+
+`type` is `eutectic` (two liquidus branches meeting at the eutectic; `solubility` gives the
+limits of alpha and beta at the eutectic temperature, omit it for immiscible solids) or
+`isomorphous` (a lens: one solid solution). For an isomorphous system give measured
+`liquidus` and `solidus` as `[[x, T], ...]` when the numbers matter; otherwise the lens is
+schematic (`lens`, 0.05 to 0.9). Each marked point is reported with its field and, in a
+two-phase field, the tie line is drawn and the lever rule gives each phase's composition and
+fraction. Field labels that do not fit their field go beside the frame with a leader.
+Also `unit`, `basis` (`mole` or `mass`), `curvature`, `x_label`, `y_label`, `title`.
 
 ## flowchart (process and separation charts)
 

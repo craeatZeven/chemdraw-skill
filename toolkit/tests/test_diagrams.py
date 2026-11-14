@@ -21,7 +21,9 @@ EXAMPLES = Path(__file__).resolve().parents[1] / 'docs' / 'examples' / 'scientif
 
 
 def _operation(name):
-    return 'energy_profile' if name.startswith('energy_profile') else name
+    """The operation an example file is for: the longest operation name its stem starts with."""
+    matches = [op for op in DIAGRAM_OPERATIONS if name == op or name.startswith(op + '_')]
+    return max(matches, key=len) if matches else name
 
 
 @pytest.mark.parametrize('example', sorted(p.stem for p in EXAMPLES.glob('*.json')
@@ -312,3 +314,55 @@ def test_phase_diagram_orders_its_points():
     assert result['warnings'] == [] and check_cdxml(result['cdxml'])['ok']
     with pytest.raises(ValueError, match='critical point'):
         phase_diagram({'triple': [300, 5], 'critical': [200, 70]})
+
+
+# ---------------------------------------------------------------- hexagonal cells and binary diagrams
+@pytest.mark.parametrize('preset,counts,cn,packing', [
+    ('hcp', {'Mg': 6}, {'Mg': 12}, 0.7405), ('wurtzite', {'S': 6, 'Zn': 6}, {'S': 4, 'Zn': 4}, None),
+    ('simple_hexagonal', {'X': 3}, {'X': 8}, 0.6046), ('fcc', {'Cu': 4}, {'Cu': 12}, 0.7405),
+    ('bcc', {'Fe': 2}, {'Fe': 8}, 0.6802), ('diamond', {'C': 8}, {'C': 4}, 0.3401)])
+def test_cells_count_coordinate_and_pack(preset, counts, cn, packing):
+    result = unit_cell({'preset': preset})
+    assert result['atoms_per_cell'] == counts
+    assert {e: v['coordination_number'] for e, v in result['coordination'].items()} == cn
+    assert result.get('packing_fraction') == (pytest.approx(packing, abs=2e-4) if packing else None)
+    assert check_cdxml(result['cdxml'])['ok']
+
+
+def test_hexagonal_atoms_do_not_hide_each_other():
+    import itertools, math, re
+    for preset in ('hcp', 'wurtzite', 'simple_hexagonal'):
+        text = unit_cell({'preset': preset})['cdxml']
+        centres = [tuple(map(float, m.split()[:2])) for m in re.findall(r'OvalType="Circle" [^>]*?Center3D="([^"]+)"', text)]
+        assert min(math.dist(a, b) for a, b in itertools.combinations(centres, 2)) > 10.0
+
+
+def test_binary_eutectic_fields_and_lever_rule():
+    from cdxml_toolkit.scientific.binary import binary_phase_diagram
+    result = binary_phase_diagram({'type': 'eutectic', 'components': ['Pb', 'Sn'], 'melting': [327, 232],
+                                   'eutectic': [0.619, 183], 'solubility': [0.183, 0.977],
+                                   'points': [{'x': 0.4, 'T': 230}, {'x': 0.4, 'T': 150}, {'x': 0.8, 'T': 300}]})
+    assert set(result['fields']) == {'L', 'L + α', 'L + β', 'α', 'α + β', 'β'}
+    fields = [p['field'] for p in result['points']]
+    assert fields == ['L + α', 'α + β', 'L']
+    for point in result['points']:
+        assert sum(q['fraction'] for q in point['phases']) == pytest.approx(1.0)
+        if len(point['phases']) == 2:      # the lever rule: the mixture's composition is recovered
+            assert sum(q['fraction'] * q['composition'] for q in point['phases']) == pytest.approx(point['x'], abs=2e-3)
+    assert result['warnings'] == [] and check_cdxml(result['cdxml'], allow_sizes=[8])['ok']
+    with pytest.raises(ValueError, match='below both melting points'):
+        binary_phase_diagram({'melting': [300, 200], 'eutectic': [0.5, 250]})
+    with pytest.raises(ValueError, match='either side'):
+        binary_phase_diagram({'melting': [300, 200], 'eutectic': [0.5, 150], 'solubility': [0.6, 0.9]})
+
+
+def test_binary_isomorphous_uses_measured_curves():
+    from cdxml_toolkit.scientific.binary import binary_phase_diagram
+    result = binary_phase_diagram({'type': 'isomorphous', 'melting': [1085, 1455],
+                                   'liquidus': [[0.4, 1290]], 'solidus': [[0.4, 1220]],
+                                   'points': [{'x': 0.4, 'T': 1250}]})
+    liquid, solid = result['points'][0]['phases']
+    assert result['points'][0]['field'] == 'L + α' and liquid['composition'] < 0.4 < solid['composition']
+    with pytest.raises(ValueError, match='above the solidus'):
+        binary_phase_diagram({'type': 'isomorphous', 'melting': [1000, 1400],
+                              'liquidus': [[0.5, 1100]], 'solidus': [[0.5, 1150]]})

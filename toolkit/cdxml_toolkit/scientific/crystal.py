@@ -92,8 +92,12 @@ def unit_cell(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     else:
         key = str(spec.get('preset', '')).lower().replace(' ', '_').replace('-', '_')
         key = _ALIASES.get(key, key)
+        from .hexagonal import HEX_ALIASES, HEX_PRESETS, hexagonal_cell
+        key = HEX_ALIASES.get(key, key)
+        if key in HEX_PRESETS:
+            return hexagonal_cell(key, spec, output)
         if key not in PRESETS:
-            raise ValueError(f'preset must be one of: {", ".join(PRESETS)} (or give "sites")')
+            raise ValueError(f'preset must be one of: {", ".join([*PRESETS, *HEX_PRESETS])} (or give "sites")')
         roles, sites = PRESETS[key]
         names = {**roles, **{str(k): str(v) for k, v in (spec.get('elements') or {}).items()}}
         unknown = set(names) - set(roles)
@@ -194,7 +198,13 @@ def unit_cell(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     if title:
         x1, _y1, x2, y2 = c.extent
         c.label(((x1 + x2) / 2, y2 + 16.0), str(title), align='Center')
+    packing = None
+    if len(basis) == 1:              # touching spheres of one element, cell edge 1
+        only = next(iter(basis))
+        radius = coordination[only]['distance_in_cell_edges'] / 2
+        packing = round(counts[only] * 4 / 3 * math.pi * radius ** 3, 4)
     report = {'diagram': 'unit_cell', 'structure': name, 'atoms_per_cell': counts, 'formula': formula,
+              **({'packing_fraction': packing} if packing is not None else {}),
               'coordination': coordination, 'atoms_drawn': len(atoms), 'bonds_drawn': bonds_drawn,
               'warnings': warnings}
     return _result(c, output, report)
