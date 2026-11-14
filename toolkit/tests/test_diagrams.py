@@ -366,3 +366,112 @@ def test_binary_isomorphous_uses_measured_curves():
     with pytest.raises(ValueError, match='above the solidus'):
         binary_phase_diagram({'type': 'isomorphous', 'melting': [1000, 1400],
                               'liquidus': [[0.5, 1100]], 'solidus': [[0.5, 1150]]})
+
+
+# ---------------------------------------------------------------- redox, correlation, Walsh, surfaces
+_FE = {'element': 'Fe', 'activity': 1e-6, 'species': [
+    {'name': 'Fe2+', 'dGf': -78.90, 'charge': 2}, {'name': 'Fe3+', 'dGf': -4.7, 'charge': 3},
+    {'name': 'Fe2O3', 'dGf': -742.2, 'atoms': 2, 'O': 3}, {'name': 'Fe3O4', 'dGf': -1015.4, 'atoms': 3, 'O': 4}]}
+
+
+def test_pourbaix_fields_follow_from_gibbs_energies():
+    from cdxml_toolkit.scientific.redox import pourbaix
+    result = pourbaix({**_FE, 'points': [{'pH': 1, 'E': 0.3}, {'pH': 7, 'E': 0.0}, {'pH': 2, 'E': -0.8},
+                                         {'pH': 0.5, 'E': 1.2}]})
+    assert set(result['fields']) == {'Fe2+', 'Fe3+', 'Fe2O3', 'Fe3O4', 'Fe'}
+    assert [p['stable'] for p in result['points']] == ['Fe2+', 'Fe2O3', 'Fe', 'Fe3+']
+    assert result['warnings'] == [] and check_cdxml(result['cdxml'], allow_sizes=[8])['ok']
+
+
+def test_pourbaix_fe2_fe_boundary_is_the_nernst_potential():
+    from cdxml_toolkit.scientific.redox import pourbaix
+    # Fe2+/Fe at a = 1e-6: E = dGf/(2F) + (RT/2F) ln a = -0.409 - 0.177 V, independent of pH.
+    below = pourbaix({**_FE, 'points': [{'pH': 2, 'E': -0.60}]})['points'][0]['stable']
+    above = pourbaix({**_FE, 'points': [{'pH': 2, 'E': -0.57}]})['points'][0]['stable']
+    assert (below, above) == ('Fe', 'Fe2+')
+
+
+def test_latimer_derives_couples_and_finds_disproportionation():
+    from cdxml_toolkit.scientific.redox import frost, latimer
+    spec = json.loads((EXAMPLES / 'latimer.json').read_text(encoding='utf-8'))
+    result = latimer(spec)
+    assert result['disproportionate'] == ['MnO{sub:4}{sup:2−}', 'Mn{sup:3+}']
+    assert [d['E'] for d in result['derived']] == pytest.approx([1.693, 1.508], abs=1e-3)
+    points = frost({k: v for k, v in spec.items() if k != 'derived'})['series'][0]['points']
+    assert [p['NE'] for p in points] == pytest.approx([5.18, 4.62, 0.10, -0.85, -2.36, 0.0], abs=1e-2)
+    with pytest.raises(ValueError, match='highest oxidation state'):
+        latimer({'species': [{'name': 'a', 'oxidation_state': 1}, {'name': 'b', 'oxidation_state': 2}], 'potentials': [0.1]})
+
+
+def test_ellingham_crossings():
+    from cdxml_toolkit.scientific.redox import ellingham
+    result = ellingham(json.loads((EXAMPLES / 'ellingham.json').read_text(encoding='utf-8')))
+    crossing = {tuple(sorted(x['lines'])): x for x in result['crossings']}
+    co = crossing[tuple(sorted(['2C + O{sub:2} → 2CO', 'C + O{sub:2} → CO{sub:2}']))]
+    assert co['T'] == pytest.approx(981, abs=2) and co['lower_above'].endswith('2CO')
+    assert not any('MgO' in name for x in result['crossings'] for name in x['lines'])   # Mg crosses above 2273 K
+    with pytest.raises(ValueError, match='kink'):
+        ellingham({'lines': [{'label': 'x', 'dH': -500, 'dS': -100, 'segments': [{'from_T': 1000, 'dH': -400, 'dS': -100}]}]})
+
+
+@pytest.mark.parametrize('preset,allowed', [
+    ('butadiene_conrotatory', True), ('butadiene_disrotatory', False), ('hexatriene_conrotatory', False),
+    ('hexatriene_disrotatory', True), ('cycloaddition_2+2', False), ('cycloaddition_4+2', True)])
+def test_woodward_hoffmann_correlations(preset, allowed):
+    from cdxml_toolkit.scientific.correlation import correlation_diagram
+    result = correlation_diagram({'preset': preset})
+    assert result['allowed_thermally'] is allowed
+    assert check_cdxml(result['cdxml'], allow_sizes=[8])['ok']
+
+
+def test_correlation_conserves_symmetry():
+    from cdxml_toolkit.scientific.correlation import correlation_diagram
+    with pytest.raises(ValueError, match='conserved'):
+        correlation_diagram({'left': [{'label': 'a', 'symmetry': 'S'}], 'right': [{'label': 'b', 'symmetry': 'A'}],
+                             'electrons': 2})
+
+
+@pytest.mark.parametrize('electrons,geometry', [(4, 'linear'), (5, 'bent'), (6, 'bent'), (8, 'bent')])
+def test_walsh_ah2(electrons, geometry):
+    from cdxml_toolkit.scientific.correlation import walsh_diagram
+    assert walsh_diagram({'preset': 'AH2', 'electrons': electrons})['geometry'] == geometry
+
+
+def test_mueller_brown_stationary_points():
+    from cdxml_toolkit.scientific.surface import potential_surface
+    result = potential_surface({'preset': 'mueller_brown'})
+    minima = [p for p in result['stationary_points'] if p['kind'] == 'minimum']
+    saddles = [p for p in result['stationary_points'] if p['kind'] != 'minimum']
+    assert [round(p['energy'], 1) for p in minima] == [-146.7, -108.2, -80.8]
+    assert [round(p['energy'], 1) for p in saddles] == [-72.2, -40.7]
+    assert (minima[0]['x'], minima[0]['y']) == pytest.approx((-0.558, 1.442), abs=2e-3)
+    assert check_cdxml(result['cdxml'], allow_sizes=[8])['ok']
+
+
+def test_grid_surface_finds_a_saddle():
+    from cdxml_toolkit.scientific.surface import potential_surface
+    xs = [i / 10 for i in range(-20, 21)]
+    z = [[(x * x - 1) ** 2 + 2 * y * y for x in xs] for y in xs]       # double well, saddle at (0, 0)
+    result = potential_surface({'grid': {'x': xs, 'y': xs, 'z': z}, 'levels': 8})
+    kinds = sorted((p['kind'], round(p['x'], 1), round(p['y'], 1)) for p in result['stationary_points'])
+    assert kinds == [('minimum', -1.0, 0.0), ('minimum', 1.0, 0.0), ('transition state', 0.0, 0.0)]
+
+
+def test_lewis_hex_grid_places_pairs_between_bonds():
+    from cdxml_toolkit.scientific.lewis import _groups
+    result = lewis_structure(json.loads((EXAMPLES / 'lewis_carbonate.json').read_text(encoding='utf-8')))
+    atoms = {a['atom']: a for a in result['species'][0]['atoms']}
+    assert result['species'][0]['charge'] == -2 and atoms['O2']['nonbonding_electrons'] == 6
+    assert _groups({'id': 'O', 'nonbonding': 4, 'bonds': {0: None, 180: None}}) == {90: 2, 270: 2}
+    with pytest.raises(ValueError, match='neighbours on the hex grid'):
+        lewis_structure({'grid': 'hex', 'atoms': [{'id': 'a', 'element': 'H', 'at': [0, 0]},
+                                                  {'id': 'b', 'element': 'H', 'at': [1, 1]}], 'bonds': [['a', 'b']]})
+
+
+@pytest.mark.parametrize('system,energies', [
+    ('formaldehyde', [1.618, -0.618]), ('pyridine', [2.107, 1.167, 1.0, -0.841, -1.0, -1.934])])
+def test_huckel_heteroatoms(system, energies):
+    from cdxml_toolkit.scientific.huckel import huckel_mo
+    result = huckel_mo({'system': system})
+    assert [o['x'] for o in result['orbitals']] == pytest.approx(energies, abs=1e-3)
+    assert 'delocalisation_energy_beta' not in result and result['heteroatoms']

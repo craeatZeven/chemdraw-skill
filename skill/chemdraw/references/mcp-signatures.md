@@ -597,7 +597,10 @@ count per atom), unit_cell (cubic and hexagonal: atoms per cell, formula, coordi
 numbers, packing fraction), flowchart,
 electrochemical_cell (polarity and electron flow), periodic_table, huckel_mo (pi orbitals,
 HOMO/LUMO, aromaticity), phase_diagram, binary_phase_diagram (fields and the
-lever rule at marked points) and compose (several
+lever rule at marked points), pourbaix (stable species from Gibbs energies), latimer and
+frost (derived couples, disproportionation), ellingham (reduction temperatures),
+correlation_diagram (Woodward-Hoffmann allowed or forbidden), walsh_diagram,
+potential_surface (contours, minima and saddle points) and compose (several
 CDXML files merged on one page). Electrons, charges and energies that contradict each
 other are rejected rather than drawn. The spec formats are in the diagrams reference.
 

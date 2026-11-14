@@ -1,0 +1,29 @@
+{
+ "element": "Fe",
+ "activity": 1e-06,
+ "title": "Fe, 25 \u00b0C, a = 10{sup:\u22126}",
+ "species": [
+  {
+   "name": "Fe{sup:2+}",
+   "dGf": -78.9,
+   "charge": 2
+  },
+  {
+   "name": "Fe{sup:3+}",
+   "dGf": -4.7,
+   "charge": 3
+  },
+  {
+   "name": "Fe{sub:2}O{sub:3}",
+   "dGf": -742.2,
+   "atoms": 2,
+   "O": 3
+  },
+  {
+   "name": "Fe{sub:3}O{sub:4}",
+   "dGf": -1015.4,
+   "atoms": 3,
+   "O": 4
+  }
+ ]
+}

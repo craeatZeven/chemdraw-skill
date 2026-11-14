@@ -1,0 +1,55 @@
+{
+ "grid": "hex",
+ "charge": -2,
+ "atoms": [
+  {
+   "id": "C",
+   "element": "C",
+   "at": [
+    0,
+    0
+   ]
+  },
+  {
+   "id": "O1",
+   "element": "O",
+   "at": [
+    1,
+    0
+   ]
+  },
+  {
+   "id": "O2",
+   "element": "O",
+   "at": [
+    -1,
+    1
+   ],
+   "formal_charge": -1
+  },
+  {
+   "id": "O3",
+   "element": "O",
+   "at": [
+    0,
+    -1
+   ],
+   "formal_charge": -1
+  }
+ ],
+ "bonds": [
+  [
+   "C",
+   "O1",
+   2
+  ],
+  [
+   "C",
+   "O2"
+  ],
+  [
+   "C",
+   "O3"
+  ]
+ ]
+}

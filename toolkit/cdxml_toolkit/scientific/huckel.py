@@ -24,10 +24,25 @@ SYSTEMS = {
     'benzene': (6, True, 6), 'tropylium': (7, True, 6), 'cyclooctatetraene': (8, True, 8),
 }
 TOL = 1e-6
+# Streitwieser heteroatom parameters: alpha_X = alpha + h beta, beta_CX = k beta, and the pi electrons X gives.
+HETEROATOMS = {
+    'N_pyridine': {'symbol': 'N', 'h': 0.5, 'k': 1.0, 'electrons': 1},   # pyridine-type N (one pi electron)
+    'N_pyrrole': {'symbol': 'N', 'h': 1.5, 'k': 0.8, 'electrons': 2},    # pyrrole-type N (lone pair in the pi system)
+    'O_carbonyl': {'symbol': 'O', 'h': 1.0, 'k': 1.0, 'electrons': 1},   # carbonyl O (one pi electron)
+    'O_furan': {'symbol': 'O', 'h': 2.0, 'k': 0.8, 'electrons': 2},      # furan-type O (lone pair in the pi system)
+}
+# name -> (atoms, cyclic, {index: heteroatom type})
+HETERO_SYSTEMS = {
+    'formaldehyde': (2, False, {1: 'O_carbonyl'}), 'acrolein': (4, False, {3: 'O_carbonyl'}),
+    'pyridine': (6, True, {0: 'N_pyridine'}), 'pyrrole': (5, True, {0: 'N_pyrrole'}),
+    'furan': (5, True, {0: 'O_furan'}), 'pyrimidine': (6, True, {0: 'N_pyridine', 2: 'N_pyridine'}),
+}
 
 
-def solve(atoms, cyclic=False, bonds=None):
-    """Energies ``x`` (E = alpha + x beta, bonding x > 0) and coefficient vectors, highest x first."""
+def solve(atoms, cyclic=False, bonds=None, h_values=None, k_values=None):
+    """Energies ``x`` (E = alpha + x beta, bonding x > 0) and coefficient vectors, highest x first.
+
+    ``h_values``: ``{atom: h}``; ``k_values``: ``{(a, b): k}`` for heteroatoms (Streitwieser)."""
     import numpy as np
     n = int(atoms)
     if not 1 <= n <= 12:
@@ -38,7 +53,9 @@ def solve(atoms, cyclic=False, bonds=None):
         a, b = int(a), int(b)
         if not (0 <= a < n and 0 <= b < n) or a == b:
             raise ValueError(f'bond {a}-{b} does not join two of the {n} atoms')
-        h[a, b] = h[b, a] = 1.0
+        h[a, b] = h[b, a] = (k_values or {}).get((a, b), (k_values or {}).get((b, a), 1.0))
+    for atom, value in (h_values or {}).items():
+        h[int(atom), int(atom)] = value
     values, vectors = np.linalg.eigh(h)
     order = list(range(n))[::-1]
     out = []
@@ -58,20 +75,45 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     nodes, the HOMO and LUMO, the total pi energy and, for rings, the delocalisation energy
     against isolated ethene units.
     """
+    hetero = {}
     if spec.get('system') is not None:
         key = str(spec['system']).lower().replace(' ', '_').replace('-', '_')
-        if key not in SYSTEMS:
-            raise ValueError(f'Unknown system {spec["system"]!r}; available: {", ".join(SYSTEMS)}')
-        atoms, cyclic, electrons = SYSTEMS[key]
+        if key in HETERO_SYSTEMS:
+            atoms, cyclic, kinds = HETERO_SYSTEMS[key]
+            hetero = {i: dict(HETEROATOMS[kind], type=kind) for i, kind in kinds.items()}
+            electrons = sum(hetero[i]['electrons'] if i in hetero else 1 for i in range(atoms))
+        elif key in SYSTEMS:
+            atoms, cyclic, electrons = SYSTEMS[key]
+        else:
+            raise ValueError(f'Unknown system {spec["system"]!r}; available: {", ".join([*SYSTEMS, *HETERO_SYSTEMS])}')
         name = key
     else:
         atoms, cyclic = int(spec.get('atoms', 0)), bool(spec.get('cyclic', False))
         if spec.get('electrons') is None:
             raise ValueError('Give "electrons" (pi electrons) with "atoms"')
         electrons, name = int(spec['electrons']), str(spec.get('name', 'custom'))
+    for item in spec.get('heteroatoms') or []:
+        index = int(item.get('index', -1))
+        if not 0 <= index < atoms:
+            raise ValueError(f'heteroatom index {index} is not one of the {atoms} atoms')
+        if item.get('type') is not None:
+            if item['type'] not in HETEROATOMS:
+                raise ValueError(f'heteroatom type must be one of {", ".join(HETEROATOMS)} (or give "h" and "k")')
+            hetero[index] = dict(HETEROATOMS[item['type']], type=item['type'])
+        else:
+            hetero[index] = {'symbol': str(item.get('symbol', 'X')), 'h': float(item.get('h', 0.0)),
+                             'k': float(item.get('k', 1.0)), 'type': 'custom'}
     if not 0 <= electrons <= 2 * atoms:
         raise ValueError(f'{electrons} pi electrons do not fit {atoms} pi orbitals')
-    levels, pairs = solve(atoms, cyclic, spec.get('bonds'))
+    bond_list = spec.get('bonds')
+    pairs_default = bond_list if bond_list is not None else [(i, i + 1) for i in range(atoms - 1)] + (
+        [(atoms - 1, 0)] if cyclic and atoms > 2 else [])
+    k_values = {}
+    for a, b in pairs_default:
+        for end in (int(a), int(b)):
+            if end in hetero:
+                k_values[(int(a), int(b))] = hetero[end]['k']
+    levels, pairs = solve(atoms, cyclic, bond_list, {i: v['h'] for i, v in hetero.items()}, k_values)
     groups = []
     for energy, vector in levels:
         if groups and abs(groups[-1]['x'] - energy) < 1e-6:
@@ -92,6 +134,14 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     block_w = (atoms - 1) * 2.2 * lobe + 2 * lobe if not cyclic else 2 * ring_r + 2 * lobe
     xs = sorted({round(g['x'], 6) for g in groups})
     y_of = {x: -(x - xs[0]) / ((xs[-1] - xs[0]) or 1) * spacing * (len(xs) - 1) for x in xs}
+    # Keep the order but never let two drawn levels overlap (energies are then not to scale).
+    room = 2 * ring_r * 0.95 + 14.0 if cyclic else 2 * 1.6 * lobe * 0.62 + 20.0
+    for lower, upper in zip(xs, xs[1:]):
+        if y_of[lower] - y_of[upper] < room:
+            shift = room - (y_of[lower] - y_of[upper])
+            for x in xs:
+                if x >= upper:
+                    y_of[x] -= shift
     report_orbitals = []
     psi = 1
     widest = 0.0
@@ -109,6 +159,13 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                 corners = [(cx0 + ring_r * math.cos(-math.pi / 2 + 2 * math.pi * i / atoms),
                             y + ring_r * math.sin(-math.pi / 2 + 2 * math.pi * i / atoms)) for i in range(atoms)]
                 c.path(corners, closed=True)
+                if psi == 1:
+                    for index, info in hetero.items():
+                        hx, hy = corners[index]
+                        ox, oy = hx - cx0, hy - y
+                        norm = math.hypot(ox, oy) or 1.0
+                        c.label((hx + ox / norm * (lobe + 6.0), hy + oy / norm * (lobe + 6.0)), info['symbol'],
+                                align='Center', valign='middle', size=8)
                 for (px, py), coefficient in zip(corners, vector):
                     radius = abs(coefficient) * lobe
                     if radius < 0.8:
@@ -117,6 +174,8 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             else:
                 for i, coefficient in enumerate(vector):
                     cx = left + lobe + i * 2.2 * lobe
+                    if psi == 1 and i in hetero:
+                        c.label((cx, y + 1.6 * lobe + 10.0), hetero[i]['symbol'], align='Center', size=8)
                     size = abs(coefficient) * lobe * 1.6
                     if size < 0.8:
                         c.circle((cx, y), 0.8, fill='#000000', outline=None)   # a node at this atom
@@ -152,9 +211,13 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                               'pi_energy_beta': round(total, 4),
                               'unpaired_electrons': sum(1 for o in report_orbitals if o['electrons'] == 1),
                               'energies': 'E = alpha + x beta; beta < 0, so x > 0 is bonding'}
+    if hetero:
+        report['heteroatoms'] = [{'index': i, 'symbol': v['symbol'], 'type': v['type'], 'h': v['h'], 'k': v['k']}
+                                 for i, v in sorted(hetero.items())]
     if cyclic:
         # Against electrons/2 isolated ethene double bonds (2 beta each).
-        report['delocalisation_energy_beta'] = round(total - 2.0 * (electrons // 2), 4)
+        if not hetero:
+            report['delocalisation_energy_beta'] = round(total - 2.0 * (electrons // 2), 4)
         open_shell = report['unpaired_electrons'] > 0
         report['huckel_rule'] = ('aromatic (4n+2)' if electrons % 4 == 2 and not open_shell
                                  else 'antiaromatic (4n)' if electrons % 4 == 0 else 'neither')
