@@ -1,0 +1,27 @@
+{
+  "_comment": "教材式催化/非催化对比：两条平滑曲线，按路径标注，不写数值。能量为示意值。",
+  "style": "smooth",
+  "unit": "kJ/mol",
+  "y_label": "能量",
+  "x_label": "反应进程",
+  "show_values": false,
+  "species": [
+    {"id": "R",    "label": "反应物", "energy": 0,   "x": 0},
+    {"id": "TS",   "label": "过渡态", "energy": 100, "x": 2,   "ts": true},
+    {"id": "TSc1", "label": "TSc1",  "energy": 55,  "x": 1.2, "ts": true, "label_position": "none"},
+    {"id": "Ic",   "label": "Ic",    "energy": 25,  "x": 2,   "label_position": "none"},
+    {"id": "TSc2", "label": "TSc2",  "energy": 45,  "x": 2.8, "ts": true, "label_position": "none"},
+    {"id": "P",    "label": "生成物", "energy": -30, "x": 4}
+  ],
+  "pathways": [
+    {"id": "uncat", "nodes": ["R", "TS", "P"], "color": "#CC0000", "label": "无催化剂", "label_x": 3.0},
+    {"id": "cat", "nodes": ["R", "TSc1", "Ic", "TSc2", "P"], "color": "#336699", "label": "有催化剂",
+     "label_x": 2.45, "label_position": "below"}
+  ],
+  "annotation_color": "#000000",
+  "annotations": [
+    {"from": "R", "to": "TS", "label": "{i:E}{sub:a}", "side": "right", "at": 0.75, "ref": "none"},
+    {"from": "R", "to": "TSc1", "label": "{i:E}{sub:a}′", "side": "left", "ref": "none"},
+    {"from": "R", "to": "P", "x": 4.55, "label": "Δ{i:H}", "heads": "to"}
+  ]
+}

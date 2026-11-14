@@ -1,0 +1,73 @@
+{
+ "layout": "catalytic-cycle",
+ "species": [
+  {
+   "id": "Pd0",
+   "smiles": "[Pd]",
+   "label": "Pd(0)"
+  },
+  {
+   "id": "ArX",
+   "smiles": "Ic1ccccc1",
+   "label": "ArX"
+  },
+  {
+   "id": "Ox",
+   "smiles": "I[Pd]c1ccccc1",
+   "label": "Ar—Pd—I"
+  },
+  {
+   "id": "ArB",
+   "smiles": "OB(O)c1ccccc1",
+   "label": "ArB(OH)2"
+  },
+  {
+   "id": "ArM",
+   "smiles": "[Pd](c1ccccc1)c1ccccc1",
+   "label": "Ar—Pd—Ar"
+  },
+  {
+   "id": "Prod",
+   "smiles": "c1ccc(-c2ccccc2)cc1",
+   "label": "Ar—Ar"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "Pd0",
+    "ArX"
+   ],
+   "products": [
+    "Ox"
+   ],
+   "above": [
+    "氧化加成"
+   ]
+  },
+  {
+   "substrates": [
+    "Ox",
+    "ArB"
+   ],
+   "products": [
+    "ArM"
+   ],
+   "above": [
+    "转金属化"
+   ]
+  },
+  {
+   "substrates": [
+    "ArM"
+   ],
+   "products": [
+    "Prod",
+    "Pd0"
+   ],
+   "above": [
+    "还原消除"
+   ]
+  }
+ ]
+}
