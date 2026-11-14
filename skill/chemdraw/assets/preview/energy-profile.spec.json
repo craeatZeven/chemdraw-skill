@@ -1,0 +1,34 @@
+{
+ "style": "smooth",
+ "unit": "kJ/mol",
+ "energy_symbol": "E",
+ "y_label_style": "slash",
+ "x_label": "二面角 φ / °",
+ "decimals": 0,
+ "ts_marker": "none",
+ "species": [
+  {
+   "id": "A",
+   "label": "共平面 0°",
+   "energy": 28
+  },
+  {
+   "id": "B",
+   "label": "垂直 ±90°",
+   "energy": 0
+  },
+  {
+   "id": "C",
+   "label": "共平面 180°",
+   "energy": 26
+  }
+ ],
+ "annotations": [
+  {
+   "from": "B",
+   "to": "A",
+   "label": "旋转能垒",
+   "side": "left"
+  }
+ ]
+}

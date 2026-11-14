@@ -1,0 +1,22 @@
+{
+  "_comment": "Journal-style free-energy diagram: level bars + connectors, competing pathway dashed dark red. Illustrative values.",
+  "style": "levels",
+  "unit": "kcal/mol",
+  "energy_symbol": "ΔG",
+  "x_label": "Reaction coordinate",
+  "decimals": 1,
+  "unit_width": 56,
+  "species": [
+    {"id": "A",    "label": "1",     "energy": 0.0,   "x": 0},
+    {"id": "TS1",  "label": "TS1",   "energy": 18.2,  "x": 1, "ts": true},
+    {"id": "INT",  "label": "INT1",  "energy": -4.5,  "x": 2},
+    {"id": "TS2",  "label": "TS2",   "energy": 12.7,  "x": 3.2, "ts": true},
+    {"id": "P",    "label": "2",     "energy": -15.3, "x": 4.2},
+    {"id": "TS2b", "label": "TS2′",  "energy": 16.9,  "x": 2.6, "ts": true},
+    {"id": "Pb",   "label": "3",     "energy": -9.8,  "x": 3.6}
+  ],
+  "pathways": [
+    {"id": "major", "nodes": ["A", "TS1", "INT", "TS2", "P"], "color": "#000000"},
+    {"id": "minor", "nodes": ["INT", "TS2b", "Pb"], "color": "#CC0000", "dashed": true}
+  ]
+}

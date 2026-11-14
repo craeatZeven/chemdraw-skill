@@ -1,0 +1,21 @@
+{
+  "_comment": "教材式两步反应势能图：R → TS1 → I → TS2 → P，平滑曲线，中文标注。能量为示意值。",
+  "style": "smooth",
+  "unit": "kJ/mol",
+  "energy_symbol": "E",
+  "y_label_style": "slash",
+  "x_label": "反应进程",
+  "decimals": 0,
+  "species": [
+    {"id": "R",   "label": "反应物 R", "energy": 0},
+    {"id": "TS1", "label": "TS1", "energy": 75, "ts": true},
+    {"id": "I",   "label": "中间体 I", "energy": 30},
+    {"id": "TS2", "label": "TS2", "energy": 60, "ts": true},
+    {"id": "P",   "label": "产物 P", "energy": -40}
+  ],
+  "annotations": [
+    {"from": "R", "to": "TS1", "label": "{i:E}{sub:a1}", "side": "left"},
+    {"from": "I", "to": "TS2", "label": "{i:E}{sub:a2}", "side": "left"},
+    {"from": "R", "to": "P", "x": 4.55, "label": "Δ{i:H}", "heads": "to"}
+  ]
+}

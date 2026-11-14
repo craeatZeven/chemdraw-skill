@@ -1,0 +1,255 @@
+{
+ "tool": "chemdraw-energy-profile 1.0",
+ "spec": "D:\\Work\\tools\\chemdraw-energy-profile\\examples\\competing_levels_en.json",
+ "outputs": {
+  "cdxml": "D:\\Work\\tools\\chemdraw-energy-profile\\examples\\out\\competing_levels_en.cdxml",
+  "png": "D:\\Work\\tools\\chemdraw-energy-profile\\examples\\out\\competing_levels_en.png"
+ },
+ "mapping": {
+  "pt_per_unit_x": 56.0,
+  "pt_per_energy": 4.477611940298507,
+  "energy_range": [
+   -15.3,
+   18.2
+  ],
+  "note": "X = 62.280 + 56.0000*(x - 0)；Y = 57.200 + 4.477612*(18.2 - E)（pt，y 向下）"
+ },
+ "species_points_pt": {
+  "A": [
+   62.28,
+   138.693
+  ],
+  "TS1": [
+   118.28,
+   57.2
+  ],
+  "INT": [
+   174.28,
+   158.842
+  ],
+  "TS2": [
+   241.48,
+   81.827
+  ],
+  "P": [
+   297.48,
+   207.2
+  ],
+  "TS2b": [
+   207.88,
+   63.021
+  ],
+  "Pb": [
+   263.88,
+   182.573
+  ]
+ },
+ "plot": null,
+ "layout_warnings": [],
+ "selfcheck": {
+  "ok": true,
+  "items": [
+   {
+    "name": "root-style",
+    "ok": true,
+    "detail": "根属性 = ACS 1996（键长 14.4、线宽 0.6、标签/说明 Arial 10）"
+   },
+   {
+    "name": "fonttable",
+    "ok": true,
+    "detail": {
+     "3": "Arial",
+     "5": "SimSun"
+    }
+   },
+   {
+    "name": "fonts-per-run",
+    "ok": true,
+    "detail": "20 个 run：中文 0 个全为 SimSun(5)，其余全为 Arial(3)"
+   },
+   {
+    "name": "font-size",
+    "ok": true,
+    "detail": "字号 ['10'] pt"
+   },
+   {
+    "name": "texts",
+    "ok": true,
+    "detail": {
+     "n": 16,
+     "texts": [
+      "1",
+      "0.0",
+      "18.2",
+      "TS1",
+      "INT1",
+      "−4.5",
+      "12.7",
+      "TS2",
+      "2",
+      "−15.3",
+      "16.9",
+      "TS2′",
+      "3",
+      "−9.8",
+      "ΔG (kcal mol−1)",
+      "Reaction coordinate"
+     ]
+    }
+   },
+   {
+    "name": "markup-resolved",
+    "ok": true,
+    "detail": "无残留标记 {..}"
+   },
+   {
+    "name": "colors",
+    "ok": true,
+    "detail": "色表 3 条，引用 [3, 4]"
+   },
+   {
+    "name": "curve-nodes",
+    "ok": true,
+    "detail": "0 个 <curve>（应 0），属性齐全，点数为 3 的倍数"
+   },
+   {
+    "name": "bars-at-species",
+    "ok": true,
+    "detail": "短横线中点与物种(x, E)点最大偏差 0.000 pt"
+   },
+   {
+    "name": "arrowheads",
+    "ok": true,
+    "detail": "箭头头尺寸合规（HeadSize∈[800, 1000, 1500, 2000, 2250]，0.875/0.25 比例）"
+   },
+   {
+    "name": "inside-page",
+    "ok": true,
+    "detail": "全部坐标在页面 331×260 pt 内"
+   }
+  ]
+ },
+ "check_cdxml": {
+  "ok": true,
+  "exit": 0,
+  "summary": "pass 4 | warn 0 | fail 0 | info 7",
+  "fail": [],
+  "warn": [],
+  "rows": [
+   {
+    "level": "pass",
+    "rule": "style",
+    "detail": "根属性与 acs1996 一致（线宽不缩放）"
+   },
+   {
+    "level": "info",
+    "rule": "rings",
+    "detail": "没有六元环"
+   },
+   {
+    "level": "info",
+    "rule": "nickname-attach",
+    "detail": "没有缩写连接键（未检查）"
+   },
+   {
+    "level": "info",
+    "rule": "nickname-semantics",
+    "detail": "没有 Nickname 节点（未检查）"
+   },
+   {
+    "level": "info",
+    "rule": "noble-gas",
+    "detail": "没有成键原子（未检查）"
+   },
+   {
+    "level": "info",
+    "rule": "wedges",
+    "detail": "没有楔键"
+   },
+   {
+    "level": "pass",
+    "rule": "arrows",
+    "detail": "2 支箭头头尺寸合规"
+   },
+   {
+    "level": "info",
+    "rule": "graphics",
+    "detail": "13 个 graphic：0 个带 SupersededBy（幽灵副本，不应重复绘制），13 个活的"
+   },
+   {
+    "level": "pass",
+    "rule": "text-face",
+    "detail": "20 个 run 的 face 均为已知值（分布 {1: 7, 0: 11, 2: 1, 64: 1}）"
+   },
+   {
+    "level": "info",
+    "rule": "text-size",
+    "detail": "字号分布：{10.0: 20}"
+   },
+   {
+    "level": "pass",
+    "rule": "colors",
+    "detail": "颜色表 3 条，所有引用合法（用了 2 种）"
+   }
+  ]
+ },
+ "render": {
+  "ok": true,
+  "error": null
+ },
+ "png_check": {
+  "ok": true,
+  "png_px": [
+   2604,
+   2047
+  ],
+  "px_per_pt": 8.3361,
+  "items": [
+   {
+    "name": "calibration",
+    "ok": true,
+    "detail": "坐标轴定标：8.335 / 8.337 px/pt（两轴应一致），原点像素 (305.0, 1925.5)"
+   },
+   {
+    "name": "line:connector",
+    "ok": true,
+    "detail": "4 条，覆盖率 1.000（阈值 0.90）"
+   },
+   {
+    "name": "line:connector:dashed",
+    "ok": true,
+    "detail": "2 条，覆盖率 0.712（阈值 0.35）"
+   },
+   {
+    "name": "line:bar",
+    "ok": true,
+    "detail": "7 条，覆盖率 1.000（阈值 0.90）"
+   },
+   {
+    "name": "arrow:axis:y",
+    "ok": true,
+    "detail": "箭杆覆盖率 1.000"
+   },
+   {
+    "name": "arrow:axis:x",
+    "ok": true,
+    "detail": "箭杆覆盖率 1.000"
+   },
+   {
+    "name": "texts-drawn",
+    "ok": true,
+    "detail": "16 段文字都有墨迹"
+   },
+   {
+    "name": "unexplained-ink",
+    "ok": true,
+    "detail": "多余墨迹 0 px（阈值 300；折行文字、错位对象会落在这里）"
+   }
+  ]
+ },
+ "sha256": {
+  "competing_levels_en.cdxml": "63f84aee84c8a4afb93ce54cf8397adf904f8d82d5826b1e94bafff124d3fca4",
+  "competing_levels_en.png": "599ef45f90ab13d45ce218e9baa95baeb56b644ebb63ba773d12dbb16c45b807"
+ },
+ "ok": true
+}

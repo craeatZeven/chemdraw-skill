@@ -537,7 +537,7 @@ def _apply_decorations(cdxml: str, brief: dict, grounded: list[dict]) -> str:
                 f'<graphic id="{right_id}" BoundingBox="{bx2:.2f} {by1:.2f} {bx2 - lip:.2f} {by2:.2f}" '
                 f'GraphicType="Bracket" BracketType="{bracket_type}" LipSize="{lip:g}"/>'
             )
-            # Python 3.10 forbids reusing the enclosing quote inside f-string braces (PEP 701 relaxed this in 3.12)
+            # Python 3.10 rejects a same-quoted expression inside an f-string (PEP 701 allows it only from 3.12).
             _ids_joined = ' '.join(node_ids)
             fg_xml.append(
                 f'<bracketedgroup id="{bg_id}" BracketedObjectIDs="{_ids_joined}" BracketType="{bracket_type}">'
