@@ -219,15 +219,18 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
             path.write_text(str(text), encoding="utf-8")
             applied += [a for a in page_applied if a not in applied]
             style_warnings += [w for w in warned if w not in style_warnings]
-        if render:
-            png_dir = target / "png"
-            png_dir.mkdir(exist_ok=True)
-            try:
-                for page in pages:
-                    _render_png(page["path"], str(png_dir / (Path(page["file"]).stem + ".png")))
-                checks.setdefault("native_preview", {})["status"] = "rendered_pending_visual_review"
-            except Exception as exc:
-                checks.setdefault("native_preview", {})["error"] = str(exc)
+    if render:
+        # Rendering is not a styling step: a plain panel needs its PNG too. This used
+        # to sit inside ``if restyle`` so an unstyled scope panel with render=true
+        # reported native_preview "unavailable" and wrote no png/ folder.
+        png_dir = target / "png"
+        png_dir.mkdir(exist_ok=True)
+        try:
+            for page in pages:
+                _render_png(page["path"], str(png_dir / (Path(page["file"]).stem + ".png")))
+            checks.setdefault("native_preview", {})["status"] = "rendered_pending_visual_review"
+        except Exception as exc:
+            checks.setdefault("native_preview", {})["error"] = str(exc)
     readback = _readback([Path(p["path"]) for p in pages], grounded)
 
     notes: list[str] = []

@@ -304,3 +304,32 @@ def test_batch_figure_validation_reuses_shared_render_session(tmp_path, monkeypa
 
     figure_validation._close_shared_render_session()
     assert sessions_created[0].closed is True
+
+def test_catalytic_cycle_draws_entering_reactants_and_departing_products(tmp_path):
+    """A cycle must show what enters and leaves it, not only the ring intermediates.
+
+    Regression: the layout drew one intermediate per step and silently dropped every
+    other species named for that step, so a Suzuki cycle came out as three palladium
+    complexes with no ArX, no ArB(OH)2 and no biaryl product.
+    """
+    brief = {
+        "layout": "catalytic-cycle",
+        "species": [
+            {"id": "pd0", "smiles": "[Pd]", "label": "Pd(0)"},
+            {"id": "arx", "smiles": "Ic1ccccc1", "label": "ArX"},
+            {"id": "ox", "smiles": "I[Pd]c1ccccc1", "label": "Ar-Pd-I"},
+            {"id": "arb", "smiles": "OB(O)c1ccccc1", "label": "ArB(OH)2"},
+            {"id": "arm", "smiles": "[Pd](c1ccccc1)c1ccccc1", "label": "Ar-Pd-Ar"},
+            {"id": "prod", "smiles": "c1ccc(-c2ccccc2)cc1", "label": "Ar-Ar"},
+        ],
+        "steps": [
+            {"substrates": ["pd0", "arx"], "products": ["ox"], "above": ["oxidative addition"]},
+            {"substrates": ["ox", "arb"], "products": ["arm"], "above": ["transmetallation"]},
+            {"substrates": ["arm"], "products": ["prod", "pd0"], "above": ["reductive elimination"]},
+        ],
+    }
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "cycle_entry_exit.cdxml"))
+
+    assert report["layout"] == "catalytic-cycle"
+    assert report["readback"]["structures_drawn"] == len(brief["species"])
+    assert report["readback"]["missing"] == []

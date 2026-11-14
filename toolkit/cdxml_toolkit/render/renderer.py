@@ -2758,6 +2758,29 @@ def _ray_box_exit_t(
     return max(0.08, min(0.45, t))
 
 
+def _ray_box_exit_unclamped(
+    px: float,
+    py: float,
+    dx: float,
+    dy: float,
+    box: Tuple[float, float, float, float],
+    pad: float,
+) -> float:
+    """Return the true ``t`` in (0, 1] where ``P(t)`` leaves the padded *box*.
+
+    Unlike :func:`_ray_box_exit_t` this does not clamp to ``[0.08, 0.45]``, so the
+    result really sits on the box edge — needed to start a connector arrow at a
+    structure's border instead of inside it.
+    """
+    bx0, by0, bx1, by1 = box[0] - pad, box[1] - pad, box[2] + pad, box[3] + pad
+    tx = ((bx1 - px) / dx if dx > 0 else (bx0 - px) / dx) if abs(dx) > 1e-6 else float("inf")
+    ty = ((by1 - py) / dy if dy > 0 else (by0 - py) / dy) if abs(dy) > 1e-6 else float("inf")
+    t = min(tx, ty)
+    if not math.isfinite(t) or t <= 0:
+        return 0.0
+    return min(1.0, t)
+
+
 def _text_box_at(lines: List[str], x: float, y: float) -> Tuple[float, float, float, float]:
     max_chars = max((len(ln) for ln in lines), default=1)
     w = max_chars * _CHAR_WIDTH
@@ -2935,6 +2958,86 @@ def _layout_catalytic_cycle(
         placed_boxes.append(abox)
         lowest_y = max(lowest_y, abox[3])
 
+    # 2b. Place entering reactants and departing products on radial connectors.
+    # The ring intermediate drawn after step k is steps[k+1].substrates[0]; any other
+    # species listed for the step enters or leaves the cycle there. Without this the
+    # cycle only shows its intermediates and silently drops ArX / ArB(OH)2 / product.
+    extra_in: Dict[int, List[int]] = {}
+    extra_out: Dict[int, List[int]] = {}
+    for k, step in enumerate(steps):
+        nk = (k + 1) % n_steps
+        ring_here = step.substrates[0] if step.substrates else None
+        ring_next = steps[nk].substrates[0] if steps[nk].substrates else None
+        entering = [s for s in step.substrates[1:] if s != ring_here]
+        leaving = [p for p in step.products if p != ring_next]
+        if not entering and not leaving:
+            continue
+
+        tx, ty, hx, hy, _aid = arrow_records[k]
+        mx_, my_ = (tx + hx) / 2.0, (ty + hy) / 2.0
+        rx_, ry_ = mx_ - cx, my_ - cy
+        r_norm = math.hypot(rx_, ry_) or 1.0
+        rx_, ry_ = rx_ / r_norm, ry_ / r_norm
+
+        for kind, sids in (("in", entering), ("out", leaving)):
+            for j, sid in enumerate(sids):
+                struct = scheme.structures.get(sid)
+                if struct is None:
+                    continue
+                # stagger along the chord so an entering and a leaving species
+                # belonging to the same step do not land on top of each other
+                frac = 0.16 if kind == "in" else 0.84
+                ax = tx + (hx - tx) * frac
+                ay = ty + (hy - ty) * frac
+                dist = radius * 0.48 + 34.0 + 30.0 * j
+                px_ = ax + rx_ * dist
+                py_ = ay + ry_ * dist
+
+                frag = _resolve_structure(
+                    struct,
+                    center_x=px_,
+                    center_y=py_,
+                    source_data=source_data,
+                    reference_mol=reference_mol,
+                )
+                if frag is None:
+                    continue
+                _shift_atoms(frag.atoms, px_ - frag.cx, py_ - frag.cy)
+                frag.bbox = _fragment_bbox(frag.atoms)
+                frag.cx, frag.cy = _bbox_center(frag.bbox)
+                frag_xml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
+                xml_parts.append(frag_xml)
+
+                box_y2 = frag.bbox[3]
+                if frag.ref.label:
+                    lbl_y = frag.bbox[3] + 14.0
+                    lbl_xml, _ = _build_label_element(frag.ref.label, frag.cx, lbl_y, ids)
+                    xml_parts.append(lbl_xml)
+                    box_y2 = lbl_y + _DESCENT
+
+                fbox = (frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0)
+                placed_boxes.append(fbox)
+                lowest_y = max(lowest_y, box_y2)
+
+                # short connector arrow between the species and the chord arrow
+                ddx, ddy = ax - frag.cx, ay - frag.cy
+                edge_t = _ray_box_exit_unclamped(frag.cx, frag.cy, ddx, ddy, fbox, 3.0)
+                ex = frag.cx + ddx * edge_t
+                ey = frag.cy + ddy * edge_t
+                if kind == "in":
+                    conn_xml, conn_id = _build_arrow(ex, ey, ax, ay, ids)
+                else:
+                    conn_xml, conn_id = _build_arrow(ax, ay, ex, ey, ids)
+                xml_parts.append(conn_xml)
+                placed_boxes.append(
+                    (min(ex, ax) - 1.5, min(ey, ay) - 3.0, max(ex, ax) + 1.5, max(ey, ay) + 3.0)
+                )
+
+                if kind == "in":
+                    extra_in.setdefault(k, []).append(fid)
+                else:
+                    extra_out.setdefault(k, []).append(fid)
+
     # 3. Place above / below condition labels radially outside / inside each arrow
     step_metadata: List[Dict[str, Any]] = []
     for k, step in enumerate(steps):
@@ -2996,8 +3099,8 @@ def _layout_catalytic_cycle(
                 lowest_y = max(lowest_y, tbox[3])
 
         step_metadata.append({
-            "reactant_ids": [frag_ids[k]],
-            "product_ids": [frag_ids[nk]],
+            "reactant_ids": [frag_ids[k]] + extra_in.get(k, []),
+            "product_ids": [frag_ids[nk]] + extra_out.get(k, []),
             "arrow_id": arrow_id,
             "above_ids": above_ids,
             "below_ids": below_ids,
