@@ -1,47 +1,34 @@
 {
  "style": "smooth",
- "pathways": [
+ "unit": "kJ/mol",
+ "energy_symbol": "E",
+ "y_label_style": "slash",
+ "x_label": "dihedral angle φ / °",
+ "decimals": 0,
+ "ts_marker": "none",
+ "species": [
   {
-   "points": [
-    {
-     "id": "A",
-     "label": "\u5171\u5e73\u9762 0\u00b0",
-     "energy": 28.0,
-     "x": 0.0,
-     "kind": "minimum"
-    },
-    {
-     "id": "B",
-     "label": "\u5782\u76f4 \u00b190\u00b0",
-     "energy": 0.0,
-     "x": 0.5,
-     "kind": "minimum"
-    },
-    {
-     "id": "C",
-     "label": "\u5171\u5e73\u9762 180\u00b0",
-     "energy": 26.0,
-     "x": 1.0,
-     "kind": "minimum"
-    }
-   ]
+   "id": "A",
+   "label": "coplanar 0°",
+   "energy": 28
+  },
+  {
+   "id": "B",
+   "label": "perpendicular ±90°",
+   "energy": 0
+  },
+  {
+   "id": "C",
+   "label": "coplanar 180°",
+   "energy": 26
   }
  ],
- "arrows": [
+ "annotations": [
   {
    "from": "B",
    "to": "A",
-   "pathway": 0,
-   "heads": "both",
-   "label": "\u65cb\u8f6c\u80fd\u5792"
+   "label": "rotation barrier",
+   "side": "left"
   }
- ],
- "show_values": true,
- "value_format": "{:.0f}",
- "value_brackets": false,
- "ts_marker": false,
- "label_bold": true,
- "y_label": "{i:E} / (kJ mol{sup:\u22121})",
- "x_label": "\u4e8c\u9762\u89d2 \u03c6 / \u00b0",
- "unit": "kJ/mol"
+ ]
 }

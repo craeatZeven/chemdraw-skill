@@ -1,40 +1,39 @@
 {
  "species": [
   {
-   "id": "ArBr",
-   "smiles": "COc1ccc(Br)cc1",
+   "id": "ald",
+   "smiles": "O=Cc1ccccc1",
    "label": "1"
   },
   {
-   "id": "ArB",
-   "smiles": "OB(O)c1ccccc1",
+   "id": "nm",
+   "smiles": "C[N+](=O)[O-]",
    "label": "2"
   },
   {
-   "id": "Prod",
-   "smiles": "COc1ccc(-c2ccccc2)cc1",
+   "id": "prod",
+   "smiles": "O=[N+]([O-])CC(O)c1ccccc1",
    "label": "3"
   }
  ],
  "steps": [
   {
    "substrates": [
-    "ArBr",
-    "ArB"
+    "ald",
+    "nm"
    ],
    "products": [
-    "Prod"
+    "prod"
    ],
    "above": [
-    "Pd(PPh3)4 (3 mol%)",
-    "K2CO3"
+    "NaOH (cat.)"
    ],
    "below": [
-    "dioxane/H2O, 90 °C, 6 h"
+    "EtOH, 0 °C, 30 min"
    ],
-   "yield": "92%"
+   "yield": "94%"
   }
  ],
- "title": "Suzuki–Miyaura \u5076\u8054",
+ "title": "Henry reaction (nitroaldol)",
  "max_width": 504
 }

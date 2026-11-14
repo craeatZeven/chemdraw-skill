@@ -24,6 +24,13 @@ def markdown_link_targets(text: str) -> list[str]:
 
 class DistributionTests(unittest.TestCase):
     CHINESE_DOCUMENTS = {"README.zh-cn.md", "docs/guide.zh-cn.md", "docs/zh-cn.md"}
+
+    # Demo fixtures that contain Chinese on purpose (the Chinese annotation in the
+    # preview figure). They are not translations, so they are kept out of
+    # CHINESE_DOCUMENTS.
+    CHINESE_FIXTURES = {
+        "skill/chemdraw/assets/preview/build.json",
+    }
     # The landing page (docs/website.md) has a Chinese home page and error page.
     CHINESE_PAGES = {"site/index.html", "site/404.html", "site/lab/index.html", "site/words.zh.js", "site/daily.zh.js"}
 
@@ -33,7 +40,8 @@ class DistributionTests(unittest.TestCase):
         ).decode("utf-8").split("\0")
         violations = []
         for name in filter(None, tracked):
-            if name in self.CHINESE_DOCUMENTS or name in self.CHINESE_PAGES:
+            if (name in self.CHINESE_DOCUMENTS or name in self.CHINESE_PAGES
+                    or name in self.CHINESE_FIXTURES):
                 continue
             path = ROOT / name
             try:
