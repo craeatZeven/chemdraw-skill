@@ -600,7 +600,8 @@ HOMO/LUMO, aromaticity), phase_diagram, binary_phase_diagram (fields and the
 lever rule at marked points), pourbaix (stable species from Gibbs energies), latimer and
 frost (derived couples, disproportionation), ellingham (reduction temperatures),
 correlation_diagram (Woodward-Hoffmann allowed or forbidden), walsh_diagram,
-potential_surface (contours, minima and saddle points) and compose (several
+potential_surface (contours, minima and saddle points), tanabe_sugano (d2-d8 levels from
+the full ligand-field Hamiltonian, spin crossover, Delta and B from two bands) and compose (several
 CDXML files merged on one page). Electrons, charges and energies that contradict each
 other are rejected rather than drawn. The spec formats are in the diagrams reference.
 

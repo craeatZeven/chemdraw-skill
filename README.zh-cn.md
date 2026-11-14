@@ -208,7 +208,7 @@ python <skill>/scripts/cdx.py decimer crop.png                              # �
 | **引擎与预测** | 15 个可选引擎，经你同意才安装：同一张图用六个识别器对比、从 PDF 取结构、前体与路线、产物、反应条件和 1H/13C 位移。所有结果都标明是预测。[案例与安装大小](#预测与分析引擎)。 |
 | **计算器与报告** | ChemDraw 自带的化学计量表并读回数据；含过程质量强度的 SI 材料表；HRMS 行与表征段落；来自 116 条 GHS 表的安全提示；路线总收率；原子映射；性质表和反应配平检查。[详见](#反应计算器与化学报告)。 |
 | **TLC 与装置** | 原生 TLC 板：点样道、斑点、Rf、共点样道、显色剂配色和二维板；用 ChemDraw 模板搭装置。 |
-| **化学示意图** | 能级图、玻恩–哈伯循环、Jablonski 图、分子轨道图、Hückel 图、晶体场分裂图和轨道框图，路易斯结构，立方与六方晶胞，带杠杆规则的相图，Pourbaix、Latimer、Frost 与 Ellingham 图，Woodward–Hoffmann 相关图与 Walsh 图，势能面等高线图，工艺流程图，原电池与电解池，元素周期表。图中的化学内容由程序计算并校验：电子数、能垒、键级、稳定物种和反应是否允许都会写进报告。 |
+| **化学示意图** | 能级图、玻恩–哈伯循环、Jablonski 图、分子轨道图、Hückel 图、晶体场分裂图和轨道框图，路易斯结构，立方与六方晶胞，带杠杆规则的相图，Pourbaix、Latimer、Frost 与 Ellingham 图，Woodward–Hoffmann 相关图、Walsh 图与 Tanabe–Sugano 图，势能面等高线图，工艺流程图，原电池与电解池，元素周期表。图中的化学内容由程序计算并校验：电子数、能垒、键级、稳定物种和反应是否允许都会写进报告。 |
 | **谱图与科研绘图** | 读取 Bruker、JCAMP-DX、JEOL、Varian/Agilent 的一维核磁，做峰检测、积分、残留溶剂标注、多重峰、放大插图和堆叠谱；数值数据画成可编辑曲线。 |
 | **实验记录** | LCMS 报告（Waters、OpenLynx、Shimadzu、Agilent ChemStation、mzML 和 mzXML），含 Cl/Br 同位素检验、内标归一化和 24/96 孔纯度热图；SciFinder RDF 与实验记录流程。 |
 | **分子比较** | 各平台都有 RDKit 指纹相似度；精确一致性检查在 Windows 用 ChemScript，在 macOS 用 ChemDraw。 |

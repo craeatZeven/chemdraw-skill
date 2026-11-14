@@ -4,7 +4,7 @@ Generators for the diagrams that are not reaction schemes: energy profiles, enth
 Jablonski diagrams, MO diagrams, Hückel pi orbitals, orbital boxes, crystal-field splitting,
 Lewis structures, cubic and hexagonal unit cells, one-component and binary phase diagrams,
 Pourbaix, Latimer, Frost and Ellingham diagrams, Woodward–Hoffmann correlation diagrams, Walsh
-diagrams, potential-energy-surface contours, flow charts, electrochemical cells and the
+diagrams, potential-energy-surface contours, Tanabe–Sugano diagrams, flow charts, electrochemical cells and the
 periodic table. Each one reads a JSON
 spec, writes one editable ACS 1996 CDXML and prints a report of what the drawing implies.
 
@@ -41,6 +41,7 @@ feature: fix the spec rather than looking for a way around them.
 | `ellingham` | ΔG° per mole of O{sub:2} along T, crossing temperatures (which element reduces which oxide) | a phase change that makes ΔG° jump instead of kink |
 | `correlation_diagram` | orbital links by the non-crossing rule, thermally allowed or forbidden | reactant and product with different symmetry counts |
 | `walsh_diagram` | total orbital energy along the coordinate, preferred geometry | an energy list that does not match the coordinate |
+| `tanabe_sugano` | every d{sup:n} level along Δ/B from the full ligand-field Hamiltonian, labelled by spin and O{sub:h} symmetry; free-ion terms; spin crossover; Δ and B from two band positions | n outside 2 to 8 |
 | `potential_surface` | contours, minima and first-order saddle points (transition states) with energies and barriers | a malformed grid |
 | `electrochemical_cell` | polarity, electron flow, ion migration from the cell type | (nothing to contradict: none of it is stated) |
 
@@ -223,6 +224,20 @@ preset's energies are qualitative: the report's preferred geometry is the trend,
 y value, e.g. from a relaxed scan); `levels` (count or values), `cap`, `path` (an IRC or other
 path drawn on top), `x_label`, `y_label`. Minima (dots) and first-order saddle points (crosses,
 TS‡) are located and reported with their energies and the barriers from the lowest minimum.
+
+## tanabe_sugano
+
+`{"d_electrons": 3, "bands": [17400, 24500]}`. The Hamiltonian is built over every Slater
+determinant of d{sup:n}: electron repulsion from the Racah parameters (B = 1, `c_over_b`, default
+the ratio Tanabe and Sugano used for each n) plus the octahedral field, and diagonalised along
+Δ/B. Each level is labelled by its spin multiplicity (from S²) and its O{sub:h} symmetry
+(degeneracy and the character of a C{sub:4} rotation, which separates A{sub:1}/A{sub:2} and
+T{sub:1}/T{sub:2}); the free-ion terms on the left come from L². Energies are relative to the
+ground state, so the d{sup:4}–d{sup:7} diagrams show the spin crossover as a kink; its Δ/B is reported.
+Spin-allowed terms (the weak-field ground state's multiplicity) are blue. `bands` (the first two
+spin-allowed absorptions, cm{sup:−1}) gives every Δ/B whose band ratio matches, with B, Δ and the
+assignment; `at` lists the spin-allowed transitions at one Δ/B. Also `delta_max`, `energy_max`,
+`samples`. Where curves bunch at the right edge a few labels may not fit; the report says how many.
 
 ## flowchart (process and separation charts)
 

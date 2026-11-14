@@ -511,7 +511,7 @@ def cmd_build(ns):
 DIAGRAM_OPERATIONS = ('energy_profile', 'energy_cycle', 'jablonski', 'mo_diagram', 'electron_configuration',
                       'crystal_field', 'lewis', 'unit_cell', 'flowchart', 'electrochemical_cell', 'periodic_table',
                       'huckel_mo', 'phase_diagram', 'binary_phase_diagram',
-                      'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'compose')
+                      'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'tanabe_sugano', 'compose')
 SCIENTIFIC_OPERATIONS = ('nmr', 'plot', 'tlc', 'apparatus', 'mechanism', 'stack_nmr', 'lcms_plate',
                          *DIAGRAM_OPERATIONS)
 

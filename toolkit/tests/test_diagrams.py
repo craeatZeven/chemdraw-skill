@@ -475,3 +475,44 @@ def test_huckel_heteroatoms(system, energies):
     result = huckel_mo({'system': system})
     assert [o['x'] for o in result['orbitals']] == pytest.approx(energies, abs=1e-3)
     assert 'delocalisation_energy_beta' not in result and result['heteroatoms']
+
+
+# ---------------------------------------------------------------- Tanabe-Sugano
+def test_tanabe_sugano_free_ion_terms_are_exact():
+    from cdxml_toolkit.scientific.tanabe import levels
+    cb = 4.42
+    free = levels(2, 0.0, cb)
+    terms = {f'{m}{label}': round(e - free[0][0], 6) for e, m, label in free}
+    assert terms == pytest.approx({'3F': 0, '3P': 15, '1D': 5 + 2 * cb, '1G': 12 + 2 * cb, '1S': 22 + 7 * cb})
+
+
+@pytest.mark.parametrize('n,first', [(3, '4T{sub:2g}'), (8, '3T{sub:2g}')])
+def test_first_spin_allowed_band_of_d3_and_d8_is_delta(n, first):
+    from cdxml_toolkit.scientific.tanabe import levels
+    for delta in (5.0, 12.0, 30.0):
+        lv = levels(n, delta, 4.5)
+        ground = lv[0]
+        allowed = [(e - ground[0], f'{m}{label}') for e, m, label in lv[1:] if m == ground[1]]
+        assert allowed[0] == (pytest.approx(delta, abs=1e-6), first)
+
+
+@pytest.mark.parametrize('n,weak,strong,crossover', [
+    (2, '3T{sub:1g}', '3T{sub:1g}', None), (3, '4A{sub:2g}', '4A{sub:2g}', None),
+    (4, '5E{sub:g}', '3T{sub:1g}', 27.3), (5, '6A{sub:1g}', '2T{sub:2g}', 28.3),
+    (6, '5T{sub:2g}', '1A{sub:1g}', 20.0), (7, '4T{sub:1g}', '2E{sub:g}', 21.7), (8, '3A{sub:2g}', '3A{sub:2g}', None)])
+def test_ground_states_and_spin_crossover(n, weak, strong, crossover):
+    from cdxml_toolkit.scientific.tanabe import tanabe_sugano
+    result = tanabe_sugano({'d_electrons': n, 'samples': 80})
+    assert (result['weak_field_ground'], result['strong_field_ground']) == (weak, strong)
+    if crossover is None:
+        assert result['spin_crossover'] == []
+    else:
+        assert result['spin_crossover'][0]['delta_over_b'] == pytest.approx(crossover, abs=0.15)
+    assert check_cdxml(result['cdxml'], allow_sizes=[8, 6])['ok']
+
+
+def test_band_fit_recovers_delta_for_d3():
+    from cdxml_toolkit.scientific.tanabe import tanabe_sugano
+    fit = tanabe_sugano({'d_electrons': 3, 'bands': [17400, 24500], 'samples': 60})['band_fit'][0]
+    assert fit['Delta'] == pytest.approx(17400, abs=1) and fit['assignment'] == ['4T{sub:2g}', '4T{sub:1g}']
+    assert 600 < fit['B'] < 900

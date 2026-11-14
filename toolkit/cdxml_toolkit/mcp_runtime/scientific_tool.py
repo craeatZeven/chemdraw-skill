@@ -38,6 +38,7 @@ OPERATIONS = {
     "correlation_diagram": ".cdxml",
     "walsh_diagram": ".cdxml",
     "potential_surface": ".cdxml",
+    "tanabe_sugano": ".cdxml",
     "compose": ".cdxml",
 }
 MAX_SPEC_BYTES = 5 * 1024 * 1024
@@ -66,7 +67,8 @@ def scientific_workflow(operation: str, spec_path: str, output_path: str) -> dic
     lever rule at marked points), pourbaix (stable species from Gibbs energies), latimer and
     frost (derived couples, disproportionation), ellingham (reduction temperatures),
     correlation_diagram (Woodward-Hoffmann allowed or forbidden), walsh_diagram,
-    potential_surface (contours, minima and saddle points) and compose (several
+    potential_surface (contours, minima and saddle points), tanabe_sugano (d2-d8 levels from
+    the full ligand-field Hamiltonian, spin crossover, Delta and B from two bands) and compose (several
     CDXML files merged on one page). Electrons, charges and energies that contradict each
     other are rejected rather than drawn. The spec formats are in the diagrams reference.
     """
