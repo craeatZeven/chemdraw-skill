@@ -12,19 +12,19 @@
 <arrow id="1009" Z="1009" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="800" ArrowheadCenterSize="700" ArrowheadWidth="200" Head3D="302.955 206.500 0" Tail3D="302.955 154.926 0" color="4"/>
 <arrow id="1010" Z="1010" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="39.555 25.500 0" Tail3D="39.555 237.300 0" color="3"/>
 <arrow id="1011" Z="1011" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="327.295 237.300 0" Tail3D="39.555 237.300 0" color="3"/>
-<t id="1012" Z="1012" p="66.355 166.826" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">反应物</s><s font="3" size="10" face="1"> R</s></t>
+<t id="1012" Z="1012" p="66.355 166.826" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">&#x53CD;&#x5E94;&#x7269;</s><s font="3" size="10" face="1"> R</s></t>
 <t id="1013" Z="1013" p="66.355 178.826" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">0</s></t>
 <t id="1014" Z="1014" p="118.355 52.900" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">75</s></t>
 <t id="1015" Z="1015" p="118.355 40.900" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="1">TS1</s></t>
-<t id="1016" Z="1016" p="170.355 127.696" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">中间体</s><s font="3" size="10" face="1"> I</s></t>
+<t id="1016" Z="1016" p="170.355 127.696" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">&#x4E2D;&#x95F4;&#x4F53;</s><s font="3" size="10" face="1"> I</s></t>
 <t id="1017" Z="1017" p="170.355 139.696" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">30</s></t>
 <t id="1018" Z="1018" p="222.355 72.465" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">60</s></t>
 <t id="1019" Z="1019" p="222.355 60.465" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="1">TS2</s></t>
-<t id="1020" Z="1020" p="274.355 219.000" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">产物</s><s font="3" size="10" face="1"> P</s></t>
+<t id="1020" Z="1020" p="274.355 219.000" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">&#x4EA7;&#x7269;</s><s font="3" size="10" face="1"> P</s></t>
 <t id="1021" Z="1021" p="274.355 231.000" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">−40</s></t>
 <t id="1022" Z="1022" p="107.850 107.913" Justification="Center" CaptionJustification="Center" color="4" InterpretChemically="no"><s font="3" size="10" face="2" color="4">E</s><s font="3" size="10" face="32" color="4">a1</s></t>
 <t id="1023" Z="1023" p="211.850 98.130" Justification="Center" CaptionJustification="Center" color="4" InterpretChemically="no"><s font="3" size="10" face="2" color="4">E</s><s font="3" size="10" face="32" color="4">a2</s></t>
 <t id="1024" Z="1024" p="312.625 184.263" Justification="Center" CaptionJustification="Center" color="4" InterpretChemically="no"><s font="3" size="10" face="0" color="4">Δ</s><s font="3" size="10" face="2" color="4">H</s></t>
 <t id="1025" Z="1025" p="39.555 19.400" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="2">E</s><s font="3" size="10" face="0"> / (kJ mol</s><s font="3" size="10" face="64">−1</s><s font="3" size="10" face="0">)</s></t>
-<t id="1026" Z="1026" p="183.425 250.900" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="0">反应进程</s></t>
+<t id="1026" Z="1026" p="183.425 250.900" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="0">&#x53CD;&#x5E94;&#x8FDB;&#x7A0B;</s></t>
 </page></CDXML>

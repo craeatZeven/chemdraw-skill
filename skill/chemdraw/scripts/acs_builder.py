@@ -630,12 +630,18 @@ class Fig:
         for px, py in pts:
             self._bb(px, py, 3)
         native = [pts[0], *pts, pts[-1]]          # (handle, point, handle) for each end
+        # Written exactly like the mechanism tool's curved arrows (figure_mechanism._curve_xml).
+        samples = [tuple(((1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t ** 2 * c + t ** 3 * d)
+                         for a, b, c, d in zip(*pts)) for t in (k / 24 for k in range(25))]
+        xs, ys = [q[0] for q in samples], [q[1] for q in samples]
         c_idx = self.resolve_color(color)
         c_attr = f' color="{c_idx}"' if c_idx is not None else ''
         gid = self._id()
         self.items.append(
-            f'<curve id="{gid}" CurvePoints="{" ".join(f"{px:.2f} {py:.2f}" for px, py in native)}" FillType="None" '
-            f'ArrowheadHead="{"HalfLeft" if electrons == 1 else "Full"}" ArrowheadType="Solid"{c_attr}/>')
+            f'<curve id="{gid}" BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}" '
+            f'CurvePoints="{" ".join(f"{px:.2f} {py:.2f}" for px, py in native)}" FillType="None" LineWidth="0.6" '
+            f'ArrowheadHead="{"HalfLeft" if electrons == 1 else "Full"}" ArrowheadType="Solid" HeadSize="1000" '
+            f'ArrowheadCenterSize="875" ArrowheadWidth="250"{c_attr}/>')
         return gid
 
     def add_bracket(self, box, label='n', bracket_type='Square', lip_size=5.0):

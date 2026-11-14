@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
-"""文字：标记解析、中英文分字体、宽度/上下伸估计（Arial / SimSun 10 pt）。
+"""Text: markup parsing, Latin/CJK font split, width and ascent/descent estimates (Arial / SimSun 10 pt).
 
-标记语法与 chemdraw skill 的 acs_builder 相同：{i:..} {b:..} {bi:..} {sub:..} {sup:..}，不可嵌套。
-中文（CJK 表意字、CJK 标点、全角字符）写成 SimSun（font 5），其余写成 Arial（font 3），
-规则同 figure-guide 1.3 / acs_builder.runs()。
+The markup is the same as acs_builder's: {i:..} {b:..} {bi:..} {sub:..} {sup:..}, not nested.
+CJK text (ideographs, CJK punctuation, full-width forms) is set in SimSun (font 5), the rest in Arial (font 3),
+as acs_builder.runs() does.
 
-宽度表是 Helvetica/Arial 的 AFM 字宽（1/1000 em）。2026-11-09 用 ChemDraw 原生渲染实测：
-  'TS1' 粗体墨迹宽 16.4 pt（估 18.3，含字侧空），'反应进程' 39.1 pt（估 40），'−12.3' 24.2 pt（估 25.3）；
-  基线以上：拉丁大写 7.2–7.4 pt，中文 8.2–8.6 pt，上标顶 9.3 pt；基线以下：中文 0.8–1.2 pt。
-估计值只用于排版间距和重叠预警，最终以渲染后的像素核对为准。
+The width table holds Helvetica/Arial AFM advances (1/1000 em). Measured in native ChemDraw renders:
+  bold 'TS1' inks 16.4 pt (estimate 18.3 with side bearings), four CJK characters 39.1 pt (estimate 40), '-12.3' 24.2 pt (estimate 25.3);
+  above the baseline: Latin capitals 7.2-7.4 pt, CJK 8.2-8.6 pt, superscript top 9.3 pt; below it: CJK 0.8-1.2 pt.
+Estimates only set spacing and overlap warnings; the pixel check of the render is what counts.
 """
 import re
 
 FONT_LATIN, FONT_CJK = 3, 5
 SIZE = 10.0
-LINE_PITCH = 12.0          # figure-guide 1.1：Captions line height 12 pt
+LINE_PITCH = 12.0          # ACS 1996 caption line height, 12 pt
 
 TOK = re.compile(r'\{(i|b|bi|sub|sup):([^{}]*)\}')
 FACE = {'': 0, 'b': 1, 'i': 2, 'bi': 3, 'sub': 32, 'sup': 64}
-CJK_RANGE = '　-〿㐀-鿿＀-￯'
+CJK_RANGE = '\u3000-\u303f\u3400-\u9fff\uff00-\uffef'
 _CJK_CHAR = re.compile('[%s]' % CJK_RANGE)
 _SPLIT = re.compile('[%s]+|[^%s]+' % (CJK_RANGE, CJK_RANGE))
 
@@ -47,9 +47,9 @@ def is_cjk(ch):
 
 
 def parse(markup, base=0):
-    """'{i:G}{sub:a}' -> [('G', 2), ('a', 32)]；base 是整串的底色字形（如 1=粗体）。"""
+    """'{i:G}{sub:a}' -> [('G', 2), ('a', 32)]; base is the face of the whole string (e.g. 1 = bold)."""
     if not isinstance(markup, str):
-        raise ValueError('文字必须是字符串：%r' % (markup,))
+        raise ValueError('text must be a string: %r' % (markup,))
     out, pos = [], 0
     for m in TOK.finditer(markup):
         if m.start() > pos:
@@ -60,7 +60,7 @@ def parse(markup, base=0):
         out.append((markup[pos:], base))
     for t, _ in out:
         if '{' in t or '}' in t:
-            raise ValueError('标记写法不对（只支持 {i:} {b:} {bi:} {sub:} {sup:}，不能嵌套）：%r' % markup)
+            raise ValueError('bad markup (only {i:} {b:} {bi:} {sub:} {sup:}, not nested): %r' % markup)
     return [(t, f) for t, f in out if t]
 
 
@@ -69,7 +69,7 @@ def plain(runs):
 
 
 def metrics(runs, size=SIZE):
-    """返回 (前进宽度, 基线以上高度, 基线以下深度)，单位 pt。"""
+    """Returns (advance width, height above the baseline, depth below it) in pt."""
     k = size / 10.0
     width, asc, desc = 0.0, 0.0, 0.3
     for t, f in runs:
@@ -98,7 +98,7 @@ def _esc(s):
 
 
 def runs_xml(runs, color_idx=None, size=SIZE):
-    """每个 run 再按中英文切开：中文 SimSun(5)，其余 Arial(3)。"""
+    """Split each run into CJK (SimSun, 5) and other (Arial, 3) pieces."""
     c = ' color="%s"' % color_idx if color_idx else ''
     out = []
     for t, f in runs:

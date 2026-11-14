@@ -1,14 +1,14 @@
 {
  "kind": "scope",
- "title": "底物拓展",
- "conditions": "标准条件同 图1",
+ "title": "\u5e95\u7269\u62d3\u5c55",
+ "conditions": "\u6807\u51c6\u6761\u4ef6\u540c \u56fe1",
  "footnotes": [
-  "a 分离收率。"
+  "a \u5206\u79bb\u6536\u7387\u3002"
  ],
  "fields": [
   {
    "key": "yield",
-   "label": "收率"
+   "label": "\u6536\u7387"
   }
  ],
  "species": [
@@ -16,7 +16,7 @@
    "id": "3a",
    "smiles": "COc1ccc(-c2ccccc2)cc1",
    "label": "3a",
-   "group": "对位",
+   "group": "\u5bf9\u4f4d",
    "values": {
     "yield": "92%"
    }
@@ -25,7 +25,7 @@
    "id": "3b",
    "smiles": "Cc1ccc(-c2ccccc2)cc1",
    "label": "3b",
-   "group": "对位",
+   "group": "\u5bf9\u4f4d",
    "values": {
     "yield": "88%"
    }
@@ -34,7 +34,7 @@
    "id": "3c",
    "smiles": "[O-][N+](=O)c1ccc(-c2ccccc2)cc1",
    "label": "3c",
-   "group": "对位",
+   "group": "\u5bf9\u4f4d",
    "values": {
     "yield": "79%"
    }
@@ -43,7 +43,7 @@
    "id": "3d",
    "smiles": "Clc1ccc(-c2ccccc2)cc1",
    "label": "3d",
-   "group": "对位",
+   "group": "\u5bf9\u4f4d",
    "values": {
     "yield": "83%"
    }
@@ -52,7 +52,7 @@
    "id": "3e",
    "smiles": "COc1ccc(-c2ccc(C)cc2)cc1",
    "label": "3e",
-   "group": "对位",
+   "group": "\u5bf9\u4f4d",
    "values": {
     "yield": "90%"
    }

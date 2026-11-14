@@ -3,23 +3,23 @@
  "unit": "kJ/mol",
  "energy_symbol": "E",
  "y_label_style": "slash",
- "x_label": "二面角 φ / °",
+ "x_label": "\u4e8c\u9762\u89d2 φ / °",
  "decimals": 0,
  "ts_marker": "none",
  "species": [
   {
    "id": "A",
-   "label": "共平面 0°",
+   "label": "\u5171\u5e73\u9762 0°",
    "energy": 28
   },
   {
    "id": "B",
-   "label": "垂直 ±90°",
+   "label": "\u5782\u76f4 ±90°",
    "energy": 0
   },
   {
    "id": "C",
-   "label": "共平面 180°",
+   "label": "\u5171\u5e73\u9762 180°",
    "energy": 26
   }
  ],
@@ -27,7 +27,7 @@
   {
    "from": "B",
    "to": "A",
-   "label": "旋转能垒",
+   "label": "\u65cb\u8f6c\u80fd\u5792",
    "side": "left"
   }
  ]

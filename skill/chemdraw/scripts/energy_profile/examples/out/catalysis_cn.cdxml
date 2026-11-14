@@ -11,14 +11,14 @@
 <arrow id="1008" Z="1008" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="800" ArrowheadCenterSize="700" ArrowheadWidth="200" Head3D="281.400 195.100 0" Tail3D="281.400 161.085 0" color="3"/>
 <arrow id="1009" Z="1009" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="20.000 23.900 0" Tail3D="20.000 214.900 0" color="3"/>
 <arrow id="1010" Z="1010" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="305.740 214.900 0" Tail3D="20.000 214.900 0" color="3"/>
-<t id="1011" Z="1011" p="44.800 172.985" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">反应物</s></t>
-<t id="1012" Z="1012" p="148.800 40.500" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">过渡态</s></t>
-<t id="1013" Z="1013" p="252.800 207.600" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">生成物</s></t>
-<t id="1014" Z="1014" p="200.800 71.057" Justification="Center" CaptionJustification="Center" color="4" InterpretChemically="no"><s font="5" size="10" face="0" color="4">无催化剂</s></t>
-<t id="1015" Z="1015" p="172.200 143.946" Justification="Center" CaptionJustification="Center" color="5" InterpretChemically="no"><s font="5" size="10" face="0" color="5">有催化剂</s></t>
+<t id="1011" Z="1011" p="44.800 172.985" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">&#x53CD;&#x5E94;&#x7269;</s></t>
+<t id="1012" Z="1012" p="148.800 40.500" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">&#x8FC7;&#x6E21;&#x6001;</s></t>
+<t id="1013" Z="1013" p="252.800 207.600" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="1">&#x751F;&#x6210;&#x7269;</s></t>
+<t id="1014" Z="1014" p="200.800 71.057" Justification="Center" CaptionJustification="Center" color="4" InterpretChemically="no"><s font="5" size="10" face="0" color="4">&#x65E0;&#x50AC;&#x5316;&#x5242;</s></t>
+<t id="1015" Z="1015" p="172.200 143.946" Justification="Center" CaptionJustification="Center" color="5" InterpretChemically="no"><s font="5" size="10" face="0" color="5">&#x6709;&#x50AC;&#x5316;&#x5242;</s></t>
 <t id="1016" Z="1016" p="157.220 76.446" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="2">E</s><s font="3" size="10" face="32">a</s></t>
 <t id="1017" Z="1017" p="97.825 131.254" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="2">E</s><s font="3" size="10" face="32">a</s><s font="3" size="10" face="0">′</s></t>
 <t id="1018" Z="1018" p="291.070 181.642" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Δ</s><s font="3" size="10" face="2">H</s></t>
-<t id="1019" Z="1019" p="20.000 18.600" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="0">能量</s></t>
-<t id="1020" Z="1020" p="162.870 228.500" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="0">反应进程</s></t>
+<t id="1019" Z="1019" p="20.000 18.600" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="0">&#x80FD;&#x91CF;</s></t>
+<t id="1020" Z="1020" p="162.870 228.500" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="0">&#x53CD;&#x5E94;&#x8FDB;&#x7A0B;</s></t>
 </page></CDXML>
