@@ -85,7 +85,7 @@ sits on the line.
 
 Conformer templates only — there is no "any molecule" form. For a structure that is not
 one of those templates, draw it with `cdx.py build` into its own CDXML and merge it into
-the profile afterwards (that is what the 图5-3 SN1 figure did).
+the profile afterwards (that is what the SN1 profile figure did).
 
 ## Checks
 

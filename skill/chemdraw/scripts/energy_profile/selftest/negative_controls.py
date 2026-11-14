@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""反向对照：故意做坏的 CDXML 交给 ChemDraw 原生渲染，确认像素核对能抓到。
+"""Negative controls: deliberately broken CDXML handed to the native renderer, to prove the pixel check catches it.
 
     D:/python/python.exe tests/negative_controls.py [spec.json]
 
-每个变体都应得到"预期结果"一栏写的结论；任何一个不符，退出码 1。
-  ok_shifted       整图右移 480 pt，WidthPages 按脚本规则计算 → 应全部通过（验证 WidthPages 修复）
-  wrap_onepage     同样右移，但 WidthPages=1 → 右侧文字被 ChemDraw 折行 → 应抓到（多余墨迹）
-  no_curvetype     <curve> 去掉 CurveType（陷阱 1）→ ChemDraw 丢弃曲线 → 应抓到（曲线覆盖率）
-  long_label       一段文字在 CDXML 里被换成长串 → 应抓到（多余墨迹）
+Each variant must end with the verdict in its expected column; any mismatch exits 1.
+  ok_shifted       whole drawing shifted right by 480 pt, WidthPages computed as the script does -> must pass
+  wrap_onepage     same shift but WidthPages=1 -> ChemDraw wraps the right-hand text -> must be caught (stray ink)
+  no_curvetype     <curve> without CurveType -> ChemDraw drops the curve -> must be caught (curve coverage)
+  long_label       one text run swapped for a long string -> must be caught (stray ink)
 """
 import copy
 import json
@@ -42,7 +42,7 @@ def main():
                  and all(ord(c) < 128 for c in t['runs'][0][0]))['runs'][0][0]
     long_xml = M['xml'].replace('>%s</s>' % latin, '>%s XXXXXXXXXXXXXXXX</s>' % latin, 1)
     assert long_xml != M['xml']
-    # 第 4 项 None = 只观察、不计入对错（ChemDraw 行为本身待定）
+    # The 4th field None = observation only, not scored (ChemDraw behaviour undecided)
     cases = {
         'ok_shifted': (shifted, L2, ax2, True),
         'wrap_onepage': (re.sub(r'WidthPages="\d+"', 'WidthPages="1"', shifted), L2, ax2, False),
@@ -60,23 +60,23 @@ def main():
                 fh.write(xml)
             ok, err = E.render(cd, png, cdx, env)
             if not ok:
-                print('%-13s 渲染失败：%s' % (name, err))
+                print('%-13s render failed: %s' % (name, err))
                 bad += 1
                 continue
             r = ep_verify.verify_png(png, L, axes)
             failed = [i for i in r['items'] if not i['ok']]
             curve = '; '.join(i['detail'] for i in r['items'] if i['name'].startswith('curve:'))
             if want_ok is None:
-                verdict, exp = '观察', '—'
+                verdict, exp = 'observe', '-'
             else:
-                verdict, exp = ('OK' if r['ok'] == want_ok else '不符'), ('通过' if want_ok else '抓到')
+                verdict, exp = ('OK' if r['ok'] == want_ok else 'MISMATCH'), ('pass' if want_ok else 'caught')
                 bad += r['ok'] != want_ok
-            print('%-13s 预期 %-4s 实得 %-4s %s  %s | 曲线 %s' % (
-                name, exp, '通过' if r['ok'] else '抓到', verdict,
+            print('%-13s expected %-4s got %-4s %s  %s | curve %s' % (
+                name, exp, 'pass' if r['ok'] else 'caught', verdict,
                 '; '.join('%s: %s' % (i['name'], i['detail']) for i in failed)[:260], curve[:80]))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    print('反向对照：%s' % ('全部符合预期' if not bad else '%d 项不符' % bad))
+    print('negative controls: %s' % ('all as expected' if not bad else '%d mismatch' % bad))
     return 1 if bad else 0
 
 

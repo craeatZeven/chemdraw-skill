@@ -1,14 +1,14 @@
 {
  "kind": "scope",
- "title": "底物拓展",
- "conditions": "标准条件同 图1",
+ "title": "Substrate scope",
+ "conditions": "Standard conditions as in Scheme 1",
  "footnotes": [
-  "a 分离收率。"
+  "a Isolated yield."
  ],
  "fields": [
   {
    "key": "yield",
-   "label": "收率"
+   "label": "Yield"
   }
  ],
  "species": [
@@ -16,7 +16,7 @@
    "id": "3a",
    "smiles": "COc1ccc(-c2ccccc2)cc1",
    "label": "3a",
-   "group": "对位",
+   "group": "para",
    "values": {
     "yield": "92%"
    }
@@ -25,7 +25,7 @@
    "id": "3b",
    "smiles": "Cc1ccc(-c2ccccc2)cc1",
    "label": "3b",
-   "group": "对位",
+   "group": "para",
    "values": {
     "yield": "88%"
    }
@@ -34,7 +34,7 @@
    "id": "3c",
    "smiles": "[O-][N+](=O)c1ccc(-c2ccccc2)cc1",
    "label": "3c",
-   "group": "对位",
+   "group": "para",
    "values": {
     "yield": "79%"
    }
@@ -43,7 +43,7 @@
    "id": "3d",
    "smiles": "Clc1ccc(-c2ccccc2)cc1",
    "label": "3d",
-   "group": "对位",
+   "group": "para",
    "values": {
     "yield": "83%"
    }
@@ -52,7 +52,7 @@
    "id": "3e",
    "smiles": "COc1ccc(-c2ccc(C)cc2)cc1",
    "label": "3e",
-   "group": "对位",
+   "group": "para",
    "values": {
     "yield": "90%"
    }

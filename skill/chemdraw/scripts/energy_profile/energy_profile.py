@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-"""势能图生成器：JSON → 可编辑 CDXML（ACS Document 1996）→ ChemDraw 原生渲染 PNG → 数值检查。
+"""Energy-profile generator: JSON -> editable CDXML (ACS Document 1996) -> native ChemDraw PNG -> numeric checks.
 
     D:/python/python.exe energy_profile.py spec.json [-o out.cdxml] [--no-render] [--force] [--keep-work DIR]
 
-产物（与 out.cdxml 同目录同名）：out.cdxml、out.png、out.report.json（全部检查结果与映射参数）。
-退出码：0 全部通过；1 有检查失败；2 输入或环境错误。
+Products (same folder and stem as out.cdxml): out.cdxml, out.png, out.report.json (every check and the mapping constants).
+Exit codes: 0 all checks passed; 1 a check failed; 2 bad input or environment.
 
-分工（chemdraw-workbench 规矩）：
-  * 平滑曲线：chemdraw skill 的 scientific_workflow(operation=plot) 生成原生 <curve>（ep_plot.py）；
-  * 坐标轴、能级短横线、连接线、能垒箭头、文字：本脚本按 figure-guide 第 1 节规格写原生对象；
-  * 验收：cdx.py render 原生渲染 + 读回 CDXML 自检 + check_cdxml.py + PNG 像素统计（ep_verify.py）。
-JSON 格式见同目录 README.md。
+Who does what:
+  * smooth curves: the Skill scientific_workflow(operation=plot) makes the native <curve> (ep_plot.py);
+  * axes, level bars, connectors, barrier arrows and text: written here as native objects to the section 1 spec;
+  * acceptance: cdx.py render, CDXML readback, check_cdxml.py and PNG pixel statistics (ep_verify.py).
+The JSON format is documented in README.md beside this file.
 """
 import argparse
 import hashlib
@@ -46,7 +46,7 @@ CHECKER = next((c for c in (
     r'D:\Work\tools\chemdraw-standard\check_cdxml.py',
 ) if c and os.path.isfile(c)), None)
 
-# figure-guide 1.1 / acs_builder.to_cdxml() 的根属性，原样照抄
+# Root attributes from figure-guide 1.1 / acs_builder.to_cdxml(), copied verbatim
 ROOT_ATTRS = ('BondLength="14.4" LabelFont="3" LabelSize="10" LabelFace="96" CaptionFont="3" CaptionSize="10" '
               'LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" ChainAngle="120" '
               'LabelJustification="Auto" CaptionJustification="Left" color="0" bgcolor="1"')
@@ -55,7 +55,7 @@ FONTTABLE = ('<fonttable><font id="3" charset="iso-8859-1" name="Arial"/>'
 PALETTE = ['#000000', '#CC0000', '#808080', '#336699', '#FF6600']   # figure-guide 1.2
 STRUCTURE_GAP = 10.0        # pt between a stationary point and the structure above it
 LW, BOLD_W = 0.6, 2.0
-GAP = 3.0                 # 文字与线条的净空
+GAP = 3.0                 # clearance between text and a line
 MARGIN = 10.0
 HEAD_AXIS, HEAD_ANN = 1000, 800
 UNITS = {'kj/mol': 'kJ mol{sup:−1}', 'kj mol-1': 'kJ mol{sup:−1}', 'kcal/mol': 'kcal mol{sup:−1}',
@@ -78,28 +78,28 @@ class SpecError(ValueError):
 
 def _keys(obj, allowed, where):
     if not isinstance(obj, dict):
-        raise SpecError('%s 必须是对象' % where)
+        raise SpecError('%s must be an object' % where)
     bad = [k for k in obj if k not in allowed and not k.startswith('_')]
     if bad:
-        raise SpecError('%s 有不认识的键 %s（允许：%s；以 _ 开头的键当注释忽略）' % (where, bad, sorted(allowed)))
+        raise SpecError('%s has unknown keys %s (allowed: %s; keys starting with _ are ignored as comments)' % (where, bad, sorted(allowed)))
 
 
 def _color(v, where):
     if not (isinstance(v, str) and len(v) == 7 and v[0] == '#'):
-        raise SpecError('%s 的颜色要写成 #RRGGBB：%r' % (where, v))
+        raise SpecError('%s colour must be written #RRGGBB: %r' % (where, v))
     int(v[1:], 16)
     return v.upper()
 
 
 def _num(v, where):
     if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):
-        raise SpecError('%s 必须是数值：%r' % (where, v))
+        raise SpecError('%s must be a number: %r' % (where, v))
     return float(v)
 
 
-# ---------------------------------------------------------------- 规格
+# ---------------------------------------------------------------- spec
 def normalize(spec):
-    _keys(spec, TOP_KEYS, '顶层')
+    _keys(spec, TOP_KEYS, 'top level')
     o = {
         'style': spec.get('style', 'smooth'), 'unit': spec.get('unit'), 'unit_markup': spec.get('unit_markup'),
         'energy_symbol': spec.get('energy_symbol', 'E'), 'y_label': spec.get('y_label'),
@@ -118,28 +118,28 @@ def normalize(spec):
         'samples_per_segment': int(spec.get('samples_per_segment', 60)),
     }
     if o['style'] not in ('smooth', 'levels'):
-        raise SpecError('style 只能是 smooth 或 levels')
+        raise SpecError('style must be smooth or levels')
     o['tail'] = _num(spec.get('tail', 0.35 if o['style'] == 'smooth' else 0.0), 'tail')
     o['bars'] = bool(spec.get('bars', o['style'] == 'levels'))
     o['bar_width'] = _num(spec.get('bar_width', 20.0 if o['style'] == 'levels' else 14.0), 'bar_width')
     for k, allowed in (('label_layout', ('stack', 'inline', 'split')), ('label_face', ('bold', 'plain', 'italic')),
                        ('ts_marker', ('none', 'dagger')), ('y_label_style', ('paren', 'slash'))):
         if o[k] not in allowed:
-            raise SpecError('%s 只能是 %s' % (k, '/'.join(allowed)))
+            raise SpecError('%s must be one of %s' % (k, '/'.join(allowed)))
 
     raw = spec.get('species')
     if not isinstance(raw, list) or len(raw) < 2:
-        raise SpecError('species 至少要有 2 个物种')
+        raise SpecError('species needs at least 2 entries')
     species, order = {}, []
     for i, s in enumerate(raw):
         where = 'species[%d]' % i
         _keys(s, SP_KEYS, where)
         sid = s.get('id')
         if not isinstance(sid, str) or not sid or sid in species:
-            raise SpecError('%s 的 id 缺失或重复' % where)
+            raise SpecError('%s has a missing or duplicate id' % where)
         lp = s.get('label_position', 'auto')
         if lp not in ('auto', 'above', 'below', 'none'):
-            raise SpecError('%s.label_position 只能是 auto/above/below/none' % where)
+            raise SpecError('%s.label_position must be auto/above/below/none' % where)
         species[sid] = {'id': sid, 'label': s.get('label', sid), 'E_in': _num(s.get('energy'), where + '.energy'),
                         'ts': bool(s.get('ts', False)), 'x': _num(s['x'], where + '.x') if 'x' in s else float(i),
                         'pos': lp, 'dx': _num(s.get('dx', 0), where + '.dx'), 'dy': _num(s.get('dy', 0), where + '.dy'),
@@ -150,7 +150,7 @@ def normalize(spec):
         order.append(sid)
     ref = o['reference']
     if ref is not None and ref not in species:
-        raise SpecError('reference=%r 不是任何物种的 id' % ref)
+        raise SpecError('reference=%r is not the id of any species' % ref)
     base = species[ref]['E_in'] if ref else 0.0
     for s in species.values():
         s['E'] = s['E_in'] - base
@@ -162,12 +162,12 @@ def normalize(spec):
         _keys(p, PW_KEYS, where)
         nodes = p.get('nodes')
         if not isinstance(nodes, list) or len(nodes) < 2 or any(n not in species for n in nodes):
-            raise SpecError('%s.nodes 必须是 ≥2 个已定义物种 id 的列表' % where)
+            raise SpecError('%s.nodes must list at least 2 defined species ids' % where)
         xs = [species[n]['x'] for n in nodes]
         if any(b <= a for a, b in zip(xs, xs[1:])):
-            raise SpecError('%s 的物种 x 必须严格递增：%s' % (where, list(zip(nodes, xs))))
+            raise SpecError('%s species x must strictly increase: %s' % (where, list(zip(nodes, xs))))
         if o['bars'] and any((b - a) * o['unit_width'] < o['bar_width'] + 4 for a, b in zip(xs, xs[1:])):
-            raise SpecError('%s 相邻物种太近，放不下 %g pt 的短横线（加大 unit_width 或减小 bar_width）'
+            raise SpecError('%s neighbours are too close for a %g pt bar (raise unit_width or lower bar_width)'
                             % (where, o['bar_width']))
         pathways.append({'id': str(p.get('id', 'path%d' % (i + 1))), 'nodes': list(nodes),
                          'color': _color(p['color'], where) if 'color' in p else PALETTE[i % len(PALETTE)],
@@ -178,22 +178,22 @@ def normalize(spec):
                          'label_dy': _num(p.get('label_dy', 0), where + '.label_dy')})
         used.update(nodes)
     if len({p['id'] for p in pathways}) != len(pathways):
-        raise SpecError('pathways 的 id 重复')
+        raise SpecError('duplicate pathway id')
     unused = [s for s in order if s not in used]
     if unused:
-        raise SpecError('这些物种不在任何 pathway 里：%s' % unused)
+        raise SpecError('these species are in no pathway: %s' % unused)
 
     ann = []
     for i, a in enumerate(spec.get('annotations') or []):
         where = 'annotations[%d]' % i
         _keys(a, AN_KEYS, where)
         if a.get('type', 'gap') != 'gap':
-            raise SpecError('%s.type 目前只支持 gap（两物种间的能量差箭头）' % where)
+            raise SpecError('%s.type only supports gap (an energy-gap arrow between two species)' % where)
         if a.get('from') not in species or a.get('to') not in species:
-            raise SpecError('%s 的 from/to 必须是物种 id' % where)
+            raise SpecError('%s from/to must be species ids' % where)
         x = a.get('x', a['to'])
         if isinstance(x, str) and x not in species:
-            raise SpecError('%s.x 必须是物种 id 或数值' % where)
+            raise SpecError('%s.x must be a species id or a number' % where)
         ann.append({'from': a['from'], 'to': a['to'], 'label': a.get('label', ''), 'x': x,
                     'side': a.get('side', 'right'), 'at': _num(a.get('at', 0.5), where + '.at'),
                     'heads': a.get('heads', 'both'), 'ref': a.get('ref', 'both'),
@@ -228,13 +228,13 @@ def y_label_markup(o):
     return '%s / (%s)' % (sym, unit) if o['y_label_style'] == 'slash' else '%s (%s)' % (sym, unit)
 
 
-# ---------------------------------------------------------------- 版面
+# ---------------------------------------------------------------- layout
 class Frame:
     def __init__(self, o, species):
         es = [s['E'] for s in species.values()]
         self.emin, self.emax = min(es), max(es)
         if self.emax - self.emin < 1e-9:
-            raise SpecError('所有物种能量相同，画不出势能图')
+            raise SpecError('every species has the same energy, nothing to plot')
         self.k = o['energy_height'] / (self.emax - self.emin)
         self.u = o['unit_width']
         self.xmin = min(s['x'] for s in species.values())
@@ -247,7 +247,7 @@ class Frame:
 
 
 def smooth_samples(p, species, o):
-    """余弦缓动：每段 E(t)=E0+(E1-E0)(1-cos πt)/2，节点处斜率为 0，节点本身是采样点。"""
+    """Cosine easing: each segment E(t)=E0+(E1-E0)(1-cos pi t)/2, slope 0 at the nodes, and the nodes are samples."""
     xs = [species[n]['x'] for n in p['nodes']]
     es = [species[n]['E'] for n in p['nodes']]
     n = o['samples_per_segment']
@@ -265,7 +265,7 @@ def smooth_samples(p, species, o):
 
 
 def poly_range(polys, xa, xb):
-    """多条 x 单调折线在 [xa, xb] 内的 (ymin, ymax)，画布坐标（y 向下）。"""
+    """(ymin, ymax) of several x-monotonic polylines inside [xa, xb], canvas coordinates (y down)."""
     ys = []
     for pl in polys:
         for (x1, y1), (x2, y2) in zip(pl, pl[1:]):
@@ -283,7 +283,7 @@ def text_el(x, y, runs, color, role, owner):
 
 
 def stack(lines, cx, side, env_y, half, color, role, owner, extra_dy=0.0):
-    """lines 自上而下；side=above 时最后一行贴线，below 时第一行贴线。"""
+    """Lines top to bottom; with side=above the last line sits on the line, with below the first one does."""
     out = []
     if side == 'above':
         y = env_y - half - GAP - T.metrics(lines[-1])[2] - extra_dy
@@ -386,11 +386,11 @@ def layout(o, species, order, pathways, ann, F, curve_segs, curve_attrs):
         if s.get('structure'):
             sspec = s['structure']
             if not isinstance(sspec, dict):
-                raise SpecError('species %r 的 structure 必须是对象' % sid)
+                raise SpecError('species %r structure must be an object' % sid)
             try:
                 item = ep_structure.make(sspec, len(L['structures']))
             except ep_structure.StructureError as exc:
-                raise SpecError('species %r 的 structure: %s' % (sid, exc))
+                raise SpecError('species %r structure: %s' % (sid, exc))
             extra_dy = _num(sspec.get('dy', 0), 'structure.dy')
             extra_dx = _num(sspec.get('dx', 0), 'structure.dx')
             scx = cx + extra_dx
@@ -416,7 +416,7 @@ def layout(o, species, order, pathways, ann, F, curve_segs, curve_attrs):
         cx = F.X(_num(lx, 'label_x'))
         rng = poly_range([polys[p['id']]], cx - w / 2 - 1, cx + w / 2 + 1)
         if rng is None:
-            raise SpecError('路径 %s 的 label_x 不在曲线范围内' % p['id'])
+            raise SpecError('pathway %s label_x is outside the curve range' % p['id'])
         env = rng[0] if p['label_position'] == 'above' else rng[1]
         L['texts'] += stack([runs], cx, p['label_position'], env, p['width'] / 2, p['color'], 'pathway',
                             p['id'], p['label_dy'])
@@ -441,7 +441,7 @@ def layout(o, species, order, pathways, ann, F, curve_segs, curve_attrs):
         need = {'both': 2, 'to': 1, 'from': 1, 'none': 0}[heads] * 6.0 * HEAD_ANN / 1000 + 2
         owner = 'ann:%s-%s' % (a['from'], a['to'])
         if heads != 'none' and length < need:
-            L['warnings'].append('能量差箭头 %s 只有 %.1f pt，放不下箭头，改画成无箭头线段' % (owner, length))
+            L['warnings'].append('gap arrow %s is only %.1f pt, too short for a head; drawn as a plain segment' % (owner, length))
             heads = 'none'
         if heads == 'from':
             t1, t2 = t2, t1
@@ -504,7 +504,7 @@ def add_axes(L, o, F, species=None):
         for v in o['y_ticks']:
             y = F.Y(v)
             if not (ytip[1] + 8 < y < origin[1]):
-                L['warnings'].append('刻度 %g 超出纵轴范围，已跳过' % v)
+                L['warnings'].append('tick %g is outside the y range, skipped' % v)
                 continue
             # inward, matching x_ticks: the plot lies to the right of the y axis
             L['lines'].append({'p1': (origin[0], y), 'p2': (origin[0] + 3, y), 'style': 'solid',
@@ -535,7 +535,7 @@ def check_overlaps(L):
         for j in range(i + 1, len(ts)):
             a, b = rect(ts[i]), rect(ts[j])
             if a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]:
-                warn.append('文字重叠：%s 与 %s' % (name(ts[i]), name(ts[j])))
+                warn.append('text overlap: %s and %s' % (name(ts[i]), name(ts[j])))
     shapes = [('%s:%s' % (l['role'], l['owner']), ep_verify.seg_points(l['p1'], l['p2'])) for l in L['lines']]
     shapes += [('%s:%s' % (a['role'], a['owner']), ep_verify.seg_points(a['tail'], a['head'])) for a in L['arrows']]
     for c in L['curves']:
@@ -548,7 +548,7 @@ def check_overlaps(L):
         r = rect(t)
         for nm, pts in shapes:
             if any(r[0] < x < r[2] and r[1] < y < r[3] for x, y in pts):
-                warn.append('文字压线：%s 压到 %s' % (name(t), nm))
+                warn.append('text on a line: %s crosses %s' % (name(t), nm))
     return warn
 
 
@@ -636,21 +636,21 @@ def serialize(L, W, H):
     return head + '\n'.join(out) + '\n</page></CDXML>\n', C
 
 
-# ---------------------------------------------------------------- 主流程
+# ---------------------------------------------------------------- main
 def sha256(path):
     with open(path, 'rb') as fh:
         return hashlib.sha256(fh.read()).hexdigest()
 
 
 def guard(path, prev, force):
-    """只覆盖本脚本上次写的、之后没被改过的文件（或 --force）。"""
+    """Only overwrite a file this script wrote last time and nobody edited since, unless --force."""
     if not os.path.exists(path) or force:
         return
     if path.endswith('.report.json') and str(prev.get('tool', '')).startswith('chemdraw-energy-profile'):
         return
     if prev.get('sha256', {}).get(os.path.basename(path)) == sha256(path):
         return
-    raise SpecError('%s 已存在且不是本脚本上次的产物（或已被手改）；换输出名，或加 --force' % path)
+    raise SpecError('%s exists and is not this script last output (or was edited); pick another name or pass --force' % path)
 
 
 def render(cdxml, png, cdx_cmd, env):
@@ -669,7 +669,7 @@ def render(cdxml, png, cdx_cmd, env):
 
 
 def build(spec, cdx_cmd, env, keep_work=None):
-    """规格 → 版面 + CDXML 文本（不写盘、不渲染）。返回 dict，供 main 和测试共用。"""
+    """Spec -> layout + CDXML text (no write, no render). Returns a dict shared by main and the tests."""
     o, species, order, pathways, ann = normalize(spec)
     F = Frame(o, species)
     segs, attrs, plot_info = {}, {}, None
@@ -712,13 +712,13 @@ def main(argv=None):
             s.reconfigure(encoding='utf-8')
         except Exception:
             pass
-    ap = argparse.ArgumentParser(description='势能图 JSON → CDXML + 原生 PNG')
+    ap = argparse.ArgumentParser(description='energy-profile JSON -> CDXML + native PNG')
     ap.add_argument('spec')
-    ap.add_argument('-o', '--output', help='输出 .cdxml（默认与 spec 同名同目录）')
+    ap.add_argument('-o', '--output', help='output .cdxml (default: beside the spec, same stem)')
     ap.add_argument('--no-render', action='store_true')
-    ap.add_argument('--force', action='store_true', help='允许覆盖不是本脚本写的同名文件')
-    ap.add_argument('--keep-work', help='保留 plot 中间产物到这个新目录（必须不存在）')
-    ap.add_argument('--skill', help='chemdraw skill 目录（默认 ~/.claude/skills/chemdraw）')
+    ap.add_argument('--force', action='store_true', help='allow overwriting a same-named file this script did not write')
+    ap.add_argument('--keep-work', help='keep the plot intermediates in this new folder (must not exist)')
+    ap.add_argument('--skill', help='Skill folder (default: resolved from this file, then the home installs)')
     args = ap.parse_args(argv)
     try:
         with open(args.spec, encoding='utf-8') as fh:
@@ -734,12 +734,12 @@ def main(argv=None):
             guard(pth, prev, args.force)
         skill = args.skill or next((d for d in SKILL_DIRS if os.path.isfile(os.path.join(d, 'scripts', 'cdx.py'))), None)
         if not skill:
-            raise SpecError('找不到 chemdraw skill（scripts/cdx.py）；用 --skill 指定')
+            raise SpecError('cannot find the Skill (scripts/cdx.py); pass --skill')
         cdx_cmd = [CDX_PY, os.path.join(skill, 'scripts', 'cdx.py')]
         env = dict(os.environ, PYTHONIOENCODING='utf-8')
         M = build(spec, cdx_cmd, env, args.keep_work)
     except (SpecError, ValueError, OSError, RuntimeError, json.JSONDecodeError) as exc:
-        print('错误：%s' % exc)
+        print('error: %s' % exc)
         return 2
     L, axes, F = M['L'], M['axes'], M['F']
     with open(out, 'w', encoding='utf-8') as fh:
@@ -747,7 +747,7 @@ def main(argv=None):
     report = {'tool': 'chemdraw-energy-profile %s' % VERSION, 'spec': os.path.abspath(args.spec),
               'outputs': {'cdxml': out, 'png': None if args.no_render else png},
               'mapping': {'pt_per_unit_x': F.u, 'pt_per_energy': F.k, 'energy_range': [F.emin, F.emax],
-                          'note': 'X = %.3f + %.4f*(x - %g)；Y = %.3f + %.6f*(%g - E)（pt，y 向下）'
+                          'note': 'X = %.3f + %.4f*(x - %g); Y = %.3f + %.6f*(%g - E) (pt, y down)'
                                   % (M['dx'], F.u, F.xmin, M['dy'], F.k, F.emax)},
               'species_points_pt': {k: [round(v[0], 3), round(v[1], 3)] for k, v in M['nodes'].items()},
               'plot': M['plot_info'], 'layout_warnings': L['warnings']}
