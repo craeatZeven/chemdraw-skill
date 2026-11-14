@@ -1660,6 +1660,7 @@ def _layout_serpentine(
 # Gap between the bottom of one branch row and the top of the next (halved
 # between rows: branch rows have no run arrows, so they can sit closer).
 _DIVERGENT_BRANCH_GAP = 2.5 * ACS_BOND_LENGTH
+_LABEL_ROOM_ABOVE = 20.0  # a compound number under a structure above an arrow
 
 
 def _layout_divergent(
@@ -1751,6 +1752,9 @@ def _layout_divergent(
     # tail column right of the starting material, joined by a vertical connector,
     # so each product reads as made from the starting material (a column of
     # stacked vertical arrows reads as a chain, 1 -> 3 -> 4).
+    # A branch's other substrates (the co-substrate of a Michael addition, say) and
+    # any reagent structures stand above its arrow, in one row over the text.  The
+    # co-substrates are recorded as reactants of the step, the reagents above it.
     branches = []
     for step in shared_steps:
         above_text = [normalize_condition_text(t) for t in step.above_arrow.text] if step.above_arrow else []
@@ -1760,10 +1764,26 @@ def _layout_divergent(
         products = [_resolve_structure(_get_ref(sid), source_data=source_data,
                                        reference_mol=reference_mol)
                     for sid in step.products]
-        branches.append((step, above_text, below_text, products))
+        over = [(_resolve_structure(_get_ref(sid), source_data=source_data,
+                                    reference_mol=reference_mol), "reactant")
+                for sid in step.substrates if sid != shared_id]
+        if step.above_arrow:
+            over += [(_resolve_structure(_get_ref(sid), source_data=source_data,
+                                         reference_mol=reference_mol), "above")
+                     for sid in step.above_arrow.structures]
+        branches.append((step, above_text, below_text, products, over))
 
-    content_w = max((max(_estimate_text_width(above), _estimate_text_width(below), 0)
-                     for _, above, below, _ in branches), default=0)
+    def _over_width(over) -> float:
+        if not over:
+            return 0.0
+        return sum(_bbox_width(f.bbox) for f, _ in over) + inter_gap * (len(over) - 1)
+
+    def _over_height(over) -> float:
+        return max((_bbox_height(f.bbox) + (_LABEL_ROOM_ABOVE if f.ref.label else 0.0)
+                    for f, _ in over), default=0.0)
+
+    content_w = max((max(_estimate_text_width(above), _estimate_text_width(below), _over_width(over), 0)
+                     for _, above, below, _, over in branches), default=0)
     arrow_len = max(content_w + 10.0, min_arrow_len)
     tail_x = sm_right_x + frag_gap * 0.3
     head_x = tail_x + arrow_len
@@ -1771,12 +1791,18 @@ def _layout_divergent(
     tail_ys: List[float] = []
     previous_bottom: Optional[float] = None
 
-    for step, above_text, below_text, products in branches:
+    for step, above_text, below_text, products, over in branches:
         # Extent of the row above and below its arrow line.
         above_h = 0.0
+        text_h = 0.0
         if above_text:
-            above_h = (LAYOUT_BELOW_GAP + max(0, len(above_text) - 1) * _LINE_ADVANCE
-                       + _DESCENT + _CAP_HEIGHT)
+            text_h = (max(0, len(above_text) - 1) * _LINE_ADVANCE + _DESCENT + _CAP_HEIGHT)
+            above_h = LAYOUT_BELOW_GAP + text_h
+        # The structures above the arrow sit over the text (4 pt apart), or
+        # LAYOUT_ABOVE_GAP over the arrow when there is no text.
+        over_base = (LAYOUT_BELOW_GAP + text_h + 4.0) if above_text else LAYOUT_ABOVE_GAP
+        if over:
+            above_h = over_base + _over_height(over)
         below_h = 0.0
         if below_text:
             below_h = (LAYOUT_BELOW_GAP + _CAP_HEIGHT
@@ -1821,6 +1847,23 @@ def _layout_divergent(
             xml_parts.append(txt_xml)
             step_meta["below_ids"].append(txt_id)
 
+        over_x = arrow_mid_x - _over_width(over) / 2.0
+        for frag, role in over:
+            fw, fh = _bbox_width(frag.bbox), _bbox_height(frag.bbox)
+            label_h = _LABEL_ROOM_ABOVE if frag.ref.label else 0.0
+            _shift_atoms(frag.atoms, over_x + fw / 2.0 - frag.cx,
+                         branch_y - over_base - label_h - fh / 2.0 - frag.cy)
+            frag.bbox = _fragment_bbox(frag.atoms)
+            frag.cx, frag.cy = _bbox_center(frag.bbox)
+            ofrag_xml, _, ofrag_id = _build_fragment(frag.atoms, frag.bonds, ids)
+            xml_parts.append(ofrag_xml)
+            all_frag_ids.append(ofrag_id)
+            step_meta["reactant_ids" if role == "reactant" else "above_ids"].append(ofrag_id)
+            if frag.ref.label:
+                lbl_xml, _ = _build_label_element(frag.ref.label, frag.cx, frag.bbox[3] + 14.0, ids)
+                xml_parts.append(lbl_xml)
+            over_x += fw + inter_gap
+
         cursor_x = head_x + frag_gap * 1.0
         for prod_frag in products:
             pw = _bbox_width(prod_frag.bbox)
@@ -1846,6 +1889,23 @@ def _layout_divergent(
         xml_parts.append(
             f'<graphic id="{line_id}" Z="{line_z}" GraphicType="Line" '
             f'BoundingBox="{tail_x:.2f} {tail_ys[0]:.2f} {tail_x:.2f} {tail_ys[-1]:.2f}"/>')
+
+    # Steps that do not start from the shared substrate are drawn as their own
+    # rows underneath, rather than dropped.
+    previous_bottom = _drawn_extent("\n".join(xml_parts))[1]
+    for step in other_steps:
+        row_scheme = SchemeDescriptor(structures=scheme.structures, steps=[step],
+                                      layout="linear", gap_scale=scheme.gap_scale)
+
+        def row_layout(at_y, row_ids, row_scheme=row_scheme):
+            return _layout_linear(row_scheme, row_ids, source_data=source_data,
+                                  reference_mol=reference_mol, arrow_y=at_y)
+
+        row_y = _next_arrow_y(row_layout, arrow_y, previous_bottom, _DIVERGENT_BRANCH_GAP)
+        row_xml, row_lowest = row_layout(row_y, ids)
+        xml_parts.append(row_xml)
+        previous_bottom = _drawn_extent(row_xml)[1]
+        lowest_y = max(lowest_y, row_lowest, previous_bottom)
 
     # --- Build <scheme> ---
     scheme_id = ids.next()

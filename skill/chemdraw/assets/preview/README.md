@@ -63,7 +63,7 @@ product's label line (`3, 96%`). Exercises house-style conventions on top of a p
   single file — that is how `kind: "scope"` works.
 - Both energy profiles are specs for `cdx.py scientific energy_profile`, which runs inside the
   toolkit runtime it selects. Their native PNGs are made with the commands in the table.
-- Known gap, not shown here: a `layout: "divergent"` route draws the shared substrate and
-  its products but **not the co-substrates**, so a three-way Michael addition reports
-  `readback.status = mismatch` with the nucleophiles listed as missing. Same class of
-  problem as the catalytic-cycle bug fixed above.
+- A `layout: "divergent"` route draws each branch's co-substrate above its arrow and records
+  it as a reactant of that step. Before this fix the co-substrates were dropped, so a
+  three-way Michael addition reported its nucleophiles as missing: the same class of
+  problem as the catalytic-cycle bug above.

@@ -77,3 +77,67 @@ def test_branch_conditions_are_tidied_like_other_layouts(tmp_path):
 def test_the_branches_pass_the_layout_checks(tmp_path):
     cdxml, _ = _render(tmp_path)
     assert figure_lint.lint_cdxml(cdxml) == []
+
+
+THREE_WAY = """
+layout: divergent
+structures:
+  E: {smiles: "C=CC(=O)OC", label: "1"}
+  N1: {smiles: "CC(=O)CC(=O)C", label: "2a"}
+  N2: {smiles: "C(C#N)C#N", label: "2b"}
+  N3: {smiles: "O=[N+]([O-])CC", label: "2c"}
+  P1: {smiles: "CC(=O)C(CCC(=O)OC)C(=O)C", label: "3a"}
+  P2: {smiles: "N#CC(CCC(=O)OC)C#N", label: "3b"}
+  P3: {smiles: "CCC(CCC(=O)OC)[N+](=O)[O-]", label: "3c"}
+  B: {smiles: "C1CCN2CCCN=C2CC1", label: "DBU"}
+  X: {smiles: "OC(=O)C(O)c1ccccc1", label: "4"}
+  Y: {smiles: "O=C(O)C(=O)c1ccccc1", label: "5"}
+steps:
+  - {substrates: [E, N1], products: [P1], below_arrow: {text: ["THF, rt"]}, yield: "91%"}
+  - {substrates: [E, N2], products: [P2], above_arrow: {structures: [B], text: ["(10 mol%)"]}}
+  - {substrates: [E, N3], products: [P3], above_arrow: {text: ["K2CO3"]}}
+  - {substrates: [X], products: [Y], above_arrow: {text: ["PCC"]}}
+"""
+
+
+def _render_three_way(tmp_path):
+    source = tmp_path / "three_way.yaml"
+    source.write_text(THREE_WAY, encoding="utf-8")
+    cdxml = renderer.render(parse_yaml(str(source)))
+    return cdxml, ET.fromstring(cdxml[cdxml.index("<CDXML"):])
+
+
+def test_each_branch_draws_its_co_substrate_as_a_reactant(tmp_path):
+    _, root = _render_three_way(tmp_path)
+    boxes = _boxes(root)
+    arrows = {a.get("id"): a for a in root.iter("arrow")}
+    steps = list(root.iter("step"))
+    branches = [s for s in steps if len(s.get("ReactionStepReactants", "").split()) == 2]
+    assert len(branches) == 3
+    shared = {s.get("ReactionStepReactants").split()[0] for s in branches}
+    assert len(shared) == 1
+    for step in branches:
+        co = boxes[step.get("ReactionStepReactants").split()[1]]
+        arrow = arrows[step.get("ReactionStepArrows")]
+        (tail_x, tail_y), (head_x, _) = _point(arrow, "Tail3D"), _point(arrow, "Head3D")
+        # The co-substrate stands above its own arrow, within the arrow's length.
+        assert co[3] < tail_y and tail_x <= co[0] and co[2] <= head_x
+
+
+def test_reagent_structures_above_the_arrow_are_drawn(tmp_path):
+    _, root = _render_three_way(tmp_path)
+    above = [s.get("ReactionStepObjectsAboveArrow", "").split() for s in root.iter("step")]
+    fragment_ids = {f.get("id") for f in root.iter("fragment")}
+    assert any(any(i in fragment_ids for i in ids) for ids in above)
+
+
+def test_a_step_without_the_shared_substrate_is_still_drawn(tmp_path):
+    _, root = _render_three_way(tmp_path)
+    labels = {"".join(t.itertext()).strip() for t in root.iter("t")}
+    assert {"4", "5", "PCC"} <= labels
+    assert len(list(root.iter("step"))) == 4
+
+
+def test_the_three_way_scheme_passes_the_layout_checks(tmp_path):
+    cdxml, _ = _render_three_way(tmp_path)
+    assert figure_lint.lint_cdxml(cdxml) == []
