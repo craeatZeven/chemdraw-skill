@@ -301,7 +301,12 @@ document settings (bond length 14.4, line 0.6, bold 2.0, hash 2.5, margin 1.6, l
 10 pt Arial, chain angle 120), Chinese text in SimSun, text sizes (`--allow-sizes 8,6`), the
 palette (black, white, #FF6600, #336699; `--palette any` or a list), the median drawn bond,
 duplicate ids, references to missing objects, curves ChemDraw would drop, lone unlabelled
-carbons that render blank and an XML declaration of `utf8`. `--ignore bond_length` accepts the
+carbons that render blank and an XML declaration of `utf8`. It also reports what the native
+render drops or distorts: text still carrying `{sub:...}` markup, one text run mixing Chinese
+with Latin letters or digits (each script needs its own run and font), filled or closed curves
+without a `CurveType`, arrowheads off the 1 : 0.875 : 0.25 proportion, objects outside the page,
+and text past the page width, which ChemDraw wraps onto a new line (the generators size
+`WidthPages` and `HeightPages` to their content). `--ignore bond_length` accepts the
 24 pt bonds of a Newman projection and the foreshortened bonds of the cage templates.
 
 The check cannot see chemistry: a wrong ring size, a misfilled orbital or two isomers drawn alike

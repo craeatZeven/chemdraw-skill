@@ -1,6 +1,7 @@
 """Diagram generators: the chemistry each report states, the errors a self-contradicting spec
 raises, and the house rules every bundled example meets. None of this needs ChemDraw or RDKit."""
 import json
+import math
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -80,7 +81,7 @@ def test_energy_profile_reports_barriers_and_rejects_a_false_transition_state():
     assert [b['forward_barrier'] for b in path['barriers']] == [20, 20]
     assert path['barriers'][1]['reverse_barrier'] == 35
     assert path['overall_change'] == -10 and path['thermodynamics'] == 'exothermic'
-    assert '‡' in result['cdxml']                     # transition states are marked
+    assert '\u2021' in result['cdxml']                     # transition states are marked
     with pytest.raises(ValueError, match='maximum'):
         energy_profile({'points': [{'label': 'A', 'energy': 0}, {'label': 'X', 'energy': -5, 'kind': 'ts'},
                                    {'label': 'B', 'energy': 3}]})
@@ -284,7 +285,7 @@ def test_progid_override_and_fallback(monkeypatch):
     progid._detected.cache_clear()
 
 
-# ---------------------------------------------------------------- Hückel and phase diagrams
+# ---------------------------------------------------------------- Huckel and phase diagrams
 @pytest.mark.parametrize('system,energies,rule', [
     ('butadiene', [1.618, 0.618, -0.618, -1.618], None), ('benzene', [2, 1, 1, -1, -1, -2], 'aromatic (4n+2)'),
     ('cyclobutadiene', [2, 0, 0, -2], 'antiaromatic (4n)'), ('allyl_radical', [1.4142, 0, -1.4142], None)])
@@ -342,9 +343,9 @@ def test_binary_eutectic_fields_and_lever_rule():
     result = binary_phase_diagram({'type': 'eutectic', 'components': ['Pb', 'Sn'], 'melting': [327, 232],
                                    'eutectic': [0.619, 183], 'solubility': [0.183, 0.977],
                                    'points': [{'x': 0.4, 'T': 230}, {'x': 0.4, 'T': 150}, {'x': 0.8, 'T': 300}]})
-    assert set(result['fields']) == {'L', 'L + α', 'L + β', 'α', 'α + β', 'β'}
+    assert set(result['fields']) == {'L', 'L + \u03b1', 'L + \u03b2', '\u03b1', '\u03b1 + \u03b2', '\u03b2'}
     fields = [p['field'] for p in result['points']]
-    assert fields == ['L + α', 'α + β', 'L']
+    assert fields == ['L + \u03b1', '\u03b1 + \u03b2', 'L']
     for point in result['points']:
         assert sum(q['fraction'] for q in point['phases']) == pytest.approx(1.0)
         if len(point['phases']) == 2:      # the lever rule: the mixture's composition is recovered
@@ -362,7 +363,7 @@ def test_binary_isomorphous_uses_measured_curves():
                                    'liquidus': [[0.4, 1290]], 'solidus': [[0.4, 1220]],
                                    'points': [{'x': 0.4, 'T': 1250}]})
     liquid, solid = result['points'][0]['phases']
-    assert result['points'][0]['field'] == 'L + α' and liquid['composition'] < 0.4 < solid['composition']
+    assert result['points'][0]['field'] == 'L + \u03b1' and liquid['composition'] < 0.4 < solid['composition']
     with pytest.raises(ValueError, match='above the solidus'):
         binary_phase_diagram({'type': 'isomorphous', 'melting': [1000, 1400],
                               'liquidus': [[0.5, 1100]], 'solidus': [[0.5, 1150]]})
@@ -395,7 +396,7 @@ def test_latimer_derives_couples_and_finds_disproportionation():
     from cdxml_toolkit.scientific.redox import frost, latimer
     spec = json.loads((EXAMPLES / 'latimer.json').read_text(encoding='utf-8'))
     result = latimer(spec)
-    assert result['disproportionate'] == ['MnO{sub:4}{sup:2−}', 'Mn{sup:3+}']
+    assert result['disproportionate'] == ['MnO{sub:4}{sup:2\u2212}', 'Mn{sup:3+}']
     assert [d['E'] for d in result['derived']] == pytest.approx([1.693, 1.508], abs=1e-3)
     points = frost({k: v for k, v in spec.items() if k != 'derived'})['series'][0]['points']
     assert [p['NE'] for p in points] == pytest.approx([5.18, 4.62, 0.10, -0.85, -2.36, 0.0], abs=1e-2)
@@ -407,7 +408,7 @@ def test_ellingham_crossings():
     from cdxml_toolkit.scientific.redox import ellingham
     result = ellingham(json.loads((EXAMPLES / 'ellingham.json').read_text(encoding='utf-8')))
     crossing = {tuple(sorted(x['lines'])): x for x in result['crossings']}
-    co = crossing[tuple(sorted(['2C + O{sub:2} → 2CO', 'C + O{sub:2} → CO{sub:2}']))]
+    co = crossing[tuple(sorted(['2C + O{sub:2} \u2192 2CO', 'C + O{sub:2} \u2192 CO{sub:2}']))]
     assert co['T'] == pytest.approx(981, abs=2) and co['lower_above'].endswith('2CO')
     assert not any('MgO' in name for x in result['crossings'] for name in x['lines'])   # Mg crosses above 2273 K
     with pytest.raises(ValueError, match='kink'):
@@ -525,7 +526,7 @@ _TWO_STEP = {'style': 'smooth', 'unit': 'kJ/mol', 'energy_symbol': 'E', 'y_label
                          {'id': 'I', 'energy': 40}, {'id': 'TS2', 'energy': 70, 'ts': True},
                          {'id': 'P', 'energy': -30, 'label_position': 'below'}],
              'annotations': [{'from': 'R', 'to': 'TS1', 'label': 'E{sub:a} = {value}'},
-                             {'from': 'P', 'to': 'R', 'heads': 'from', 'x': 4.5, 'label': 'ΔH'}],
+                             {'from': 'P', 'to': 'R', 'heads': 'from', 'x': 4.5, 'label': '\u0394H'}],
              'unit_width': 60}
 
 
@@ -540,7 +541,7 @@ def test_species_list_format_is_translated():
     assert spec['arrows'][0]['label'] == 'E{sub:a} = +75'                         # {value}, signed, 0 decimals
     assert (spec['arrows'][1]['from'], spec['arrows'][1]['to'], spec['arrows'][1]['heads']) == ('R', 'P', 'to')
     assert spec['arrows'][1]['x'] == pytest.approx(1.125)
-    assert spec['y_label'] == '{i:E} / (kJ mol{sup:−1})' and spec['label_bold'] and not spec['ts_marker']
+    assert spec['y_label'] == '{i:E} / (kJ mol{sup:\u22121})' and spec['label_bold'] and not spec['ts_marker']
     assert ignored == ['unit_width']
 
 
@@ -559,3 +560,57 @@ def test_profile_accepts_a_conformer_template_as_structure():
     assert result['structures'] == ['A', 'B']
     root = ET.fromstring(result['cdxml'].split('\n', 2)[2])
     assert len(list(root.iter('fragment'))) == 2 and check_cdxml(result['cdxml'], allow_sizes=[8, 6])['ok']
+
+
+# ---------------------------------------------------------------- native-render hazards
+def _doc(body, page='<page id="1" BoundingBox="0 0 200 100" Width="200" Height="100" WidthPages="2" HeightPages="2">'):
+    return ('<?xml version="1.0" encoding="UTF-8" ?><CDXML BondLength="14.4" LineWidth="0.6" BoldWidth="2" '
+            'HashSpacing="2.5" MarginWidth="1.6" LabelSize="10" CaptionSize="10" ChainAngle="120" LabelFont="3" '
+            'CaptionFont="3"><fonttable><font id="3" charset="iso-8859-1" name="Arial"/>'
+            '<font id="5" charset="Unicode" name="SimSun"/></fonttable>' + page + body + '</page></CDXML>')
+
+
+def test_checker_flags_what_chemdraw_drops_or_wraps():
+    codes = lambda text: {i['code'] for i in check_cdxml(text)['errors'] + check_cdxml(text)['warnings']}
+    mixed = _doc('<t id="2" p="10 10"><s font="5" size="10">\u4e2dA</s></t>')
+    assert 'mixed_script_run' in codes(mixed)
+    markup = _doc('<t id="2" p="10 10"><s font="3" size="10">E{sub:a}</s></t>')
+    assert 'unresolved_markup' in codes(markup)
+    polyline = _doc('<curve id="2" CurvePoints="0 0 0 0 0 0 10 10 10 10 10 10" Closed="no" FillType="None"/>')
+    assert 'curve_type_missing' in codes(polyline)
+    assert 'curve_type_missing' not in codes(polyline.replace('<curve id="2"', '<curve id="2" CurveType="0"'))
+    saved_by_chemdraw = _doc('<curve id="2" CurvePoints="0 0 0 0 0 0 10 10 10 10 10 10"/>')   # no Closed/FillType
+    assert 'curve_type_missing' not in codes(saved_by_chemdraw)
+    bezier = _doc('<curve id="2" CurvePoints="0 0 0 0 5 -5 10 -5 15 0 15 0"/>')      # an electron arrow
+    assert 'curve_type_missing' not in codes(bezier)
+    head = _doc('<arrow id="2" Head3D="50 10 0" Tail3D="10 10 0" HeadSize="1000" ArrowheadCenterSize="500" '
+                'ArrowheadWidth="250"/>')
+    assert 'arrowhead_ratio' in codes(head)
+    outside = _doc('<t id="2" p="350 10"><s font="3" size="10">A</s></t>')
+    assert 'outside_page' in codes(outside)
+    one_page = _doc('<t id="2" p="650 10"><s font="3" size="10">A</s></t>',
+                    '<page id="1" BoundingBox="0 0 700 100" Width="700" Height="100">')
+    assert 'text_may_wrap' in codes(one_page)
+
+
+def test_generated_pages_are_wide_enough_not_to_wrap():
+    for result in (build('periodic_table', {}), build('flowchart', json.loads(
+            (EXAMPLES / 'flowchart.json').read_text(encoding='utf-8')))):
+        page = ET.fromstring(result['cdxml'].split('\n', 2)[2]).find('page')
+        width = float(page.get('Width'))
+        assert int(page.get('WidthPages')) >= max(2, math.ceil(width / 500) + 1)
+        assert int(page.get('HeightPages')) >= 2
+        assert check_cdxml(result['cdxml'], allow_sizes=[8, 6])['ok']
+
+
+def test_new_checks_pass_the_bundled_native_files():
+    """CDXML files already rendered natively for the README must not trip the render-hazard checks."""
+    root = Path(__file__).resolve().parents[2]
+    for name in ('assets/readme/scientific/apparatus.cdxml', 'assets/readme/scientific/kinetics.cdxml',
+                 'assets/readme/scientific/nmr.cdxml', 'assets/readme/engines/nmr/caffeine/comparison.cdxml'):
+        path = root / name
+        if not path.exists():
+            pytest.skip('README assets are not in this checkout')
+        found = check_cdxml(str(path), palette=None)
+        codes = {i['code'] for i in found['errors'] + found['warnings']}
+        assert not codes & {'curve_type_missing', 'text_may_wrap', 'mixed_script_run', 'unresolved_markup'}, (name, codes)

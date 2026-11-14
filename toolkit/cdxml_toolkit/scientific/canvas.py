@@ -352,6 +352,13 @@ class Canvas(Drawing):
         self.page.set('BoundingBox', box)
         self.page.set('Width', f'{width:.2f}')
         self.page.set('Height', f'{height:.2f}')
+        # Enough pages that ChemDraw never wraps text at a page edge in the native render.
+        from ..cdxml_check import pages_needed
+        wide, tall = pages_needed(width, height)
+        self.page.set('WidthPages', str(wide))
+        self.page.set('HeightPages', str(tall))
+        self.page.set('HeaderPosition', '0')
+        self.page.set('FooterPosition', '0')
         self.text_boxes = [(a + dx, b + dy, c + dx, d + dy, t) for a, b, c, d, t in self.text_boxes]
         self._extent = [margin, margin, width - margin, height - margin]
         return width, height

@@ -244,6 +244,10 @@ def merge_cdxml(parts: Sequence[Mapping[str, Any]], output=None, *, gap: float =
     page.set('BoundingBox', box)
     page.set('Width', f'{width:.2f}')
     page.set('Height', f'{height:.2f}')
+    from .cdxml_check import pages_needed
+    wide, tall = pages_needed(width, height)
+    page.set('WidthPages', str(wide))
+    page.set('HeightPages', str(tall))
     for a, b in ((a, b) for i, a in enumerate(placed) for b in placed[i + 1:]):
         if (a['box'][0] < b['box'][2] and b['box'][0] < a['box'][2]
                 and a['box'][1] < b['box'][3] and b['box'][1] < a['box'][3]):

@@ -28,6 +28,17 @@ PROFILES: dict[str, dict[str, Any]] = {
 _CJK = re.compile(r'[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]')
 _CJK_ONLY_PUNCT = re.compile(r'[\u3000-\u303f\uff00-\uffef]')
 _COLOR_ATTRS = ('color', 'bgcolor', 'fgcolor')
+_MARKUP_LEFT = re.compile(r'\{(i|b|bi|sub|sup):')
+# Page size used when writing WidthPages/HeightPages (with room to spare), and the width per page
+# beyond which a native render has been seen to wrap text (text at x = 537 pt on one page did not).
+PAGE_WIDTH, PAGE_HEIGHT = 500.0, 650.0
+WRAP_WIDTH = 600.0
+
+
+def pages_needed(width, height):
+    """WidthPages and HeightPages that keep a drawing of this size from wrapping its text."""
+    import math
+    return max(2, math.ceil(width / PAGE_WIDTH) + 1), max(2, math.ceil(height / PAGE_HEIGHT) + 1)
 
 
 def _issue(bucket, code, message, **extra):
@@ -113,6 +124,12 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
         font = fonts.get(run.get('font', default_font))
         has_cjk = bool(_CJK.search(content))
         latin = _CJK.sub('', content).strip()
+        if _MARKUP_LEFT.search(content):
+            _issue(errors, 'unresolved_markup', f'"{content[:20]}" still contains markup such as {{sub:..}}; it would '
+                                                'print literally')
+        if has_cjk and re.search(r'[A-Za-z0-9]', latin):
+            _issue(errors, 'mixed_script_run', f'"{content[:12]}" mixes Chinese and Latin in one run; split it so the '
+                                               'Chinese is SimSun and the rest Arial')
         if has_cjk and font not in rules['cjk_fonts']:
             _issue(errors, 'cjk_font', f'Chinese text "{content[:12]}" is in {font or "an undefined font"}; it must be '
                                        f'{rules["cjk_fonts"][0]} or ChemDraw draws boxes')
@@ -182,6 +199,22 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
         if len(values) % 6 or len(values) < 12:
             _issue(errors, 'curve_points', f'<curve id="{curve.get("id")}"> has {len(values) // 2} points; ChemDraw '
                                            'needs whole (handle, point, handle) triples and silently drops other curves')
+            continue
+        # A curve that states Closed or FillType but not CurveType is dropped from the native render
+        # (curves saved by ChemDraw itself carry none of the three and render fine).
+        if curve.get('CurveType') is None and (curve.get('Closed') is not None or curve.get('FillType') is not None):
+            _issue(errors, 'curve_type_missing', f'<curve id="{curve.get("id")}"> sets Closed/FillType without '
+                                                 'CurveType; ChemDraw drops such a curve from the native render')
+    for arrow in root.iter('arrow'):
+        try:
+            head = float(arrow.get('HeadSize', '1000'))
+            centre = float(arrow.get('ArrowheadCenterSize', head * 0.875))
+            width = float(arrow.get('ArrowheadWidth', head * 0.25))
+        except ValueError:
+            continue
+        if abs(centre - 0.875 * head) > 1.5 or abs(width - 0.25 * head) > 1.5:
+            _issue(warnings, 'arrowhead_ratio', f'<arrow id="{arrow.get("id")}"> head {head:g}/{centre:g}/{width:g} '
+                                                'is not the house 1 : 0.875 : 0.25 shape')
     for line_width in {n.get('LineWidth') for n in root.iter() if n.tag != 'CDXML' and n.get('LineWidth')}:
         if abs(float(line_width) - rules['settings']['LineWidth']) > 1e-6:
             _issue(warnings, 'line_width', f'Some objects set LineWidth {line_width} (the house width is '
@@ -212,6 +245,26 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
                 _issue(warnings, 'bare_terminal_carbon',
                        f'<fragment id="{fragment.get("id")}"> is a two-atom molecule whose carbon has no label: it '
                        'renders as a bond end with nothing on it; label the carbon (CH3, H2C)')
+    # ---- the page: coordinates outside it, and drawings wider than its pages (text wraps)
+    page = root.find('page')
+    if page is not None and page.get('Width') and page.get('Height'):
+        width, height = float(page.get('Width')), float(page.get('Height'))
+        outside = 0
+        right = 0.0
+        for node in root.iter():
+            for attr in ('p', 'Head3D', 'Tail3D'):
+                if node.get(attr):
+                    x, y = (float(v) for v in node.get(attr).split()[:2])
+                    right = max(right, x)
+                    if not (-1 <= x <= width + 1 and -1 <= y <= height + 1):
+                        outside += 1
+        if outside:
+            _issue(warnings, 'outside_page', f'{outside} object position(s) lie outside the {width:.0f} x {height:.0f} pt page')
+        pages = float(page.get('WidthPages', '1'))
+        if right > pages * WRAP_WIDTH:
+            need = pages_needed(width, height)
+            _issue(warnings, 'text_may_wrap', f'the drawing reaches x = {right:.0f} pt but the page is {pages:g} page(s) '
+                                              f'wide; ChemDraw may wrap text there (set WidthPages="{need[0]}")')
     summary: dict[str, Any] = {'fragments': fragments, 'colors': used, 'text_sizes': {f'{k:g}': v for k, v in sizes.items()}}
     if lengths:
         median = statistics.median(lengths)
