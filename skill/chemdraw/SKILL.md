@@ -18,10 +18,10 @@ cdx.py sig TOOL                            # inspect one tool signature
 cdx.py call TOOL --args args.json          # run any tool with JSON object args
 cdx.py draw brief.json out.cdxml --render  # checked scheme, scope panel or mechanism
 cdx.py build spec.json out.cdxml --render  # ACS 1996 drawing from a spec
-cdx.py render a.cdxml                      # native 300 dpi PNG beside it
+cdx.py render a.cdxml                      # native 300 dpi PNG
 ```
 
-Write `tool(arg=value)` calls as `cdx.py call tool --args args.json` (`--json '{"arg": value}'` works in bash; `--args` avoids Windows quoting issues; `--out new.json` saves long output). Run scripts/modules via `cdx.py py <skill>/scripts/NAME.py ...` or `cdx.py py -m cdxml_toolkit.scientific ...` without an MCP server. Setup and allowlisting: [agent integration](references/agent-integration.md).
+Write `tool(arg=value)` calls as `cdx.py call tool --args args.json` (`--json '{"arg": value}'` works in bash; `--args` avoids Windows quoting; `--out new.json` saves long output). Run scripts/modules via `cdx.py py <skill>/scripts/NAME.py ...` or `cdx.py py -m cdxml_toolkit.scientific ...` without an MCP server. Setup and allowlisting: [agent integration](references/agent-integration.md).
 
 ## Core Rules
 
@@ -54,7 +54,7 @@ Write `tool(arg=value)` calls as `cdx.py call tool --args args.json` (`--json '{
 | LCMS/NMR reports (`.mzML`/`.raw`, internal standard `IS` normalization, `lcms_plate`), RDF, experiment discovery and lab books | Analysis section in [workflow router](references/workflow-router.md) |
 | Processed spectra (`Bruker/JCAMP/JEOL/Varian`, `inset_region`, `stack_nmr`, `lcms_plate`), plots and mechanisms | [Scientific workflows](references/scientific-workflows.md) |
 | TLC, apparatus, instruments | [Laboratory drawings](references/native-laboratory-drawings.md) |
-| Energy, Born–Haber, Jablonski, MO, ligand field, Lewis, unit cell, flowchart | [Diagrams](references/diagrams.md) |
+| Energy profile, Born–Haber, Jablonski, MO, ligand field, Lewis, crystal, phase, flowchart | [Diagrams](references/diagrams.md) |
 | Atom indices, CIP, MCS or stereo enumeration | [RDKit workbench](references/rdkit-workbench.md) |
 | Formula, masses, logP, balance, stoichiometry grid, HRMS, SI tables, mapping, export, naming | [Chemistry reports](references/chemistry-reports.md) |
 | ChemDraw interfaces (ChemScript, COM, CDXML elements, menus) and verified recipes | [Interface catalog](references/interface-catalog.md) |
