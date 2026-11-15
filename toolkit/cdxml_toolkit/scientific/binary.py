@@ -228,8 +228,47 @@ def binary_phase_diagram(spec: Mapping[str, Any], output=None) -> dict[str, Any]
         c.label((px + 5.0, py), f'{te:g}', valign='middle', size=8)
         c.segment((px, py), (px + 3.0, py))
 
-    # ---- field labels: the centre of each field, found by sampling the plot
     warnings: list[str] = []
+    # ---- marked points and the lever rule (drawn first: the field labels keep clear of them)
+    analysed = []
+    for i, item in enumerate(spec.get('points') or []):
+        x = number(item.get('x'), f'point {i + 1} x', 0.0, 1.0)
+        t = number(item.get('T'), f'point {i + 1} T', t_bottom, t_top)
+        field, phases = locate(x, t)
+        entry: dict[str, Any] = {'label': item.get('label'), 'x': x, 'T': t, 'field': field}
+        px, py = at(x, t)
+        c.circle((px, py), 1.4, fill='#000000', outline=None)
+        c.block((px - 1.4, py - 1.4, px + 1.4, py + 1.4), 1.0)
+        if len(phases) == 2:
+            (p1, x1), (p2, x2) = phases
+            c.segment(at(x1, t), at(x2, t), dashed=True)
+            c.block_path([at(x1, t), at(x2, t)], 1.5)
+            f2 = (x - x1) / (x2 - x1) if abs(x2 - x1) > 1e-12 else 0.0
+            entry['phases'] = [{'phase': p1, 'composition': round(x1, 3), 'fraction': round(1 - f2, 3)},
+                               {'phase': p2, 'composition': round(x2, 3), 'fraction': round(f2, 3)}]
+        else:
+            entry['phases'] = [{'phase': phases[0][0], 'composition': round(x, 3), 'fraction': 1.0}]
+        if item.get('label'):
+            near = [((px + 4.0, py - 4.0), 'Left', 'baseline'), ((px - 4.0, py - 4.0), 'Right', 'baseline'),
+                    ((px + 4.0, py + 10.0), 'Left', 'baseline'), ((px - 4.0, py + 10.0), 'Right', 'baseline'),
+                    ((px + 4.0, py - 9.0), 'Left', 'baseline'), ((px - 4.0, py - 9.0), 'Right', 'baseline'),
+                    ((px + 4.0, py + 15.0), 'Left', 'baseline'), ((px - 4.0, py + 15.0), 'Right', 'baseline')]
+            # In a narrow field every spot beside the point meets a boundary: step further out,
+            # and join the label to its point with a short leader.
+            far = [((px + dx, py + dy), 'Left' if dx > 0 else 'Right', 'baseline')
+                   for dy in (-16.0, 24.0, -23.0, 31.0) for dx in (8.0, -8.0)]
+            label = str(item['label'])
+            first_free = next((o for o in near + far if c.is_free(c.measure(o[0], label, None, o[1], o[2]))), None)
+            box, clear = c.place([first_free] if first_free else near, label)
+            if first_free in far:
+                bx = min(max(px, box[0] + 1.0), box[2] - 1.0)
+                by = box[3] + 0.5 if box[3] < py else box[1] - 0.5
+                c.segment((px, py), (bx, by))
+                c.block_path([(px, py), (bx, by)], 1.0)
+            if not clear:
+                warnings.append(f"the point label {item['label']} overlaps other ink")
+        analysed.append(entry)
+    # ---- field labels: the centre of each field, found by sampling the plot
     samples: dict[str, list] = {}
     for i in range(1, 60):
         for j in range(1, 60):
@@ -241,8 +280,7 @@ def binary_phase_diagram(spec: Mapping[str, Any], output=None) -> dict[str, Any]
         cx, ct = xs[len(xs) // 2], ts[len(ts) // 2]
         candidates = [(at(*p), 'Center', 'middle') for p in sorted(pts, key=lambda p: (p[0] - cx) ** 2 * 4 +
                                                                   ((p[1] - ct) / (t_top - t_bottom)) ** 2)[:90:3]]
-        inside = next((cand for cand in candidates
-                       if not any(_overlap(c.measure(cand[0], name, None, cand[1], cand[2]), o) for o in c.obstacles)),
+        inside = next((cand for cand in candidates if c.is_free(c.measure(cand[0], name, None, cand[1], cand[2]))),
                       None)
         if inside is not None:
             c.place([inside], name)
@@ -251,33 +289,17 @@ def binary_phase_diagram(spec: Mapping[str, Any], output=None) -> dict[str, Any]
         fx, fy = at(cx, ct)
         right = cx >= 0.5
         lx = PLOT_W + 14.0 if right else -14.0
-        _box, clear = c.place([((lx, fy + dy), 'Left' if right else 'Right', 'middle') for dy in (0.0, -12.0, 12.0, -24.0, 24.0)],
-                              name)
-        c.segment((fx, fy), (lx - (2.0 if right else -2.0), fy))
+        # The leader runs straight from the field to its label, clear of every other caption.
+        end_x = lx - (2.0 if right else -2.0)
+        options = [((lx, fy + dy), 'Left' if right else 'Right', 'middle') for dy in (0.0, -12.0, 12.0, -24.0, 24.0)]
+        usable = [o for o in options if c.path_is_free([(fx, fy), (end_x, o[0][1])])] or options
+        box, clear = c.place(usable, name)
+        end = (end_x, (box[1] + box[3]) / 2)
+        c.segment((fx, fy), end)
+        c.block_path([(fx, fy), end], 1.5)
         if not clear:
             warnings.append(f'the field label {name} overlaps other ink')
 
-    # ---- marked points and the lever rule
-    analysed = []
-    for i, item in enumerate(spec.get('points') or []):
-        x = number(item.get('x'), f'point {i + 1} x', 0.0, 1.0)
-        t = number(item.get('T'), f'point {i + 1} T', t_bottom, t_top)
-        field, phases = locate(x, t)
-        entry: dict[str, Any] = {'label': item.get('label'), 'x': x, 'T': t, 'field': field}
-        px, py = at(x, t)
-        c.circle((px, py), 1.4, fill='#000000', outline=None)
-        if len(phases) == 2:
-            (p1, x1), (p2, x2) = phases
-            c.segment(at(x1, t), at(x2, t), dashed=True)
-            f2 = (x - x1) / (x2 - x1) if abs(x2 - x1) > 1e-12 else 0.0
-            entry['phases'] = [{'phase': p1, 'composition': round(x1, 3), 'fraction': round(1 - f2, 3)},
-                               {'phase': p2, 'composition': round(x2, 3), 'fraction': round(f2, 3)}]
-        else:
-            entry['phases'] = [{'phase': phases[0][0], 'composition': round(x, 3), 'fraction': 1.0}]
-        if item.get('label'):
-            c.place([((px + 4.0, py - 4.0), 'Left', 'baseline'), ((px - 4.0, py - 4.0), 'Right', 'baseline'),
-                     ((px + 4.0, py + 10.0), 'Left', 'baseline')], str(item['label']))
-        analysed.append(entry)
     title = spec.get('title')
     if title:
         x1, _y1, x2, y2 = c.extent

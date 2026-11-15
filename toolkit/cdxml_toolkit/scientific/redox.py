@@ -95,16 +95,35 @@ def pourbaix(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             edges[key] = (a, b)
     for a, b in edges.values():
         plot.segment(a, b)
+    water, water_warnings = [], []
     if spec.get('water', True):
         # Water's limits at 1 bar O2 and H2 (E\u00b0 of O2/H2O taken at 298 K).
         for intercept, name in ((1.229, 'O{sub:2}/H{sub:2}O'), (0.0, 'H{sub:2}O/H{sub:2}')):
             ends = ((ph0, intercept - slope * ph0), (ph1, intercept - slope * ph1))
             if plot.segment(*ends, dashed=True, color=BLUE):
-                px, py = plot.at(ph1, intercept - slope * ph1)
-                if 0 <= py <= plot.h:
-                    c.place([((px - 3.0, py - 4.0), 'Right', 'baseline'), ((px - 3.0, py + 10.0), 'Right', 'baseline')],
-                            name, color=BLUE, size=8)
-    warnings = []
+                water.append((intercept, name))
+    # Name each water line just above it near the right edge, where it is free; the line falls
+    # to the right, so the caption's baseline sits clear of the line under its left end.
+    for intercept, name in water:
+        options = []
+        for ph in (ph1 - (ph1 - ph0) * f for f in (0.0, 0.08, 0.16, 0.24, 0.32)):
+            px, py = plot.at(ph, intercept - slope * ph)
+            if not 0 <= py <= plot.h:
+                continue
+            width = c.measure((0.0, 0.0), name, 8, 'Right', 'baseline')
+            # How far the line rises across the caption's width, in points.
+            drop = (width[2] - width[0]) * abs(slope) * (plot.h / (e1 - e0)) / (plot.w / (ph1 - ph0))
+            options += [((px - 3.0, py - 3.0 - drop), 'Right', 'baseline'),
+                        ((px - 3.0, py + 9.0), 'Right', 'baseline')]
+        # Where the field boundaries crowd the line, name it beyond the frame at its end.
+        px, py = plot.at(ph1, intercept - slope * ph1)
+        if 0 <= py <= plot.h:
+            options += [((plot.w + 4.0, py + dy), 'Left', 'middle') for dy in (0.0, -6.0, 6.0, -12.0, 12.0)]
+        if options:
+            _box, clear = c.place(options, name, color=BLUE, size=8)
+            if not clear:
+                water_warnings.append(f'the label {name} overlaps other ink')
+    warnings = water_warnings
     for field in fields:
         poly = field['polygon']
         cx = sum(p[0] for p in poly) / len(poly)
@@ -112,8 +131,8 @@ def pourbaix(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         ring = [(cx + (p[0] - cx) * f, cy + (p[1] - cy) * f) for f in (0.3, 0.55) for p in poly]
         candidates = [(plot.at(cx, cy), 'Center', 'middle')] + [(plot.at(*p), 'Center', 'middle') for p in ring]
         name = field['species']['name']
-        inside = next((cand for cand in candidates if not any(
-            _overlap(c.measure(cand[0], name, None, cand[1], cand[2]), o) for o in c.obstacles)), None)
+        inside = next((cand for cand in candidates if c.is_free(c.measure(cand[0], name, None, cand[1], cand[2]))),
+                      None)
         if inside is not None:
             c.place([inside], name)
             continue

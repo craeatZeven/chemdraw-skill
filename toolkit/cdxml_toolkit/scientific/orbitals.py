@@ -12,7 +12,7 @@ import math
 import re
 from typing import Any, Mapping
 
-from .canvas import Canvas, plain
+from .canvas import Canvas, caption_box, plain
 from .common import number
 from .elements import (CAPACITY, L_LETTERS, MADELUNG, SYMBOLS, atomic_number, d_electron_count,
                        electron_configuration, noble_gas_core, parse_ion, subshell_name)
@@ -310,7 +310,8 @@ def mo_diagram(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     # ---- geometry
     every = atomic + molecular
     height = float(spec.get('height', max(150.0, 30.0 * (len({round(lv["energy"], 6) for lv in every}) - 1))))
-    if _spread(every, 'energy', height, 28.0) and not spec.get('schematic'):
+    # 32 pt keeps a label under one level clear of the spin arrows rising from the next.
+    if _spread(every, 'energy', height, 32.0) and not spec.get('schematic'):
         warnings.append('close levels were moved apart: the vertical spacing is not to scale')
     gap = float(spec.get('column_gap', 118.0))
     centers = {'left': 0.0, 'center': gap, 'right': 2 * gap}
@@ -346,7 +347,9 @@ def mo_diagram(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         elif lv['column'] == 'right':
             c.label((lv['x2'] + 5.0, lv['y']), lv['label'], align='Left', valign='middle')
         else:
-            c.label(((lv['x1'] + lv['x2']) / 2, lv['y'] + 12.0), lv['label'], align='Center')
+            # Below the level, clear of the spin arrows (which reach 5 pt under it).
+            rise = lv['y'] - caption_box(0.0, lv['y'], lv['label'])[1]
+            c.label(((lv['x1'] + lv['x2']) / 2, lv['y'] + 6.5 + rise), lv['label'], align='Center')
     bottom = max(lv['y'] for lv in every) + 32.0
     for key in ('left', 'center', 'right'):
         if columns[key]['title']:

@@ -35,6 +35,25 @@ _TOKEN = re.compile(r'\{(i|b|bi|sub|sup):([^{}]*)\}')
 _FACE = {'b': 1, 'i': 2, 'bi': 3, 'sub': 32, 'sup': 64}
 _CJK = re.compile(r'[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]')
 _SPLIT = re.compile(r'[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+|[^\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+')
+# Arial advance widths in thousandths of an em (the font ChemDraw uses for captions).
+_ARIAL = {
+    ' ': 278, '!': 278, '"': 355, '#': 556, '$': 556, '%': 889, '&': 667, "'": 191, '(': 333,
+    ')': 333, '*': 389, '+': 584, ',': 278, '-': 333, '.': 278, '/': 278, ':': 278, ';': 278,
+    '<': 584, '=': 584, '>': 584, '?': 556, '@': 1015, '[': 278, '\\': 278, ']': 278, '^': 469,
+    '_': 556, '{': 334, '|': 260, '}': 334, '~': 584, '0': 556, '1': 556, '2': 556, '3': 556,
+    '4': 556, '5': 556, '6': 556, '7': 556, '8': 556, '9': 556, 'A': 667, 'B': 667, 'C': 722,
+    'D': 722, 'E': 667, 'F': 611, 'G': 778, 'H': 722, 'I': 278, 'J': 500, 'K': 667, 'L': 556,
+    'M': 833, 'N': 722, 'O': 778, 'P': 667, 'Q': 778, 'R': 722, 'S': 667, 'T': 611, 'U': 722,
+    'V': 667, 'W': 944, 'X': 667, 'Y': 667, 'Z': 611, 'a': 556, 'b': 556, 'c': 500, 'd': 556,
+    'e': 556, 'f': 278, 'g': 556, 'h': 556, 'i': 222, 'j': 222, 'k': 500, 'l': 222, 'm': 833,
+    'n': 556, 'o': 556, 'p': 556, 'q': 556, 'r': 333, 's': 500, 't': 278, 'u': 556, 'v': 500,
+    'w': 722, 'x': 500, 'y': 500, 'z': 500,
+    '\u03b1': 578, '\u03b2': 575, '\u03b3': 500, '\u03b4': 556, '\u0394': 668, '\u03b5': 446,
+    '\u03c3': 617, '\u03c0': 687, '\u03bc': 576, '\u03bd': 500, '\u03c4': 456, '\u03c6': 648,
+    '\u03c8': 713, '\u03c9': 781, '\u03b7': 556, '\u03b8': 556, '\u03bb': 500, '\u00b0': 400,
+    '\u00b1': 584, '\u2212': 584, '\u2021': 556, '\u2020': 556, '\u2032': 191, '\u00b7': 278,
+    '\u2192': 1000, '\u2190': 1000, '\u21cc': 1000, '\u2013': 556, '\u2014': 1000, '\u00d7': 584,
+}
 _NARROW = set("ijlI|.,:;'!() []")
 _WIDE = set('mwMW@%→←⇌')
 # Attributes that hold absolute coordinates and move with the content.
@@ -85,6 +104,8 @@ def text_width(markup, size=FONT_SIZE):
             for ch in text:
                 if _CJK.match(ch):
                     unit = 1.0
+                elif ch in _ARIAL:
+                    unit = _ARIAL[ch] / 1000
                 elif ch in _NARROW:
                     unit = 0.28
                 elif ch in _WIDE:
@@ -96,6 +117,23 @@ def text_width(markup, size=FONT_SIZE):
                 width += unit * size * scale * (1.06 if face & 1 else 1.0)
         widest = max(widest, width)
     return widest
+
+
+def caption_box(x, baseline, markup, size=FONT_SIZE, align='Left'):
+    """Box of a caption whose first baseline is at ``baseline``, as ChemDraw measures it.
+
+    Calibrated on the text boxes ChemDraw writes when it saves a file: capitals reach 0.84 of
+    the size above the baseline, a superscript 1.15; descenders reach 0.25 below it and
+    subscripts 0.3. Later lines advance 1.2 sizes.
+    """
+    markup = str(markup)
+    width = text_width(markup, size)
+    left = x if align == 'Left' else x - width / 2 if align == 'Center' else x - width
+    first, last = markup.split('\n')[0], markup.split('\n')[-1]
+    above = 1.15 if '{sup:' in first else 0.84
+    below = 0.3 if '{sub:' in last else 0.25
+    lines = markup.count('\n') + 1
+    return (left, baseline - size * above, left + width, baseline + size * below + (lines - 1) * size * 1.2)
 
 
 def text_height(markup, size=FONT_SIZE):
@@ -269,9 +307,7 @@ class Canvas(Drawing):
                 if index is not None:
                     run['color'] = index
                 ET.SubElement(node, 's', run).text = piece
-        width = text_width(markup, size)
-        left = x if align == 'Left' else x - width / 2 if align == 'Center' else x - width
-        box = (left, y - size * 0.8, left + width, y + size * 0.25 + (lines - 1) * size * 1.2)
+        box = caption_box(x, y, markup, size, align)
         self.see_box(box)
         self.text_boxes.append((*box, plain(markup)))
         return box
@@ -286,9 +322,7 @@ class Canvas(Drawing):
             y += size * 0.36 - (lines - 1) * size * 0.6
         elif valign == 'top':
             y += size * 0.8
-        width = text_width(markup, size)
-        left = x if align == 'Left' else x - width / 2 if align == 'Center' else x - width
-        return (left, y - size * 0.8, left + width, y + size * 0.25 + (lines - 1) * size * 1.2)
+        return caption_box(x, y, markup, size, align)
 
     def block(self, box, pad=1.0):
         """Reserve ``box`` so that :meth:`place` keeps captions out of it."""
@@ -297,25 +331,67 @@ class Canvas(Drawing):
         self.obstacles.append((x1 - pad, y1 - pad, x2 + pad, y2 + pad))
 
     def block_path(self, points, pad=1.5):
-        """Reserve the ink of a polyline (one small box per segment)."""
-        pts = list(points)
-        for a, b in zip(pts, pts[1:]):
-            self.block((a[0], a[1], b[0], b[1]), pad)
+        """Reserve the ink of a polyline: small boxes along each segment.
 
-    def place(self, candidates, markup, size=None, color=None, bold=False, parent=None):
+        A long diagonal segment is cut into pieces of at most 4 pt, so that its reserved area
+        follows the line instead of filling the rectangle it spans.
+        """
+        pts = [(float(p[0]), float(p[1])) for p in points]
+        for a, b in zip(pts, pts[1:]):
+            pieces = max(1, math.ceil(max(abs(b[0] - a[0]), abs(b[1] - a[1])) / 4.0))
+            if min(abs(b[0] - a[0]), abs(b[1] - a[1])) < 1e-6:
+                pieces = 1  # horizontal or vertical: its box already hugs the line
+            for k in range(pieces):
+                u, v = k / pieces, (k + 1) / pieces
+                self.block((a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u,
+                            a[0] + (b[0] - a[0]) * v, a[1] + (b[1] - a[1]) * v), pad)
+
+    def is_free(self, box) -> bool:
+        """Whether ``box`` meets no reserved ink and no caption drawn so far."""
+        return not any(boxes_overlap(box, other) for other in self.obstacles) and \
+            not any(boxes_overlap(box, other[:4], 0.5) for other in self.text_boxes)
+
+    def path_is_free(self, points, step=1.0) -> bool:
+        """Whether a polyline would cross no caption drawn so far (a leader or connector)."""
+        pts = [(float(p[0]), float(p[1])) for p in points]
+        for a, b in zip(pts, pts[1:]):
+            n = max(1, math.ceil(math.dist(a, b) / step))
+            for k in range(n + 1):
+                x, y = a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n
+                if any(t[0] < x < t[2] and t[1] < y < t[3] for t in self.text_boxes):
+                    return False
+        return True
+
+    def choose(self, candidates, markup, size=None):
+        """The first free candidate ``(xy, align, valign)``, or the least crowded one.
+
+        Returns ``(candidate, clear)``; nothing is drawn.
+        """
+        for xy, align, valign in candidates:
+            if self.is_free(self.measure(xy, markup, size, align, valign)):
+                return (xy, align, valign), True
+
+        def crowding(candidate):
+            box = self.measure(candidate[0], markup, size, candidate[1], candidate[2])
+            return (sum(boxes_overlap(box, other) for other in self.obstacles)
+                    + 3 * sum(boxes_overlap(box, other[:4], 0.5) for other in self.text_boxes))
+        return min(candidates, key=crowding), False
+
+    def place(self, candidates, markup, size=None, color=None, bold=False, parent=None, knockout=False):
         """Draw ``markup`` at the first candidate ``(xy, align, valign)`` that is free.
 
         Returns ``(box, clear)``; ``clear`` is False when every candidate met reserved ink
-        or an earlier caption and the first one was used anyway.
+        or an earlier caption, and the least crowded one was used. With ``knockout``, such a
+        caption is drawn on a white patch that hides the lines under it (the usual way to
+        label a contour plot); it then counts as clear.
         """
-        chosen, clear = None, True
-        for xy, align, valign in candidates:
-            box = self.measure(xy, markup, size, align, valign)
-            if not any(boxes_overlap(box, other) for other in self.obstacles):
-                chosen = (xy, align, valign)
-                break
-        if chosen is None:
-            chosen, clear = candidates[0], False
+        chosen, clear = self.choose(candidates, markup, size)
+        if not clear and knockout:
+            x1, y1, x2, y2 = self.measure(chosen[0], markup, size, chosen[1], chosen[2])
+            x1, y1, x2, y2 = x1 - 1.0, y1 - 0.5, x2 + 1.0, y2 + 0.5
+            self.path([(x1, y1), (x2, y1), (x2, y2), (x1, y2)], color=WHITE, closed=True, filled=True,
+                      parent=parent)
+            clear = True
         box = self.label(chosen[0], markup, size=size, align=chosen[1], valign=chosen[2], color=color, bold=bold,
                          parent=parent)
         self.block(box, 0.5)

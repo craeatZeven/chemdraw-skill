@@ -306,7 +306,11 @@ render drops or distorts: text still carrying `{sub:...}` markup, one text run m
 with Latin letters or digits (each script needs its own run and font), filled or closed curves
 without a `CurveType`, arrowheads off the 1 : 0.875 : 0.25 proportion, objects outside the page,
 and text past the page width, which ChemDraw wraps onto a new line (the generators size
-`WidthPages` and `HeightPages` to their content). `--ignore bond_length` accepts the
+`WidthPages` and `HeightPages` to their content). The warning `text_over_ink` names captions
+that a line, arrow, curve or other caption runs through; it reads ChemDraw's own text boxes from
+a file ChemDraw saved, and otherwise uses Arial metrics that match them. Lines drawn before a
+white patch under a caption do not count (the contour plot puts such patches under labels the
+contours crowd). `--ignore bond_length` accepts the
 24 pt bonds of a Newman projection and the foreshortened bonds of the cage templates.
 
 The check cannot see chemistry: a wrong ring size, a misfilled orbital or two isomers drawn alike

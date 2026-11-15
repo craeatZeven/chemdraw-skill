@@ -34,6 +34,9 @@ def test_every_example_meets_the_house_rules_without_layout_warnings(example):
     result = build(_operation(example), spec)
     check = check_cdxml(result['cdxml'], allow_sizes=[8, 6])
     assert check['ok'], check['errors']
+    # No line, arrow, curve or other caption may run through a caption (the checker's estimate
+    # matches the text boxes ChemDraw writes when it saves the file).
+    assert [w for w in check['warnings'] if w['code'] == 'text_over_ink'] == []
     # Only the honest "not to scale" note is allowed; no caption may sit on other ink.
     assert all('not to scale' in w for w in result['warnings']), result['warnings']
 
@@ -637,4 +640,42 @@ def test_new_checks_pass_the_bundled_native_files():
             pytest.skip('README assets are not in this checkout')
         found = check_cdxml(str(path), palette=None)
         codes = {i['code'] for i in found['errors'] + found['warnings']}
-        assert not codes & {'curve_type_missing', 'text_may_wrap', 'mixed_script_run', 'unresolved_markup'}, (name, codes)
+        assert not codes & {'curve_type_missing', 'text_may_wrap', 'mixed_script_run', 'unresolved_markup',
+                            'text_over_ink'}, (name, codes)
+
+
+def _page(body):
+    return ('<?xml version="1.0" encoding="UTF-8" ?><CDXML><fonttable><font id="3" charset="utf-8" name="Arial"/>'
+            '</fonttable><colortable><color r="1" g="1" b="1"/><color r="0" g="0" b="0"/></colortable>'
+            f'<page id="1" Width="300" Height="200">{body}</page></CDXML>')
+
+
+def test_text_over_ink_finds_a_line_through_a_caption_and_nothing_beside_it():
+    from cdxml_toolkit.cdxml_check import text_over_ink
+    caption = '<t id="2" p="50 50"><s font="3" size="10" face="0">Fe</s><s font="3" size="10" face="32">2</s></t>'
+    through = '<graphic id="3" GraphicType="Line" BoundingBox="40 47 90 47"/>'
+    beside = '<graphic id="3" GraphicType="Line" BoundingBox="40 56 90 56"/>'
+    assert text_over_ink(_page(caption + through)) == ["a line runs through 'Fe{sub:2}'"]
+    assert text_over_ink(_page(caption + beside)) == []
+    assert check_cdxml(_page(caption + through))['warnings'][-1]['code'] == 'text_over_ink'
+
+
+def test_text_over_ink_trusts_chemdraw_boxes_and_white_patches():
+    from cdxml_toolkit.cdxml_check import text_over_ink
+    line = '<graphic id="3" GraphicType="Line" BoundingBox="60 40 60 60"/>'
+    # ChemDraw's own box (written when it saved the file) ends before the line.
+    measured = '<t id="2" p="50 50" BoundingBox="50 42 58 52"><s font="3" size="10" face="0">MMMM</s></t>'
+    assert text_over_ink(_page(line + measured)) == []
+    # A white patch drawn after the line and under the caption hides the line there.
+    caption = '<t id="4" p="55 50"><s font="3" size="10" face="0">TS</s></t>'
+    patch = ('<curve id="5" CurvePoints="53 40 53 40 53 40 70 40 70 40 70 40 70 54 70 54 70 54 53 54 53 54 53 54"'
+             ' Closed="yes" FillType="Solid" CurveType="129" color="2"/>')
+    assert text_over_ink(_page(line + caption)) == ["a line runs through 'TS'"]
+    assert text_over_ink(_page(line + patch + caption)) == []
+    assert text_over_ink(_page(patch + line + caption)) == ["a line runs through 'TS'"]
+
+
+def test_caption_widths_follow_arial():
+    from cdxml_toolkit.scientific.canvas import text_width
+    # ChemDraw measures "tautomerization" in 13 pt Arial as 88.9 pt wide.
+    assert text_width('tautomerization', 13) == pytest.approx(88.9, abs=0.3)

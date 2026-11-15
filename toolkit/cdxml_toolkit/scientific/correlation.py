@@ -174,6 +174,7 @@ def walsh_diagram(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     for value in ticks:
         px, _ = plot.at(value, plot.y0)
         c.label((px, plot.h + 10.0), tick_text(value, step), align='Center', size=8)
+    crowded: list[str] = []
     end_rank = sorted(range(len(orbitals)), key=lambda i: orbitals[i]['energy'][0])
     occupied_left = set(end_rank[:(electrons + 1) // 2])
     for i, o in enumerate(orbitals):
@@ -186,12 +187,18 @@ def walsh_diagram(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         plot.polyline(pts, color=BLUE if i in occupied_left else None, dashed=i not in occupied_left)
         lx, ly = plot.at(xs[0], o['energy'][0])
         rx, ry = plot.at(xs[-1], o['energy'][-1])
-        c.place([((lx - 4.0, ly + d), 'Right', 'middle') for d in (0, -7, 7)], str(o.get('left', '')), size=8)
-        c.place([((rx + 4.0, ry + d), 'Left', 'middle') for d in (0, -7, 7, -14, 14)], str(o.get('right', '')), size=8)
+        # Levels that meet at an end share the space beside it: step the names apart.
+        offsets = (0, -7, 7, -14, 14, -21, 21)
+        for (x, y, side), name in (((lx - 4.0, ly, 'Right'), o.get('left', '')), ((rx + 4.0, ry, 'Left'), o.get('right', ''))):
+            if not str(name):
+                continue
+            _box, clear = c.place([((x, y + d), side, 'middle') for d in offsets], str(name), size=8)
+            if not clear:
+                crowded.append(f'the orbital label {name} overlaps other ink')
     report = {'diagram': 'walsh', 'electrons': electrons, 'total_energy': [round(t, 4) for t in totals],
               'preferred_x': xs[best], 'preferred': ('the low end' if best == 0 else 'the high end' if best == len(xs) - 1
                                                      else 'in between'),
-              'note': 'preset energies are qualitative; the trend, not the angle, is the result', 'warnings': []}
+              'note': 'preset energies are qualitative; the trend, not the angle, is the result', 'warnings': crowded}
     if spec.get('preset') is not None:
         report['geometry'] = 'linear' if xs[best] >= 170 else 'bent'
     return _result(c, output, report)

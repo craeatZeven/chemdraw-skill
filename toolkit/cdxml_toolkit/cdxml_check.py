@@ -62,6 +62,160 @@ def normalize_palette(palette: Iterable[str] | None):
     return tuple(out)
 
 
+def _run_markup(run) -> str:
+    face = int(run.get('face', '0') or 0) & 96
+    # 96 is ChemDraw's "formula" face (digits lowered), read here as plain text.
+    return ('{sub:%s}' if face == 32 else '{sup:%s}' if face == 64 else '%s') % (run.text or '')
+
+
+def _free_text_boxes(root) -> list[tuple[str, tuple[float, float, float, float]]]:
+    """Estimated boxes of captions that are not atom labels (ChemDraw computes the real ones)."""
+    from .scientific.canvas import caption_box
+    # Atom labels and the text of native objects (TLC plates, stoichiometry grids) place themselves.
+    atom_text = {id(t) for owner in ('fragment', 'objecttag') for item in root.iter(owner) for t in item.iter('t')}
+    boxes = []
+    for t in root.iter('t'):
+        if id(t) in atom_text or not t.get('p'):
+            continue
+        runs = list(t.iter('s'))
+        markup = ''.join(_run_markup(r) for r in runs)
+        if not markup.strip():
+            continue
+        if t.get('BoundingBox'):  # ChemDraw wrote its own measurement when it saved the file
+            v = [float(c) for c in t.get('BoundingBox').split()[:4]]
+            boxes.append((markup, (min(v[0], v[2]), min(v[1], v[3]), max(v[0], v[2]), max(v[1], v[3]))))
+            continue
+        x, y = (float(v) for v in t.get('p').split()[:2])
+        if x == 0 and y == 0:  # a placeholder position (table cells are placed by their table)
+            continue
+        size = max((float(r.get('size', 10) or 10) for r in runs), default=10.0)
+        boxes.append((markup, caption_box(x, y, markup, size, t.get('Justification', 'Left'))))
+    return boxes
+
+
+def _white_indices(root) -> set[str]:
+    """Colour indices that are white: 1, and colour-table entries (numbered from 2) of 1 1 1."""
+    white = {'1'}
+    for k, color in enumerate(root.findall('./colortable/color'), start=2):
+        if all(abs(float(color.get(c, 0)) - 1.0) < 1e-6 for c in 'rgb'):
+            white.add(str(k))
+    return white
+
+
+def _strokes(root) -> list[tuple[tuple[float, float], tuple[float, float], int]]:
+    """Straight pieces of the drawn lines, rectangles, straight arrows and curves, each with
+    the position of its element in drawing order."""
+    order = {id(el): k for k, el in enumerate(root.iter())}
+    pieces = []
+    for graphic in root.iter('graphic'):
+        if not graphic.get('BoundingBox'):
+            continue
+        k = order[id(graphic)]
+        v = [float(x) for x in graphic.get('BoundingBox').split()[:4]]
+        if graphic.get('GraphicType') == 'Line':
+            pieces.append(((v[0], v[1]), (v[2], v[3]), k))
+        elif graphic.get('GraphicType') == 'Rectangle':
+            corners = [(v[0], v[1]), (v[2], v[1]), (v[2], v[3]), (v[0], v[3])]
+            pieces += [(a, b, k) for a, b in zip(corners, corners[1:] + corners[:1])]
+    for arrow in root.iter('arrow'):
+        if arrow.get('Head3D') and arrow.get('Tail3D') and not arrow.get('Center3D'):
+            head = tuple(float(x) for x in arrow.get('Head3D').split()[:2])
+            tail = tuple(float(x) for x in arrow.get('Tail3D').split()[:2])
+            pieces.append((tail, head, order[id(arrow)]))
+    for curve in root.iter('curve'):
+        k = order[id(curve)]
+        v = [float(x) for x in curve.get('CurvePoints', '').split()]
+        pts = list(zip(v[0::2], v[1::2]))
+        # CurvePoints are (in-handle, anchor, out-handle) triples: one cubic Bezier per pair of anchors.
+        triples = [pts[i:i + 3] for i in range(0, len(pts) - 2, 3)]
+        for (_, a, out), (into, b, _) in zip(triples, triples[1:]):
+            samples = [tuple((1 - u) ** 3 * a[i] + 3 * (1 - u) ** 2 * u * out[i] + 3 * (1 - u) * u * u * into[i]
+                             + u ** 3 * b[i] for i in (0, 1)) for u in (n / 8 for n in range(9))]
+            pieces += [(p, q, k) for p, q in zip(samples, samples[1:])]
+    return pieces
+
+
+def _knockouts(root) -> list[tuple[tuple[float, float, float, float], int]]:
+    """White filled patches (box, drawing order): they hide whatever was drawn before them."""
+    order = {id(el): k for k, el in enumerate(root.iter())}
+    white = _white_indices(root)
+    patches = []
+    for el in root.iter():
+        if el.tag not in ('curve', 'graphic') or el.get('FillType') != 'Solid' or el.get('color', '0') not in white:
+            continue
+        if el.tag == 'curve':
+            v = [float(x) for x in el.get('CurvePoints', '').split()]
+            xs, ys = v[0::2], v[1::2]
+            if not xs:
+                continue
+            box = (min(xs), min(ys), max(xs), max(ys))
+        elif el.get('BoundingBox'):
+            v = [float(x) for x in el.get('BoundingBox').split()[:4]]
+            box = (min(v[0], v[2]), min(v[1], v[3]), max(v[0], v[2]), max(v[1], v[3]))
+        else:
+            continue
+        patches.append((box, order[id(el)]))
+    return patches
+
+
+def _crosses(a, b, box) -> bool:
+    """Whether the segment a-b enters ``box`` (Liang-Barsky)."""
+    x0, y0, x1, y1 = box
+    if x1 <= x0 or y1 <= y0:
+        return False
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    t0, t1 = 0.0, 1.0
+    for p, q in ((-dx, a[0] - x0), (dx, x1 - a[0]), (-dy, a[1] - y0), (dy, y1 - a[1])):
+        if p == 0:
+            if q < 0:
+                return False
+            continue
+        r = q / p
+        if p < 0:
+            t0 = max(t0, r)
+        else:
+            t1 = min(t1, r)
+        if t0 > t1:
+            return False
+    return True
+
+
+def text_over_ink(source, inset: float = 1.0) -> list[str]:
+    """Captions (not atom labels) that a line, arrow, curve or another caption runs through.
+
+    A line drawn before a white filled patch that covers the caption does not count. Text
+    boxes are estimated from the font metrics ChemDraw uses for Arial and SimSun, so a
+    graze within ``inset`` points of a box edge is not counted.
+    """
+    if hasattr(source, 'iter'):
+        root = source
+    else:
+        text = str(source)
+        if not text.lstrip().startswith('<'):
+            text = Path(text).read_text(encoding='utf-8-sig')
+        body = re.sub(r'^\s*<\?xml[^>]*\?>', '', text, count=1)
+        root = ET.fromstring(re.sub(r'<!DOCTYPE[^>]*>', '', body, count=1).encode('utf-8'))
+    boxes = _free_text_boxes(root)
+    pieces = _strokes(root)
+    patches = _knockouts(root)
+    found = []
+    for markup, (x0, y0, x1, y1) in boxes:
+        inner = (x0 + inset, y0 + inset, x1 - inset, y1 - inset)
+        # A stroke drawn before a white patch that covers the caption is hidden by it.
+        covers = [k for (px0, py0, px1, py1), k in patches
+                  if px0 <= x0 + inset and py0 <= y0 + inset and px1 >= x1 - inset and py1 >= y1 - inset]
+        hidden = max(covers, default=-1)
+        if any(order > hidden and _crosses(a, b, inner) for a, b, order in pieces):
+            found.append(f'a line runs through {markup!r}')
+    # Two captions' boxes include room for sub- and superscripts that seldom meet the other
+    # line's glyphs, so tight leading (lines 1.04 sizes apart) is allowed.
+    for i, (ma, a) in enumerate(boxes):
+        for mb, b in boxes[i + 1:]:
+            if min(a[2], b[2]) - max(a[0], b[0]) > inset and min(a[3], b[3]) - max(a[1], b[1]) > 1.5 * inset:
+                found.append(f'{ma!r} overlaps {mb!r}')
+    return found
+
+
 def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile',
                 allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03,
                 ignore: Iterable[str] = ()) -> dict[str, Any]:
@@ -265,6 +419,10 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
             need = pages_needed(width, height)
             _issue(warnings, 'text_may_wrap', f'the drawing reaches x = {right:.0f} pt but the page is {pages:g} page(s) '
                                               f'wide; ChemDraw may wrap text there (set WidthPages="{need[0]}")')
+    crowded = text_over_ink(root)
+    if crowded:
+        _issue(warnings, 'text_over_ink', f'{len(crowded)} caption(s) sit on other ink: ' + '; '.join(crowded[:5]),
+               cases=crowded)
     summary: dict[str, Any] = {'fragments': fragments, 'colors': used, 'text_sizes': {f'{k:g}': v for k, v in sizes.items()}}
     if lengths:
         median = statistics.median(lengths)

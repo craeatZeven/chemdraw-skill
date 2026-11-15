@@ -182,6 +182,7 @@ def potential_surface(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             if len(line) > 1:
                 pts = [plot.at(x, y) for x, y in line]
                 c.path(pts)
+                c.block_path(pts, 0.8)
                 drawn += 1
     if spec.get('path'):
         plot.polyline([(float(p[0]), float(p[1])) for p in spec['path']], color=ORANGE)
@@ -204,6 +205,7 @@ def potential_surface(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         p['name'] = f'M{k}'
     for k, p in enumerate(saddles, start=1):
         p['name'] = f'TS{k}'
+    crowded: list[str] = []
     if spec.get('mark', True):
         for p in points:
             px, py = plot.at(p['x'], p['y'])
@@ -212,12 +214,22 @@ def potential_surface(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             else:
                 c.segment((px - 2.5, py - 2.5), (px + 2.5, py + 2.5), color=ORANGE)
                 c.segment((px - 2.5, py + 2.5), (px + 2.5, py - 2.5), color=ORANGE)
-            name = p['name'] + ('{sup:‡}' if p['kind'] != 'minimum' else '')
-            c.place([((px + 4.0, py - 4.0), 'Left', 'baseline'), ((px - 4.0, py - 4.0), 'Right', 'baseline'),
-                     ((px + 4.0, py + 10.0), 'Left', 'baseline'), ((px - 4.0, py + 10.0), 'Right', 'baseline')],
-                    name, size=8)
+            c.block((px - 2.5, py - 2.5, px + 2.5, py + 2.5), 0.5)
+    if spec.get('mark', True):
+        # Contours crowd every stationary point: try spots around it at growing distance; when
+        # none is clear, the least crowded one gets a white patch that hides the contours under it.
+        for p in points:
+            px, py = plot.at(p['x'], p['y'])
+            name = p['name'] + ('{sup:\u2021}' if p['kind'] != 'minimum' else '')
+            spots = []
+            for r in (4.0, 7.0, 10.0):
+                spots += [((px + r, py - r), 'Left', 'baseline'), ((px - r, py - r), 'Right', 'baseline'),
+                          ((px + r, py + r + 6.0), 'Left', 'baseline'), ((px - r, py + r + 6.0), 'Right', 'baseline'),
+                          ((px + r + 1.0, py), 'Left', 'middle'), ((px - r - 1.0, py), 'Right', 'middle')]
+            c.place(spots, name, size=8, knockout=True)
     report = {'diagram': 'potential_surface', 'levels': len(levels), 'contour_lines': drawn,
-              'stationary_points': points, 'warnings': [] if drawn else ['no contour line falls inside the plot']}
+              'stationary_points': points,
+              'warnings': crowded if drawn else ['no contour line falls inside the plot']}
     if minima and saddles:
         report['barriers_from_global_minimum'] = {s['name']: round(s['energy'] - minima[0]['energy'], 3) for s in saddles}
     return _result(c, output, report)
