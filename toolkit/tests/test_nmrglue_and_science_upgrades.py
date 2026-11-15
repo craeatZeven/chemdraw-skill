@@ -527,3 +527,11 @@ def test_site_chem_js_expanded_valence_sulfur_and_phosphorus():
     assert data["overS"] is None
     assert data["pOxide"] == "CP(=O)(C)C"
 
+
+
+def test_a_missing_spectrum_is_named_rather_than_blamed_on_its_format(tmp_path):
+    from cdxml_toolkit.scientific.spectra import read_spectrum
+    missing = tmp_path / 'source-nmr' / '1d_data.ft'
+    with pytest.raises(ValueError, match=r'spectrum not found: .*1d_data\.ft') as raised:
+        read_spectrum(missing)
+    assert 'Supported spectra' not in str(raised.value)

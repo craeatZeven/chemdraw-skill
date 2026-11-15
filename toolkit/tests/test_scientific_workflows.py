@@ -153,3 +153,12 @@ def test_tlc_native_dimensions_are_fixed_point(tmp_path):
     assert int(spot.get('Width'))==8*65536
     assert int(spot.get('Height'))==5*65536
     assert int(spot.get('Tail'))==2*65536
+
+
+def test_a_missing_clipware_template_says_where_templates_come_from(tmp_path):
+    from cdxml_toolkit.scientific.apparatus import draw_apparatus
+    spec = {'template_files': {'glassware': str(tmp_path / 'native-templates' / 'clipware-1.cdxml')},
+            'components': [{'id': 'flask', 'template': 'glassware', 'page': 14, 'position': [0, 0]}]}
+    with pytest.raises(ValueError, match=r"template 'glassware' not found: .*clipware-1\.cdxml.*CTP"):
+        draw_apparatus(spec, tmp_path / 'a.cdxml')
+    assert not (tmp_path / 'a.cdxml').exists()
