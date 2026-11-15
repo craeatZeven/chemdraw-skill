@@ -58,18 +58,38 @@ Each figure has three files:
 
 ## What this run did not cover
 
-- **nmr** — the example shipped for it (`toolkit/docs/examples/scientific/nmr.json`) is a
-  parameter file, but `scientific nmr` takes a spectra file (CSV, NMRPipe, JCAMP-DX,
-  Bruker, JEOL, Varian). Nothing was rendered for it here.
-- **apparatus** — needs `native-templates/clipware-1.cdxml`, which is not in the tree on
-  this branch.
+- **nmr** — `toolkit/docs/examples/scientific/nmr.json` is the right kind of file (a spec whose
+  `input` names a spectrum), but the spectrum it names, `source-nmr/1d_data.ft` from the
+  [nmrglue integration example](https://nmrglue.readthedocs.io/en/latest/examples/integrate_1d.html),
+  is not bundled. Download it beside the spec, or point `input` at another spectrum (CSV,
+  NMRPipe, JCAMP-DX, Bruker, JEOL, Varian). A missing spectrum is now reported as
+  `spectrum not found: <path>`.
+- **apparatus** — the Clipware libraries (`clipware-1.cdxml`, `clipware-2.cdxml`) are licensed
+  with ChemDraw and never shipped. Convert a copy of each CTP file from the ChemDraw installation
+  (`cdx.py call convert_cdx_cdxml`) into `native-templates/`; see
+  [laboratory drawings](../../references/native-laboratory-drawings.md). A missing template is
+  now reported by name with that instruction.
 - **substrate scope** — `kind: "scope"` writes a project folder rather than one file, so it
   stays in `assets/preview/substrate-scope.png` instead of being duplicated here.
 
-## Note for whoever runs this again
+## Renders to redo
 
-`cdx.py scientific` prints its report to stdout and crashes with `UnicodeEncodeError`
-when the run contains a character the active console code page cannot encode (a true
-minus sign `−` is enough on a GBK console). The CDXML is already written at that point,
-so the failure only costs the PNG: re-render with `cdx.py render <file>.cdxml`.
+`cdx.py check` now reports captions that a line, arrow, curve or other caption runs through
+(`text_over_ink`). On these renders it finds six figures with such captions, all since fixed in the
+generators:
 
+| Figure | What runs through a caption |
+| --- | --- |
+| `binary_phase_diagram` | tie lines through two field names; the eutectic temperature under the leader of β |
+| `binary_phase_diagram_isomorphous` | the L + α leader through the point label B |
+| `mo_diagram` | spin arrows into the labels under the centre-column levels |
+| `pourbaix` | the H₂O/H₂ line through its own label; a water line through Fe₂O₃ |
+| `potential_surface` | contour lines through the stationary-point labels |
+| `tanabe_sugano` | stacked term labels at the right edge touching each other |
+
+Caption widths now follow Arial's metrics, so every diagram's spacing moves slightly: re-render
+the whole set rather than only these six.
+
+`cdx.py scientific` no longer stops when the console code page cannot encode a character of
+its report (a true minus sign on a GBK console): such characters are printed as `\uXXXX`
+escapes, and the PNG is rendered.

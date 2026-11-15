@@ -25,11 +25,15 @@ def markdown_link_targets(text: str) -> list[str]:
 class DistributionTests(unittest.TestCase):
     CHINESE_DOCUMENTS = {"README.zh-cn.md", "docs/guide.zh-cn.md", "docs/zh-cn.md"}
 
-    # Demo fixtures that contain Chinese on purpose (the Chinese annotation in the
-    # preview figure). They are not translations, so they are kept out of
-    # CHINESE_DOCUMENTS.
+    # Demo fixtures that contain Chinese on purpose: the Chinese annotation in the
+    # preview figure, and the coverage renders of the examples with Chinese captions
+    # (each as written and as ChemDraw saved it). They are not translations, so they
+    # are kept out of CHINESE_DOCUMENTS.
     CHINESE_FIXTURES = {
         "skill/chemdraw/assets/preview/build.json",
+        *(f"skill/chemdraw/assets/coverage/{name}{suffix}"
+          for name in ("energy_profile_catalysis_cn", "energy_profile_two_step_cn", "flowchart", "preview_build")
+          for suffix in (".cdxml", ".native.cdxml")),
     }
     # The landing page (docs/website.md) has a Chinese home page and error page.
     CHINESE_PAGES = {"site/index.html", "site/404.html", "site/lab/index.html", "site/words.zh.js", "site/daily.zh.js"}
