@@ -1079,6 +1079,26 @@ def test_scientific_diagram_writes_cdxml_and_report(tmp_path, capsys):
     assert not (tmp_path / 'e.cdxml').exists()
 
 
+def test_report_survives_a_console_that_cannot_encode_it(tmp_path, monkeypatch):
+    # A Chinese Windows console writes GBK, which has no true minus sign; the report used to
+    # crash the command after the CDXML was written and before the PNG was rendered.
+    import io
+    console = io.TextIOWrapper(io.BytesIO(), encoding='gbk')
+    monkeypatch.setattr(sys, 'stdout', console)
+    spec = tmp_path / 'p.json'
+    spec.write_text(json.dumps({'unit': 'kJ/mol', 'species': [
+        {'id': 'A', 'label': 'A', 'energy': 0}, {'id': 'B\u2212', 'label': 'B\u2212', 'energy': -5}]}),
+        encoding='utf-8')
+    out, report = tmp_path / 'p.cdxml', tmp_path / 'p-report.json'
+    with mock.patch.object(cdx, 'cmd_render', return_value=0) as render:
+        assert cdx.main(['scientific', 'energy_profile', str(spec), str(out), '--report', str(report),
+                         '--render']) == 0
+    assert render.called and out.is_file()
+    console.flush()
+    printed = console.buffer.getvalue().decode('gbk')
+    assert json.loads(printed) == json.loads(report.read_text(encoding='utf-8'))
+
+
 def test_broken_venv_is_named(tmp_path, monkeypatch):
     venv = tmp_path / 'shared'
     venv.mkdir()

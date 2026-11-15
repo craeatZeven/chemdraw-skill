@@ -532,9 +532,9 @@ def cmd_scientific(ns):
         # do not add up) is reported, not drawn.
         raise SystemExit(f'{spec}: {exc}') from None
     text = json.dumps(out, ensure_ascii=False, indent=2)
-    print(text)
     if report_path:
         Path(report_path).write_text(text + '\n', encoding='utf-8')
+    print(text)
     produced = out.get('output_path') if isinstance(out, dict) else None
     if getattr(ns, 'render', False) and produced and str(produced).lower().endswith('.cdxml'):
         return cmd_render(argparse.Namespace(files=[str(produced)], out_dir=None, replace=False))
@@ -1141,8 +1141,23 @@ def cmd_predict(ns):
     return _emit(tool, _worker(tool, kwargs), getattr(ns, 'out', None))
 
 
+def _tolerant_console():
+    """Let reports reach a console whose code page lacks some of their characters.
+
+    A Chinese Windows console encodes GBK, which has no true minus sign; printing a report
+    then raised UnicodeEncodeError after the drawing was written. Characters the console
+    cannot encode are written as \\uXXXX escapes instead, which keeps JSON output valid.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors='backslashreplace')
+        except (AttributeError, ValueError, OSError):
+            pass
+
+
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else list(argv)
+    _tolerant_console()
     # `sig` reads a generated reference and help is static: both work before a runtime exists.
     if argv[:1] not in (['sig'], ['-h'], ['--help'], []):
         _ensure_runtime(argv)
