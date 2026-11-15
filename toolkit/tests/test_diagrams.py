@@ -234,8 +234,12 @@ def _benzene():
     import math
     atoms = ''.join(f'<n id="{i + 1}" p="{50 + 14.4 * math.cos(math.pi / 3 * i):.2f} '
                     f'{50 + 14.4 * math.sin(math.pi / 3 * i):.2f}"/>' for i in range(6))
-    bonds = ''.join(f'<b id="{10 + i}" B="{i + 1}" E="{(i + 1) % 6 + 1}"{" Order=\"2\"" if i % 2 == 0 else ""}/>'
-                    for i in range(6))
+    # A backslash inside an f-string expression is a syntax error before Python 3.12,
+    # so the optional double bond attribute is built outside the f-string.
+    bonds = ''.join(
+        '<b id="%d" B="%d" E="%d"%s/>' % (10 + i, i + 1, (i + 1) % 6 + 1,
+                                          ' Order="2"' if i % 2 == 0 else '')
+        for i in range(6))
     return ('<?xml version="1.0" encoding="UTF-8" ?><CDXML BondLength="14.4"><colortable><color r="0" g="0" b="1"/>'
             '</colortable><fonttable><font id="3" charset="iso-8859-1" name="Arial"/></fonttable><page id="1">'
             f'<fragment id="100">{atoms}{bonds}</fragment><t id="200" p="40 80" color="2"><s font="3" size="10">A</s></t>'

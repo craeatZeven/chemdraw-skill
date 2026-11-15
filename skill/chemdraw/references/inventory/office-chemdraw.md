@@ -24,17 +24,17 @@
 
 ## `chemdraw.cdx_converter`
 
-- **function**, line 384: `batch_convert_files(input_paths: list, method: str = 'auto') -> dict` - Convert multiple CDX/CDXML files in a single COM session.
-- **function**, line 372: `convert_cdx_to_cdxml(cdx_data: bytes, method: str = 'auto') -> str` - Convert raw CDX bytes to CDXML string.
-- **function**, line 378: `convert_cdxml_to_cdx(cdxml_data: str, method: str = 'auto') -> bytes` - Convert CDXML string to raw CDX bytes.
-- **function**, line 465: `convert_file(input_path: str, output_path: Optional[str] = None, method: str = 'auto') -> str` - Convert a file between CDX and CDXML. Returns output path.
-- **function**, line 79: `sanitise_cdxml(cdxml: str) -> str` - Remove content that makes ChemDraw's strict XML parser reject the file.
-- **function**, line 111: `sanitise_cdxml_file(path: str) -> None` - Sanitise a CDXML file in-place.
+- **function**, line 385: `batch_convert_files(input_paths: list, method: str = 'auto') -> dict` - Convert multiple CDX/CDXML files in a single COM session.
+- **function**, line 373: `convert_cdx_to_cdxml(cdx_data: bytes, method: str = 'auto') -> str` - Convert raw CDX bytes to CDXML string.
+- **function**, line 379: `convert_cdxml_to_cdx(cdxml_data: str, method: str = 'auto') -> bytes` - Convert CDXML string to raw CDX bytes.
+- **function**, line 466: `convert_file(input_path: str, output_path: Optional[str] = None, method: str = 'auto') -> str` - Convert a file between CDX and CDXML. Returns output path.
+- **function**, line 80: `sanitise_cdxml(cdxml: str) -> str` - Remove content that makes ChemDraw's strict XML parser reject the file.
+- **function**, line 112: `sanitise_cdxml_file(path: str) -> None` - Sanitise a CDXML file in-place.
 
 ## `chemdraw.cdxml_to_image`
 
-- **function**, line 124: `batch_render(cdxml_paths: list, png_dpi: int = 300) -> dict` - Render multiple CDXML files to PNG in a single COM session.
-- **function**, line 51: `cdxml_to_image(cdxml_path: str, output_path: Optional[str] = None, png_dpi: int = 300) -> str` - Render a CDXML file to PNG or SVG using ChemDraw via COM automation.
+- **function**, line 125: `batch_render(cdxml_paths: list, png_dpi: int = 300) -> dict` - Render multiple CDXML files to PNG in a single COM session.
+- **function**, line 52: `cdxml_to_image(cdxml_path: str, output_path: Optional[str] = None, png_dpi: int = 300) -> str` - Render a CDXML file to PNG or SVG using ChemDraw via COM automation.
 
 ## `chemdraw.cdxml_to_image_rdkit`
 
@@ -42,23 +42,23 @@
 
 ## `chemdraw.chemscript_bridge`
 
-- **class**, line 292: `ChemScriptBridge` - High-level Python interface to ChemScript via a 32-bit subprocess server.
-- **method**, line 463: `ChemScriptBridge.cleanup(input_path: str, output: str = None) -> str` - Clean up a structure file — normalize coordinates, bond lengths, etc.
-- **method**, line 381: `ChemScriptBridge.close()` - Shut down the server.
-- **method**, line 518: `ChemScriptBridge.contains_substructure(target: str, query: str) -> bool` - Check if target contains query as a substructure.
-- **method**, line 407: `ChemScriptBridge.convert_file(input_path: str, output_path: str) -> dict` - Convert a chemistry file between formats.
-- **method**, line 494: `ChemScriptBridge.get_formula(source: str) -> str` - Get molecular formula for a structure file or SMILES string.
-- **method**, line 504: `ChemScriptBridge.get_info(source: str) -> dict` - Get full chemical info: name, formula, SMILES, InChI, atom/bond count.
-- **method**, line 484: `ChemScriptBridge.get_name(source: str) -> str` - Get IUPAC name for a structure file or SMILES string.
-- **method**, line 573: `ChemScriptBridge.largest_common_substructure(mol1: str, mol2: str) -> dict` - Find the largest common substructure between two molecules.
-- **method**, line 552: `ChemScriptBridge.load_reaction(source: str, include_cdxml: bool = False) -> dict` - Load a reaction file and return component information.
-- **method**, line 744: `ChemScriptBridge.mimetypes() -> List[str]` - List all supported mimetypes.
-- **method**, line 423: `ChemScriptBridge.name_to_cdxml(name: str, output: str = None) -> str` - Convert a chemical name to CDXML string.
-- **method**, line 594: `ChemScriptBridge.overlay(source: str, target: str, source_format: str = None, target_format: str = None) -> Tuple[str, bool]` - Overlay (2D-align) a molecule onto a reference molecule.
-- **method**, line 443: `ChemScriptBridge.smiles_to_cdxml(smiles: str, output: str = None) -> str` - Convert a SMILES string to CDXML.
-- **method**, line 622: `ChemScriptBridge.substructure_align(query: str, target: str, query_format: str = None, target_format: str = None) -> Optional[List]` - Align a small molecule (query) to its substructure match in a larger molecule (target).
-- **method**, line 535: `ChemScriptBridge.substructure_search(target: str, query: str) -> dict` - Perform atom-by-atom substructure search.
-- **method**, line 719: `ChemScriptBridge.write_data(source: str, target_format: str, source_format: str = None) -> str` - Convert a structure to a specific format string.
+- **class**, line 293: `ChemScriptBridge` - High-level Python interface to ChemScript via a 32-bit subprocess server.
+- **method**, line 464: `ChemScriptBridge.cleanup(input_path: str, output: str = None) -> str` - Clean up a structure file — normalize coordinates, bond lengths, etc.
+- **method**, line 382: `ChemScriptBridge.close()` - Shut down the server.
+- **method**, line 519: `ChemScriptBridge.contains_substructure(target: str, query: str) -> bool` - Check if target contains query as a substructure.
+- **method**, line 408: `ChemScriptBridge.convert_file(input_path: str, output_path: str) -> dict` - Convert a chemistry file between formats.
+- **method**, line 495: `ChemScriptBridge.get_formula(source: str) -> str` - Get molecular formula for a structure file or SMILES string.
+- **method**, line 505: `ChemScriptBridge.get_info(source: str) -> dict` - Get full chemical info: name, formula, SMILES, InChI, atom/bond count.
+- **method**, line 485: `ChemScriptBridge.get_name(source: str) -> str` - Get IUPAC name for a structure file or SMILES string.
+- **method**, line 574: `ChemScriptBridge.largest_common_substructure(mol1: str, mol2: str) -> dict` - Find the largest common substructure between two molecules.
+- **method**, line 553: `ChemScriptBridge.load_reaction(source: str, include_cdxml: bool = False) -> dict` - Load a reaction file and return component information.
+- **method**, line 745: `ChemScriptBridge.mimetypes() -> List[str]` - List all supported mimetypes.
+- **method**, line 424: `ChemScriptBridge.name_to_cdxml(name: str, output: str = None) -> str` - Convert a chemical name to CDXML string.
+- **method**, line 595: `ChemScriptBridge.overlay(source: str, target: str, source_format: str = None, target_format: str = None) -> Tuple[str, bool]` - Overlay (2D-align) a molecule onto a reference molecule.
+- **method**, line 444: `ChemScriptBridge.smiles_to_cdxml(smiles: str, output: str = None) -> str` - Convert a SMILES string to CDXML.
+- **method**, line 623: `ChemScriptBridge.substructure_align(query: str, target: str, query_format: str = None, target_format: str = None) -> Optional[List]` - Align a small molecule (query) to its substructure match in a larger molecule (target).
+- **method**, line 536: `ChemScriptBridge.substructure_search(target: str, query: str) -> dict` - Perform atom-by-atom substructure search.
+- **method**, line 720: `ChemScriptBridge.write_data(source: str, target_format: str, source_format: str = None) -> str` - Convert a structure to a specific format string.
 
 ## `chemdraw.chemscript_mac`
 
@@ -126,6 +126,11 @@
 - **function**, line 650: `terminate_process(pid: Optional[int], grace_seconds: float = 5) -> None` - SIGTERM ``pid``, then SIGKILL it if it is still alive after the grace period.
 - **function**, line 698: `unregister_launch(pid: Optional[int]) -> None` - No public docstring in the audited version.
 
+## `chemdraw.progid`
+
+- **function**, line 36: `chemdraw_progid() -> str` - The ProgID to dispatch: ``$CHEMDRAW_PROGID``, else the first registered one.
+- **function**, line 15: `registered(progid: str) -> bool` - Whether ``progid`` has a CLSID under HKEY_CLASSES_ROOT (always False off Windows).
+
 ## `chemdraw.stoichiometry_grid`
 
 - **function**, line 274: `analyze(source: str, output_path: str | None = None, *, open_result: bool = False) -> dict` - Run ChemDraw's Analyze Stoichiometry on a reaction and read the grid it draws.
@@ -176,12 +181,12 @@
 
 ## `office.ole_embedder`
 
-- **function**, line 92: `batch_convert(cdxml_paths)` - Open ChemDraw once and convert all CDXML files to CDX + EMF.
-- **function**, line 746: `build_docx(items, output_path)` - Create a DOCX with editable ChemDraw OLE objects, one per paragraph.
-- **function**, line 349: `build_ole_compound_file(cdx_data)` - Build a CFB file matching the known-good layout from Office COM.
-- **function**, line 541: `build_pptx(items, output_path)` - Create a PPTX with one editable ChemDraw OLE object per slide.
-- **function**, line 303: `content_size_emu(item, margin_pt = 0.0, scale = 1.02)` - OLE display size for one batch_convert() result.
-- **function**, line 215: `get_cdxml_content_size(cdxml_path, margin_pt = 0.0, scale = 1.02)` - Compute OLE display dimensions from CDXML content BoundingBox.
+- **function**, line 93: `batch_convert(cdxml_paths)` - Open ChemDraw once and convert all CDXML files to CDX + EMF.
+- **function**, line 747: `build_docx(items, output_path)` - Create a DOCX with editable ChemDraw OLE objects, one per paragraph.
+- **function**, line 350: `build_ole_compound_file(cdx_data)` - Build a CFB file matching the known-good layout from Office COM.
+- **function**, line 542: `build_pptx(items, output_path)` - Create a PPTX with one editable ChemDraw OLE object per slide.
+- **function**, line 304: `content_size_emu(item, margin_pt = 0.0, scale = 1.02)` - OLE display size for one batch_convert() result.
+- **function**, line 216: `get_cdxml_content_size(cdxml_path, margin_pt = 0.0, scale = 1.02)` - Compute OLE display dimensions from CDXML content BoundingBox.
 
 ## `office.ole_extractor`
 

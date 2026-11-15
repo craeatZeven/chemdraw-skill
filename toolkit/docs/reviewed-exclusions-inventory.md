@@ -11,12 +11,12 @@
 
 ## `catalog.cdxml`
 
-- **function**, line 100: `binary_names(paths: Iterable[Path], names: Iterable[str]) -> set[str]` - Names that occur as standalone ASCII strings in the given binaries.
-- **function**, line 112: `build_catalog(observed: dict[str, Any], *, binary_names: set[str], candidates: Iterable[str] = CANDIDATES, fixtures: Optional[list[dict[str, Any]]] = None, verified_on: str = 'unverified') -> dict[str, Any]` - No public docstring in the audited version.
-- **function**, line 267: `dump(catalog: dict[str, Any]) -> str` - No public docstring in the audited version.
-- **function**, line 244: `extract_live(workdir, *, verified_on: Optional[str] = None) -> dict[str, Any]` - Scan the CDXML ChemDraw installs, plus what it writes for the bundled CDX files and fixtures.
-- **function**, line 54: `scan_documents(paths: Iterable[Path]) -> dict[str, Any]` - Collect elements, attributes, nesting and value shapes from CDXML files.
-- **function**, line 41: `summarise_values(values: set[str]) -> dict[str, Any]` - Describe the shape of an attribute's observed values without keeping free text.
+- **function**, line 101: `binary_names(paths: Iterable[Path], names: Iterable[str]) -> set[str]` - Names that occur as standalone ASCII strings in the given binaries.
+- **function**, line 113: `build_catalog(observed: dict[str, Any], *, binary_names: set[str], candidates: Iterable[str] = CANDIDATES, fixtures: Optional[list[dict[str, Any]]] = None, verified_on: str = 'unverified') -> dict[str, Any]` - No public docstring in the audited version.
+- **function**, line 268: `dump(catalog: dict[str, Any]) -> str` - No public docstring in the audited version.
+- **function**, line 245: `extract_live(workdir, *, verified_on: Optional[str] = None) -> dict[str, Any]` - Scan the CDXML ChemDraw installs, plus what it writes for the bundled CDX files and fixtures.
+- **function**, line 55: `scan_documents(paths: Iterable[Path]) -> dict[str, Any]` - Collect elements, attributes, nesting and value shapes from CDXML files.
+- **function**, line 42: `summarise_values(values: set[str]) -> dict[str, Any]` - Describe the shape of an attribute's observed values without keeping free text.
 
 ## `catalog.chemscript`
 
@@ -45,10 +45,10 @@
 
 ## `catalog.menu`
 
-- **function**, line 24: `build_catalog(raw: list[dict[str, Any]], *, verified_on: str = 'unverified') -> dict[str, Any]` - Turn the raw ``[{menu, items: [{caption, command_id}]}]`` walk into the committed shape.
-- **function**, line 108: `dump(catalog: dict[str, Any]) -> str` - No public docstring in the audited version.
-- **function**, line 82: `extract_live(*, verified_on: Optional[str] = None) -> dict[str, Any]` - Start a private ChemDraw (Windows), read its menus and quit it.
-- **function**, line 57: `find_command(catalog: dict[str, Any], caption: str) -> Optional[tuple[str, int]]` - Return ``(menu caption, command id)`` for a menu item caption, ignoring case.
+- **function**, line 25: `build_catalog(raw: list[dict[str, Any]], *, verified_on: str = 'unverified') -> dict[str, Any]` - Turn the raw ``[{menu, items: [{caption, command_id}]}]`` walk into the committed shape.
+- **function**, line 109: `dump(catalog: dict[str, Any]) -> str` - No public docstring in the audited version.
+- **function**, line 83: `extract_live(*, verified_on: Optional[str] = None) -> dict[str, Any]` - Start a private ChemDraw (Windows), read its menus and quit it.
+- **function**, line 58: `find_command(catalog: dict[str, Any], caption: str) -> Optional[tuple[str, int]]` - Return ``(menu caption, command id)`` for a menu item caption, ignoring case.
 
 ## `catalog.recipes`
 
@@ -61,6 +61,22 @@
 ## `catalog.render`
 
 - **function**, line 345: `render_all(catalogs: dict[str, dict[str, Any]] | None = None, recipes: list[dict[str, Any]] | None = None, classification: dict[str, Any] | None = None) -> dict[str, str]` - No public docstring in the audited version.
+
+## `cdxml_check`
+
+- **function**, line 219: `check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile', allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03, ignore: Iterable[str] = ()) -> dict[str, Any]` - Check one CDXML file or text. Returns ``{"ok", "errors", "warnings", "summary"}``.
+- **function**, line 52: `normalize_palette(palette: Iterable[str] | None)` - No public docstring in the audited version.
+- **function**, line 38: `pages_needed(width, height)` - WidthPages and HeightPages that keep a drawing of this size from wrapping its text.
+- **function**, line 183: `text_over_ink(source, inset: float = 1.0) -> list[str]` - Captions (not atom labels) that a line, arrow, curve or another caption runs through.
+
+## `cdxml_compose`
+
+- **function**, line 283: `add_ring_circles(source, output = None, *, fragment_ids: Iterable[str] | None = None, ratio: float = 0.62) -> dict[str, Any]` - Redraw Kekule aromatic rings with a circle.
+- **function**, line 53: `content_box(elements: Iterable[ET.Element])` - Bounding box ``(x1, y1, x2, y2)`` of everything positioned inside ``elements``.
+- **function**, line 106: `merge_cdxml(parts: Sequence[Mapping[str, Any]], output = None, *, gap: float = 20.0, margin: float = 12.0) -> dict[str, Any]` - Put several CDXML drawings on one page.
+- **function**, line 34: `parse_cdxml(source) -> ET.Element` - Root element of a CDXML file path or CDXML text.
+- **function**, line 45: `serialize(root: ET.Element) -> str` - No public docstring in the audited version.
+- **function**, line 71: `translate(elements: Iterable[ET.Element], dx: float, dy: float) -> None` - Move everything inside ``elements`` by ``(dx, dy)``.
 
 ## `characterization`
 
@@ -332,13 +348,13 @@
 
 ## `mcp_runtime.figure_draw`
 
-- **function**, line 618: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
-- **function**, line 584: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
-- **function**, line 592: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
-- **function**, line 734: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
-- **function**, line 573: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
-- **function**, line 608: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
-- **function**, line 599: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
+- **function**, line 620: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
+- **function**, line 586: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
+- **function**, line 594: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
+- **function**, line 736: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
+- **function**, line 575: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
+- **function**, line 610: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
+- **function**, line 601: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
 
 ## `mcp_runtime.figure_editing`
 
@@ -408,7 +424,7 @@
 
 ## `mcp_runtime.live_chemdraw`
 
-- **function**, line 389: `live_chemdraw_session(action: str = 'status', *, cdxml: str = '', smiles: str = '', output_path: str = '') -> dict[str, Any]` - Interact non-destructively with an already-open user-facing desktop ChemDraw window.
+- **function**, line 390: `live_chemdraw_session(action: str = 'status', *, cdxml: str = '', smiles: str = '', output_path: str = '') -> dict[str, Any]` - Interact non-destructively with an already-open user-facing desktop ChemDraw window.
 
 ## `mcp_runtime.markush_tools`
 
@@ -453,11 +469,11 @@
 
 ## `mcp_runtime.native_renderer`
 
-- **class**, line 36: `NativeRenderError` - ChemDraw rendering failure with a stable public error code.
-- **class**, line 109: `NativeRenderSession` - Lazily acquire and reuse one ChemDraw application for native exports.
-- **method**, line 184: `NativeRenderSession.render(source: str | Path, destination: str | Path, dpi: int = 300) -> str` - No public docstring in the audited version.
-- **function**, line 255: `render_cdxml(source: str | Path, destination: str | Path, *, dpi: int = 300, timeout_seconds: int = 30) -> str` - No public docstring in the audited version.
-- **function**, line 31: `renderer_name() -> str` - The native renderer on this platform, as written in render receipts.
+- **class**, line 37: `NativeRenderError` - ChemDraw rendering failure with a stable public error code.
+- **class**, line 110: `NativeRenderSession` - Lazily acquire and reuse one ChemDraw application for native exports.
+- **method**, line 185: `NativeRenderSession.render(source: str | Path, destination: str | Path, dpi: int = 300) -> str` - No public docstring in the audited version.
+- **function**, line 256: `render_cdxml(source: str | Path, destination: str | Path, *, dpi: int = 300, timeout_seconds: int = 30) -> str` - No public docstring in the audited version.
+- **function**, line 32: `renderer_name() -> str` - The native renderer on this platform, as written in render receipts.
 
 ## `mcp_runtime.object_tools`
 
@@ -527,19 +543,19 @@
 
 ## `mcp_runtime.runtime_diagnostics`
 
-- **function**, line 657: `diagnose_runtime(run_native_probe: bool = False, run_office_probe: bool = False, run_chemscript_probe: bool = False) -> dict[str, Any]` - Report local runtime capabilities; native probes are explicit and temporary.
+- **function**, line 658: `diagnose_runtime(run_native_probe: bool = False, run_office_probe: bool = False, run_chemscript_probe: bool = False) -> dict[str, Any]` - Report local runtime capabilities; native probes are explicit and temporary.
 
 ## `mcp_runtime.runtime_discovery`
 
-- **class**, line 28: `Discovery` - No public docstring in the audited version.
-- **method**, line 32: `Discovery.to_dict() -> dict[str, str]` - No public docstring in the audited version.
-- **function**, line 299: `find_chemdraw(explicit: str | None = None) -> Discovery` - Find ChemDraw from explicit, environment, the macOS application, COM, then common paths.
-- **function**, line 144: `find_python(explicit: str | None = None) -> Discovery` - Find and probe Python using explicit, environment, then implicit paths.
-- **function**, line 185: `find_skill_root(explicit: str | None = None) -> Discovery` - No public docstring in the audited version.
+- **class**, line 29: `Discovery` - No public docstring in the audited version.
+- **method**, line 33: `Discovery.to_dict() -> dict[str, str]` - No public docstring in the audited version.
+- **function**, line 300: `find_chemdraw(explicit: str | None = None) -> Discovery` - Find ChemDraw from explicit, environment, the macOS application, COM, then common paths.
+- **function**, line 145: `find_python(explicit: str | None = None) -> Discovery` - Find and probe Python using explicit, environment, then implicit paths.
+- **function**, line 186: `find_skill_root(explicit: str | None = None) -> Discovery` - No public docstring in the audited version.
 
 ## `mcp_runtime.scientific_tool`
 
-- **function**, line 23: `scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, Any]` - Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr or plot.
+- **function**, line 47: `scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, Any]` - Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr, plot or a diagram.
 
 ## `mcp_runtime.structure_fidelity`
 
