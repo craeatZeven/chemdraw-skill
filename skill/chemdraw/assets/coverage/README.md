@@ -93,3 +93,40 @@ the whole set rather than only these six.
 `cdx.py scientific` no longer stops when the console code page cannot encode a character of
 its report (a true minus sign on a GBK console): such characters are printed as `\uXXXX`
 escapes, and the PNG is rendered.
+
+## Re-rendered after the caption-width change (2026-11-16)
+
+All 38 figures were regenerated with the caption metrics in place, and every one was
+put through ChemDraw again (`xml -> cdx -> xml`). The six in "Renders to redo" above,
+and the rest, were rebuilt rather than patched.
+
+`cdx.py check ... --allow-sizes 8,6 --palette any` over the 38 native files:
+**no `text_over_ink` warnings left.** What it does still report, and why:
+
+- `mechanism` and `preview_jacs_house_style` fail the default `acs1996` settings
+  because they are not drawn at ACS 1996 geometry (28 pt bond length for the
+  mechanism, the acs_jacs line width and 9.1 pt labels for the house style). Pass
+  `--profile` per figure or read those as expected.
+- `tlc` shows float rounding after the native re-save: `HashSpacing` 2.49 vs 2.5,
+  `MarginWidth` 1.59 vs 1.6.
+
+### What the re-save caught
+
+`preview_mechanism`: the condition label `H2O` is a plain text object in the generated
+file. After ChemDraw saves the drawing back, the label is still there **and** a
+free-standing water molecule has appeared at the same place (fragment `1052`, one
+oxygen with two hydrogens). The render is unchanged because the molecule sits behind
+the text, but the saved file now carries a chemical entity nobody drew.
+
+A condition label that reads as a formula can therefore become a structure on a native
+round-trip. Compare fragment counts in `.native.cdxml`, not just the picture.
+
+### The two figures still missing
+
+Both now fail with a message that names the file to supply (`70e003f`):
+
+- **apparatus** needs `toolkit/docs/examples/scientific/native-templates/clipware-1.cdxml`,
+  converted from the Clipware CTP in the ChemDraw installation. That template is
+  ChemDraw-licensed, so it must not be committed; only the render may be.
+- **nmr** needs `toolkit/docs/examples/scientific/source-nmr/1d_data.ft`, the nmrglue
+  example spectrum.
