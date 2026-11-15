@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 16.0.0.82"
+ BoundingBox="0 0 1620 2160"
+ WindowPosition="-2147483648 -2147483648"
+ WindowSize="-2147483648 -2147483648"
+ FractionalWidths="yes"
+ InterpretChemically="yes"
+ ShowAtomQuery="yes"
+ ShowAtomStereo="no"
+ ShowAtomEnhancedStereo="yes"
+ ShowAtomNumber="no"
+ ShowResidueID="no"
+ ShowBondQuery="yes"
+ ShowBondRxn="yes"
+ ShowBondStereo="no"
+ ShowTerminalCarbonLabels="no"
+ ShowNonTerminalCarbonLabels="no"
+ HideImplicitHydrogens="no"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="3"
+ CaptionSize="10"
+ HashSpacing="2.50"
+ MarginWidth="1.60"
+ LineWidth="0.60"
+ BoldWidth="2"
+ BondLength="14.40"
+ BondSpacing="18"
+ ChainAngle="120"
+ LabelJustification="Auto"
+ CaptionJustification="Left"
+ AminoAcidTermini="HOH"
+ ShowSequenceTermini="yes"
+ ShowSequenceBonds="yes"
+ ResidueWrapCount="40"
+ ResidueBlockCount="10"
+ ResidueZigZag="yes"
+ NumberResidueBlocks="no"
+ PrintMargins="36 36 36 36"
+ ChemPropName=""
+ ChemPropFormula="Chemical Formula: "
+ ChemPropExactMass="Exact Mass: "
+ ChemPropMolWt="Molecular Weight: "
+ ChemPropMOverZ="m/z: "
+ ChemPropAnalysis="Elemental Analysis: "
+ ChemPropBoilingPt="Boiling Point: "
+ ChemPropMeltingPt="Melting Point: "
+ ChemPropCritTemp="Critical Temp: "
+ ChemPropCritPres="Critical Pres: "
+ ChemPropCritVol="Critical Vol: "
+ ChemPropGibbs="Gibbs Energy: "
+ ChemPropLogP="Log P: "
+ ChemPropMR="MR: "
+ ChemPropHenry="Henry&apos;s Law: "
+ ChemPropEForm="Heat of Form: "
+ ChemProptPSA="tPSA: "
+ ChemPropCLogP="CLogP: "
+ ChemPropCMR="CMR: "
+ ChemPropLogS="LogS: "
+ ChemPropPKa="pKa: "
+ ChemPropID=""
+ color="0"
+ bgcolor="1"
+ RxnAutonumberStart="1"
+ RxnAutonumberConditions="no"
+ RxnAutonumberStyle="Roman"
+ RxnAutonumberFormat="(#)"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+</fonttable>
+<page id="1050" BoundingBox="0 0 1620 2160" HeaderPosition="36" FooterPosition="36" PrintTrimMarks="yes" HeightPages="3" WidthPages="3">
+<fragment id="1000" BoundingBox="103.30 136.73 128.24 143.93" Z="1001">
+<n id="1002" p="103.30 143.93" Z="1003"/>
+<n id="1004" p="115.77 136.73" Z="1005"/>
+<n id="1006" p="128.24 143.93" Z="1007" Element="8" NumHydrogens="0" NeedsClean="yes">
+<t id="1008" p="124.99 147.45" BoundingBox="125.24 136.41 131.24 143.93" LabelJustification="Left">
+<s font="3" size="10" color="0" face="96">O</s>
+</t>
+</n>
+<b id="1009" Z="1010" B="1002" E="1004"/>
+<b id="1011" Z="1012" B="1004" E="1006" Order="2"/>
+</fragment>
+<t id="1013" p="115.77 159.38" BoundingBox="113.42 150.28 118.12 161.38" Z="1014" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="0">1</s>
+</t>
+<t id="1015" p="140.54 143.83" BoundingBox="138.19 134.73 142.89 145.83" Z="1016" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="96">+</s>
+</t>
+<fragment id="1017" BoundingBox="152.84 140.33 152.84 140.33" Z="1018">
+<n id="1019" p="152.84 140.33" Z="1020" Element="8" NumHydrogens="1" NeedsClean="yes" Charge="-1">
+<t id="1021" p="149.59 143.85" BoundingBox="149.84 132.81 155.84 140.33" LabelJustification="Left">
+<s font="3" size="10" color="0" face="96">OH</s>
+<s font="3" size="10" color="0" face="64">-</s>
+</t>
+</n>
+</fragment>
+<arrow id="1022" BoundingBox="189.46 136.33 261.46 144.33" Z="1023" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="261.46 140.33 0" Tail3D="189.46 140.33 0" LineWidth="0.60"/>
+<t id="1024" p="225.46 134.33" BoundingBox="218.41 125.23 232.51 136.33" Z="1025" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="96">H</s><s font="3" size="10.0" color="0" face="32">2</s><s font="3" size="10.0" color="0" face="96">O</s>
+</t>
+<fragment id="1026" BoundingBox="279.16 129.53 304.10 151.13" Z="1027">
+<n id="1028" p="279.16 151.13" Z="1029"/>
+<n id="1030" p="291.63 143.93" Z="1031"/>
+<n id="1032" p="304.10 151.13" Z="1033" Element="8" NumHydrogens="0" NeedsClean="yes" Charge="-1">
+<t id="1034" p="300.85 154.65" BoundingBox="301.10 143.61 307.10 151.13" LabelJustification="Left">
+<s font="3" size="10" color="0" face="96">O</s>
+<s font="3" size="10" color="0" face="64">-</s>
+</t>
+</n>
+<n id="1035" p="291.63 129.53" Z="1036" Element="8" NumHydrogens="1" NeedsClean="yes">
+<t id="1037" p="288.38 133.05" BoundingBox="288.63 122.01 294.63 129.53" LabelJustification="Left">
+<s font="3" size="10" color="0" face="96">OH</s>
+</t>
+</n>
+<b id="1038" Z="1039" B="1028" E="1030"/>
+<b id="1040" Z="1041" B="1030" E="1032"/>
+<b id="1042" Z="1043" B="1030" E="1035"/>
+</fragment>
+<t id="1044" p="293.63 166.58" BoundingBox="291.28 157.48 295.98 168.58" Z="1045" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="0">2</s>
+</t>
+<curve id="1046" BoundingBox="117.40 120.00 149.16 134.38" Z="1047" CurvePoints="149.16 134.38 149.16 134.38 142.91 115.29 123.85 115.19 117.40 134.21 117.40 134.21" FillType="None" LineWidth="0.60" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250"/>
+<curve id="1048" BoundingBox="121.22 130.27 130.08 140.33" Z="1049" CurvePoints="122.01 140.33 122.01 140.33 119.25 128.52 124.10 126.63 130.08 137.17 130.08 137.17" FillType="None" LineWidth="0.60" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250"/>
+</page>
+</CDXML>
