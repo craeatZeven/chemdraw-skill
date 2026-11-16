@@ -26,6 +26,10 @@ coverage figure. Every item below has both.
 - After any change to the renderer, regenerate the affected coverage figures and the `.native`
   copies, then `cdx.py check assets/coverage/*.native.cdxml --allow-sizes 8,6 --palette any`.
 - Keep `scripts/validate_distribution.py` and the Skill suite green.
+- **Re-run `tests/runtime/test_draw_corpus.py` after any layout change.** Its fixtures record
+  what the layout did — pages, sizes, positions — not chemical correctness, so a change that
+  is an improvement still turns them red. When a fixture moves, record the new state with a
+  note saying why, and put the intention in the gaps above rather than in the fixture.
 - Do not add a figure type that has no corpus evidence: a convention invented from taste is
   what the corpus exists to prevent.
 
