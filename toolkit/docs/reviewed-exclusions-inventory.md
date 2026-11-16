@@ -364,30 +364,30 @@
 ## `mcp_runtime.figure_house`
 
 - **function**, line 76: `add_highlight_fills(brief: dict, grounded: list[dict], house: HouseStyle | None) -> str | None` - Ask the ring_fills decoration for the largest ring of each final product.
-- **function**, line 768: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
+- **function**, line 769: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
 - **function**, line 265: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
-- **function**, line 316: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
+- **function**, line 317: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
 - **function**, line 210: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
-- **function**, line 856: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
-- **function**, line 809: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
-- **function**, line 581: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
-- **function**, line 502: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
-- **function**, line 521: `condition_text(line: Any) -> str` - The plain text of a condition line.
+- **function**, line 857: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
+- **function**, line 810: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
+- **function**, line 582: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
+- **function**, line 503: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
+- **function**, line 522: `condition_text(line: Any) -> str` - The plain text of a condition line.
 - **function**, line 66: `final_products(brief: Mapping) -> list[str]` - No public docstring in the audited version.
 - **function**, line 37: `format_yield(text: str, template: str | None) -> str` - ``template`` filled with the number of a yield such as "85%"; other text is kept.
 - **function**, line 202: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
-- **function**, line 689: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
-- **function**, line 467: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
+- **function**, line 690: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
+- **function**, line 468: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
 - **function**, line 57: `split_conditions(above: list[str], below: list[str], house: HouseStyle | None) -> tuple[list, list]` - No public docstring in the audited version.
 - **function**, line 45: `step_yield(step: Mapping, house: HouseStyle | None) -> str | None` - The yield text drawn under the arrow, or None when the house style moves it.
 
 ## `mcp_runtime.figure_lint`
 
-- **function**, line 306: `lint_cdxml(cdxml_text: str, max_width: Optional[float] = None) -> List[Dict[str, Any]]` - Return a list of issues; an empty list means the geometry checks passed.
+- **function**, line 308: `lint_cdxml(cdxml_text: str, max_width: Optional[float] = None) -> List[Dict[str, Any]]` - Return a list of issues; an empty list means the geometry checks passed.
 
 ## `mcp_runtime.figure_mechanism`
 
-- **function**, line 645: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+- **function**, line 730: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
 
 ## `mcp_runtime.figure_scope`
 

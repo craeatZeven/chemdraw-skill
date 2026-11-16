@@ -323,7 +323,7 @@ def test_mechanism_arrows_take_the_card_colour_and_weight(tmp_path, monkeypatch)
     assert any("show_lone_pairs" in s and "guidance" in s for s in report["style"]["skipped"])
     root = ET.parse(report["output_path"]).getroot()
     rgb = [tuple(float(c.get(k)) for k in "rgb") for c in root.find("colortable").findall("color")]
-    curves = list(root.iter("curve"))
+    curves = [a for a in root.iter("arrow") if a.get("AngularSize")]  # ChemDraw arc arrows
     assert len(curves) == 2
     width = 0.75 * float(style_preset("nature")["attributes"]["LineWidth"])
     for curve in curves:

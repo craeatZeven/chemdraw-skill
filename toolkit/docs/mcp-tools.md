@@ -271,13 +271,14 @@ PNGs in png/ with render=True) and the report lists the pages.
 
 kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
 lists: species [{id, smiles or name, label?}] and steps [{substrates, products, above?,
-below?, arrow?, moves [{from, to, electrons?}]}] drawn in the order given. A move runs
+below?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs
 from {species, atom} or {species, bond [i, j]} to the same kind of end, in species that
 are substrates of the step; atoms are numbered from 0 in SMILES order (the report lists
-them) and electrons is 2 (full head, default) or 1 (half head). Nothing is inferred: a
-step without moves is refused, a two-electron arrow that starts on an atom without a lone
-pair or charge is drawn and flagged, and the arrows are checked for passing through
-another atom (one automatic re-layout). A step with one substrate and one product
+them), electrons is 2 (full head, default) or 1 (half head) and color a hex colour for
+that arrow. The arrows are ChemDraw arc arrows. Nothing is inferred: a step without
+moves is refused, a two-electron arrow that starts on an atom without a lone pair or
+charge is drawn and flagged, and each arrow is routed clear of the atoms and bonds it
+does not start or end at (one automatic re-layout if one still crosses). A step with one substrate and one product
 continues the same row with the intermediate drawn once; any other step starts a new
 row, with its substrates drawn again. show_atom_numbers=true prints the atom numbers on a
 draft so the moves can be checked.

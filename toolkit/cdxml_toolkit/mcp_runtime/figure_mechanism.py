@@ -3,14 +3,18 @@
 The brief names every species, the steps in the order they happen and, for
 each step, the electron moves as (from atom or bond, to atom or bond). This
 module places the structures, turns each move into a curved arrow from the
-drawn 2D coordinates, checks that no arrow runs through another atom (one
-automatic re-layout if one does), and reads the saved file back. It never
+drawn 2D coordinates, checks that no arrow runs through another atom or bond (one
+automatic re-layout if one does), and reads the saved file back. The arrows are
+ChemDraw's own arc arrows (an <arrow> with AngularSize), each in the colour its move
+asks for. It never
 decides which electrons move: a brief without moves is refused, and a move
 that looks wrong is drawn as given and reported.
 """
 from __future__ import annotations
 
 import math
+import re
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -33,7 +37,7 @@ from . import artifact_safety, figure_draw, figure_house, figure_lint
 MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers"}
 SPECIES_KEYS = {"id", "smiles", "name", "label"}
 STEP_KEYS = {"substrates", "products", "above", "below", "yield", "arrow", "moves"}
-MOVE_KEYS = {"from", "to", "electrons"}
+MOVE_KEYS = {"from", "to", "electrons", "color"}
 END_KEYS = {"species", "atom", "bond"}
 MECH_ARROWS = ("solid", "reversible", "resonance")
 
@@ -48,6 +52,7 @@ CARBON_REACH, LABEL_REACH = 3.5, 6.5   # how close a curve may pass an atom
 CARBON_STANDOFF, LABEL_STANDOFF = 3.0, 7.0   # where an arrow starts or stops from an atom
 HEIGHT_STEPS = (1.0, 1.4, 1.9, 2.5)   # arc heights tried, relative to the default
 LABEL_OBSTACLE = 8.0
+BOND_CLEARANCE = 2.0       # how close an arrow may pass a bond it does not start or end at
 
 
 # ---------------------------------------------------------------------------
@@ -169,6 +174,8 @@ def _move_errors(number: int, index: int, move: Any, substrates: list[str], ids:
         errors.append(f"{where}: unknown keys {extra}.")
     if move.get("electrons", 2) not in (1, 2) or isinstance(move.get("electrons"), bool):
         errors.append(f"{where}: electrons must be 1 or 2.")
+    if "color" in move and not (isinstance(move["color"], str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", move["color"])):
+        errors.append(f"{where}: color must be a hex colour like #2E7D32.")
     for side in ("from", "to"):
         errors += _end_errors(f"{where} {side}", move.get(side), ids)
         end = move.get(side)
@@ -258,6 +265,7 @@ class _Drawing:
     rows: list
     curves: list
     atoms: list
+    bonds: list = field(default_factory=list)
     notes: list = field(default_factory=list)
 
 
@@ -395,63 +403,107 @@ def _anchor(inst: _Inst, end: dict) -> tuple[tuple[float, float], float, set]:
     return ((a["x"] + b["x"]) / 2.0, (a["y"] + b["y"]) / 2.0), 0.0, {(inst.uid, i), (inst.uid, j)}
 
 
-def _bezier(p0, p3, side: float, scale: float):
-    dx, dy = p3[0] - p0[0], p3[1] - p0[1]
-    length = math.hypot(dx, dy) or 1.0
-    ux, uy = dx / length, dy / length
-    nx, ny = -uy * side, ux * side
-    height = min(max(0.45 * length, BULGE_MIN), BULGE_MAX) * scale
-    control = height / 0.75
-    p1 = (p0[0] + 0.2 * dx + nx * control, p0[1] + 0.2 * dy + ny * control)
-    p2 = (p3[0] - 0.2 * dx + nx * control, p3[1] - 0.2 * dy + ny * control)
-    return [p0, p1, p2, p3]
-
-
 def _unit(dx: float, dy: float) -> tuple[float, float]:
     length = math.hypot(dx, dy) or 1.0
     return dx / length, dy / length
 
 
-def _shape(src, src_r: float, dst, dst_r: float, side: float, scale: float):
-    """Bezier from ``src`` to ``dst`` that starts and stops ``*_r`` away from the atoms, on the arc's own side."""
+def _up_angle(point, centre) -> float:
+    """Angle of ``point`` about ``centre`` with y up: anticlockwise as seen on the page."""
+    return math.atan2(-(point[1] - centre[1]), point[0] - centre[0])
+
+
+def _arc(src, src_r: float, dst, dst_r: float, side: float, scale: float) -> dict:
+    """A circular arc from ``src`` to ``dst`` that bulges to ``side`` of the chord.
+
+    The bulge (the sagitta) is 0.45 of the chord, kept between BULGE_MIN and BULGE_MAX and
+    multiplied by ``scale``; ``side`` +1 or -1 picks the normal (-uy, ux) or its opposite. The
+    arc then stops ``src_r`` and ``dst_r`` short of the atoms, along the circle itself, so it
+    lands on an atom's edge from the side it arrives on. ``pts`` samples the arc from source
+    to target; ``sweep`` is signed, positive when the arc turns anticlockwise on the page.
+    """
+    chord = max(math.dist(src, dst), 1.0)
     ux, uy = _unit(dst[0] - src[0], dst[1] - src[1])
-    length = math.hypot(dst[0] - src[0], dst[1] - src[1])
-    r_src, r_dst = min(src_r, 0.3 * length), min(dst_r, 0.3 * length)
-    start, end = (src[0] + ux * r_src, src[1] + uy * r_src), (dst[0] - ux * r_dst, dst[1] - uy * r_dst)
-    points = _bezier(start, end, side, scale)
-    if src_r or dst_r:
-        # land on the atom's edge from the side the arc arrives on, not along the straight chord
-        if src_r:
-            vx, vy = _unit(points[1][0] - src[0], points[1][1] - src[1])
-            start = (src[0] + vx * src_r, src[1] + vy * src_r)
-        if dst_r:
-            wx, wy = _unit(dst[0] - points[2][0], dst[1] - points[2][1])
-            end = (dst[0] - wx * dst_r, dst[1] - wy * dst_r)
-        points = _bezier(start, end, side, scale)
-    return points
+    nx, ny = -uy * side, ux * side
+    height = min(max(0.45 * chord, BULGE_MIN), BULGE_MAX) * scale
+    radius = chord * chord / (8.0 * height) + height / 2.0
+    mx, my = (src[0] + dst[0]) / 2.0, (src[1] + dst[1]) / 2.0
+    centre = (mx - nx * (radius - height), my - ny * (radius - height))
+    total = 4.0 * math.atan(2.0 * height / chord)          # the angle the whole arc subtends
+    begin = _up_angle(src, centre)
+    apex = (mx + nx * height, my + ny * height)
+
+    def at(angle):
+        return centre[0] + radius * math.cos(angle), centre[1] - radius * math.sin(angle)
+    # Turn the way that passes the apex half-way: anticlockwise (+1) or clockwise (-1) on the page.
+    turn = 1.0 if math.dist(at(begin + total / 2.0), apex) <= math.dist(at(begin - total / 2.0), apex) else -1.0
+    trim_src = 2.0 * math.asin(min(1.0, src_r / (2.0 * radius)))
+    trim_dst = 2.0 * math.asin(min(1.0, dst_r / (2.0 * radius)))
+    sweep = max(total - trim_src - trim_dst, 0.15 * total)
+    first = begin + turn * trim_src
+    pts = [at(first + turn * sweep * k / SAMPLES) for k in range(SAMPLES + 1)]
+    return {"centre": centre, "radius": radius, "sweep": turn * sweep, "pts": pts}
 
 
-def _sample(points, count: int = SAMPLES):
-    out = []
-    for step in range(count + 1):
-        t = step / count
-        u = 1 - t
-        out.append((
-            u ** 3 * points[0][0] + 3 * u * u * t * points[1][0] + 3 * u * t * t * points[2][0] + t ** 3 * points[3][0],
-            u ** 3 * points[0][1] + 3 * u * u * t * points[1][1] + 3 * u * t * t * points[2][1] + t ** 3 * points[3][1],
-        ))
-    return out
+def _shift_arc(arc: dict, dy: float) -> dict:
+    return {**arc, "centre": (arc["centre"][0], arc["centre"][1] + dy),
+            "pts": [(x, y + dy) for x, y in arc["pts"]]}
 
 
 def _hits(points, atoms: list[dict], skip: set) -> list[dict]:
     found: dict[Any, dict] = {}
-    samples = _sample(points)[1:-1]
+    samples = points[1:-1]
     for atom in atoms:
         if atom["key"] in skip:
             continue
         if any(math.hypot(x - atom["x"], y - atom["y"]) < atom["reach"] for x, y in samples):
             found[atom["key"]] = atom
     return list(found.values())
+
+
+def _segment_distance(p, q, a, b) -> float:
+    """Shortest distance between the segments p-q and a-b."""
+    def point(c, s, t):
+        dx, dy = t[0] - s[0], t[1] - s[1]
+        length = dx * dx + dy * dy
+        u = 0.0 if not length else max(0.0, min(1.0, ((c[0] - s[0]) * dx + (c[1] - s[1]) * dy) / length))
+        return math.hypot(c[0] - s[0] - u * dx, c[1] - s[1] - u * dy)
+
+    def side(o, s, t):
+        return (t[0] - s[0]) * (o[1] - s[1]) - (t[1] - s[1]) * (o[0] - s[0])
+    if side(a, p, q) * side(b, p, q) < 0 and side(p, a, b) * side(q, a, b) < 0:
+        return 0.0
+    return min(point(p, a, b), point(q, a, b), point(a, p, q), point(b, p, q))
+
+
+def _bond_hits(points, bonds: list[dict], skip: set) -> list[dict]:
+    """Bonds an arrow cuts or grazes, other than those at the atoms it starts or ends on."""
+    found = []
+    for bond in bonds:
+        if bond["atoms"] & skip:
+            continue
+        if any(_segment_distance(p, q, bond["a"], bond["b"]) < BOND_CLEARANCE for p, q in zip(points, points[1:])):
+            found.append(bond)
+    return found
+
+
+def _row_bonds(row: list[dict]) -> list[dict]:
+    """The drawn bonds of a row, as segments between atom positions."""
+    found = []
+    for item in row:
+        if item["t"] != "frag":
+            continue
+        atoms = item["inst"].frag.atoms
+        number = {a["index"]: k for k, a in enumerate(atoms)}
+        for bond in item["inst"].frag.bonds:
+            i, j = number.get(bond.get("atom1")), number.get(bond.get("atom2"))
+            if i is None or j is None:
+                continue
+            found.append({"key": ("bond", item["inst"].uid, min(i, j), max(i, j)),
+                          "label": f"the {item['inst'].species} bond {min(i, j)}-{max(i, j)}",
+                          "a": (atoms[i]["x"], atoms[i]["y"]), "b": (atoms[j]["x"], atoms[j]["y"]),
+                          "atoms": {(item["inst"].uid, i), (item["inst"].uid, j)}})
+    return found
 
 
 def _label_obstacles(row: list[dict]) -> list[dict]:
@@ -475,6 +527,7 @@ def _row_curves(brief: dict, step_insts: list[dict], rows: list[list[dict]], bul
              "x": a["x"], "y": a["y"], "reach": _reach(a)}
             for item in row if item["t"] == "frag" for number, a in enumerate(item["inst"].frag.atoms)
         ] + _label_obstacles(row)
+    bonds_by_row = {row_index: _row_bonds(row) for row_index, row in enumerate(rows)}
     curves: dict[int, list[dict]] = {i: [] for i in range(len(rows))}
     for number, step in enumerate(brief["steps"], 1):
         subs = step_insts[number - 1]["subs"]
@@ -491,40 +544,55 @@ def _row_curves(brief: dict, step_insts: list[dict], rows: list[list[dict]], bul
             best = None
             for height, scale in enumerate(HEIGHT_STEPS):
                 for side in (-1.0, 1.0):
-                    points = _shape((sx, sy), src_r, (tx, ty), dst_r, side, scale * bulge)
-                    hits = len(_hits(points, atoms_by_row[row], skip))
-                    mid = _sample(points)[SAMPLES // 2]
+                    arc = _arc((sx, sy), src_r, (tx, ty), dst_r, side, scale * bulge)
+                    points = arc["pts"]
+                    hits = len(_hits(points, atoms_by_row[row], skip)) + len(_bond_hits(points, bonds_by_row[row], skip))
+                    mid = points[SAMPLES // 2]
                     if centre is not None:
                         preference = -math.hypot(mid[0] - centre[0], mid[1] - centre[1])  # outside the molecule
                     else:
                         preference = mid[1]  # higher on the page (smaller y) first
                     key = (hits, height, preference)
                     if best is None or key < best[0]:
-                        best = (key, points)
+                        best = (key, arc)
             curves[row].append({"step": number, "move": index, "electrons": move.get("electrons", 2),
-                                "pts": best[1], "skip": skip})
+                                "color": move.get("color"), "arc": best[1], "pts": best[1]["pts"], "skip": skip})
     return curves
 
 
-def _crossings(curves: list[dict], atoms: list[dict]) -> list[dict]:
-    """Atoms a curved arrow passes through (other than its own endpoints)."""
+def _crossings(curves: list[dict], atoms: list[dict], bonds: list[dict] = ()) -> list[dict]:
+    """Atoms and bonds a curved arrow passes through (other than at its own endpoints)."""
     found = []
     for curve in curves:
         for atom in _hits(curve["pts"], atoms, curve["skip"]):
             found.append({"step": curve["step"], "move": curve["move"], "with": atom["label"]})
+        for bond in _bond_hits(curve["pts"], list(bonds), curve["skip"]):
+            found.append({"step": curve["step"], "move": curve["move"], "with": bond["label"]})
     return found
 
 
-def _curve_xml(curve: dict, ids) -> str:
-    p = curve["pts"]
-    flat = " ".join(f"{x:.2f} {y:.2f}" for x, y in (p[0], p[0], p[1], p[2], p[3], p[3]))
-    samples = _sample(p)
-    xs, ys = [s[0] for s in samples], [s[1] for s in samples]
+def _arc_xml(curve: dict, ids) -> str:
+    """The arc as ChemDraw writes a curved arrow (see toolkit/tests/data/native-arc-arrows.cdxml).
+
+    ChemDraw runs an arc from Tail3D anticlockwise on the page through AngularSize degrees to
+    Head3D. An arrow that turns that way has its tail at the source and the head on Head3D; one
+    that turns clockwise is the same arc from the target, with the head on the tail end.
+    """
+    arc = curve["arc"]
+    (cx, cy), r, pts = arc["centre"], arc["radius"], arc["pts"]
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     head = "HalfLeft" if curve["electrons"] == 1 else "Full"
-    return (f'<curve id="{ids.next()}" BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}" '
-            f'Z="{ids.next()}" CurvePoints="{flat}" FillType="None" LineWidth="{ACS_LINE_WIDTH}" '
-            f'ArrowheadHead="{head}" ArrowheadType="Solid" HeadSize="1000" '
-            f'ArrowheadCenterSize="875" ArrowheadWidth="250"/>')
+    if arc["sweep"] >= 0:
+        tail, tip, ends = pts[0], pts[-1], f'ArrowheadHead="{head}"'
+    else:
+        tail, tip, ends = pts[-1], pts[0], f'ArrowheadTail="{head}" ArrowheadHead="None"'
+    return (f'<arrow id="{ids()}" BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}" '
+            f'Z="{ids()}" FillType="None" LineWidth="{ACS_LINE_WIDTH}" {ends} ArrowheadType="Solid" '
+            f'HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" '
+            f'AngularSize="{abs(math.degrees(arc["sweep"])):.2f}" '
+            f'Head3D="{tip[0]:.2f} {tip[1]:.2f} 0" Tail3D="{tail[0]:.2f} {tail[1]:.2f} 0" '
+            f'Center3D="{cx:.2f} {cy:.2f} 0" MajorAxisEnd3D="{cx + r:.2f} {cy:.2f} 0" '
+            f'MinorAxisEnd3D="{cx:.2f} {cy - r:.2f} 0"/>')
 
 
 # ---------------------------------------------------------------------------
@@ -543,7 +611,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
     for row_index, row in enumerate(rows):
         top, bottom = _row_extent(row)
         for curve in local_curves[row_index]:
-            ys = [y for _, y in _sample(curve["pts"])]
+            ys = [y for _, y in curve["pts"]]
             top, bottom = min(top, min(ys)), max(bottom, max(ys))
         offset = cursor - top
         offsets.append(offset)
@@ -553,7 +621,8 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
                 R._shift_atoms(item["inst"].frag.atoms, 0.0, offset)
                 item["inst"].frag.bbox = R._fragment_bbox(item["inst"].frag.atoms)
         for curve in local_curves[row_index]:
-            curve["pts"] = [(x, y + offset) for x, y in curve["pts"]]
+            curve["arc"] = _shift_arc(curve["arc"], offset)
+            curve["pts"] = curve["arc"]["pts"]
 
     curves = [c for row_index in range(len(rows)) for c in local_curves[row_index]]
     atoms = [
@@ -561,6 +630,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
          "x": a["x"], "y": a["y"], "reach": _reach(a)}
         for row in rows for item in row if item["t"] == "frag" for number, a in enumerate(item["inst"].frag.atoms)
     ] + [o for row in rows for o in _label_obstacles(row)]
+    bonds = [b for row in rows for b in _row_bonds(row)]
 
     def build(with_numbers: bool):
         def make(ids) -> str:
@@ -593,7 +663,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
                                                                justification="Left", use_formatting=False,
                                                                font_size=7)
                                 parts.append(xml)
-            parts += [_curve_xml(c, ids) for c in curves]
+            parts += [_arc_xml(c, ids.next) for c in curves]
             return "\n".join(parts)
         return make
 
@@ -606,7 +676,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
 
     cdxml = R.render_with(build(numbers))
     clean = R.render_with(build(False)) if numbers else cdxml
-    return _Drawing(cdxml=cdxml, lint_cdxml=clean, rows=rows, curves=curves, atoms=atoms, notes=notes)
+    return _Drawing(cdxml=cdxml, lint_cdxml=clean, rows=rows, curves=curves, atoms=atoms, bonds=bonds, notes=notes)
 
 
 def _arrow_xml(item: dict, y: float, ids) -> list[str]:
@@ -623,6 +693,21 @@ def _arrow_xml(item: dict, y: float, ids) -> list[str]:
         xml, _ = R._build_text_element(item["below"], middle, y + LAYOUT_BELOW_GAP + R._CAP_HEIGHT, ids)
         parts.append(xml)
     return parts
+
+
+def _color_moves(cdxml: Any, curves: list[dict]) -> Any:
+    """Give each curved arrow the colour its move names; it wins over a house colour."""
+    if not any(c.get("color") for c in curves):
+        return cdxml
+    root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
+    colors = figure_house._Colors(root)
+    arcs = [a for a in root.iter("arrow") if a.get("AngularSize")]
+    for arrow, curve in zip(arcs, curves):  # written in the same order
+        if curve.get("color"):
+            arrow.set("color", colors.index(curve["color"]))
+    wrapped = R._ValidatedCDXML('<?xml version="1.0" encoding="UTF-8" ?>\n' + ET.tostring(root, encoding="unicode"))
+    wrapped.chemistry_validation = getattr(cdxml, "chemistry_validation", None)
+    return wrapped
 
 
 def _move_report(brief: dict, mols: dict[str, Any]) -> tuple[list[dict], list[str]]:
@@ -677,7 +762,7 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     try:
         drawing = _draw(brief, grounded, width, gap_scale, bulge, numbers)
         issues = figure_lint.lint_cdxml(drawing.lint_cdxml, max_width=budget)
-        crossings = _crossings(drawing.curves, drawing.atoms)
+        crossings = _crossings(drawing.curves, drawing.atoms, drawing.bonds)
         relayout = None
         if issues or crossings:
             first = {"issues": issues, "crossings": crossings}
@@ -691,7 +776,7 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
             if changed:
                 drawing = _draw(brief, grounded, new_width, new_gap, bulge, numbers)
                 issues = figure_lint.lint_cdxml(drawing.lint_cdxml, max_width=budget)
-                crossings = _crossings(drawing.curves, drawing.atoms)
+                crossings = _crossings(drawing.curves, drawing.atoms, drawing.bonds)
                 relayout = {"changed": changed, "first_issues": first["issues"],
                             "first_crossings": first["crossings"]}
     except Exception as exc:
@@ -706,6 +791,7 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         final, applied, more = figure_house.apply_figure_type_conventions(final, house, "mechanism", slug)
         house_applied += applied
         house_skipped += more
+    final = _color_moves(final, drawing.curves)
     try:
         target = artifact_safety.resolve_destination(
             source=None, output_path=output_path, tag="figure", suffix=".cdxml")

@@ -225,6 +225,19 @@ these six were unimplemented witnesses. They now exist, and their checks say wha
 exists; `text` has no width parameter, so anything longer than a short label wraps inside its
 own box and cannot be laid out as running text. That is why it carries no footnote.
 
+## Refreshing the native copies
+
+`convert_cdx_cdxml` never writes over an existing file. Given a target that exists it returns
+`"ok": false` with `Refusing to overwrite an existing file` and `cdx.py call` exits with 1, but
+a batch script that does not look at the result carries on, and the old `.native.cdxml` stays
+beside a new PNG and CDXML. This happened once: the native copies were 40 minutes older than
+the renders they claimed to match. So, for each figure:
+
+1. Delete `<name>.native.cdxml` (and the intermediate `.cdx`) before converting.
+2. Convert `.cdxml` to `.cdx` and back, and stop on any result whose `ok` is false
+   (in PowerShell, check `$LASTEXITCODE` after each `cdx.py call`).
+3. Compare timestamps: every `.native.cdxml` must be newer than its `.cdxml`.
+
 ## Journal parity status
 
 Progress against [journal figure parity](journal-figure-parity.md), per figure.
@@ -239,4 +252,5 @@ old output until it is rendered again.
 | P5 a failed entry keeps its value, with an optional note | `substrate_scope` | generator done (`note` on a species); the example brief has no 0% entry yet |
 | P6 a group definition under one structure | `substrate_scope` | generator done through the same `note` line |
 | P13 twelve to eighteen cells on one page at 10 pt | `substrate_scope`, `sar_table` | generator done: twelve benzamides with two fields, or eighteen ungrouped compounds, now fit one page; each group still starts its own row (see P8) |
-| P1-P4, P7-P9 | | open |
+| P1 coloured curved arrows routed clear of the structure | `mechanism`, `preview_mechanism` | generator done: ChemDraw arc arrows (`AngularSize`), a hex `color` per move, routing that also avoids bonds; re-render and check a clockwise arrow and a one-electron (half-head) arrow natively |
+| P2-P4, P7-P9 | | open |

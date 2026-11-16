@@ -279,7 +279,8 @@ def apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: st
     colors = _Colors(root)
     width = float(root.get("LineWidth") or style_preset(slug)["attributes"]["LineWidth"])
     if figure_type == "mechanism":
-        curves = list(root.iter("curve"))
+        # Curved arrows: ChemDraw's arc arrows, and Bezier curves drawn by hand or by older files.
+        curves = list(root.iter("curve")) + [a for a in root.iter("arrow") if a.get("AngularSize")]
         color = conventions.get("curved_arrow_color")
         if color and curves:
             index = colors.index(color)

@@ -245,6 +245,8 @@ def _objects(page: ET.Element) -> List[Dict[str, Any]]:
     for child in page:
         if child.tag not in ("fragment", "arrow", "t"):
             continue
+        if child.tag == "arrow" and child.get("AngularSize"):
+            continue  # a curved (electron) arrow runs onto structures by design; its route is checked where it is drawn
         box = _box(child.get("BoundingBox")) or _measured_box(child)
         if box is None:
             continue
