@@ -405,10 +405,13 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
         elif len(nodes) == 2 and len(bonds) == 1:
             bare = [n for n in nodes.values() if n.find('t') is None and n.get('Element') in (None, '6')
                     and not n.get('NodeType')]
-            if len(bare) == 1:
+            # A line ending at a labelled atom reads as a methyl halide (CH3-Br), which is
+            # the skeletal convention — quiet. Both ends unlabelled is a bare line that
+            # identifies nothing, and that is what the warning is for.
+            if len(bare) == 2:
                 _issue(warnings, 'bare_terminal_carbon',
-                       f'<fragment id="{fragment.get("id")}"> is a two-atom molecule whose carbon has no label: it '
-                       'renders as a bond end with nothing on it; label the carbon (CH3, H2C)')
+                       f'<fragment id="{fragment.get("id")}"> is a two-atom molecule with no label at either end: '
+                       'it renders as a bare line that identifies nothing; label an end (CH3, H2C)')
     # ---- the page: coordinates outside it, and drawings wider than its pages (text wraps)
     page = root.find('page')
     if page is not None and page.get('Width') and page.get('Height'):

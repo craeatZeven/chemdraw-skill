@@ -709,3 +709,17 @@ def test_a_setting_rounded_by_chemdraw_is_tolerated():
 
     assert 'setting' not in codes(HashSpacing='2.49', MarginWidth='1.59')
     assert 'setting' in codes(HashSpacing='2.4')
+
+def test_a_methyl_halide_is_not_a_bare_terminal_carbon():
+    """A line ending at Br reads as CH3Br; that is the skeletal convention, not a defect.
+
+    The warning belongs on a fragment where *both* ends are unlabelled: a bare line that
+    identifies nothing.
+    """
+    halide = _doc('<fragment id="1"><n id="2" p="20 20"/><n id="3" p="40 20" Element="35"/>'
+                  '<b id="4" B="2" E="3"/></fragment>')
+    bare_line = _doc('<fragment id="1"><n id="2" p="20 20"/><n id="3" p="40 20"/>'
+                     '<b id="4" B="2" E="3"/></fragment>')
+    codes = lambda text: {i['code'] for i in check_cdxml(text)['errors'] + check_cdxml(text)['warnings']}
+    assert 'bare_terminal_carbon' not in codes(halide)
+    assert 'bare_terminal_carbon' in codes(bare_line)

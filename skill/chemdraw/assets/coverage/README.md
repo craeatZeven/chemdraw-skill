@@ -179,9 +179,11 @@ cdx.py check mechanism.native.cdxml --allow-sizes 8,6 --palette any \
     --ignore setting --ignore bond_length --ignore text_size    # passes
 ```
 
-`mechanism` still carries two `bare_terminal_carbon` warnings: two-atom fragments whose
-carbon has no label, which reads as a bare bond end. That one is worth a look — it is a
-chemistry-ambiguity signal, not a setting mismatch.
+`mechanism` used to carry two `bare_terminal_carbon` warnings, for the CH3Br and CH3Cl of its SN2
+example. The rule fired when exactly one end of a two-atom fragment was unlabelled — which is the
+ordinary skeletal methyl halide — and stayed quiet when *both* ends were unlabelled, a bare line
+that identifies nothing. The condition was inverted; it now warns only on the both-unlabelled case,
+so a line ending at Br is left alone.
 
 **The rounding is now tolerated, not documented away.** `setting` compares root
 attributes with a tolerance of 0.02, so the 0.01 that ChemDraw's SaveAs introduces no
