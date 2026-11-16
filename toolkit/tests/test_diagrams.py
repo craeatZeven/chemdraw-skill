@@ -723,3 +723,45 @@ def test_a_methyl_halide_is_not_a_bare_terminal_carbon():
     codes = lambda text: {i['code'] for i in check_cdxml(text)['errors'] + check_cdxml(text)['warnings']}
     assert 'bare_terminal_carbon' not in codes(halide)
     assert 'bare_terminal_carbon' in codes(bare_line)
+
+
+@pytest.mark.parametrize('head, shape, flagged', [
+    ('Full', ('1000', '875', '250'), False),
+    ('Full', ('1000', '1000', '500'), True),
+    ('HalfLeft', ('1000', '1000', '500'), False),   # the fishhook barb
+    ('HalfLeft', ('600', '525', '150'), False),     # spin arrows as ChemDraw saves them
+    ('HalfLeft', ('1000', '700', '400'), True),
+])
+def test_a_half_head_may_take_the_fishhook_shape(head, shape, flagged):
+    arrow = (f'<arrow id="5" ArrowheadHead="{head}" HeadSize="{shape[0]}" ArrowheadCenterSize="{shape[1]}" '
+             f'ArrowheadWidth="{shape[2]}" Head3D="60 40 0" Tail3D="20 40 0"/>')
+    codes = [w['code'] for w in check_cdxml(_page(arrow))['warnings']]
+    assert ('arrowhead_ratio' in codes) is flagged
+
+
+def _arc_arrow(ident, tail, head, centre, angle, end='Head'):
+    r = math.dist(tail, centre)
+    heads = 'ArrowheadHead="Full"' if end == 'Head' else 'ArrowheadHead="None" ArrowheadTail="Full"'
+    return (f'<arrow id="{ident}" {heads} HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" '
+            f'AngularSize="{angle}" Tail3D="{tail[0]} {tail[1]} 0" Head3D="{head[0]} {head[1]} 0" '
+            f'Center3D="{centre[0]} {centre[1]} 0" MajorAxisEnd3D="{centre[0] + r} {centre[1]} 0" '
+            f'MinorAxisEnd3D="{centre[0]} {centre[1] - r} 0"/>')
+
+
+def test_check_reports_curved_arrows_that_run_into_each_other():
+    # A quarter circle about (50, 50), r 30, from its east point anticlockwise to its north point
+    # (50, 20); another about (50, -10) from its west point anticlockwise to its south point, the
+    # same (50, 20): the two heads land together.
+    first = _arc_arrow(10, (80, 50), (50, 20), (50, 50), 90)
+    meeting = _arc_arrow(11, (20, -10), (50, 20), (50, -10), 90)
+    elsewhere = _arc_arrow(12, (230, 50), (200, 20), (200, 50), 90)
+    codes = [w['code'] for w in check_cdxml(_page(first + meeting))['warnings']]
+    assert 'arrows_collide' in codes
+    assert 'arrows_collide' not in [w['code'] for w in check_cdxml(_page(first + elsewhere))['warnings']]
+
+
+def test_check_ignores_curved_arrows_that_only_share_a_tail():
+    # Both leave the east point (80, 50): one turns up, the other (written from its target) down.
+    up = _arc_arrow(10, (80, 50), (50, 20), (50, 50), 90)
+    down = _arc_arrow(11, (50, 80), (80, 50), (50, 50), 90, end='Tail')
+    assert 'arrows_collide' not in [w['code'] for w in check_cdxml(_page(up + down))['warnings']]

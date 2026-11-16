@@ -222,6 +222,85 @@ def text_over_ink(source, inset: float = 1.0) -> list[str]:
     return found
 
 
+def _point3(value: str | None) -> tuple[float, float] | None:
+    parts = (value or '').split()
+    return (float(parts[0]), float(parts[1])) if len(parts) >= 2 else None
+
+
+def _curved_arrows(root) -> list[tuple[str, list[tuple[float, float]]]]:
+    """Curved arrows sampled from their source to the end that carries the head.
+
+    An arc arrow runs from Tail3D anticlockwise on the page through AngularSize degrees (as
+    ChemDraw writes it); a curve with an arrowhead is a chain of cubic Beziers.
+    """
+    found = []
+    for arrow in root.iter('arrow'):
+        centre, tail = _point3(arrow.get('Center3D')), _point3(arrow.get('Tail3D'))
+        if not arrow.get('AngularSize') or centre is None or tail is None:
+            continue
+        r = math.dist(centre, tail)
+        start = math.atan2(-(tail[1] - centre[1]), tail[0] - centre[0])
+        sweep = math.radians(float(arrow.get('AngularSize')))
+        pts = [(centre[0] + r * math.cos(start + sweep * k / 24), centre[1] - r * math.sin(start + sweep * k / 24))
+               for k in range(25)]
+        if arrow.get('ArrowheadHead', 'None') == 'None':
+            pts.reverse()
+        found.append((f'<arrow id="{arrow.get("id")}">', pts))
+    for curve in root.iter('curve'):
+        heads = [curve.get(end, 'None') != 'None' for end in ('ArrowheadHead', 'ArrowheadTail')]
+        if not any(heads):
+            continue
+        v = [float(x) for x in curve.get('CurvePoints', '').split()]
+        pts3 = list(zip(v[0::2], v[1::2]))
+        triples = [pts3[i:i + 3] for i in range(0, len(pts3) - 2, 3)]
+        pts = []
+        for (_, a, out), (into, b, _) in zip(triples, triples[1:]):
+            pts += [tuple((1 - u) ** 3 * a[i] + 3 * (1 - u) ** 2 * u * out[i] + 3 * (1 - u) * u * u * into[i]
+                          + u ** 3 * b[i] for i in (0, 1)) for u in (n / 12 for n in range(13))]
+        if len(pts) < 2:
+            continue
+        if not heads[0]:
+            pts.reverse()
+        found.append((f'<curve id="{curve.get("id")}">', pts))
+    return found
+
+
+def _segment_gap(p, q, a, b) -> float:
+    """Shortest distance between the segments p-q and a-b."""
+    def to_segment(c, s, t):
+        dx, dy = t[0] - s[0], t[1] - s[1]
+        length = dx * dx + dy * dy
+        u = 0.0 if not length else max(0.0, min(1.0, ((c[0] - s[0]) * dx + (c[1] - s[1]) * dy) / length))
+        return math.hypot(c[0] - s[0] - u * dx, c[1] - s[1] - u * dy)
+
+    def turn(o, s, t):
+        return (t[0] - s[0]) * (o[1] - s[1]) - (t[1] - s[1]) * (o[0] - s[0])
+    if turn(a, p, q) * turn(b, p, q) < 0 and turn(p, a, b) * turn(q, a, b) < 0:
+        return 0.0
+    return min(to_segment(p, a, b), to_segment(q, a, b), to_segment(a, p, q), to_segment(b, p, q))
+
+
+def arrows_collide(source) -> list[str]:
+    """Pairs of curved arrows whose heads come within 6 pt or whose bodies within 3 pt.
+
+    The first fifth of each arrow, from its tail, is left out: two arrows may leave one atom.
+    The same rule routes the arrows of a drawn mechanism.
+    """
+    root = source if hasattr(source, 'iter') else ET.fromstring(
+        re.sub(r'<!DOCTYPE[^>]*>', '', re.sub(r'^\s*<\?xml[^>]*\?>', '', str(source), count=1), count=1).encode('utf-8'))
+    arrows = _curved_arrows(root)
+    found = []
+    for i, (name_a, a) in enumerate(arrows):
+        for name_b, b in arrows[i + 1:]:
+            if math.dist(a[-1], b[-1]) < 6.0:
+                found.append(f'{name_a} and {name_b} point at the same spot')
+                continue
+            ra, rb = a[len(a) // 5:], b[len(b) // 5:]
+            if any(_segment_gap(p, q, r, t) < 3.0 for p, q in zip(ra, ra[1:]) for r, t in zip(rb, rb[1:])):
+                found.append(f'{name_a} and {name_b} run into each other')
+    return found
+
+
 def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile',
                 allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03,
                 ignore: Iterable[str] = ()) -> dict[str, Any]:
@@ -376,9 +455,15 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
             width = float(arrow.get('ArrowheadWidth', head * 0.25))
         except ValueError:
             continue
-        if abs(centre - 0.875 * head) > 1.5 or abs(width - 0.25 * head) > 1.5:
+        house = abs(centre - 0.875 * head) <= 1.5 and abs(width - 0.25 * head) <= 1.5
+        # A one-electron (half) head may instead be the fishhook barb: as wide as half its length,
+        # with no notch. The full head's proportions, halved, render as a thin spike.
+        half = any(arrow.get(end, '').startswith('Half') for end in ('ArrowheadHead', 'ArrowheadTail'))
+        fishhook = half and abs(centre - head) <= 1.5 and abs(width - 0.5 * head) <= 1.5
+        if not house and not fishhook:
             _issue(warnings, 'arrowhead_ratio', f'<arrow id="{arrow.get("id")}"> head {head:g}/{centre:g}/{width:g} '
-                                                'is not the house 1 : 0.875 : 0.25 shape')
+                                                'is not the house 1 : 0.875 : 0.25 shape'
+                                                + (' or the 1 : 1 : 0.5 half-head barb' if half else ''))
     for line_width in {n.get('LineWidth') for n in root.iter() if n.tag != 'CDXML' and n.get('LineWidth')}:
         if abs(float(line_width) - rules['settings']['LineWidth']) > 1e-6:
             _issue(warnings, 'line_width', f'Some objects set LineWidth {line_width} (the house width is '
@@ -432,6 +517,10 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
             need = pages_needed(width, height)
             _issue(warnings, 'text_may_wrap', f'the drawing reaches x = {right:.0f} pt but the page is {pages:g} page(s) '
                                               f'wide; ChemDraw may wrap text there (set WidthPages="{need[0]}")')
+    collided = arrows_collide(root)
+    if collided:
+        _issue(warnings, 'arrows_collide', f'{len(collided)} pair(s) of curved arrows meet: ' + '; '.join(collided[:5]),
+               cases=collided)
     crowded = text_over_ink(root)
     if crowded:
         _issue(warnings, 'text_over_ink', f'{len(crowded)} caption(s) sit on other ink: ' + '; '.join(crowded[:5]),

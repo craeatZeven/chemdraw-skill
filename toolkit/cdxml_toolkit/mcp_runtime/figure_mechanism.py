@@ -53,6 +53,9 @@ CARBON_STANDOFF, LABEL_STANDOFF = 3.0, 7.0   # where an arrow starts or stops fr
 HEIGHT_STEPS = (1.0, 1.4, 1.9, 2.5)   # arc heights tried, relative to the default
 LABEL_OBSTACLE = 8.0
 BOND_CLEARANCE = 2.0       # how close an arrow may pass a bond it does not start or end at
+ARROW_CLEARANCE = 3.0      # how close two arrows may run, away from their tails
+HEAD_CLEARANCE = 6.0       # how close two arrowheads may come
+TAIL_SHARE = 0.2           # the part of an arrow, from its tail, that may meet another's tail
 
 
 # ---------------------------------------------------------------------------
@@ -487,6 +490,40 @@ def _bond_hits(points, bonds: list[dict], skip: set) -> list[dict]:
     return found
 
 
+def _arrows_clash(first, second) -> bool:
+    """Whether two arrows (sampled source to target) run into each other.
+
+    Their heads may not come within HEAD_CLEARANCE, nor their bodies within ARROW_CLEARANCE;
+    the first TAIL_SHARE of each is left out, as two arrows may leave the same atom.
+    """
+    if math.dist(first[-1], second[-1]) < HEAD_CLEARANCE:
+        return True
+    a, b = first[int(len(first) * TAIL_SHARE):], second[int(len(second) * TAIL_SHARE):]
+    return any(_segment_distance(p, q, r, t) < ARROW_CLEARANCE for p, q in zip(a, a[1:]) for r, t in zip(b, b[1:]))
+
+
+def _choose_arc(src, src_r: float, dst, dst_r: float, *, atoms: list[dict], bonds: list[dict], skip: set,
+                placed: list, bulge: float, centre) -> dict:
+    """The arc that meets the fewest atoms, bonds and arrows already drawn; then the lowest; then
+    the preferred side (outside the molecule for a move within one, else higher on the page)."""
+    best = None
+    for height, scale in enumerate(HEIGHT_STEPS):
+        for side in (-1.0, 1.0):
+            arc = _arc(src, src_r, dst, dst_r, side, scale * bulge)
+            points = arc["pts"]
+            hits = (len(_hits(points, atoms, skip)) + len(_bond_hits(points, bonds, skip))
+                    + sum(_arrows_clash(points, other) for other in placed))
+            mid = points[SAMPLES // 2]
+            if centre is not None:
+                preference = -math.hypot(mid[0] - centre[0], mid[1] - centre[1])
+            else:
+                preference = mid[1]
+            key = (hits, height, preference)
+            if best is None or key < best[0]:
+                best = (key, arc)
+    return best[1]
+
+
 def _row_bonds(row: list[dict]) -> list[dict]:
     """The drawn bonds of a row, as segments between atom positions."""
     found = []
@@ -541,33 +578,26 @@ def _row_curves(brief: dict, step_insts: list[dict], rows: list[list[dict]], bul
             if src_inst is dst_inst:
                 pts = src_inst.frag.atoms
                 centre = (sum(a["x"] for a in pts) / len(pts), sum(a["y"] for a in pts) / len(pts))
-            best = None
-            for height, scale in enumerate(HEIGHT_STEPS):
-                for side in (-1.0, 1.0):
-                    arc = _arc((sx, sy), src_r, (tx, ty), dst_r, side, scale * bulge)
-                    points = arc["pts"]
-                    hits = len(_hits(points, atoms_by_row[row], skip)) + len(_bond_hits(points, bonds_by_row[row], skip))
-                    mid = points[SAMPLES // 2]
-                    if centre is not None:
-                        preference = -math.hypot(mid[0] - centre[0], mid[1] - centre[1])  # outside the molecule
-                    else:
-                        preference = mid[1]  # higher on the page (smaller y) first
-                    key = (hits, height, preference)
-                    if best is None or key < best[0]:
-                        best = (key, arc)
+            # Arrows are routed in the order given, each around those already drawn in its row.
+            arc = _choose_arc((sx, sy), src_r, (tx, ty), dst_r, atoms=atoms_by_row[row], bonds=bonds_by_row[row],
+                              skip=skip, placed=[c["pts"] for c in curves[row]], bulge=bulge, centre=centre)
             curves[row].append({"step": number, "move": index, "electrons": move.get("electrons", 2),
-                                "color": move.get("color"), "arc": best[1], "pts": best[1]["pts"], "skip": skip})
+                                "color": move.get("color"), "arc": arc, "pts": arc["pts"], "skip": skip})
     return curves
 
 
 def _crossings(curves: list[dict], atoms: list[dict], bonds: list[dict] = ()) -> list[dict]:
-    """Atoms and bonds a curved arrow passes through (other than at its own endpoints)."""
+    """Atoms, bonds and other arrows a curved arrow runs into (other than at its own endpoints)."""
     found = []
-    for curve in curves:
+    for number, curve in enumerate(curves):
         for atom in _hits(curve["pts"], atoms, curve["skip"]):
             found.append({"step": curve["step"], "move": curve["move"], "with": atom["label"]})
         for bond in _bond_hits(curve["pts"], list(bonds), curve["skip"]):
             found.append({"step": curve["step"], "move": curve["move"], "with": bond["label"]})
+        for other in curves[:number]:
+            if _arrows_clash(curve["pts"], other["pts"]):
+                found.append({"step": curve["step"], "move": curve["move"],
+                              "with": f"the arrow of step {other['step']} move {other['move']}"})
     return found
 
 
@@ -582,13 +612,17 @@ def _arc_xml(curve: dict, ids) -> str:
     (cx, cy), r, pts = arc["centre"], arc["radius"], arc["pts"]
     xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     head = "HalfLeft" if curve["electrons"] == 1 else "Full"
+    # A half head keeps one barb of the full head's 1 : 0.875 : 0.25 shape, which renders as a thin
+    # spike; the fishhook is a right-angled barb as wide as half its length instead.
+    shape = ('HeadSize="1000" ArrowheadCenterSize="1000" ArrowheadWidth="500"' if curve["electrons"] == 1
+             else 'HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250"')
     if arc["sweep"] >= 0:
         tail, tip, ends = pts[0], pts[-1], f'ArrowheadHead="{head}"'
     else:
         tail, tip, ends = pts[-1], pts[0], f'ArrowheadTail="{head}" ArrowheadHead="None"'
     return (f'<arrow id="{ids()}" BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}" '
             f'Z="{ids()}" FillType="None" LineWidth="{ACS_LINE_WIDTH}" {ends} ArrowheadType="Solid" '
-            f'HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" '
+            f'{shape} '
             f'AngularSize="{abs(math.degrees(arc["sweep"])):.2f}" '
             f'Head3D="{tip[0]:.2f} {tip[1]:.2f} 0" Tail3D="{tail[0]:.2f} {tail[1]:.2f} 0" '
             f'Center3D="{cx:.2f} {cy:.2f} 0" MajorAxisEnd3D="{cx + r:.2f} {cy:.2f} 0" '

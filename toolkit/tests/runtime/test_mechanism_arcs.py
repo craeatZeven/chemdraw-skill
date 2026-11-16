@@ -79,6 +79,13 @@ def test_a_one_electron_move_has_a_half_head():
     arrow = ET.fromstring(M._arc_xml({"arc": arc, "electrons": 1, "pts": arc["pts"]}, iter(range(9)).__next__))
     heads = {arrow.get("ArrowheadHead", "None"), arrow.get("ArrowheadTail", "None")} - {"None"}
     assert heads == {"HalfLeft"}
+    # The full head's 1 : 0.875 : 0.25 shape, halved, renders as a thin spike that does not read as
+    # one electron: a half head is a right-angled barb as wide as half its length, with no notch.
+    assert (arrow.get("HeadSize"), arrow.get("ArrowheadCenterSize"), arrow.get("ArrowheadWidth")) == \
+        ("1000", "1000", "500")
+    full = ET.fromstring(M._arc_xml({"arc": arc, "electrons": 2, "pts": arc["pts"]}, iter(range(9)).__next__))
+    assert (full.get("HeadSize"), full.get("ArrowheadCenterSize"), full.get("ArrowheadWidth")) == \
+        ("1000", "875", "250")
 
 
 def test_an_arc_is_scored_as_crossing_a_bond_it_cuts_and_not_one_it_clears():
@@ -101,3 +108,34 @@ def test_a_move_colour_is_checked():
     assert any("color" in e for e in M._validate(brief))
     brief["steps"][0]["moves"][0]["color"] = "#2E7D32"
     assert not any("color" in e for e in M._validate(brief))
+
+
+def test_two_arrows_whose_heads_meet_clash_and_arrows_that_only_share_a_tail_do_not():
+    one = M._arc((0.0, 0.0), 0.0, (40.0, 0.0), 0.0, 1.0, 1.0)
+    onto_the_same_head = M._arc((80.0, 0.0), 0.0, (41.0, 1.0), 0.0, 1.0, 1.0)
+    from_the_same_tail = M._arc((0.0, 0.0), 0.0, (-40.0, 0.0), 0.0, 1.0, 1.0)
+    far = M._arc((200.0, 0.0), 0.0, (240.0, 0.0), 0.0, 1.0, 1.0)
+    assert M._arrows_clash(one["pts"], onto_the_same_head["pts"])
+    assert not M._arrows_clash(one["pts"], from_the_same_tail["pts"])
+    assert not M._arrows_clash(one["pts"], far["pts"])
+
+
+def test_an_arrow_is_routed_around_one_already_drawn():
+    # The first arrow bulges above the chord from (0, 0) to (40, 0). On its own a second arrow from
+    # (10, 0) to (50, 0) would bulge above too (higher on the page first) and run along the first;
+    # with the first in place it takes the side below.
+    placed = M._arc((0.0, 0.0), 0.0, (40.0, 0.0), 0.0, -1.0, 1.0)
+    assert max(y for _, y in placed["pts"]) <= 1e-6  # above the chord (page y grows downwards)
+    alone = M._choose_arc((10.0, 0.0), 0.0, (50.0, 0.0), 0.0, atoms=[], bonds=[], skip=set(),
+                          placed=[], bulge=1.0, centre=None)
+    assert M._arrows_clash(placed["pts"], alone["pts"])
+    second = M._choose_arc((10.0, 0.0), 0.0, (50.0, 0.0), 0.0, atoms=[], bonds=[], skip=set(),
+                           placed=[placed["pts"]], bulge=1.0, centre=None)
+    assert not M._arrows_clash(placed["pts"], second["pts"])
+
+
+def test_clashing_arrows_are_reported_as_crossings():
+    first = M._arc((0.0, 0.0), 0.0, (40.0, 0.0), 0.0, 1.0, 1.0)
+    curves = [{"step": 1, "move": 1, "pts": first["pts"], "skip": set()},
+              {"step": 1, "move": 2, "pts": M._arc((80.0, 0.0), 0.0, (41.0, 1.0), 0.0, 1.0, 1.0)["pts"], "skip": set()}]
+    assert M._crossings(curves, [], []) == [{"step": 1, "move": 2, "with": "the arrow of step 1 move 1"}]
