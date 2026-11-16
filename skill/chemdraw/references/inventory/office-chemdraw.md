@@ -24,12 +24,13 @@
 
 ## `chemdraw.cdx_converter`
 
-- **function**, line 385: `batch_convert_files(input_paths: list, method: str = 'auto') -> dict` - Convert multiple CDX/CDXML files in a single COM session.
-- **function**, line 373: `convert_cdx_to_cdxml(cdx_data: bytes, method: str = 'auto') -> str` - Convert raw CDX bytes to CDXML string.
-- **function**, line 379: `convert_cdxml_to_cdx(cdxml_data: str, method: str = 'auto') -> bytes` - Convert CDXML string to raw CDX bytes.
-- **function**, line 466: `convert_file(input_path: str, output_path: Optional[str] = None, method: str = 'auto') -> str` - Convert a file between CDX and CDXML. Returns output path.
-- **function**, line 80: `sanitise_cdxml(cdxml: str) -> str` - Remove content that makes ChemDraw's strict XML parser reject the file.
-- **function**, line 112: `sanitise_cdxml_file(path: str) -> None` - Sanitise a CDXML file in-place.
+- **function**, line 430: `batch_convert_files(input_paths: list, method: str = 'auto') -> dict` - Convert multiple CDX/CDXML files in a single COM session.
+- **function**, line 418: `convert_cdx_to_cdxml(cdx_data: bytes, method: str = 'auto') -> str` - Convert raw CDX bytes to CDXML string.
+- **function**, line 424: `convert_cdxml_to_cdx(cdxml_data: str, method: str = 'auto') -> bytes` - Convert CDXML string to raw CDX bytes.
+- **function**, line 511: `convert_file(input_path: str, output_path: Optional[str] = None, method: str = 'auto') -> str` - Convert a file between CDX and CDXML. Returns output path.
+- **function**, line 122: `mark_free_captions(text: str) -> str` - Set ``InterpretChemically="no"`` on text that is not an atom label.
+- **function**, line 81: `sanitise_cdxml(cdxml: str) -> str` - Remove content that makes ChemDraw's strict XML parser reject the file.
+- **function**, line 113: `sanitise_cdxml_file(path: str) -> None` - Sanitise a CDXML file in-place.
 
 ## `chemdraw.cdxml_to_image`
 
