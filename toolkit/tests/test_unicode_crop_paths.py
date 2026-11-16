@@ -12,7 +12,7 @@ from cdxml_toolkit.image.structure_from_image import _write_crop
 
 
 def test_a_crop_is_written_under_a_non_ascii_directory(tmp_path):
-    target = tmp_path / "使用者" / "crop_000.png"
+    target = tmp_path / "\u4f7f\u7528\u8005" / "crop_000.png"
     target.parent.mkdir()
     image = np.full((12, 16, 3), 255, dtype=np.uint8)
     image[2:8, 3:9] = 0
