@@ -20,24 +20,32 @@ because the rule is easy to get wrong:
 licence containing `-NC`, `-ND`, "noncommercial" or "no derivatives" before a file is
 written. `file` holds the bare name; the image is `<file>.png`.
 
-## What is here — 51 figures, 11 MB
+## What is here — 71 figures, 14 MB
 
 | Journal | Count |
 | --- | --- |
-| Beilstein J. Org. Chem. | 31 |
+| Beilstein J. Org. Chem. | 51 |
 | Communications Chemistry | 11 |
 | Nature Communications | 9 |
 
-| Type | Count | What it shows |
-| --- | --- | --- |
-| mechanism | 10 | Curved arrows, equilibrium arrows, Newman projections, dashed mapping overlays |
-| reaction_scheme | 10 | Multi-step schemes, conditions above the arrow |
-| concept_panel | 10 | Overview and schematic panels |
-| substrate_scope | 7 | Scope tables: yields under every entry, `0%` kept, variable groups, colour-coded section bands in the Nature examples |
-| structure_panel | 6 | Ligand, catalyst and substrate families |
-| optimization_table | 4 | Condition screening as a table |
-| assignment_panel | 3 | NOESY evidence drawn onto structures |
-| retrosynthesis | 1 | Disconnection arrows |
+| Type | Count |
+| --- | --- |
+| reaction_scheme | 10 |
+| mechanism | 10 |
+| concept_panel | 10 |
+| substrate_scope | 7 |
+| structure_panel | 6 |
+| graphical_abstract | 6 |
+| optimization_table | 4 |
+| assignment_panel | 3 |
+| polymer | 2 |
+| coordination_complex | 2 |
+| markush | 2 |
+| biomolecule | 2 |
+| biosynthesis | 2 |
+| energy_profile | 2 |
+| catalytic_cycle | 2 |
+| retrosynthesis | 1 |
 
 ## Conventions here that this Skill does not produce yet
 
