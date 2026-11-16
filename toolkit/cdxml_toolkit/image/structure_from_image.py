@@ -159,7 +159,7 @@ def _load_decimer(hand_drawn: bool = False):
                                 raise RuntimeError("opencv-python is required to write image crops")
                             with tempfile.TemporaryDirectory(prefix="cdxml-decimer-") as tmp_dir:
                                 crop_path = os.path.join(tmp_dir, "crop.png")
-                                cv2.imwrite(crop_path, image_input)
+                                _write_crop(crop_path, image_input)
                                 rows = _engine_env.call(
                                     "decimer-local",
                                     "predict",
@@ -418,6 +418,25 @@ def _adaptive_gap(boxes: List[Tuple[int, int, int, int]]) -> int:
     # Gap = 50% of median nearest-neighbour distance
     gap = int(median_nn * 0.50)
     return max(8, min(40, gap))
+
+
+def _write_crop(path: str, image) -> None:
+    """Write a crop as PNG, including when the path has non-ASCII characters.
+
+    OpenCV's imwrite takes the path as a narrow string. On Windows a path such as
+    ``C:\\Users\\<non-ASCII>\\AppData\\Local\\Temp\\crop.png`` is written to a
+    mojibake name — and imwrite still returns True — so the engine is handed a path
+    that does not exist. Encoding in memory and writing the bytes goes through Python's
+    own file layer, which handles the real name.
+    """
+    if path.isascii():
+        if cv2.imwrite(path, image):
+            return
+    ok, buffer = cv2.imencode(".png", image)
+    if not ok:
+        raise RuntimeError("could not encode a crop as PNG")
+    with open(path, "wb") as handle:
+        handle.write(buffer.tobytes())
 
 
 def segment_structures(
@@ -881,7 +900,7 @@ def _extract_structures_raw(
             crop_paths = []
             for idx, (crop, _bbox) in enumerate(regions):
                 crop_path = os.path.join(tmp_dir, f"crop_{idx:03d}.png")
-                cv2.imwrite(crop_path, crop)
+                _write_crop(crop_path, crop)
                 crop_paths.append(crop_path)
             batched_rows = _engine_env.call(
                 "decimer-local",
@@ -916,7 +935,7 @@ def _extract_structures_raw(
                 with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tf:
                     tmp_path = tf.name
                 try:
-                    cv2.imwrite(tmp_path, crop)
+                    _write_crop(tmp_path, crop)
                     try:
                         result = predict_fn(tmp_path, confidence=True)
                         if isinstance(result, tuple):
