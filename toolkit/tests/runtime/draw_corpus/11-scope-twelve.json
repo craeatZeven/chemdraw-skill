@@ -145,6 +145,7 @@
   "ok": true,
   "kind": "scope",
   "species": 12,
-  "pages": 1
- }
+  "pages": 2
+ },
+ "note": "Two pages because the label/caption size is now the ACS 10 pt: the grid packs 10 cells on page 1 and 2 on page 2. Fitting twelve cells on one page at 10 pt is a layout-density task recorded as P13 in docs/journal-figure-parity.md, not a reason to shrink the type back to 8."
 }

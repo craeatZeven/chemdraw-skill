@@ -169,6 +169,19 @@ Produce: the compact caption form; keep the long form available for the case whe
 needs a qualifier (`85% (2 steps)`).
 Done when: the example scope shows `3a` with `92%` beneath it.
 
+### P13 — Pack a scope grid densely enough to keep one page
+
+Witness: `journal-corpus/bjoc-articles-22-127-scheme2.png` puts eighteen compounds on one
+page; `journal-corpus/nature-communications-pmc13594109-fig4.png` puts twenty-two on one.
+Today: with the type at the correct 10 pt, a twelve-compound scope paginates — page 1 holds
+ten cells and page 2 the remaining two (`draw_corpus/11-scope-twelve`), so the grid is roughly
+one cell short of fitting.
+
+Produce: cell geometry that packs twelve to twenty cells on one page at 10 pt — the space
+between a structure and its values, and between cells, is where the slack is.
+Done when: `11-scope-twelve` is a single page again with `LabelSize`/`CaptionSize` at 10, and
+the eighteen-cell witness can be reproduced in one page.
+
 ## Acceptance
 
 A figure is publication-ready when all of the following hold, and the evidence is quoted with

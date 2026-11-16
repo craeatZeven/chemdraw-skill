@@ -605,6 +605,30 @@ def _strip_multi_attachments_for_inventory(root_el: ET.Element) -> ET.Element:
     return cleaned
 
 
+def _strip_text_indent(root) -> None:
+    """Undo the padding ET.indent adds inside <t>.
+
+    ET.indent sets .text on every element that has children, and <t> is one of them, so a
+    label ends up as '\n      <s>text</s>\n    '. The <t> element's text is the label, not
+    layout: strip whitespace-only padding so the run reads exactly what was written.
+    """
+    for node in root.iter('t'):
+        if node.text is not None and not node.text.strip():
+            node.text = None
+        for child in node:
+            if child.tail is not None and not child.tail.strip():
+                child.tail = None
+
+
+def _measurement(value: float) -> str:
+    """Format a style measurement the way ChemDraw writes it: 10, not 10.0.
+
+    The attributes below are compared as text by callers (and by the ACS checker), so an
+    integral size must not carry a trailing '.0' while 14.4 and 0.6 keep their digits.
+    """
+    return f'{value:g}'
+
+
 def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
     """Compose editable CDXML using explicit point coordinates and grounded molecules.
 
@@ -738,9 +762,9 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             value = float(style[name])
             if not math.isfinite(value) or value <= 0:
                 raise ValueError('Style measurements must be positive finite numbers')
-            root.set(attribute, str(value))
+            root.set(attribute, _measurement(value))
     if 'font_size' in style:
-        root.set('LabelSize', str(font_size))
+        root.set('LabelSize', _measurement(font_size))
     fonts = root.find('fonttable')
     if fonts is None:
         fonts = ET.SubElement(root, 'fonttable')
@@ -810,7 +834,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 raise ValueError('A text run cannot be both subscript and superscript')
             ET.SubElement(node, 's', {
                 'font': font_id,
-                'size': str(size),
+                'size': _measurement(size),
                 'face': str(face),
                 'color': color(run.get('color', item.get('color'))),
             }).text = str(run.get('text', ''))
@@ -1428,6 +1452,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
     target = artifact_safety.resolve_destination(source=template, output_path=output_path, tag='figure', suffix='.cdxml')
     with artifact_safety.staging_file(target) as stage:
         ET.indent(root)
+        _strip_text_indent(root)
         ET.ElementTree(root).write(stage, encoding='utf-8', xml_declaration=True)
         artifact_safety.validate_artifact(stage)
         serialized = ET.parse(stage)

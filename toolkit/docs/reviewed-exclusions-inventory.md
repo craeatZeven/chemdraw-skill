@@ -391,12 +391,12 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 175: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 201: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_tools`
 
-- **function**, line 1468: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
-- **function**, line 608: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
+- **function**, line 1493: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
+- **function**, line 632: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
 - **function**, line 165: `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict` - Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs, r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like, enumerate_markush.
 
 ## `mcp_runtime.figure_validation`
@@ -619,7 +619,7 @@
 - **function**, line 15: `local_path(base, value)` - No public docstring in the audited version.
 - **function**, line 11: `sha256(path)` - No public docstring in the audited version.
 - **function**, line 36: `table_rows(path, sheet = None)` - No public docstring in the audited version.
-- **function**, line 155: `write_json(path, value)` - No public docstring in the audited version.
+- **function**, line 157: `write_json(path, value)` - No public docstring in the audited version.
 
 ## `publication.house_styles`
 
@@ -637,18 +637,18 @@
 
 ## `publication.layout`
 
-- **function**, line 197: `bounds(node, style)` - No public docstring in the audited version.
-- **function**, line 219: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 111: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
-- **function**, line 25: `font_for(style, size = None)` - No public docstring in the audited version.
-- **function**, line 53: `fragment_mol(fragment)` - No public docstring in the audited version.
-- **function**, line 64: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
-- **function**, line 60: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 215: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 84: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 214: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 236: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 114: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 27: `font_for(style, size = None)` - No public docstring in the audited version.
+- **function**, line 55: `fragment_mol(fragment)` - No public docstring in the audited version.
+- **function**, line 66: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
+- **function**, line 62: `node_text(node)` - No public docstring in the audited version.
+- **function**, line 232: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 86: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 15: `style_settings(spec)` - No public docstring in the audited version.
-- **function**, line 36: `text_width(value, style, size = None)` - No public docstring in the audited version.
-- **function**, line 41: `wrap(value, width, style)` - No public docstring in the audited version.
+- **function**, line 38: `text_width(value, style, size = None)` - No public docstring in the audited version.
+- **function**, line 43: `wrap(value, width, style)` - No public docstring in the audited version.
 
 ## `publication.update`
 
