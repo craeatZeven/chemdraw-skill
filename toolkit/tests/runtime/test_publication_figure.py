@@ -310,3 +310,38 @@ def test_an_update_that_lengthens_text_grows_the_cropped_page(tmp_path):
     page = json.loads((out/'project.json').read_text(encoding='utf-8'))['pages'][0]
     assert page['height_pt'] > before
     assert not [i for i in result['checks']['layout']['issues'] if i['issue'] == 'outside_page']
+
+
+def test_twelve_benzamides_with_two_fields_fit_one_page_at_10_pt(tmp_path):
+    # Journal scope tables hold 18 to 22 compounds on a page at body-text size; a cell spends its
+    # height on the structure and its lines, not on padding.
+    rows = [[f'4{chr(97 + i)}', f'4{chr(97 + i)}', smiles, f'{90 - i}%', group]
+            for i, (smiles, group) in enumerate(
+                [(f'{x}c1ccc(cc1)C(=O)N', 'para') for x in ('C', 'CO', 'F', 'Cl', 'Br', 'FC(F)(F)')]
+                + [(f'{x}c1cccc(c1)C(=O)N', 'meta') for x in ('C', 'CO', 'F', 'Cl', 'Br', 'FC(F)(F)')])]
+    table = tmp_path/'twelve.csv'
+    with table.open('w', newline='', encoding='utf-8') as stream:
+        writer = csv.writer(stream)
+        writer.writerow(['compound_id', 'label', 'smiles', 'yield', 'group', 'ee'])
+        writer.writerows([row + ['95%'] for row in rows])
+    spec = {'table': str(table), 'mode': 'scope', 'native_render': False, 'group_column': 'group',
+            'title': 'Substrate scope', 'conditions': 'Conditions as supplied by the user',
+            'footnotes': ['a Isolated yield.'],
+            'fields': [{'column': 'yield', 'label': 'Yield'}, {'column': 'ee', 'label': 'ee'}]}
+    path = tmp_path/'twelve.json'; path.write_text(json.dumps(spec))
+    out = tmp_path/'twelve'
+    result = execute(path, out)
+    assert result['ok'] and result['pages'] == 1
+    assert not result['checks']['layout']['issues']
+    root = ET.parse(out/'page-001.cdxml').getroot()
+    assert root.get('LabelSize') == '10'
+
+
+def test_cell_geometry_leaves_the_structure_box_clear_of_its_caption():
+    from cdxml_toolkit.publication.layout import CELL
+    size = 10.0
+    # check_pages pads a structure by 1.2 sizes and draws a caption from 1 size above its
+    # baseline to 0.3 below; it reports boxes that overlap by more than 1 pt. The first caption
+    # must clear the padded structure, and each caption the one above it.
+    assert CELL['caption_baseline'] * size - size >= 1.2 * size - 1.0
+    assert CELL['line_advance'] * size + CELL['line_gap'] >= 1.3 * size + 1.0

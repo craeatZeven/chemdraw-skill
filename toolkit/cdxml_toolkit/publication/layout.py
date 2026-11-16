@@ -83,6 +83,26 @@ def molecule_coordinates(mol, bond_length, reference=None):
     return mol,xy,warning
 
 
+# Cell geometry, in multiples of the text size (10 pt by default). Journal scope tables hold
+# 18 to 22 compounds on a page at body-text size, so a cell spends its height on the structure
+# and its lines rather than on padding. Each value is the least that keeps check_pages' boxes
+# apart: it pads a structure by 1.2 sizes and draws a caption from 1 size above its baseline to
+# 0.3 below.
+CELL = {
+    'pad': 1.2,               # around the structure's atoms
+    'caption_baseline': 2.3,  # from the lowest atom to the first caption baseline
+    'line_advance': 1.25,     # from one caption line to the next, plus line_gap points
+    'line_gap': 2.0,
+    'wrapped_line': 1.5,      # extra advance for each wrapped line inside one caption
+    'foot': 0.3,              # below the last baseline, plus foot_gap points
+    'foot_gap': 4.0,
+}
+
+
+def _caption_advance(value, size):
+    return value.count('\n')*size*CELL['wrapped_line']+size*CELL['line_advance']+CELL['line_gap']
+
+
 def prepare(records,spec):
     style=style_settings(spec); size=style['font_size']
     usable=style['width_mm']*72/25.4-32
@@ -96,7 +116,7 @@ def prepare(records,spec):
         mol,xy,warning=molecule_coordinates(Chem.MolFromSmiles(record['smiles']),style['bond_length'],refs.get(group))
         refs.setdefault(group,mol)
         if warning: warnings.append({'compound_id':record['compound_id'],'message':warning})
-        xs,ys=zip(*xy); molecule_width=max(xs)-min(xs)+size*4
+        xs,ys=zip(*xy); pad=size*CELL['pad']; molecule_width=max(xs)-min(xs)+2*pad
         if molecule_width>usable:
             raise ValueError(f"Structure {record['compound_id']} exceeds figure width at requested bond length")
         texts={'label':record['label'],**{f['column']:field_text(record,f) for f in spec.get('fields',[])}}
@@ -104,8 +124,10 @@ def prepare(records,spec):
         width=max(100,molecule_width,min(usable,max(text_width(v,style)+16 for v in texts.values())))
         width=min(width,usable)
         texts={k:wrap(v,width-12,style) for k,v in texts.items()}
-        height=max(ys)-min(ys)+size*4+sum((v.count('\n')+1)*size*1.45+4 for v in texts.values())+8
-        coords=[[x-min(xs)+size*2,y-min(ys)+size*2] for x,y in xy]
+        lines=sum(_caption_advance(v,size) for v in texts.values())-size*CELL['line_advance']-CELL['line_gap']
+        height=(pad+max(ys)-min(ys)+size*CELL['caption_baseline']+lines
+                +size*CELL['foot']+CELL['foot_gap'])
+        coords=[[x-min(xs)+pad,y-min(ys)+pad] for x,y in xy]
         prepared.append({'input':record,'coords':coords,'texts':texts,'width':width,'height':height,
                          'molecule_bottom':max(y for x,y in coords)})
     return prepared,warnings
@@ -162,10 +184,10 @@ def create_pages(records,spec,stage,start_index=0):
         key=f'c{len(compounds)}'; cid=p['input']['compound_id']
         objects=[{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
                   'coordinates':[[a+x,b+y] for a,b in p['coords']]}]
-        ty=y+p['molecule_bottom']+size*2.6
+        ty=y+p['molecule_bottom']+size*CELL['caption_baseline']
         for field,value in p['texts'].items():
             objects.append({'type':'text','id':key+'_'+field,'text':value,'position':[x+6,ty],'size':size})
-            ty+=(value.count('\n')+1)*size*1.45+4
+            ty+=_caption_advance(value,size)
         current['objects'].extend(objects)
         entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']]}
         current['entries'].append(entry)

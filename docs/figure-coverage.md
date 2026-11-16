@@ -238,4 +238,5 @@ old output until it is rendered again.
 | P10 page cropped to its content, footnotes after the last row | `substrate_scope`, `sar_table` | generator done; re-render, then measure the PNG margins |
 | P5 a failed entry keeps its value, with an optional note | `substrate_scope` | generator done (`note` on a species); the example brief has no 0% entry yet |
 | P6 a group definition under one structure | `substrate_scope` | generator done through the same `note` line |
+| P13 twelve to eighteen cells on one page at 10 pt | `substrate_scope`, `sar_table` | generator done: twelve benzamides with two fields, or eighteen ungrouped compounds, now fit one page; each group still starts its own row (see P8) |
 | P1-P4, P7-P9 | | open |
