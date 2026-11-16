@@ -5,35 +5,39 @@ looks like next to what this Skill produces (`../preview/`, `../coverage/`).
 
 ## Licence discipline
 
-Only **CC BY** figures are here. That rule is applied twice, because the first pass was not
-enough: an early run selected articles whose licence *text* contained "Creative Commons
-Attribution" and kept eleven **CC BY-NC-ND** figures from Nature Communications, which are not
-redistributable. They were removed; the filter now rejects anything whose licence contains
-`-NC`, `-ND` or "noncommercial". Every row in `INDEX.csv` states its licence, and the whole
-file asserts `CC BY` on load.
+Only **CC BY** figures are here. Two incidents shaped this section, and both are recorded
+because the rule is easy to get wrong:
 
-`INDEX.csv` carries, per figure: journal, DOI, title, figure number, caption and licence —
-the attribution CC BY requires. Nothing here is a redrawn copy: each PNG is the publisher's
-own image file (Beilstein SVG rasterised through PDF; Nature Communications PNG from the
-Springer Nature media server).
+1. The first pass kept a figure when its licence *text* contained "Creative Commons
+   Attribution" — which is also true of **CC BY-NC-ND**. Eleven non-redistributable figures
+   from Nature Communications were collected that way and later removed.
+2. The "final guard" that removed them compared publisher prose against the already
+   normalised string `CC BY 4.0`, decided *every* row was non-CC-BY, and deleted the PNG
+   files. The corpus was restored from git. The guard now only excludes rows, never deletes
+   files; deletion is a separate, explicit step.
 
-## What is here — 25 figures
+`INDEX.csv` states a normalised licence per row (`CC BY 4.0`) and the collector rejects any
+licence containing `-NC`, `-ND`, "noncommercial" or "no derivatives" before a file is
+written. `file` holds the bare name; the image is `<file>.png`.
+
+## What is here — 51 figures, 11 MB
 
 | Journal | Count |
 | --- | --- |
-| Beilstein J. Org. Chem. | 16 |
+| Beilstein J. Org. Chem. | 31 |
+| Communications Chemistry | 11 |
 | Nature Communications | 9 |
 
 | Type | Count | What it shows |
 | --- | --- | --- |
-| reaction_scheme | 7 | Multi-step schemes, conditions above the arrow |
-| substrate_scope | 7 | Scope tables: yields under every entry, `0%` kept, variable groups, **colour-coded section bands** in the Nature examples |
-| mechanism | 5 | Curved arrows, equilibrium arrows, Newman projections, dashed mapping overlays |
-| optimization_table | 2 | Condition screening as a table |
-| structure_panel | 2 | Ligand and catalyst families |
-| concept_panel | 2 | Overview panels |
+| mechanism | 10 | Curved arrows, equilibrium arrows, Newman projections, dashed mapping overlays |
+| reaction_scheme | 10 | Multi-step schemes, conditions above the arrow |
+| concept_panel | 10 | Overview and schematic panels |
+| substrate_scope | 7 | Scope tables: yields under every entry, `0%` kept, variable groups, colour-coded section bands in the Nature examples |
+| structure_panel | 6 | Ligand, catalyst and substrate families |
+| optimization_table | 4 | Condition screening as a table |
+| assignment_panel | 3 | NOESY evidence drawn onto structures |
 | retrosynthesis | 1 | Disconnection arrows |
-| assignment_panel | 1 | NOESY evidence drawn onto structures |
 
 ## Conventions here that this Skill does not produce yet
 
@@ -48,7 +52,7 @@ Reading the corpus against `../coverage/` gives the gap list:
 - **`0%` entries and "not formed"** — the renderer omits a value it was not given; the papers
   keep the failure visible.
 - **Variable-group rows** such as `Alk = C7H15, C18H37` under one structure.
-- **Secondary products in grey**, drawn beside the main product (Nature scope figures).
+- **Secondary products in grey**, drawn beside the main product.
 - **Section bands** dividing a scope into para/ortho/heterocycle/nucleophile groups, each band
   labelled in italic.
 - **Dashed mapping overlays** across a catalytic cycle.
@@ -57,16 +61,20 @@ Reading the corpus against `../coverage/` gives the gap list:
 
 Access differs by publisher and was measured, not assumed:
 
-- **Beilstein** — each figure is its own SVG (`/bjoc/content/inline/*.svg`). Strip the external
-  DOCTYPE before parsing or the parser tries to fetch the DTD; rasterise through PDF at 2.2x.
+- **Beilstein** — each figure is its own SVG (`/bjoc/content/inline/*.svg`, thematic issues at
+  `/bjoc/series/<n>`). Strip the external DOCTYPE before parsing or the parser tries to fetch
+  the DTD; rasterise through PDF at 2.2x.
 - **Springer Nature** (Nature Communications, Communications Chemistry, Scientific Reports) —
-  figure files follow `media.springernature.com/full/springer-static/image/art%3A<DOI>/MediaObjects/<j>_<year>_<id>_Fig<N>_HTML.png`.
-  Captions and the licence come from the Europe PMC full-text XML for the same article.
-- **Blocked** at the time of collection: `europepmc.org/.../bin/...` figures (403), PMC
-  `oa.fcgi` tarballs for these IDs (404), `pubs.rsc.org/image/article/...` (403/404). Do not
-  spend time on those paths without re-testing.
+  `media.springernature.com/full/springer-static/image/art%3A<DOI>/MediaObjects/<j>_<year>_<id>_Fig<N>_HTML.png`.
+  The article number in the filename **drops leading zeros** (`01180` → `1180`); getting that
+  wrong returns 404 and silently yields nothing. Captions and licence come from the Europe PMC
+  full-text XML for the same article.
+- **Blocked** when tested: `europepmc.org/.../bin/...` figures (403), PMC `oa.fcgi` tarballs
+  for these IDs (404), `pubs.rsc.org/image/article/...` (403/404). Do not spend time on those
+  paths without re-testing.
 
 ## Files
 
 - `<journal>-<volume>-<article>-<figure>.png`, `nature-communications-<pmcid>-fig<N>.png`
-- `INDEX.csv` — one row per figure
+- `INDEX.csv` — one row per figure: bare `file` name, type, figure label, journal, DOI,
+  licence, title, caption
