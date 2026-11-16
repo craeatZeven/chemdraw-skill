@@ -1,0 +1,90 @@
+{
+ "layout": "divergent",
+ "species": [
+  {
+   "id": "sm",
+   "smiles": "CC(=O)C=C",
+   "label": "1"
+  },
+  {
+   "id": "n1",
+   "smiles": "Sc1ccccc1",
+   "label": "2a"
+  },
+  {
+   "id": "n2",
+   "smiles": "COC(=O)CC(=O)OC",
+   "label": "2b"
+  },
+  {
+   "id": "n3",
+   "smiles": "NCc1ccccc1",
+   "label": "2c"
+  },
+  {
+   "id": "p1",
+   "smiles": "CC(=O)CCSc1ccccc1",
+   "label": "3a"
+  },
+  {
+   "id": "p2",
+   "smiles": "COC(=O)C(CCC(=O)C)C(=O)OC",
+   "label": "3b"
+  },
+  {
+   "id": "p3",
+   "smiles": "CC(=O)CCNCc1ccccc1",
+   "label": "3c"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "sm",
+    "n1"
+   ],
+   "products": [
+    "p1"
+   ],
+   "above": [
+    "Et3N (10 mol%)"
+   ],
+   "below": [
+    "CH2Cl2, rt"
+   ],
+   "yield": "96%"
+  },
+  {
+   "substrates": [
+    "sm",
+    "n2"
+   ],
+   "products": [
+    "p2"
+   ],
+   "above": [
+    "DBU (10 mol%)"
+   ],
+   "below": [
+    "CH2Cl2, rt"
+   ],
+   "yield": "88%"
+  },
+  {
+   "substrates": [
+    "sm",
+    "n3"
+   ],
+   "products": [
+    "p3"
+   ],
+   "above": [
+    "AcOH (cat.)"
+   ],
+   "below": [
+    "MeOH, rt"
+   ],
+   "yield": "82%"
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "title": "Scalable route to 3",
+ "layout": "sequential",
+ "species": [
+  {
+   "id": "A",
+   "smiles": "CC(=O)c1ccccc1",
+   "label": "A"
+  },
+  {
+   "id": "B",
+   "smiles": "CC(O)c1ccccc1",
+   "label": "B"
+  },
+  {
+   "id": "C",
+   "smiles": "CC(Br)c1ccccc1",
+   "label": "C"
+  },
+  {
+   "id": "D",
+   "smiles": "CC(N3CCCC3)c1ccccc1",
+   "label": "D"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "A"
+   ],
+   "products": [
+    "B"
+   ],
+   "above": "NaBH4, MeOH",
+   "below": "0→25 °C, 2 h (1.2 kg scale)",
+   "yield": "96%"
+  },
+  {
+   "substrates": [
+    "B"
+   ],
+   "products": [
+    "C"
+   ],
+   "above": "HBr (48%), H2O",
+   "below": "80 °C, 4 h",
+   "yield": "90%"
+  },
+  {
+   "substrates": [
+    "C"
+   ],
+   "products": [
+    "D"
+   ],
+   "above": "pyrrolidine, K2CO3",
+   "below": "MeCN, 60 °C, 6 h",
+   "yield": "88%"
+  }
+ ]
+}

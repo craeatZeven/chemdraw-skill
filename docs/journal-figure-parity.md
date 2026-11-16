@@ -182,3 +182,19 @@ the claim rather than asserted:
 
 Record the per-figure status in `coverage/README.md` next to the existing notes, so the next
 session knows which figures have been brought to this bar and which have not.
+
+## Status when this was written
+
+- `journal-corpus/`: 71 figures over 16 types from three publishers, every row CC BY 4.0
+  with DOI and caption.
+- `coverage/`: 47 figures, each with its `.cdxml`, the ChemDraw-resaved `.native.cdxml` and a
+  PNG. Six types were drawn for this task — `derivatization`, `optimization_table`,
+  `process_route`, `sar_table`, `stereo_model`, `total_synthesis` — and their briefs live in
+  `assets/preview/` (14 briefs in total), so every figure can be regenerated.
+- Every one of the 23 declared types now has a witness on at least one side; the corpus
+  covers 16 of them and the coverage set the rest.
+- Measured deviations are recorded in `coverage/README.md` rather than hidden: `sar_table`
+  and `substrate_scope` shrink `LabelSize`/`CaptionSize` to 8, and the conformer templates
+  ignore a `bond_length` of 14.4 and draw at 12 whatever the brief asks.
+- Reproducibility was checked: rendering `assets/preview/total-synthesis.json` reproduces
+  `assets/coverage/total_synthesis.png` with 0 differing pixels.

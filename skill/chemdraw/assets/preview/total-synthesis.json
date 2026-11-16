@@ -1,0 +1,65 @@
+{
+ "title": "Total synthesis of 5",
+ "layout": "sequential",
+ "species": [
+  {
+   "id": "1",
+   "smiles": "COc1ccccc1",
+   "label": "1"
+  },
+  {
+   "id": "2",
+   "smiles": "COc1ccc(Br)cc1",
+   "label": "2"
+  },
+  {
+   "id": "3",
+   "smiles": "COc1ccc(-c2ccccc2)cc1",
+   "label": "3"
+  },
+  {
+   "id": "4",
+   "smiles": "COc1ccc(-c2ccc(C=O)cc2)cc1",
+   "label": "4"
+  },
+  {
+   "id": "5",
+   "smiles": "COc1ccc(-c2ccc(CO)cc2)cc1",
+   "label": "5"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "1"
+   ],
+   "products": [
+    "2"
+   ],
+   "above": "Br2, AcOH",
+   "yield": "94%"
+  },
+  {
+   "substrates": [
+    "2",
+    "3"
+   ],
+   "products": [
+    "4"
+   ],
+   "above": "PhB(OH)2, Pd(PPh3)4",
+   "below": "Na2CO3, dioxane, 90 °C",
+   "yield": "81%"
+  },
+  {
+   "substrates": [
+    "4"
+   ],
+   "products": [
+    "5"
+   ],
+   "above": "NaBH4, MeOH",
+   "yield": "97%"
+  }
+ ]
+}

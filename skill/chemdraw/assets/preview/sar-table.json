@@ -1,0 +1,91 @@
+{
+ "kind": "scope",
+ "title": "Structure–activity relationships",
+ "conditions": "Enzyme assay: 10 µM compound, 37 °C, 30 min",
+ "footnotes": [
+  "a Values are means of three runs.",
+  "b n.d. = not determined."
+ ],
+ "fields": [
+  {
+   "key": "ic50",
+   "label": "IC50 (µM)"
+  },
+  {
+   "key": "logd",
+   "label": "LogD"
+  },
+  {
+   "key": "sol",
+   "label": "Solubility (µM)"
+  }
+ ],
+ "species": [
+  {
+   "id": "6a",
+   "smiles": "c1ccc(-c2ccccc2)cc1",
+   "label": "6a",
+   "group": "core",
+   "values": {
+    "ic50": "0.42",
+    "logd": "3.1",
+    "sol": "48"
+   }
+  },
+  {
+   "id": "6b",
+   "smiles": "Cc1ccc(-c2ccccc2)cc1",
+   "label": "6b",
+   "group": "core",
+   "values": {
+    "ic50": "1.8",
+    "logd": "3.6",
+    "sol": "12"
+   }
+  },
+  {
+   "id": "6c",
+   "smiles": "COc1ccc(-c2ccccc2)cc1",
+   "label": "6c",
+   "group": "core",
+   "values": {
+    "ic50": "0.11",
+    "logd": "2.7",
+    "sol": "95"
+   }
+  },
+  {
+   "id": "6d",
+   "smiles": "N#Cc1ccc(-c2ccccc2)cc1",
+   "label": "6d",
+   "group": "core",
+   "values": {
+    "ic50": ">10",
+    "logd": "2.9",
+    "sol": "31"
+   }
+  },
+  {
+   "id": "6e",
+   "smiles": "O=C(N)c1ccc(-c2ccccc2)cc1",
+   "label": "6e",
+   "group": "core",
+   "values": {
+    "ic50": "0.87",
+    "logd": "2.2",
+    "sol": "160"
+   }
+  },
+  {
+   "id": "6f",
+   "smiles": "Fc1ccc(-c2ccccc2)cc1",
+   "label": "6f",
+   "group": "core",
+   "values": {
+    "ic50": "2.4",
+    "logd": "3.4",
+    "sol": "9"
+   }
+  }
+ ]
+}
