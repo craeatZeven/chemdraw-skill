@@ -350,7 +350,11 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
     # ---- constructs ChemDraw drops or renders blank
     for curve in root.iter('curve'):
         values = (curve.get('CurvePoints') or '').split()
-        if len(values) % 6 or len(values) < 12:
+        # One triple (handle, point, handle) is six numbers and is the smallest curve
+        # ChemDraw draws; Clipware stationery is full of them and they render (deleting
+        # 13 of them from a native apparatus drawing changed 9k pixels). Only a count
+        # that is not a whole number of triples is dropped.
+        if len(values) % 6 or len(values) < 6:
             _issue(errors, 'curve_points', f'<curve id="{curve.get("id")}"> has {len(values) // 2} points; ChemDraw '
                                            'needs whole (handle, point, handle) triples and silently drops other curves')
             continue

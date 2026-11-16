@@ -272,7 +272,7 @@ def test_merge_renumbers_ids_and_keeps_colours():
 # ---------------------------------------------------------------- checker
 def test_checker_finds_what_chemdraw_drops():
     bad = ('<?xml version="1.0" encoding="utf8" ?><CDXML BondLength="20"><fonttable><font id="3" name="Times"/></fonttable>'
-           '<page id="1"><fragment id="1"><n id="2" p="0 0"/></fragment><curve id="3" CurvePoints="0 0 1 1 2 2"/>'
+           '<page id="1"><fragment id="1"><n id="2" p="0 0"/></fragment><curve id="3" CurvePoints="0 0 1 1 2"/>'
            '<t id="4" p="0 0"><s font="3" size="10">\u4e2d\u6587</s></t><b id="5" B="9" E="2"/></page></CDXML>')
     codes = {e['code'] for e in check_cdxml(bad)['errors']}
     assert {'xml_encoding', 'setting', 'blank_structure', 'curve_points', 'cjk_font', 'dangling_reference'} <= codes
@@ -683,3 +683,12 @@ def test_caption_widths_follow_arial():
     from cdxml_toolkit.scientific.canvas import text_width
     # ChemDraw measures "tautomerization" in 13 pt Arial as 88.9 pt wide.
     assert text_width('tautomerization', 13) == pytest.approx(88.9, abs=0.3)
+
+def test_a_single_triple_curve_is_accepted():
+    """Six numbers is one whole (handle, point, handle) triple — the smallest curve
+    ChemDraw draws, and what Clipware stationery uses. It must not be reported."""
+    good = ('<?xml version="1.0" encoding="utf-8" ?><CDXML BondLength="14.4">'
+            '<fonttable><font id="3" name="Arial"/></fonttable>'
+            '<page id="1"><curve id="3" CurvePoints="0 0 10 20 20 0"/></page></CDXML>')
+    codes = {e['code'] for e in check_cdxml(good)['errors']}
+    assert 'curve_points' not in codes

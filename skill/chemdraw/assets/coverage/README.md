@@ -17,6 +17,7 @@ Each figure has three files:
 
 | Figure | Type | PNG |
 | --- | --- | --- |
+| `apparatus` | Laboratory apparatus assembled from the Clipware stationery | yes |
 | `binary_phase_diagram` | Binary phase diagram, eutectic | yes |
 | `binary_phase_diagram_isomorphous` | Binary phase diagram, isomorphous | yes |
 | `correlation_diagram` | Correlation diagram between two states | yes |
@@ -40,6 +41,7 @@ Each figure has three files:
 | `lewis_carbonate` | Lewis structure, carbonate with formal charges | yes |
 | `mechanism` | Mechanism with curved arrows | yes |
 | `mo_diagram` | Molecular-orbital diagram (O2, 2s/2p mixing, spin filling) | yes |
+| `nmr` | NMR spectrum panel (ethanol, synthetic JCAMP-DX) | yes |
 | `periodic_table` | Periodic table panel | yes |
 | `phase_diagram` | Phase diagram (one component) | yes |
 | `potential_surface` | Potential-energy surface (contour) | yes |
@@ -136,7 +138,7 @@ round-trip. Compare fragment counts in `.native.cdxml`, not just the picture.
 
 - `nmr` and `apparatus` carry the same float rounding as `tlc` after the native re-save
   (`HashSpacing` 2.49 vs 2.5, `MarginWidth` 1.59 vs 1.6).
-- `apparatus` reports `curve_points` for `<curve>` elements with 3 points. Three points
-  is one whole (handle, point, handle) triple, and the native PNG shows every glassware
-  outline, so those curves are rendered, not dropped — the rule looks too strict for the
-  single-segment curves Clipware clip art uses.
+- `apparatus` used to report `curve_points` for its 13 single-triple curves. That was a
+  false positive: deleting those curves from the native drawing changed 9064 pixels, so
+  ChemDraw draws them. The rule now rejects only a count that is not a whole number of
+  (handle, point, handle) triples.
