@@ -25,6 +25,7 @@ import os
 import sys
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ElementTree
 from typing import Optional
 
 # ---------------------------------------------------------------------------
@@ -118,6 +119,34 @@ def sanitise_cdxml_file(path: str) -> None:
         f.write(cleaned)
 
 
+def mark_free_captions(text: str) -> str:
+    """Set ``InterpretChemically="no"`` on text that is not an atom label.
+
+    ChemDraw reads a free caption such as "H2O" or "MeOH" as a nickname fragment
+    when it opens the document, so saving the drawing back adds a chemical entity
+    nobody drew.  Atom labels (``<t>`` inside ``<n>``) are left alone, and a
+    caption that already carries its own value keeps it.  The macOS automation
+    path does the same thing in ``mac_automation.protect_captions``.
+    """
+    start = text.find("<CDXML")
+    if start < 0:
+        return text
+    try:
+        root = ElementTree.fromstring(text[start:])
+    except ElementTree.ParseError:
+        return text
+    labels = {id(node) for atom in root.iter("n") for node in atom.findall("t")}
+    changed = False
+    for node in root.iter("t"):
+        if id(node) in labels or node.get("InterpretChemically") is not None:
+            continue
+        node.set("InterpretChemically", "no")
+        changed = True
+    if not changed:
+        return text
+    return text[:start] + ElementTree.tostring(root, encoding="unicode")
+
+
 # ---------------------------------------------------------------------------
 # COM backend
 # ---------------------------------------------------------------------------
@@ -142,11 +171,27 @@ def _com_convert_file(input_path: str, output_path: str) -> None:
     app, launched = _get_chemdraw()
     was_visible = app.Visible
     app.Visible = False
+    open_path = input_path
+    staged = None
+    if input_path.lower().endswith(".cdxml"):
+        original = open(input_path, encoding="utf-8", errors="replace").read()
+        marked = mark_free_captions(original)
+        if marked != original:
+            handle, staged = tempfile.mkstemp(suffix=".cdxml")
+            os.close(handle)
+            with open(staged, "w", encoding="utf-8") as fh:
+                fh.write(marked)
+            open_path = staged
     try:
-        doc = app.Documents.Open(os.path.abspath(input_path))
+        doc = app.Documents.Open(os.path.abspath(open_path))
         doc.SaveAs(os.path.abspath(output_path))
         doc.Close()
     finally:
+        if staged:
+            try:
+                os.unlink(staged)
+            except OSError:
+                pass
         if launched:
             app.Quit()
         else:
