@@ -692,3 +692,20 @@ def test_a_single_triple_curve_is_accepted():
             '<page id="1"><curve id="3" CurvePoints="0 0 10 20 20 0"/></page></CDXML>')
     codes = {e['code'] for e in check_cdxml(good)['errors']}
     assert 'curve_points' not in codes
+
+def test_a_setting_rounded_by_chemdraw_is_tolerated():
+    """ChemDraw's own SaveAs writes 2.5 as 2.49 and 1.6 as 1.59.
+
+    An exact comparison failed every file that had been through the native save, so the
+    rule stops being a signal. 0.01 is rounding; a real deviation still reports.
+    """
+    import re as _re
+
+    def codes(**overrides):
+        text = _doc('')
+        for key, value in overrides.items():
+            text = _re.sub(r'%s="[^"]*"' % key, '%s="%s"' % (key, value), text, count=1)
+        return {i['code'] for i in check_cdxml(text)['errors']}
+
+    assert 'setting' not in codes(HashSpacing='2.49', MarginWidth='1.59')
+    assert 'setting' in codes(HashSpacing='2.4')

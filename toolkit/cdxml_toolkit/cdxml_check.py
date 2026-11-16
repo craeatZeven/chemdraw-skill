@@ -41,6 +41,12 @@ def pages_needed(width, height):
     return max(2, math.ceil(width / PAGE_WIDTH) + 1), max(2, math.ceil(height / PAGE_HEIGHT) + 1)
 
 
+# ChemDraw's own SaveAs rounds root settings: 2.5 is written 2.49 and 1.6 as 1.59. An exact
+# comparison reported every natively saved file, including ones ChemDraw wrote itself, so
+# the signal was lost. 0.02 absorbs the rounding and keeps a real deviation visible.
+SETTING_TOLERANCE = 0.02
+
+
 def _issue(bucket, code, message, **extra):
     bucket.append({'code': code, 'message': message, **extra})
 
@@ -257,7 +263,7 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
         value = root.get(name)
         if value is None:
             _issue(warnings, 'setting_missing', f'{name} is not set (expected {expected:g})', setting=name)
-        elif abs(float(value) - expected) > 1e-6:
+        elif abs(float(value) - expected) > SETTING_TOLERANCE:
             _issue(errors, 'setting', f'{name} is {value}, expected {expected:g}', setting=name, found=value)
 
     # ---- fonts and text

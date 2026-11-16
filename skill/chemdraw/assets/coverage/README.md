@@ -183,9 +183,8 @@ cdx.py check mechanism.native.cdxml --allow-sizes 8,6 --palette any \
 carbon has no label, which reads as a bare bond end. That one is worth a look — it is a
 chemistry-ambiguity signal, not a setting mismatch.
 
-**Open item for the maintainer.** `setting` compares exactly, so once a file has been
-through ChemDraw's own SaveAs it can fail on 0.01 (`HashSpacing` 2.49 vs 2.5, `MarginWidth`
-1.59 vs 1.6) — including files ChemDraw wrote itself. That is why `nmr` and `tlc` above are
-the only two that miss. A check that always fails is a check people learn to ignore: a
-tolerance of about +/-0.02 on those numeric settings, or comparing against the file's own
-saved style rather than the baseline, would keep the signal.
+**The rounding is now tolerated, not documented away.** `setting` compares root
+attributes with a tolerance of 0.02, so the 0.01 that ChemDraw's SaveAs introduces no
+longer reports while a real deviation (28 pt against 14.4) still does. With that in place
+`nmr`, `tlc` and `apparatus` pass the baseline and only the figures whose geometry is
+deliberately different need `--ignore`.

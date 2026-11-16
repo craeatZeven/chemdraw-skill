@@ -64,10 +64,10 @@
 
 ## `cdxml_check`
 
-- **function**, line 219: `check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile', allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03, ignore: Iterable[str] = ()) -> dict[str, Any]` - Check one CDXML file or text. Returns ``{"ok", "errors", "warnings", "summary"}``.
-- **function**, line 52: `normalize_palette(palette: Iterable[str] | None)` - No public docstring in the audited version.
+- **function**, line 225: `check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile', allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03, ignore: Iterable[str] = ()) -> dict[str, Any]` - Check one CDXML file or text. Returns ``{"ok", "errors", "warnings", "summary"}``.
+- **function**, line 58: `normalize_palette(palette: Iterable[str] | None)` - No public docstring in the audited version.
 - **function**, line 38: `pages_needed(width, height)` - WidthPages and HeightPages that keep a drawing of this size from wrapping its text.
-- **function**, line 183: `text_over_ink(source, inset: float = 1.0) -> list[str]` - Captions (not atom labels) that a line, arrow, curve or another caption runs through.
+- **function**, line 189: `text_over_ink(source, inset: float = 1.0) -> list[str]` - Captions (not atom labels) that a line, arrow, curve or another caption runs through.
 
 ## `cdxml_compose`
 
