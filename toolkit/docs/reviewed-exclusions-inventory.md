@@ -637,15 +637,15 @@
 
 ## `publication.layout`
 
-- **function**, line 214: `bounds(node, style)` - No public docstring in the audited version.
-- **function**, line 236: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 114: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 236: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 258: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 136: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 27: `font_for(style, size = None)` - No public docstring in the audited version.
 - **function**, line 55: `fragment_mol(fragment)` - No public docstring in the audited version.
 - **function**, line 66: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 62: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 232: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 86: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 254: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 106: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 15: `style_settings(spec)` - No public docstring in the audited version.
 - **function**, line 38: `text_width(value, style, size = None)` - No public docstring in the audited version.
 - **function**, line 43: `wrap(value, width, style)` - No public docstring in the audited version.

@@ -1,296 +1,230 @@
 <?xml version='1.0' encoding='utf-8'?>
-<CDXML BondLength="14.4" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" LabelFont="1001" CaptionFont="1001" LabelSize="8.0" CaptionSize="8.0" LabelFace="96" BoundingBox="0 0 510.236 680.315">
+<CDXML BondLength="14.4" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" LabelFont="1001" CaptionFont="1001" LabelSize="10" CaptionSize="10" LabelFace="96" BoundingBox="0 0 409 372">
   <fonttable>
     <font id="3" charset="iso-8859-1" name="Arial" />
     <font id="1001" charset="iso-8859-1" name="Arial" />
   </fonttable>
-  <page id="1" BoundingBox="0 0 510.236 680.315" WidthPages="1" HeightPages="1">
-    <t id="1002" p="16.0 24.0" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">Structure–activity relationships</s>
-    </t>
-    <t id="1003" p="16.0 44.0" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">Enzyme assay: 10 µM compound, 37 °C, 30 min</s>
-    </t>
-    <t id="1004" p="16.0 648.3149606299213" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">a Values are means of three runs.
-b n.d. = not determined.</s>
-    </t>
-    <t id="1005" p="16.0 64.0" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">core</s>
-    </t>
-    <group id="1377"><fragment id="1006" BoundingBox="32.00 92.00 104.00 116.94" Z="1007" color="3">
-      <n id="1008" p="104.00 104.47" Z="1009" />
-      <n id="1010" p="96.80 116.94" Z="1011" />
-      <n id="1012" p="82.40 116.94" Z="1013" />
-      <n id="1014" p="75.20 104.47" Z="1015" />
-      <n id="1016" p="60.80 104.47" Z="1017" />
-      <n id="1018" p="53.60 92.00" Z="1019" />
-      <n id="1020" p="39.20 92.00" Z="1021" />
-      <n id="1022" p="32.00 104.47" Z="1023" />
-      <n id="1024" p="39.20 116.94" Z="1025" />
-      <n id="1026" p="53.60 116.94" Z="1027" />
-      <n id="1028" p="82.40 92.00" Z="1029" />
-      <n id="1030" p="96.80 92.00" Z="1031" />
-      <b id="1032" Z="1033" B="1008" E="1010" Order="2" DoublePosition="Left" />
-      <b id="1034" Z="1035" B="1010" E="1012" />
-      <b id="1036" Z="1037" B="1012" E="1014" Order="2" DoublePosition="Left" />
-      <b id="1038" Z="1039" B="1014" E="1016" />
-      <b id="1040" Z="1041" B="1016" E="1018" Order="2" DoublePosition="Right" />
-      <b id="1042" Z="1043" B="1018" E="1020" />
-      <b id="1044" Z="1045" B="1020" E="1022" Order="2" DoublePosition="Right" />
-      <b id="1046" Z="1047" B="1022" E="1024" />
-      <b id="1048" Z="1049" B="1024" E="1026" Order="2" DoublePosition="Right" />
-      <b id="1050" Z="1051" B="1014" E="1028" />
-      <b id="1052" Z="1053" B="1028" E="1030" Order="2" DoublePosition="Left" />
-      <b id="1054" Z="1055" B="1030" E="1008" />
-      <b id="1056" Z="1057" B="1026" E="1016" />
+  <page id="1" BoundingBox="0 0 409 372" WidthPages="1" HeightPages="1">
+    <t id="1002" p="16.0 26.0" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">Structure–activity relationships</s></t>
+    <t id="1003" p="16.0 49.0" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">Enzyme assay: 10 µM compound, 37 °C, 30 min</s></t>
+    <t id="1004" p="16.0 72.0" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">core</s></t>
+    <t id="1376" p="16.0 335.88306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">a Values are means of three runs.
+b n.d. = not determined.</s></t>
+  <group id="1377"><fragment id="1005" BoundingBox="28.00 97.00 100.00 121.94" Z="1006" color="3">
+      <n id="1007" p="100.00 109.47" Z="1008" />
+      <n id="1009" p="92.80 121.94" Z="1010" />
+      <n id="1011" p="78.40 121.94" Z="1012" />
+      <n id="1013" p="71.20 109.47" Z="1014" />
+      <n id="1015" p="56.80 109.47" Z="1016" />
+      <n id="1017" p="49.60 97.00" Z="1018" />
+      <n id="1019" p="35.20 97.00" Z="1020" />
+      <n id="1021" p="28.00 109.47" Z="1022" />
+      <n id="1023" p="35.20 121.94" Z="1024" />
+      <n id="1025" p="49.60 121.94" Z="1026" />
+      <n id="1027" p="78.40 97.00" Z="1028" />
+      <n id="1029" p="92.80 97.00" Z="1030" />
+      <b id="1031" Z="1032" B="1007" E="1009" Order="2" DoublePosition="Left" />
+      <b id="1033" Z="1034" B="1009" E="1011" />
+      <b id="1035" Z="1036" B="1011" E="1013" Order="2" DoublePosition="Left" />
+      <b id="1037" Z="1038" B="1013" E="1015" />
+      <b id="1039" Z="1040" B="1015" E="1017" Order="2" DoublePosition="Right" />
+      <b id="1041" Z="1042" B="1017" E="1019" />
+      <b id="1043" Z="1044" B="1019" E="1021" Order="2" DoublePosition="Right" />
+      <b id="1045" Z="1046" B="1021" E="1023" />
+      <b id="1047" Z="1048" B="1023" E="1025" Order="2" DoublePosition="Right" />
+      <b id="1049" Z="1050" B="1013" E="1027" />
+      <b id="1051" Z="1052" B="1027" E="1029" Order="2" DoublePosition="Left" />
+      <b id="1053" Z="1054" B="1029" E="1007" />
+      <b id="1055" Z="1056" B="1025" E="1015" />
     </fragment>
-    <t id="1057" p="22.0 137.74153162899185" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">6a</s>
-    </t>
-    <t id="1058" p="22.0 153.34153162899185" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">IC50 (µM): 0.42</s>
-    </t>
-    <t id="1059" p="22.0 168.94153162899184" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">LogD: 3.1</s>
-    </t>
-    <t id="1060" p="22.0 184.54153162899183" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">Solubility (µM): 48</s>
-    </t>
-    </group><group id="1378"><fragment id="1061" BoundingBox="148.00 92.00 234.40 116.94" Z="1062" color="3">
-      <n id="1063" p="234.40 104.47" Z="1064" />
-      <n id="1065" p="220.00 104.47" Z="1066" />
-      <n id="1067" p="212.80 116.94" Z="1068" />
-      <n id="1069" p="198.40 116.94" Z="1070" />
-      <n id="1071" p="191.20 104.47" Z="1072" />
-      <n id="1073" p="176.80 104.47" Z="1074" />
-      <n id="1075" p="169.60 92.00" Z="1076" />
-      <n id="1077" p="155.20 92.00" Z="1078" />
-      <n id="1079" p="148.00 104.47" Z="1080" />
-      <n id="1081" p="155.20 116.94" Z="1082" />
-      <n id="1083" p="169.60 116.94" Z="1084" />
-      <n id="1085" p="198.40 92.00" Z="1086" />
-      <n id="1087" p="212.80 92.00" Z="1088" />
-      <b id="1089" Z="1090" B="1063" E="1065" />
-      <b id="1091" Z="1092" B="1065" E="1067" />
-      <b id="1093" Z="1094" B="1067" E="1069" Order="2" DoublePosition="Left" />
-      <b id="1095" Z="1096" B="1069" E="1071" />
-      <b id="1097" Z="1098" B="1071" E="1073" />
-      <b id="1099" Z="1100" B="1073" E="1075" Order="2" DoublePosition="Right" />
-      <b id="1101" Z="1102" B="1075" E="1077" />
-      <b id="1103" Z="1104" B="1077" E="1079" Order="2" DoublePosition="Right" />
-      <b id="1105" Z="1106" B="1079" E="1081" />
-      <b id="1107" Z="1108" B="1081" E="1083" Order="2" DoublePosition="Right" />
-      <b id="1109" Z="1110" B="1071" E="1085" Order="2" DoublePosition="Left" />
-      <b id="1111" Z="1112" B="1085" E="1087" />
-      <b id="1113" Z="1114" B="1087" E="1065" Order="2" DoublePosition="Left" />
-      <b id="1115" Z="1116" B="1083" E="1073" />
+    <t id="1056" p="22.0 144.94153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">6a</s></t>
+    <t id="1057" p="22.0 159.44153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">IC50 (µM): 0.42</s></t>
+    <t id="1058" p="22.0 173.94153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">LogD: 3.1</s></t>
+    <t id="1059" p="22.0 188.44153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">Solubility (µM): 48</s></t>
+    </group><group id="1378"><fragment id="1060" BoundingBox="140.00 97.00 226.40 121.94" Z="1061" color="3">
+      <n id="1062" p="226.40 109.47" Z="1063" />
+      <n id="1064" p="212.00 109.47" Z="1065" />
+      <n id="1066" p="204.80 121.94" Z="1067" />
+      <n id="1068" p="190.40 121.94" Z="1069" />
+      <n id="1070" p="183.20 109.47" Z="1071" />
+      <n id="1072" p="168.80 109.47" Z="1073" />
+      <n id="1074" p="161.60 97.00" Z="1075" />
+      <n id="1076" p="147.20 97.00" Z="1077" />
+      <n id="1078" p="140.00 109.47" Z="1079" />
+      <n id="1080" p="147.20 121.94" Z="1081" />
+      <n id="1082" p="161.60 121.94" Z="1083" />
+      <n id="1084" p="190.40 97.00" Z="1085" />
+      <n id="1086" p="204.80 97.00" Z="1087" />
+      <b id="1088" Z="1089" B="1062" E="1064" />
+      <b id="1090" Z="1091" B="1064" E="1066" />
+      <b id="1092" Z="1093" B="1066" E="1068" Order="2" DoublePosition="Left" />
+      <b id="1094" Z="1095" B="1068" E="1070" />
+      <b id="1096" Z="1097" B="1070" E="1072" />
+      <b id="1098" Z="1099" B="1072" E="1074" Order="2" DoublePosition="Right" />
+      <b id="1100" Z="1101" B="1074" E="1076" />
+      <b id="1102" Z="1103" B="1076" E="1078" Order="2" DoublePosition="Right" />
+      <b id="1104" Z="1105" B="1078" E="1080" />
+      <b id="1106" Z="1107" B="1080" E="1082" Order="2" DoublePosition="Right" />
+      <b id="1108" Z="1109" B="1070" E="1084" Order="2" DoublePosition="Left" />
+      <b id="1110" Z="1111" B="1084" E="1086" />
+      <b id="1112" Z="1113" B="1086" E="1064" Order="2" DoublePosition="Left" />
+      <b id="1114" Z="1115" B="1082" E="1072" />
     </fragment>
-    <t id="1116" p="138.00000000000003 137.74153162899185" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">6b</s>
-    </t>
-    <t id="1117" p="138.00000000000003 153.34153162899185" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">IC50 (µM): 1.8</s>
-    </t>
-    <t id="1118" p="138.00000000000003 168.94153162899184" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">LogD: 3.6</s>
-    </t>
-    <t id="1119" p="138.00000000000003 184.54153162899183" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">Solubility (µM): 12</s>
-    </t>
-    </group><group id="1379"><fragment id="1120" BoundingBox="278.40 92.00 372.00 116.94" Z="1121" color="3">
-      <n id="1122" p="372.00 116.94" Z="1123" />
-      <n id="1124" p="364.80 104.47" Z="1125" Element="8" NumHydrogens="0" NeedsClean="yes">
-        <t id="1126" p="361.55 107.99" BoundingBox="361.80 96.95 367.80 104.47" LabelJustification="Left">
-          <s font="1001" size="8.0" color="3" face="96">O</s>
-        </t>
+    <t id="1115" p="134.0 144.94153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">6b</s></t>
+    <t id="1116" p="134.0 159.44153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">IC50 (µM): 1.8</s></t>
+    <t id="1117" p="134.0 173.94153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">LogD: 3.6</s></t>
+    <t id="1118" p="134.0 188.44153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">Solubility (µM): 12</s></t>
+    </group><group id="1379"><fragment id="1119" BoundingBox="262.40 97.00 356.00 121.94" Z="1120" color="3">
+      <n id="1121" p="356.00 121.94" Z="1122" />
+      <n id="1123" p="348.80 109.47" Z="1124" Element="8" NumHydrogens="0" NeedsClean="yes">
+        <t id="1125" p="345.55 112.99" BoundingBox="345.80 101.95 351.80 109.47" LabelJustification="Left"><s font="1001" size="10.0" color="3" face="96">O</s></t>
       </n>
-      <n id="1127" p="350.40 104.47" Z="1128" />
-      <n id="1129" p="343.20 116.94" Z="1130" />
-      <n id="1131" p="328.80 116.94" Z="1132" />
-      <n id="1133" p="321.60 104.47" Z="1134" />
-      <n id="1135" p="307.20 104.47" Z="1136" />
-      <n id="1137" p="300.00 92.00" Z="1138" />
-      <n id="1139" p="285.60 92.00" Z="1140" />
-      <n id="1141" p="278.40 104.47" Z="1142" />
-      <n id="1143" p="285.60 116.94" Z="1144" />
-      <n id="1145" p="300.00 116.94" Z="1146" />
-      <n id="1147" p="328.80 92.00" Z="1148" />
-      <n id="1149" p="343.20 92.00" Z="1150" />
-      <b id="1151" Z="1152" B="1122" E="1124" />
-      <b id="1153" Z="1154" B="1124" E="1127" />
-      <b id="1155" Z="1156" B="1127" E="1129" />
-      <b id="1157" Z="1158" B="1129" E="1131" Order="2" DoublePosition="Left" />
-      <b id="1159" Z="1160" B="1131" E="1133" />
-      <b id="1161" Z="1162" B="1133" E="1135" />
-      <b id="1163" Z="1164" B="1135" E="1137" Order="2" DoublePosition="Right" />
-      <b id="1165" Z="1166" B="1137" E="1139" />
-      <b id="1167" Z="1168" B="1139" E="1141" Order="2" DoublePosition="Right" />
-      <b id="1169" Z="1170" B="1141" E="1143" />
-      <b id="1171" Z="1172" B="1143" E="1145" Order="2" DoublePosition="Right" />
-      <b id="1173" Z="1174" B="1133" E="1147" Order="2" DoublePosition="Left" />
-      <b id="1175" Z="1176" B="1147" E="1149" />
-      <b id="1177" Z="1178" B="1149" E="1127" Order="2" DoublePosition="Left" />
-      <b id="1179" Z="1180" B="1145" E="1135" />
+      <n id="1126" p="334.40 109.47" Z="1127" />
+      <n id="1128" p="327.20 121.94" Z="1129" />
+      <n id="1130" p="312.80 121.94" Z="1131" />
+      <n id="1132" p="305.60 109.47" Z="1133" />
+      <n id="1134" p="291.20 109.47" Z="1135" />
+      <n id="1136" p="284.00 97.00" Z="1137" />
+      <n id="1138" p="269.60 97.00" Z="1139" />
+      <n id="1140" p="262.40 109.47" Z="1141" />
+      <n id="1142" p="269.60 121.94" Z="1143" />
+      <n id="1144" p="284.00 121.94" Z="1145" />
+      <n id="1146" p="312.80 97.00" Z="1147" />
+      <n id="1148" p="327.20 97.00" Z="1149" />
+      <b id="1150" Z="1151" B="1121" E="1123" />
+      <b id="1152" Z="1153" B="1123" E="1126" />
+      <b id="1154" Z="1155" B="1126" E="1128" />
+      <b id="1156" Z="1157" B="1128" E="1130" Order="2" DoublePosition="Left" />
+      <b id="1158" Z="1159" B="1130" E="1132" />
+      <b id="1160" Z="1161" B="1132" E="1134" />
+      <b id="1162" Z="1163" B="1134" E="1136" Order="2" DoublePosition="Right" />
+      <b id="1164" Z="1165" B="1136" E="1138" />
+      <b id="1166" Z="1167" B="1138" E="1140" Order="2" DoublePosition="Right" />
+      <b id="1168" Z="1169" B="1140" E="1142" />
+      <b id="1170" Z="1171" B="1142" E="1144" Order="2" DoublePosition="Right" />
+      <b id="1172" Z="1173" B="1132" E="1146" Order="2" DoublePosition="Left" />
+      <b id="1174" Z="1175" B="1146" E="1148" />
+      <b id="1176" Z="1177" B="1148" E="1126" Order="2" DoublePosition="Left" />
+      <b id="1178" Z="1179" B="1144" E="1134" />
     </fragment>
-    <t id="1180" p="268.4000000000001 137.74153162899185" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">6c</s>
-    </t>
-    <t id="1181" p="268.4000000000001 153.34153162899185" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">IC50 (µM): 0.11</s>
-    </t>
-    <t id="1182" p="268.4000000000001 168.94153162899184" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">LogD: 2.7</s>
-    </t>
-    <t id="1183" p="268.4000000000001 184.54153162899183" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">Solubility (µM): 95</s>
-    </t>
-    </group><group id="1380"><fragment id="1184" BoundingBox="32.00 231.34 132.80 256.28" Z="1185" color="3">
-      <n id="1186" p="132.80 243.81" Z="1187" Element="7" NumHydrogens="0" NeedsClean="yes">
-        <t id="1188" p="129.55 247.33" BoundingBox="129.80 236.29 135.80 243.81" LabelJustification="Left">
-          <s font="1001" size="8.0" color="3" face="96">N</s>
-        </t>
+    <t id="1179" p="256.40000000000003 144.94153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">6c</s></t>
+    <t id="1180" p="256.40000000000003 159.44153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">IC50 (µM): 0.11</s></t>
+    <t id="1181" p="256.40000000000003 173.94153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">LogD: 2.7</s></t>
+    <t id="1182" p="256.40000000000003 188.44153162899187" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">Solubility (µM): 95</s></t>
+    </group><group id="1380"><fragment id="1183" BoundingBox="28.00 219.44 128.80 244.38" Z="1184" color="3">
+      <n id="1185" p="128.80 231.91" Z="1186" Element="7" NumHydrogens="0" NeedsClean="yes">
+        <t id="1187" p="125.55 235.43" BoundingBox="125.80 224.39 131.80 231.91" LabelJustification="Left"><s font="1001" size="10.0" color="3" face="96">N</s></t>
       </n>
-      <n id="1189" p="118.40 243.81" Z="1190" />
-      <n id="1191" p="104.00 243.81" Z="1192" />
-      <n id="1193" p="96.80 256.28" Z="1194" />
-      <n id="1195" p="82.40 256.28" Z="1196" />
-      <n id="1197" p="75.20 243.81" Z="1198" />
-      <n id="1199" p="60.80 243.81" Z="1200" />
-      <n id="1201" p="53.60 231.34" Z="1202" />
-      <n id="1203" p="39.20 231.34" Z="1204" />
-      <n id="1205" p="32.00 243.81" Z="1206" />
-      <n id="1207" p="39.20 256.28" Z="1208" />
-      <n id="1209" p="53.60 256.28" Z="1210" />
-      <n id="1211" p="82.40 231.34" Z="1212" />
-      <n id="1213" p="96.80 231.34" Z="1214" />
-      <b id="1215" Z="1216" B="1186" E="1189" Order="3" />
-      <b id="1217" Z="1218" B="1189" E="1191" />
-      <b id="1219" Z="1220" B="1191" E="1193" />
-      <b id="1221" Z="1222" B="1193" E="1195" Order="2" DoublePosition="Left" />
-      <b id="1223" Z="1224" B="1195" E="1197" />
-      <b id="1225" Z="1226" B="1197" E="1199" />
-      <b id="1227" Z="1228" B="1199" E="1201" Order="2" DoublePosition="Right" />
-      <b id="1229" Z="1230" B="1201" E="1203" />
-      <b id="1231" Z="1232" B="1203" E="1205" Order="2" DoublePosition="Right" />
-      <b id="1233" Z="1234" B="1205" E="1207" />
-      <b id="1235" Z="1236" B="1207" E="1209" Order="2" DoublePosition="Right" />
-      <b id="1237" Z="1238" B="1197" E="1211" Order="2" DoublePosition="Left" />
-      <b id="1239" Z="1240" B="1211" E="1213" />
-      <b id="1241" Z="1242" B="1213" E="1191" Order="2" DoublePosition="Left" />
-      <b id="1243" Z="1244" B="1209" E="1199" />
+      <n id="1188" p="114.40 231.91" Z="1189" />
+      <n id="1190" p="100.00 231.91" Z="1191" />
+      <n id="1192" p="92.80 244.38" Z="1193" />
+      <n id="1194" p="78.40 244.38" Z="1195" />
+      <n id="1196" p="71.20 231.91" Z="1197" />
+      <n id="1198" p="56.80 231.91" Z="1199" />
+      <n id="1200" p="49.60 219.44" Z="1201" />
+      <n id="1202" p="35.20 219.44" Z="1203" />
+      <n id="1204" p="28.00 231.91" Z="1205" />
+      <n id="1206" p="35.20 244.38" Z="1207" />
+      <n id="1208" p="49.60 244.38" Z="1209" />
+      <n id="1210" p="78.40 219.44" Z="1211" />
+      <n id="1212" p="92.80 219.44" Z="1213" />
+      <b id="1214" Z="1215" B="1185" E="1188" Order="3" />
+      <b id="1216" Z="1217" B="1188" E="1190" />
+      <b id="1218" Z="1219" B="1190" E="1192" />
+      <b id="1220" Z="1221" B="1192" E="1194" Order="2" DoublePosition="Left" />
+      <b id="1222" Z="1223" B="1194" E="1196" />
+      <b id="1224" Z="1225" B="1196" E="1198" />
+      <b id="1226" Z="1227" B="1198" E="1200" Order="2" DoublePosition="Right" />
+      <b id="1228" Z="1229" B="1200" E="1202" />
+      <b id="1230" Z="1231" B="1202" E="1204" Order="2" DoublePosition="Right" />
+      <b id="1232" Z="1233" B="1204" E="1206" />
+      <b id="1234" Z="1235" B="1206" E="1208" Order="2" DoublePosition="Right" />
+      <b id="1236" Z="1237" B="1196" E="1210" Order="2" DoublePosition="Left" />
+      <b id="1238" Z="1239" B="1210" E="1212" />
+      <b id="1240" Z="1241" B="1212" E="1190" Order="2" DoublePosition="Left" />
+      <b id="1242" Z="1243" B="1208" E="1198" />
     </fragment>
-    <t id="1244" p="22.0 277.0830632579837" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">6d</s>
-    </t>
-    <t id="1245" p="22.0 292.68306325798375" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">IC50 (µM): &gt;10</s>
-    </t>
-    <t id="1246" p="22.0 308.28306325798377" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">LogD: 2.9</s>
-    </t>
-    <t id="1247" p="22.0 323.8830632579838" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">Solubility (µM): 31</s>
-    </t>
-    </group><group id="1381"><fragment id="1248" BoundingBox="176.80 231.34 270.40 256.28" Z="1249" color="3">
-      <n id="1250" p="270.40 256.28" Z="1251" Element="7" NumHydrogens="2" NeedsClean="yes">
-        <t id="1252" p="267.15 259.80" BoundingBox="267.40 248.76 273.40 256.28" LabelJustification="Left">
-          <s font="1001" size="8.0" color="3" face="96">NH2</s>
-        </t>
+    <t id="1243" p="22.0 267.38306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">6d</s></t>
+    <t id="1244" p="22.0 281.88306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">IC50 (µM): &gt;10</s></t>
+    <t id="1245" p="22.0 296.38306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">LogD: 2.9</s></t>
+    <t id="1246" p="22.0 310.88306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">Solubility (µM): 31</s></t>
+    </group><group id="1381"><fragment id="1247" BoundingBox="164.80 219.44 258.40 244.38" Z="1248" color="3">
+      <n id="1249" p="258.40 244.38" Z="1250" Element="7" NumHydrogens="2" NeedsClean="yes">
+        <t id="1251" p="255.15 247.90" BoundingBox="255.40 236.86 261.40 244.38" LabelJustification="Left"><s font="1001" size="10.0" color="3" face="96">NH2</s></t>
       </n>
-      <n id="1253" p="263.20 243.81" Z="1254" />
-      <n id="1255" p="270.40 231.34" Z="1256" Element="8" NumHydrogens="0" NeedsClean="yes">
-        <t id="1257" p="267.15 234.86" BoundingBox="267.40 223.82 273.40 231.34" LabelJustification="Left">
-          <s font="1001" size="8.0" color="3" face="96">O</s>
-        </t>
+      <n id="1252" p="251.20 231.91" Z="1253" />
+      <n id="1254" p="258.40 219.44" Z="1255" Element="8" NumHydrogens="0" NeedsClean="yes">
+        <t id="1256" p="255.15 222.96" BoundingBox="255.40 211.92 261.40 219.44" LabelJustification="Left"><s font="1001" size="10.0" color="3" face="96">O</s></t>
       </n>
-      <n id="1258" p="248.80 243.81" Z="1259" />
-      <n id="1260" p="241.60 256.28" Z="1261" />
-      <n id="1262" p="227.20 256.28" Z="1263" />
-      <n id="1264" p="220.00 243.81" Z="1265" />
-      <n id="1266" p="205.60 243.81" Z="1267" />
-      <n id="1268" p="198.40 231.34" Z="1269" />
-      <n id="1270" p="184.00 231.34" Z="1271" />
-      <n id="1272" p="176.80 243.81" Z="1273" />
-      <n id="1274" p="184.00 256.28" Z="1275" />
-      <n id="1276" p="198.40 256.28" Z="1277" />
-      <n id="1278" p="227.20 231.34" Z="1279" />
-      <n id="1280" p="241.60 231.34" Z="1281" />
-      <b id="1282" Z="1283" B="1250" E="1253" />
-      <b id="1284" Z="1285" B="1253" E="1255" Order="2" />
-      <b id="1286" Z="1287" B="1253" E="1258" />
-      <b id="1288" Z="1289" B="1258" E="1260" />
-      <b id="1290" Z="1291" B="1260" E="1262" Order="2" DoublePosition="Left" />
-      <b id="1292" Z="1293" B="1262" E="1264" />
-      <b id="1294" Z="1295" B="1264" E="1266" />
-      <b id="1296" Z="1297" B="1266" E="1268" Order="2" DoublePosition="Right" />
-      <b id="1298" Z="1299" B="1268" E="1270" />
-      <b id="1300" Z="1301" B="1270" E="1272" Order="2" DoublePosition="Right" />
-      <b id="1302" Z="1303" B="1272" E="1274" />
-      <b id="1304" Z="1305" B="1274" E="1276" Order="2" DoublePosition="Right" />
-      <b id="1306" Z="1307" B="1264" E="1278" Order="2" DoublePosition="Left" />
-      <b id="1308" Z="1309" B="1278" E="1280" />
-      <b id="1310" Z="1311" B="1280" E="1258" Order="2" DoublePosition="Left" />
-      <b id="1312" Z="1313" B="1276" E="1266" />
+      <n id="1257" p="236.80 231.91" Z="1258" />
+      <n id="1259" p="229.60 244.38" Z="1260" />
+      <n id="1261" p="215.20 244.38" Z="1262" />
+      <n id="1263" p="208.00 231.91" Z="1264" />
+      <n id="1265" p="193.60 231.91" Z="1266" />
+      <n id="1267" p="186.40 219.44" Z="1268" />
+      <n id="1269" p="172.00 219.44" Z="1270" />
+      <n id="1271" p="164.80 231.91" Z="1272" />
+      <n id="1273" p="172.00 244.38" Z="1274" />
+      <n id="1275" p="186.40 244.38" Z="1276" />
+      <n id="1277" p="215.20 219.44" Z="1278" />
+      <n id="1279" p="229.60 219.44" Z="1280" />
+      <b id="1281" Z="1282" B="1249" E="1252" />
+      <b id="1283" Z="1284" B="1252" E="1254" Order="2" />
+      <b id="1285" Z="1286" B="1252" E="1257" />
+      <b id="1287" Z="1288" B="1257" E="1259" />
+      <b id="1289" Z="1290" B="1259" E="1261" Order="2" DoublePosition="Left" />
+      <b id="1291" Z="1292" B="1261" E="1263" />
+      <b id="1293" Z="1294" B="1263" E="1265" />
+      <b id="1295" Z="1296" B="1265" E="1267" Order="2" DoublePosition="Right" />
+      <b id="1297" Z="1298" B="1267" E="1269" />
+      <b id="1299" Z="1300" B="1269" E="1271" Order="2" DoublePosition="Right" />
+      <b id="1301" Z="1302" B="1271" E="1273" />
+      <b id="1303" Z="1304" B="1273" E="1275" Order="2" DoublePosition="Right" />
+      <b id="1305" Z="1306" B="1263" E="1277" Order="2" DoublePosition="Left" />
+      <b id="1307" Z="1308" B="1277" E="1279" />
+      <b id="1309" Z="1310" B="1279" E="1257" Order="2" DoublePosition="Left" />
+      <b id="1311" Z="1312" B="1275" E="1265" />
     </fragment>
-    <t id="1313" p="166.8 277.0830632579837" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">6e</s>
-    </t>
-    <t id="1314" p="166.8 292.68306325798375" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">IC50 (µM): 0.87</s>
-    </t>
-    <t id="1315" p="166.8 308.28306325798377" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">LogD: 2.2</s>
-    </t>
-    <t id="1316" p="166.8 323.8830632579838" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">Solubility (µM): 160</s>
-    </t>
-    </group><group id="1382"><fragment id="1317" BoundingBox="314.40 231.34 400.80 256.28" Z="1318" color="3">
-      <n id="1319" p="400.80 243.81" Z="1320" Element="9" NumHydrogens="0" NeedsClean="yes">
-        <t id="1321" p="397.55 247.33" BoundingBox="397.80 236.29 403.80 243.81" LabelJustification="Left">
-          <s font="1001" size="8.0" color="3" face="96">F</s>
-        </t>
+    <t id="1312" p="158.8 267.38306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">6e</s></t>
+    <t id="1313" p="158.8 281.88306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">IC50 (µM): 0.87</s></t>
+    <t id="1314" p="158.8 296.38306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">LogD: 2.2</s></t>
+    <t id="1315" p="158.8 310.88306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">Solubility (µM): 160</s></t>
+    </group><group id="1382"><fragment id="1316" BoundingBox="294.40 219.44 380.80 244.38" Z="1317" color="3">
+      <n id="1318" p="380.80 231.91" Z="1319" Element="9" NumHydrogens="0" NeedsClean="yes">
+        <t id="1320" p="377.55 235.43" BoundingBox="377.80 224.39 383.80 231.91" LabelJustification="Left"><s font="1001" size="10.0" color="3" face="96">F</s></t>
       </n>
-      <n id="1322" p="386.40 243.81" Z="1323" />
-      <n id="1324" p="379.20 256.28" Z="1325" />
-      <n id="1326" p="364.80 256.28" Z="1327" />
-      <n id="1328" p="357.60 243.81" Z="1329" />
-      <n id="1330" p="343.20 243.81" Z="1331" />
-      <n id="1332" p="336.00 231.34" Z="1333" />
-      <n id="1334" p="321.60 231.34" Z="1335" />
-      <n id="1336" p="314.40 243.81" Z="1337" />
-      <n id="1338" p="321.60 256.28" Z="1339" />
-      <n id="1340" p="336.00 256.28" Z="1341" />
-      <n id="1342" p="364.80 231.34" Z="1343" />
-      <n id="1344" p="379.20 231.34" Z="1345" />
-      <b id="1346" Z="1347" B="1319" E="1322" />
-      <b id="1348" Z="1349" B="1322" E="1324" />
-      <b id="1350" Z="1351" B="1324" E="1326" Order="2" DoublePosition="Left" />
-      <b id="1352" Z="1353" B="1326" E="1328" />
-      <b id="1354" Z="1355" B="1328" E="1330" />
-      <b id="1356" Z="1357" B="1330" E="1332" Order="2" DoublePosition="Right" />
-      <b id="1358" Z="1359" B="1332" E="1334" />
-      <b id="1360" Z="1361" B="1334" E="1336" Order="2" DoublePosition="Right" />
-      <b id="1362" Z="1363" B="1336" E="1338" />
-      <b id="1364" Z="1365" B="1338" E="1340" Order="2" DoublePosition="Right" />
-      <b id="1366" Z="1367" B="1328" E="1342" Order="2" DoublePosition="Left" />
-      <b id="1368" Z="1369" B="1342" E="1344" />
-      <b id="1370" Z="1371" B="1344" E="1322" Order="2" DoublePosition="Left" />
-      <b id="1372" Z="1373" B="1340" E="1330" />
+      <n id="1321" p="366.40 231.91" Z="1322" />
+      <n id="1323" p="359.20 244.38" Z="1324" />
+      <n id="1325" p="344.80 244.38" Z="1326" />
+      <n id="1327" p="337.60 231.91" Z="1328" />
+      <n id="1329" p="323.20 231.91" Z="1330" />
+      <n id="1331" p="316.00 219.44" Z="1332" />
+      <n id="1333" p="301.60 219.44" Z="1334" />
+      <n id="1335" p="294.40 231.91" Z="1336" />
+      <n id="1337" p="301.60 244.38" Z="1338" />
+      <n id="1339" p="316.00 244.38" Z="1340" />
+      <n id="1341" p="344.80 219.44" Z="1342" />
+      <n id="1343" p="359.20 219.44" Z="1344" />
+      <b id="1345" Z="1346" B="1318" E="1321" />
+      <b id="1347" Z="1348" B="1321" E="1323" />
+      <b id="1349" Z="1350" B="1323" E="1325" Order="2" DoublePosition="Left" />
+      <b id="1351" Z="1352" B="1325" E="1327" />
+      <b id="1353" Z="1354" B="1327" E="1329" />
+      <b id="1355" Z="1356" B="1329" E="1331" Order="2" DoublePosition="Right" />
+      <b id="1357" Z="1358" B="1331" E="1333" />
+      <b id="1359" Z="1360" B="1333" E="1335" Order="2" DoublePosition="Right" />
+      <b id="1361" Z="1362" B="1335" E="1337" />
+      <b id="1363" Z="1364" B="1337" E="1339" Order="2" DoublePosition="Right" />
+      <b id="1365" Z="1366" B="1327" E="1341" Order="2" DoublePosition="Left" />
+      <b id="1367" Z="1368" B="1341" E="1343" />
+      <b id="1369" Z="1370" B="1343" E="1321" Order="2" DoublePosition="Left" />
+      <b id="1371" Z="1372" B="1339" E="1329" />
     </fragment>
-    <t id="1373" p="304.40000000000003 277.0830632579837" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">6f</s>
-    </t>
-    <t id="1374" p="304.40000000000003 292.68306325798375" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">IC50 (µM): 2.4</s>
-    </t>
-    <t id="1375" p="304.40000000000003 308.28306325798377" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">LogD: 3.4</s>
-    </t>
-    <t id="1376" p="304.40000000000003 323.8830632579838" Justification="Left" InterpretChemically="no">
-      <s font="1001" size="8.0" face="0" color="3">Solubility (µM): 9</s>
-    </t>
-  </group></page>
+    <t id="1372" p="288.40000000000003 267.38306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">6f</s></t>
+    <t id="1373" p="288.40000000000003 281.88306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">IC50 (µM): 2.4</s></t>
+    <t id="1374" p="288.40000000000003 296.38306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">LogD: 3.4</s></t>
+    <t id="1375" p="288.40000000000003 310.88306325798374" Justification="Left" InterpretChemically="no"><s font="1001" size="10" face="0" color="3">Solubility (µM): 9</s></t>
+    </group></page>
   <colortable>
     <color r="1" g="1" b="1" />
     <color r="0" g="0" b="0" />
