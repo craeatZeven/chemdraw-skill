@@ -3,13 +3,15 @@
 Goal: the drawings this Skill produces should pass as publication figures in an organic
 chemistry methodology paper, not merely be chemically correct.
 
-Three sets sit in `skill/chemdraw/assets/` and are meant to be read together:
+Three sets are meant to be read together. The corpus and the coverage renders are
+development evidence and live in the repository's `assets/`, outside the deployable Skill;
+the briefs ship with the Skill in `skill/chemdraw/assets/preview/`:
 
 | Set | What it is |
 | --- | --- |
-| `journal-corpus/` | 51 real figures from Beilstein, Communications Chemistry and Nature Communications, each with DOI, licence and caption (`INDEX.csv`) |
-| `coverage/` | 40 figures this Skill currently produces, one per supported type, each as `.png`, `.cdxml` and a ChemDraw-re-saved `.native.cdxml` |
-| `preview/` | the JSON briefs behind the preview figures, so any of them can be regenerated |
+| `assets/journal-corpus/` | 51 real figures from Beilstein, Communications Chemistry and Nature Communications, each with DOI, licence and caption (`INDEX.csv`) |
+| `assets/coverage/` | 40 figures this Skill currently produces, one per supported type, each as `.png`, `.cdxml` and a ChemDraw-re-saved `.native.cdxml` |
+| `skill/chemdraw/assets/preview/` | the JSON briefs behind the preview figures, so any of them can be regenerated |
 
 A gap is only worth acting on when it is named in a corpus figure and reproduced in a
 coverage figure. Every item below has both.
@@ -180,7 +182,7 @@ the claim rather than asserted:
 4. A human has looked at the PNG at print size and accepted it. Machine checks cannot decide
    whether a scheme reads well; they only rule out the failures they know.
 
-Record the per-figure status in `coverage/README.md` next to the existing notes, so the next
+Record the per-figure status in [figure coverage](figure-coverage.md) next to the existing notes, so the next
 session knows which figures have been brought to this bar and which have not.
 
 ## Status when this was written
@@ -190,11 +192,11 @@ session knows which figures have been brought to this bar and which have not.
 - `coverage/`: 47 figures, each with its `.cdxml`, the ChemDraw-resaved `.native.cdxml` and a
   PNG. Six types were drawn for this task — `derivatization`, `optimization_table`,
   `process_route`, `sar_table`, `stereo_model`, `total_synthesis` — and their briefs live in
-  `assets/preview/` (14 briefs in total), so every figure can be regenerated.
+  `skill/chemdraw/assets/preview/` (14 briefs in total), so every figure can be regenerated.
 - Every one of the 23 declared types now has a witness on at least one side; the corpus
   covers 16 of them and the coverage set the rest.
-- Measured deviations are recorded in `coverage/README.md` rather than hidden: `sar_table`
+- Measured deviations are recorded in [figure coverage](figure-coverage.md) rather than hidden: `sar_table`
   and `substrate_scope` shrink `LabelSize`/`CaptionSize` to 8, and the conformer templates
   ignore a `bond_length` of 14.4 and draw at 12 whatever the brief asks.
-- Reproducibility was checked: rendering `assets/preview/total-synthesis.json` reproduces
+- Reproducibility was checked: rendering `skill/chemdraw/assets/preview/total-synthesis.json` reproduces
   `assets/coverage/total_synthesis.png` with 0 differing pixels.

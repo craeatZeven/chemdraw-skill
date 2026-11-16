@@ -1,7 +1,9 @@
 # Journal figure corpus
 
-Real figures from methodology papers, kept as a reference for what a journal figure actually
-looks like next to what this Skill produces (`../preview/`, `../coverage/`).
+Real figures from methodology papers, kept in [`assets/journal-corpus/`](../assets/journal-corpus/)
+as a reference for what a journal figure actually looks like next to what this Skill produces
+([`assets/coverage/`](../assets/coverage/), described in [figure coverage](figure-coverage.md)). The
+corpus is development evidence and is not part of the deployable Skill.
 
 ## Licence discipline
 
@@ -49,7 +51,7 @@ written. `file` holds the bare name; the image is `<file>.png`.
 
 ## Conventions here that this Skill does not produce yet
 
-Reading the corpus against `../coverage/` gives the gap list:
+Reading the corpus against `assets/coverage/` gives the gap list:
 
 - **Coloured curved arrows.** Mechanisms distinguish competing pathways with green and red
   arrows.

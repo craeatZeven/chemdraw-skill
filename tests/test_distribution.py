@@ -31,7 +31,7 @@ class DistributionTests(unittest.TestCase):
     # are kept out of CHINESE_DOCUMENTS.
     CHINESE_FIXTURES = {
         "skill/chemdraw/assets/preview/build.json",
-        *(f"skill/chemdraw/assets/coverage/{name}{suffix}"
+        *(f"assets/coverage/{name}{suffix}"
           for name in ("energy_profile_catalysis_cn", "energy_profile_two_step_cn", "flowchart", "preview_build")
           for suffix in (".cdxml", ".native.cdxml")),
     }
@@ -112,7 +112,9 @@ class DistributionTests(unittest.TestCase):
                 ".github/SECURITY.md",
                 ".github/pull_request_template.md",
                 "docs/guide.md",
+                "docs/figure-coverage.md",
                 "docs/guide.zh-cn.md",
+                "docs/journal-corpus.md",
                 "docs/journal-figure-parity.md",
                 "docs/zh-cn.md",
                 "docs/website.md",

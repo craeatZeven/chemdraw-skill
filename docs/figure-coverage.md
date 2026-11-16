@@ -1,7 +1,8 @@
 # Figure coverage
 
 Every figure type this Skill can draw, rendered once on Windows with ChemDraw 26
-from the example spec that ships with it. This directory is the evidence behind the
+from the example spec that ships with it. The files are in
+[`assets/coverage/`](../assets/coverage/), outside the deployable Skill: they are the evidence behind the
 claim "we cover these figure types", not a gallery of hand-picked favourites: the
 same script rendered all of them.
 
@@ -76,10 +77,10 @@ Each figure has three files:
 - **apparatus** — the Clipware libraries (`clipware-1.cdxml`, `clipware-2.cdxml`) are licensed
   with ChemDraw and never shipped. Convert a copy of each CTP file from the ChemDraw installation
   (`cdx.py call convert_cdx_cdxml`) into `native-templates/`; see
-  [laboratory drawings](../../references/native-laboratory-drawings.md). A missing template is
+  [laboratory drawings](../skill/chemdraw/references/native-laboratory-drawings.md). A missing template is
   now reported by name with that instruction.
 - **substrate scope** — `kind: "scope"` writes a project folder rather than one file, so it
-  stays in `assets/preview/substrate-scope.png` instead of being duplicated here.
+  stays in `skill/chemdraw/assets/preview/substrate-scope.png` instead of being duplicated here.
 
 ## Renders to redo
 
@@ -226,7 +227,7 @@ own box and cannot be laid out as running text. That is why it carries no footno
 
 ## Journal parity status
 
-Progress against [journal figure parity](../../../../docs/journal-figure-parity.md), per figure.
+Progress against [journal figure parity](journal-figure-parity.md), per figure.
 "Generator done" means the change is in the code with a test; the figure here still shows the
 old output until it is rendered again.
 
