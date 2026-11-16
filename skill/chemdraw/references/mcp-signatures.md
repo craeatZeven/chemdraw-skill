@@ -33,7 +33,7 @@ as compare_molecules names them), with an optional unique ``pair_id``.
 
 Create PPTX or DOCX containing editable ChemDraw OLE objects.
 
-### `build_acs_figure(spec: dict[str, typing.Any] | str, output_path: Optional[str] = None, render: bool = False) -> dict[str, typing.Any]`
+### `build_acs_figure(spec: dict[str, typing.Any] | str, output_path: str | None = None, render: bool = False) -> dict[str, typing.Any]`
 
 Build an ACS Document 1996 CDXML figure from an acs_builder JSON spec.
 
@@ -46,7 +46,7 @@ Args:
     output_path: Optional destination .cdxml path (never overwrites an existing file).
     render: If True, also render a native 300 dpi PNG beside the CDXML when ChemDraw is available.
 
-### `characterization_text(compounds: list[dict], options: Optional[dict] = None, output_path: Optional[str] = None) -> dict`
+### `characterization_text(compounds: list[dict], options: dict | None = None, output_path: str | None = None) -> dict`
 
 ACS-style characterization paragraph per compound, in the order of the ACS Style Guide.
 
@@ -65,7 +65,7 @@ c or solvent, and an HRMS error over 5 ppm. Options are those of hrms_line (addu
 ionization, decimals, electron_mass). Output ends in .txt, .md or .json and is never
 overwritten. At most 256 structures.
 
-### `check_reaction_balance(reaction: str | dict, options: Optional[dict] = None, output_path: Optional[str] = None) -> dict`
+### `check_reaction_balance(reaction: str | dict, options: dict | None = None, output_path: str | None = None) -> dict`
 
 Check that a reaction conserves atoms and charge, and optionally tabulate its stoichiometry.
 
@@ -84,7 +84,7 @@ isolated_mg, the percent yield. A failed balance is a finding about the species 
 check the structures against their source before trusting the reaction. Generic atoms
 (R groups) are rejected. output_path ends in .json and is never overwritten.
 
-### `chemdraw_chemical_properties(molecules: list[dict], output_path: Optional[str] = None) -> dict`
+### `chemdraw_chemical_properties(molecules: list[dict], output_path: str | None = None) -> dict`
 
 Formula, masses, elemental analysis, logP and molar refractivity as ChemDraw computes them.
 
@@ -120,7 +120,7 @@ true need it too). Documents the program opens are closed without saving and Che
 is quit afterwards if the tool started it. Object results are reported as their type;
 max_items caps the items iterate reads.
 
-### `chemdraw_inventory(layer: Optional[str] = None, query: Optional[str] = None, tier: Optional[str] = None, kind: Optional[str] = None, limit: int = 50) -> dict`
+### `chemdraw_inventory(layer: str | None = None, query: str | None = None, tier: str | None = None, kind: str | None = None, limit: int = 50) -> dict`
 
 Look up ChemDraw's own interfaces and how far this Skill covers each one.
 
@@ -133,7 +133,7 @@ it (tool names it), T2 a generic tool reaches it with a recipe that was run and 
 text found in the row id or its documentation; limit caps the rows returned. The summary
 counts every row per layer and tier whatever the filter. Nothing here talks to ChemDraw.
 
-### `chemdraw_object(op: str, input_path: str, selector: Optional[str] = None, tag: Optional[str] = None, props: Optional[dict] = None, children: Optional[list] = None, text: Optional[str] = None, output_path: Optional[str] = None, allow_unknown: bool = False, dry_run: bool = False, verify: bool = True, limit: int = 200) -> dict`
+### `chemdraw_object(op: str, input_path: str, selector: str | None = None, tag: str | None = None, props: dict | None = None, children: list | None = None, text: str | None = None, output_path: str | None = None, allow_unknown: bool = False, dry_run: bool = False, verify: bool = True, limit: int = 200) -> dict`
 
 List, read, change, add or delete any object in a CDXML file, without touching the input.
 
@@ -204,7 +204,7 @@ Report local runtime capabilities; native probes are explicit and temporary.
 
 Discover and classify files belonging to one experiment.
 
-### `draw_figure(brief: dict | str, output_path: Optional[str] = None, render: bool = False) -> dict`
+### `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict`
 
 Draw a reaction scheme from a brief and check it, in one call.
 
@@ -258,9 +258,12 @@ file is never written over an existing one: without output_path a fresh name is 
 in the temp directory, and an existing output_path is refused.
 
 kind "scope" draws a substrate-scope panel instead: species [{id, smiles or name,
-label?, group?, values {field: text}, color?, atom_colors?, bond_colors?, abbreviate?}],
-optional fields [{key, label?, unit?}] (default:
-the keys used in values), conditions, footnotes, title, width_mm and height_mm. The
+label?, group?, values {field: text}, note?, color?, atom_colors?, bond_colors?,
+abbreviate?}], optional fields [{key, label?, unit?, show_label?}] (default: the keys
+used in values), conditions, footnotes, title, width_mm and height_mm. One field is
+shown as its value alone under the label (3a over 92%); show_label true, or several
+fields, names it on each line. note is an extra line under one compound ("not
+formed", "Alk = C7H15"). Text stays at 10 pt and each page is cropped to its content. The
 structures are packed onto as many editable pages as needed, grouped in first-seen
 order, each label and value bound to its structure; a missing value is drawn as a
 dash and listed in the notes. output_path is then a new folder (page-001.cdxml, ...;
@@ -283,7 +286,7 @@ draft so the moves can be checked.
 
 Execute a declarative ChemScript SDK program in an isolated Python.NET process.
 
-### `export_structures(source: str | list, options: Optional[dict] = None, output_path: Optional[str] = None) -> dict`
+### `export_structures(source: str | list, options: dict | None = None, output_path: str | None = None) -> dict`
 
 Export every structure in a file or list as SMILES, InChI, InChIKey, formula and mass.
 
@@ -314,7 +317,7 @@ Fill PPTX/DOCX text and editable ChemDraw placeholders from a manifest.
 
 Return runtime identity and diagnostics; detail='summary' omits tool signatures.
 
-### `hrms_line(molecules: list[dict], options: Optional[dict] = None, output_path: Optional[str] = None) -> dict`
+### `hrms_line(molecules: list[dict], options: dict | None = None, output_path: str | None = None) -> dict`
 
 HRMS characterization lines: "HRMS (ESI) m/z calcd for C9H10O2Na [M+Na]+ 173.0573, found 173.0570".
 
@@ -369,7 +372,7 @@ Args:
     smiles: Optional SMILES string to render and insert when cdxml is not provided.
     output_path: Optional file path to save a copy of the read or inserted CDXML.
 
-### `map_reaction_atoms(reaction: str | dict | list, options: Optional[dict] = None, output_path: Optional[str] = None) -> dict`
+### `map_reaction_atoms(reaction: str | dict | list, options: dict | None = None, output_path: str | None = None) -> dict`
 
 Map each product atom to the reactant atom it comes from (atom-to-atom mapping).
 
@@ -409,7 +412,7 @@ written beside its atom on both sides, never overwriting a file. output_path end
 .smi (the mapped reaction SMILES) or .svg (a picture) and is never overwritten. At most 120
 heavy atoms per side.
 
-### `markush_compile(spec_path: str, output_dir: str, layout_path: Optional[str] = None, render: bool = True) -> dict`
+### `markush_compile(spec_path: str, output_dir: str, layout_path: str | None = None, render: bool = True) -> dict`
 
 Compile a spec into markush.cxsmiles, markush.mol (V3000), markush.cdxml and a native PNG.
 
@@ -441,7 +444,7 @@ A parallel merge (repeat runs of one reaction) draws the first input's
 conditions and adds each run's mass and yield as run arrows; a warning names
 any run whose own conditions are therefore not drawn.
 
-### `molecule_report(molecules: list[dict], output_path: Optional[str] = None) -> dict`
+### `molecule_report(molecules: list[dict], output_path: str | None = None) -> dict`
 
 Property sheet for grounded molecules: formula, masses, MS adducts, drug-likeness.
 
@@ -523,7 +526,7 @@ never a new accepted project. Native PNG/SVG rendering defaults on, through
 isolated locked workers; native failure is reported as pending validation.
 This checks reader consistency and data binding, not experimental chemistry.
 
-### `rdkit_workbench(molecules: Union[list[dict], str, NoneType] = None, operation: str = 'inspect', options: Optional[dict] = None, output_path: Optional[str] = None, **kwargs) -> dict`
+### `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict`
 
 Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs,
 r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like,
@@ -554,7 +557,7 @@ With ``resize_frames``, each frame grows or shrinks with its drawing, as
 Office does after an object is edited in ChemDraw; its top-left corner
 stays in place. Otherwise frames keep their size.
 
-### `route_summary(steps: list, options: Optional[dict] = None, output_path: Optional[str] = None) -> dict`
+### `route_summary(steps: list, options: dict | None = None, output_path: str | None = None) -> dict`
 
 Overall yield and cumulative process mass intensity (PMI) of a synthetic route.
 
@@ -609,7 +612,7 @@ other are rejected rather than drawn. The spec formats are in the diagrams refer
 
 Segment a disconnected or multi-panel CDXML scheme into logical regions.
 
-### `si_materials_tables(reactions: list, options: Optional[dict] = None, output_path: Optional[str] = None) -> dict`
+### `si_materials_tables(reactions: list, options: dict | None = None, output_path: str | None = None) -> dict`
 
 Materials tables for a batch of reactions, ready for a Supporting Information file.
 
@@ -638,7 +641,7 @@ read is reported with its error and the others continue. output_path ends in .md
 or .json and is never overwritten. At most 100 reactions. Amounts and HRMS values are
 calculated; nothing here is a measurement.
 
-### `stoichiometry_grid(source: str, mode: str = 'analyze', output_path: Optional[str] = None, options: Optional[dict] = None) -> dict`
+### `stoichiometry_grid(source: str, mode: str = 'analyze', output_path: str | None = None, options: dict | None = None) -> dict`
 
 ChemDraw's own stoichiometry grid (Structure > Analyze Stoichiometry), drawn or read back.
 
@@ -658,7 +661,7 @@ Equivalents, Sample Mass, Reactant Moles, %Yield, ...): value is the stored numb
 g, amounts in mol, percentages as fractions) and text what the grid shows, with units;
 cells someone typed are marked edited. Nothing is computed outside ChemDraw.
 
-### `structure_to_name(molecules: list[dict], options: Optional[dict] = None, output_path: Optional[str] = None) -> dict`
+### `structure_to_name(molecules: list[dict], options: dict | None = None, output_path: str | None = None) -> dict`
 
 Name grounded structures with ChemDraw's own structure-to-name engine and check each name.
 
@@ -731,7 +734,7 @@ Returns:
 
 Safety override: Draw a molecule through a validated no-overwrite staging file.
 
-### `embed_cdxml_in_office(cdxml_path: str, office_path: str, output_path: Optional[str] = None) -> dict`
+### `embed_cdxml_in_office(cdxml_path: str, office_path: str, output_path: str | None = None) -> dict`
 
 Embed a CDXML file as an editable ChemDraw OLE object in PPTX or DOCX.
 

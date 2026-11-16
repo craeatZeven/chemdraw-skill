@@ -26,7 +26,8 @@ from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manif
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm"}
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
-SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", *SPECIES_STYLE}
+SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", *SPECIES_STYLE}
+NOTE_COLUMN = "note"
 MAX_SPECIES = 1000
 
 
@@ -35,7 +36,7 @@ def _fields(brief: dict) -> tuple[list[dict], list[str]]:
     given = brief.get("fields")
     if given is None:
         keys = list(dict.fromkeys(k for e in brief["species"] if isinstance(e, dict) for k in (e.get("values") or {})))
-        return [{"key": k, "label": k, "unit": None} for k in keys], errors
+        return [{"key": k, "label": k, "unit": None, "show_label": False} for k in keys], errors
     if not isinstance(given, list):
         return [], ["fields must be a list of keys or {key, label, unit} objects."]
     fields: list[dict] = []
@@ -50,7 +51,10 @@ def _fields(brief: dict) -> tuple[list[dict], list[str]]:
             errors.append(f"Field {key}: duplicate key.")
             continue
         label = item.get("label", key)
-        fields.append({"key": key, "label": "" if label is None else str(label), "unit": item.get("unit") or None})
+        if "show_label" in item and not isinstance(item["show_label"], bool):
+            errors.append(f"Field {key}: show_label must be true or false.")
+        fields.append({"key": key, "label": "" if label is None else str(label), "unit": item.get("unit") or None,
+                       "show_label": item.get("show_label") is True})
     return fields, errors
 
 
@@ -97,9 +101,13 @@ def _validate(brief: dict) -> list[str]:
             errors.append(f"Species {ident} needs a smiles or a name.")
         if not isinstance(entry.get("values") or {}, dict):
             errors.append(f"Species {ident}: values must be an object of field -> value.")
+        if entry.get("note") is not None and not isinstance(entry["note"], str):
+            errors.append(f"Species {ident}: note must be text (a line under the compound, e.g. 'not formed').")
 
     fields, field_errors = _fields(brief)
     errors += field_errors
+    if any(f["key"] == NOTE_COLUMN for f in fields):
+        errors.append(f"{NOTE_COLUMN!r} is reserved for the per-compound note; name the field otherwise.")
     known = {f["key"] for f in fields}
     for entry in species:
         if isinstance(entry, dict) and isinstance(entry.get("values") or {}, dict):
@@ -122,17 +130,36 @@ def _text(value: Any) -> str:
     return "" if value is None else str(value)
 
 
+def _cell_fields(fields: list[dict], notes: bool) -> list[dict]:
+    """The lines under each structure, as the publication layout reads them.
+
+    One field reads as the corpus scope tables do, its value alone under the label
+    (``3a`` over ``92%``); say what the number is in a footnote or the conditions, or set
+    ``show_label``. With several fields each line names its field. A note, when any
+    compound has one, is an extra unlabelled line that is left out where it is empty.
+    """
+    columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
+    compact = len(fields) == 1 and not fields[0].get("show_label")
+    cells = [{"column": columns[f["key"]], "label": "" if compact else f["label"],
+              **({"unit": f["unit"]} if f["unit"] else {})} for f in fields]
+    if notes:
+        cells.append({"column": NOTE_COLUMN, "label": "", "optional": True})
+    return cells
+
+
 def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[dict], render: bool) -> Path:
     columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
+    notes = any(isinstance(e, dict) and e.get("note") for e in brief["species"])
     with (work / "table.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["compound_id", "smiles", "label", "group", *columns.values()])
+        writer.writerow(["compound_id", "smiles", "label", "group", *columns.values(), *([NOTE_COLUMN] if notes else [])])
         by_id = {str(e["id"]): e for e in brief["species"]}
         for item in grounded:
             entry = by_id[item["id"]]
             values = entry.get("values") or {}
             writer.writerow([item["id"], item["smiles"], _text(entry.get("label")), _text(entry.get("group")),
-                             *(_text(values.get(f["key"])) for f in fields)])
+                             *(_text(values.get(f["key"])) for f in fields),
+                             *([_text(entry.get("note"))] if notes else [])])
     style = {k: brief[k] for k in ("width_mm", "height_mm") if brief.get(k) is not None}
     slug = brief_style(brief)[0]
     if slug != DEFAULT_STYLE_PRESET:
@@ -142,8 +169,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         style.update(preset)
     spec = {
         "mode": "scope", "table": "table.csv", "label_column": "label", "group_column": "group",
-        "fields": [{"column": columns[f["key"]], "label": f["label"], **({"unit": f["unit"]} if f["unit"] else {})}
-                   for f in fields],
+        "fields": _cell_fields(fields, notes),
         "title": brief.get("title") or "Substrate scope",
         "conditions": brief.get("conditions") or "",
         "footnotes": brief.get("footnotes") or [],

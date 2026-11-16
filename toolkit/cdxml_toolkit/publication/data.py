@@ -145,6 +145,8 @@ def load_records(spec, base):
 
 def field_text(record, field):
     value = record['values'][field['column']]
+    if value == '' and field.get('optional'):
+        return ''  # an optional line (a note under one compound) is simply absent
     # A missing value is visible, never replaced with a numeric zero.
     rendered = value if value != '' else '—'
     if value != '' and field.get('unit'): rendered += ' ' + field['unit']

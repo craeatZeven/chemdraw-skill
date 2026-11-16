@@ -236,3 +236,77 @@ def test_project_page_files_cannot_leave_the_project_folder(tmp_path):
     spec=request(tmp_path,project_path=str(base/'project.json'))
     with pytest.raises(ValueError,match='page file'):
         execute(spec,tmp_path/'checked','check')
+
+
+def _scope_page(tmp_path, rows, **options):
+    out = tmp_path/'scope'
+    result = execute(request(tmp_path, rows, **options), out)
+    assert result['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    page = project['pages'][0]
+    return project, page, ET.parse(out/page['file']).getroot()
+
+
+def test_a_scope_panel_keeps_10_pt_type_and_ends_a_margin_past_its_content(tmp_path):
+    rows = [['a', '3a', STEREO, '92%', ''], ['b', '3b', OTHER, '0%', '']]
+    project, page, root = _scope_page(tmp_path, rows, footnotes=['Isolated yields.'])
+    assert root.get('LabelSize') == '10' and root.get('CaptionSize') == '10'
+    # The page is cropped to what it holds, not left at the default 180 x 240 mm.
+    assert page['height_pt'] < 240 * 72 / 25.4 / 2
+    ys = [float(n.get('p').split()[1]) for n in root.iter() if n.get('p')]
+    assert page['height_pt'] - max(ys) < 40
+    # The footnote follows the last row instead of sitting at the foot of a full page.
+    texts = {''.join(t.itertext()): float(t.get('p').split()[1]) for t in root.iter('t') if t.get('p')}
+    assert texts['Isolated yields.'] == max(texts.values())
+    assert 'Result: 0%' in texts  # a failed entry keeps its value
+
+
+def test_an_optional_note_is_drawn_only_where_it_is_given(tmp_path):
+    rows = [['a', '3a', STEREO, '0%', '', 'not formed'], ['b', '3b', OTHER, '63%', '', '']]
+    table = tmp_path/'notes.csv'
+    with table.open('w', newline='', encoding='utf-8') as stream:
+        writer = csv.writer(stream)
+        writer.writerow(['compound_id', 'label', 'smiles', 'value', 'group', 'note'])
+        writer.writerows(rows)
+    spec = {'table': str(table), 'mode': 'scope', 'native_render': False,
+            'fields': [{'column': 'value', 'label': ''}, {'column': 'note', 'label': '', 'optional': True}]}
+    path = tmp_path/'notes.json'; path.write_text(json.dumps(spec))
+    out = tmp_path/'notes'
+    assert execute(path, out)['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    assert project['compounds']['a']['display'] == {'label': '3a', 'value': '0%', 'note': 'not formed'}
+    assert project['compounds']['b']['display'] == {'label': '3b', 'value': '63%'}
+    assert set(project['compounds']['b']['objects']['fields']) == {'value'}
+    checks = json.loads((out/'checks.json').read_text(encoding='utf-8'))
+    assert checks['data_binding']['status'] == 'passed' and not checks['layout']['issues']
+
+
+def test_one_scope_field_reads_as_the_value_alone():
+    from cdxml_toolkit.mcp_runtime.figure_scope import _cell_fields
+    yield_field = {'key': 'yield', 'label': 'Yield', 'unit': None, 'show_label': False}
+    assert _cell_fields([yield_field], notes=False) == [{'column': 'v1', 'label': ''}]
+    assert _cell_fields([{**yield_field, 'show_label': True}], notes=False) == [{'column': 'v1', 'label': 'Yield'}]
+    ee = {'key': 'ee', 'label': 'ee', 'unit': None, 'show_label': False}
+    assert [c['label'] for c in _cell_fields([yield_field, ee], notes=True)] == ['Yield', 'ee', '']
+    assert _cell_fields([yield_field], notes=True)[-1] == {'column': 'note', 'label': '', 'optional': True}
+
+
+def test_an_empty_optional_line_is_absent_and_an_empty_value_is_a_dash():
+    from cdxml_toolkit.publication.data import field_text
+    record = {'values': {'v1': '', 'note': ''}}
+    assert field_text(record, {'column': 'v1', 'label': ''}) == '—'
+    assert field_text(record, {'column': 'note', 'label': '', 'optional': True}) == ''
+
+
+def test_an_update_that_lengthens_text_grows_the_cropped_page(tmp_path):
+    spec = request(tmp_path); base = tmp_path/'base'; execute(spec, base)
+    before = json.loads((base/'project.json').read_text(encoding='utf-8'))['pages'][0]['height_pt']
+    longer = 'not formed under the standard conditions; the starting material was recovered'
+    # The last compound's caption grows past the foot of the cropped page.
+    spec = request(tmp_path, [['a', '1', STEREO, '82%', 'amine'], ['b', '2', OTHER, longer, 'alcohol']],
+                   project_path=str(base/'project.json'))
+    out = tmp_path/'updated'; result = execute(spec, out, 'update')
+    assert result['ok']
+    page = json.loads((out/'project.json').read_text(encoding='utf-8'))['pages'][0]
+    assert page['height_pt'] > before
+    assert not [i for i in result['checks']['layout']['issues'] if i['issue'] == 'outside_page']

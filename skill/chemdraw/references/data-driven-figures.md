@@ -66,11 +66,18 @@ Groups without a usable common core carry a warning and independent depictions.
 ## Layout
 
 `style` accepts `width_mm`, `height_mm`, `font_size`, `bond_length`, and `font`.
-Defaults are 180 by 240 mm, 8 pt Arial text and 14.4 pt bonds: design defaults,
-not a universal journal specification. Rows wrap or paginate at fixed text/bond
-sizes. Each page is a separate native editable CDXML. An oversized structure is
-reported rather than silently shrunk. Native exports may crop surrounding whitespace;
-assess final reproduction size when inserting them into a manuscript.
+Defaults are a page of at most 180 by 240 mm, 10 pt Arial text (the ACS 1996 label
+size) and 14.4 pt bonds: design defaults, not a universal journal specification.
+Rows wrap or paginate at fixed text/bond sizes; the type never shrinks to fit. Each
+page is a separate native editable CDXML, cropped to its content with a 16 pt margin,
+the footnotes following the last row. An update that lengthens a caption grows its
+page up to the figure size. An oversized structure is reported rather than silently
+shrunk. Assess final reproduction size when inserting pages into a manuscript.
+
+A field with `"optional": true` is a line that is left out where its value is empty
+(a per-compound note); any other empty value is drawn as a dash. A line that was empty
+when the page was laid out cannot be filled by an update: that is reported as a
+conflict, and needs a new layout.
 
 ## ChemDraw editing and incremental updates
 

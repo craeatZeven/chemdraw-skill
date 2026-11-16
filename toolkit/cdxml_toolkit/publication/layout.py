@@ -13,7 +13,9 @@ from .data import field_text, write_json
 
 
 def style_settings(spec):
-    style = {'width_mm':180, 'height_mm':240, 'font_size':8, 'bond_length':14.4,
+    # 10 pt is the ACS 1996 label and caption size: a panel that runs out of room grows or
+    # paginates, it never shrinks the type.
+    style = {'width_mm':180, 'height_mm':240, 'font_size':10, 'bond_length':14.4,
              'font':'Arial', **spec.get('style',{})}
     if not 60 <= float(style['width_mm']) <= 400 or not 60 <= float(style['height_mm']) <= 500:
         raise ValueError('Figure width/height must be 60..400 / 60..500 mm')
@@ -98,6 +100,7 @@ def prepare(records,spec):
         if molecule_width>usable:
             raise ValueError(f"Structure {record['compound_id']} exceeds figure width at requested bond length")
         texts={'label':record['label'],**{f['column']:field_text(record,f) for f in spec.get('fields',[])}}
+        texts={k:v for k,v in texts.items() if k=='label' or v!=''}  # an empty optional line is not drawn
         width=max(100,molecule_width,min(usable,max(text_width(v,style)+16 for v in texts.values())))
         width=min(width,usable)
         texts={k:wrap(v,width-12,style) for k,v in texts.items()}
@@ -129,8 +132,8 @@ def create_pages(records,spec,stage,start_index=0):
         if conditions:
             objects.append({'type':'text','id':'conditions','text':conditions,'position':[margin,top+size],'size':size})
             top+=(conditions.count('\n')+1)*size*1.5+8
-        if footer: objects.append({'type':'text','id':'footnotes','text':footer,'position':[margin,bottom+size+8],'size':size})
-        current={'index':index,'objects':objects,'entries':[],'top':top}
+        current={'index':index,'objects':objects,'entries':[],'top':top,'bottom':top,
+                 'right':margin+max((text_width(line,style) for line in (title+'\n'+conditions).splitlines()), default=0)}
         manifests.append(current)
         return current,margin,top,0
     for p in arranged:
@@ -144,6 +147,7 @@ def create_pages(records,spec,stage,start_index=0):
                 heading=wrap(group,width-2*margin,style)
                 current['objects'].append({'type':'text','text':heading,'position':[margin,y+size],'size':size})
                 y+=(heading.count('\n')+1)*size*1.5+8
+                current['right']=max(current['right'],margin+text_width(heading,style))
             last_group=group
         if x+p['width']>width-margin:
             x=margin; y+=row_height+gap; row_height=0
@@ -153,6 +157,7 @@ def create_pages(records,spec,stage,start_index=0):
                 heading=wrap(group+' (continued)',width-2*margin,style)
                 current['objects'].append({'type':'text','text':heading,'position':[margin,y+size],'size':size})
                 y+=(heading.count('\n')+1)*size*1.5+8
+                current['right']=max(current['right'],margin+text_width(heading,style))
         if y+p['height']>bottom: raise ValueError(f"Compound {p['input']['compound_id']} exceeds page height")
         key=f'c{len(compounds)}'; cid=p['input']['compound_id']
         objects=[{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
@@ -164,9 +169,20 @@ def create_pages(records,spec,stage,start_index=0):
         current['objects'].extend(objects)
         entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']]}
         current['entries'].append(entry)
+        current['bottom']=max(current['bottom'],y+p['height']); current['right']=max(current['right'],x+p['width'])
         compounds[cid]={'input':p['input'],'page':current['index'],'bbox':entry['bbox'],
                         'display':p['texts'],'locked':False}
         x+=p['width']+gap; row_height=max(row_height,p['height'])
+    # Each page is cropped to what it holds: the footnotes follow the last row (rather than
+    # sitting at the foot of the full-height page) and the page ends a margin past them.
+    for page in manifests:
+        page_bottom=page['bottom']
+        if footer:
+            page['objects'].append({'type':'text','id':'footnotes','text':footer,'position':[margin,page_bottom+8+size],'size':size})
+            page_bottom+=8+(footer.count('\n')+1)*size*1.5
+            page['right']=max(page['right'],margin+max(text_width(line,style) for line in footer.splitlines()))
+        page['width']=min(width,math.ceil(page['right']+margin))
+        page['height']=min(height,math.ceil(page_bottom+margin))
     stage=Path(stage)
     for page in manifests:
         name=f"page-{page['index']+1:03d}.cdxml"
@@ -174,8 +190,8 @@ def create_pages(records,spec,stage,start_index=0):
         write_json(manifest,{'style':{k:style[k] for k in ('font','font_size','bond_length','line_width','bold_width','hash_spacing','margin_width') if k in style},'objects':page['objects']})
         result=compose_chemical_figure(str(manifest),str(stage/name))
         tree=ET.parse(stage/name); root=tree.getroot(); native_page=root.find('page')
-        root.set('BoundingBox',f'0 0 {width:g} {height:g}')
-        native_page.set('BoundingBox',f'0 0 {width:g} {height:g}')
+        root.set('BoundingBox',f"0 0 {page['width']:g} {page['height']:g}")
+        native_page.set('BoundingBox',f"0 0 {page['width']:g} {page['height']:g}")
         native_page.set('WidthPages','1');native_page.set('HeightPages','1')
         ids=result['metadata']['object_ids']
         next_id=max(int(n.get('id','0')) for n in root.iter())+1
@@ -183,14 +199,15 @@ def create_pages(records,spec,stage,start_index=0):
             record=compounds[entry['cid']]; key=entry['key']
             group=ET.SubElement(native_page,'group',{'id':str(next_id)});next_id+=1
             object_ids={'group':group.get('id'),'fragment':ids[key+'_mol'],'label':ids[key+'_label'],
-                        'fields':{f['column']:ids[key+'_'+f['column']] for f in spec.get('fields',[])}}
+                        'fields':{f['column']:ids[key+'_'+f['column']] for f in spec.get('fields',[])
+                                  if key+'_'+f['column'] in ids}}
             for oid in [object_ids['fragment'],object_ids['label'],*object_ids['fields'].values()]:
                 node=next(n for n in native_page if n.get('id')==oid)
                 native_page.remove(node);group.append(node)
             record['objects']=object_ids
             record['displayed_identity']=semantic_key(fragment_mol(group.find('fragment')))
         tree.write(stage/name,encoding='utf-8',xml_declaration=True)
-        pages.append({'file':name,'width_pt':width,'height_pt':height})
+        pages.append({'file':name,'width_pt':page['width'],'height_pt':page['height']})
     return pages,compounds,warnings
 
 

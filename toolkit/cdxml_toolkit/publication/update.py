@@ -198,6 +198,12 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
             elif current[field]!=record['display'][field]:
                 changes.append({'compound_id':cid,'field':field,'change':'manual_text_preserved'})
             record['display'][field]=node_text(node)
+        # A line that was empty when the page was laid out (an optional note) has no text
+        # object to update: adding one needs room, which only a new layout can make.
+        added=[f['column'] for f in spec.get('fields',[])
+               if f['column'] not in ids['fields'] and desired[f['column']]!='']
+        if added:
+            conflicts.append({'compound_id':cid,'fields':added,'reason':'new_line_requires_explicit_relayout'});continue
         if new['identity']!=old_input['identity']:
             if identity!=record['displayed_identity'] and identity!=new['identity']:
                 conflicts.append({'compound_id':cid,'reason':'both_sides_changed_structure'});continue
@@ -222,6 +228,19 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
         project['pages'].extend(pages);project['compounds'].update(compounds)
         roots.extend(ET.parse(Path(stage)/p['file']).getroot() for p in pages)
         changes.extend({'compound_id':r['compound_id'],'change':'added_on_new_page'} for r in additions)
+    # Pages are cropped to their content when laid out; text that grew in an update widens
+    # or lengthens its page (never past the figure size) instead of running off it.
+    limit_w,limit_h=style['width_mm']*72/25.4,style['height_mm']*72/25.4
+    for index,root in enumerate(roots[:len(base_project['pages'])]):
+        page=project['pages'][index]; native_page=root.find('page')
+        boxes=[b for b in (bounds(n,style) for n in native_page.iter() if n.tag in {'t','fragment'}) if b]
+        if not boxes:continue
+        width=min(limit_w,max(page['width_pt'],math.ceil(max(b[2] for b in boxes)+16)))
+        height=min(limit_h,max(page['height_pt'],math.ceil(max(b[3] for b in boxes)+16)))
+        if (width,height)!=(page['width_pt'],page['height_pt']):
+            page['width_pt'],page['height_pt']=width,height
+            for element in (root,native_page):element.set('BoundingBox',f'0 0 {width:g} {height:g}')
+            changes.append({'page':index+1,'change':'page_grown_to_content'})
     for index,root in enumerate(roots):
         ET.ElementTree(root).write(Path(stage)/project['pages'][index]['file'],encoding='utf-8',xml_declaration=True)
     return project,roots,conflicts,changes,sources

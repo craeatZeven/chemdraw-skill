@@ -223,3 +223,18 @@ these six were unimplemented witnesses. They now exist, and their checks say wha
 `optimization_table` is composed from `text` and `box` primitives because no table object
 exists; `text` has no width parameter, so anything longer than a short label wraps inside its
 own box and cannot be laid out as running text. That is why it carries no footnote.
+
+## Journal parity status
+
+Progress against [journal figure parity](../../../../docs/journal-figure-parity.md), per figure.
+"Generator done" means the change is in the code with a test; the figure here still shows the
+old output until it is rendered again.
+
+| Gap | Figures | State |
+| --- | --- | --- |
+| P12 value alone under the label (`3a` over `92%`) | `substrate_scope` | generator done; re-render |
+| P11 type kept at 10 pt | `substrate_scope`, `sar_table` | generator done; re-render, then `check` should report no `setting` |
+| P10 page cropped to its content, footnotes after the last row | `substrate_scope`, `sar_table` | generator done; re-render, then measure the PNG margins |
+| P5 a failed entry keeps its value, with an optional note | `substrate_scope` | generator done (`note` on a species); the example brief has no 0% entry yet |
+| P6 a group definition under one structure | `substrate_scope` | generator done through the same `note` line |
+| P1-P4, P7-P9 | | open |
