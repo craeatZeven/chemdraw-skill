@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd">
+<CDXML BoundingBox="6.00 4.00 208.00 111.00" BondLength="14.4" LabelFont="3" LabelSize="10" LabelFace="96" CaptionFont="3" CaptionSize="10" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" ChainAngle="120" LabelJustification="Auto" CaptionJustification="Left" color="0" bgcolor="1"><colortable><color r="1" g="1" b="1"/><color r="0" g="0" b="0"/></colortable><fonttable><font id="3" charset="iso-8859-1" name="Arial"/><font id="5" charset="Unicode" name="SimSun"/></fonttable><page id="1">
+<t id="1001" p="100.00 12.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Optimization of the coupling conditions</s></t>
+<graphic id="1002" BoundingBox="206.00 24.00 10.00 24.00" GraphicType="Rectangle"/>
+<t id="1003" p="14.00 29.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Entry</s></t>
+<t id="1004" p="58.00 29.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Base</s></t>
+<t id="1005" p="102.00 29.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Solvent</s></t>
+<t id="1006" p="146.00 29.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">T (C)</s></t>
+<t id="1007" p="182.00 29.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Yield (%)</s></t>
+<graphic id="1008" BoundingBox="206.00 34.00 10.00 34.00" GraphicType="Rectangle"/>
+<t id="1009" p="14.00 42.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">1</s></t>
+<t id="1010" p="58.00 42.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">K2CO3</s></t>
+<t id="1011" p="102.00 42.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">DMF</s></t>
+<t id="1012" p="146.00 42.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">80</s></t>
+<t id="1013" p="182.00 42.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">62</s></t>
+<t id="1014" p="14.00 53.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">2</s></t>
+<t id="1015" p="58.00 53.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Cs2CO3</s></t>
+<t id="1016" p="102.00 53.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">DMF</s></t>
+<t id="1017" p="146.00 53.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">80</s></t>
+<t id="1018" p="182.00 53.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">88</s></t>
+<t id="1019" p="14.00 64.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">3</s></t>
+<t id="1020" p="58.00 64.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">DBU</s></t>
+<t id="1021" p="102.00 64.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">DMF</s></t>
+<t id="1022" p="146.00 64.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">80</s></t>
+<t id="1023" p="182.00 64.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">41</s></t>
+<t id="1024" p="14.00 75.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">4</s></t>
+<t id="1025" p="58.00 75.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Cs2CO3</s></t>
+<t id="1026" p="102.00 75.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">MeCN</s></t>
+<t id="1027" p="146.00 75.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">80</s></t>
+<t id="1028" p="182.00 75.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">73</s></t>
+<t id="1029" p="14.00 86.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">5</s></t>
+<t id="1030" p="58.00 86.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Cs2CO3</s></t>
+<t id="1031" p="102.00 86.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">dioxane</s></t>
+<t id="1032" p="146.00 86.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">100</s></t>
+<t id="1033" p="182.00 86.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">94</s></t>
+<t id="1034" p="14.00 97.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">6</s></t>
+<t id="1035" p="58.00 97.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Cs2CO3</s></t>
+<t id="1036" p="102.00 97.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">dioxane</s></t>
+<t id="1037" p="146.00 97.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">120</s></t>
+<t id="1038" p="182.00 97.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">58</s></t>
+<graphic id="1039" BoundingBox="206.00 109.00 10.00 109.00" GraphicType="Rectangle"/>
+</page></CDXML>

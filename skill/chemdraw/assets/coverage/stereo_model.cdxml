@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd">
+<CDXML BoundingBox="26.50 8.00 253.50 207.50" BondLength="14.4" LabelFont="3" LabelSize="10" LabelFace="96" CaptionFont="3" CaptionSize="10" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" ChainAngle="120" LabelJustification="Auto" CaptionJustification="Left" color="0" bgcolor="1"><colortable><color r="1" g="1" b="1"/><color r="0" g="0" b="0"/></colortable><fonttable><font id="3" charset="iso-8859-1" name="Arial"/><font id="5" charset="Unicode" name="SimSun"/></fonttable><page id="1">
+<graphic id="1023" GraphicType="Oval" OvalType="Circle Filled" color="2" Z="100" BoundingBox="203.09 51.09 216.91 64.91" Center3D="210.00 58.00 0" MajorAxisEnd3D="216.91 58.00 0" MinorAxisEnd3D="210.00 64.91 0"/>
+<graphic id="1024" GraphicType="Oval" OvalType="Circle" color="3" Z="101" BoundingBox="203.09 51.09 216.91 64.91" Center3D="210.00 58.00 0" MajorAxisEnd3D="216.91 58.00 0" MinorAxisEnd3D="210.00 64.91 0"/>
+<t id="1001" p="140.00 16.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="0">Stereochemical models</s></t>
+<fragment id="1002" BoundingBox="52.34 39.70 92.93 65.90" Z="1018">
+<n id="1003" p="79.40 65.90" Z="1019"/>
+<n id="1004" p="87.66 54.10" Z="1020"/>
+<n id="1005" p="74.13 59.03" Z="1021"/>
+<n id="1006" p="60.60 54.10" Z="1022"/>
+<n id="1007" p="52.34 65.90" Z="1023"/>
+<n id="1008" p="65.87 60.97" Z="1024"/>
+<n id="1009" p="92.93 60.97" Z="1025" Element="8" NumHydrogens="1"><t id="1010" p="89.68 64.47" BoundingBox="89.68 53.47 100.68 60.97" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<n id="1011" p="60.60 39.70" Z="1027" Element="6" NumHydrogens="3"><t id="1012" p="57.35 43.20" BoundingBox="57.35 32.20 68.35 39.70" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Me</s></t></n>
+<b id="1013" Z="1029" B="1003" E="1004"/>
+<b id="1014" Z="1030" B="1004" E="1005"/>
+<b id="1015" Z="1031" B="1005" E="1006"/>
+<b id="1016" Z="1032" B="1006" E="1007"/>
+<b id="1017" Z="1033" B="1007" E="1008"/>
+<b id="1018" Z="1034" B="1008" E="1003"/>
+<b id="1019" Z="1035" B="1003" E="1009"/>
+<b id="1020" Z="1036" B="1006" E="1011"/>
+</fragment>
+<graphic id="1021" BoundingBox="104.00 102.00 36.00 86.00" GraphicType="Rectangle" RectangleType="RoundEdge"/>
+<t id="1022" p="70.00 98.50" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="1">a  chair</s></t>
+<fragment id="1025" BoundingBox="197.53 43.60 222.47 72.40" Z="1017">
+<n id="1026" p="210.00 58.00" Z="1018"/>
+<n id="1027" p="210.00 43.60" Z="1019" Element="6" NumHydrogens="3"><t id="1028" p="206.75 47.10" BoundingBox="206.75 36.10 217.75 43.60" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Me</s></t></n>
+<n id="1029" p="222.47 65.20" Z="1021" Element="1" NumHydrogens="0"><t id="1030" p="219.22 68.70" BoundingBox="219.22 57.70 225.22 65.20" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">H</s></t></n>
+<n id="1031" p="197.53 65.20" Z="1023" Element="1" NumHydrogens="0"><t id="1032" p="194.28 68.70" BoundingBox="194.28 57.70 200.28 65.20" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">H</s></t></n>
+<n id="1033" p="210.00 58.00" Z="3"/>
+<n id="1034" p="222.47 50.80" Z="1026" Element="35" NumHydrogens="0"><t id="1035" p="219.22 54.30" BoundingBox="219.22 43.30 230.22 50.80" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Br</s></t></n>
+<n id="1036" p="210.00 72.40" Z="1028" Element="1" NumHydrogens="0"><t id="1037" p="206.75 75.90" BoundingBox="206.75 64.90 212.75 72.40" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">H</s></t></n>
+<n id="1038" p="197.53 50.80" Z="1030" Element="6" NumHydrogens="3"><t id="1039" p="194.28 54.30" BoundingBox="194.28 43.30 205.28 50.80" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Me</s></t></n>
+<b id="1040" Z="1032" B="1026" E="1027"/>
+<b id="1041" Z="1033" B="1026" E="1029"/>
+<b id="1042" Z="1034" B="1026" E="1031"/>
+<b id="1043" Z="4" B="1026" E="1033"/>
+<b id="1044" Z="9" B="1033" E="1034"/>
+<b id="1045" Z="10" B="1033" E="1036"/>
+<b id="1046" Z="11" B="1033" E="1038"/>
+</fragment>
+<graphic id="1047" BoundingBox="247.75 102.00 172.25 86.00" GraphicType="Rectangle" RectangleType="RoundEdge"/>
+<t id="1048" p="210.00 98.50" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="1">b  Newman</s></t>
+<fragment id="1049" BoundingBox="47.68 115.23 89.44 164.77" Z="1024">
+<n id="1050" p="89.44 140.00" Z="1025"/>
+<n id="1051" p="79.36 150.37" Z="1026"/>
+<n id="1052" p="60.64 150.37" Z="1027"/>
+<n id="1053" p="50.56 140.00" Z="1028"/>
+<n id="1054" p="60.64 129.63" Z="1029"/>
+<n id="1055" p="79.36 129.63" Z="1030" Element="8" NumHydrogens="0"><t id="1056" p="76.11 133.13" BoundingBox="76.11 122.13 82.11 129.63" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">O</s></t></n>
+<n id="1057" p="89.44 125.60" Z="1032" Element="8" NumHydrogens="1"><t id="1058" p="86.19 129.10" BoundingBox="86.19 118.10 97.19 125.60" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<n id="1059" p="79.36 164.77" Z="1034" Element="8" NumHydrogens="1"><t id="1060" p="76.11 168.27" BoundingBox="76.11 157.27 87.11 164.77" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<n id="1061" p="47.68 147.49" Z="1036" Element="8" NumHydrogens="1"><t id="1062" p="44.43 150.99" BoundingBox="44.43 139.99 55.43 147.49" LabelJustification="Right" LabelAlignment="Right"><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<n id="1063" p="56.61 155.84" Z="1038" Element="8" NumHydrogens="1"><t id="1064" p="53.36 159.34" BoundingBox="53.36 148.34 64.36 155.84" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<n id="1065" p="60.64 115.23" Z="1040" NodeType="Fragment"><fragment id="1066"><n id="1067" p="60.64 115.23"/><n id="1068" p="75.04 115.23" Element="8" NumHydrogens="1"/><b id="1069" B="1067" E="1068"/><n id="1070" NodeType="ExternalConnectionPoint" p="46.24 115.23" ExternalConnectionNum="1"/><b id="1071" B="1070" E="1067"/></fragment><t id="1072" p="57.39 118.73" BoundingBox="57.39 107.73 84.89 115.23" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">CH</s><s font="3" size="10" color="0" face="32">2</s><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<b id="1073" Z="1048" B="1050" E="1051" Display="WedgeBegin"/>
+<b id="1074" Z="1049" B="1051" E="1052" Display="Bold"/>
+<b id="1075" Z="1050" B="1053" E="1052" Display="WedgeBegin"/>
+<b id="1076" Z="1051" B="1053" E="1054"/>
+<b id="1077" Z="1052" B="1054" E="1055"/>
+<b id="1078" Z="1053" B="1055" E="1050"/>
+<b id="1079" Z="1054" B="1050" E="1057"/>
+<b id="1080" Z="1055" B="1051" E="1059"/>
+<b id="1081" Z="1056" B="1052" E="1061"/>
+<b id="1082" Z="1057" B="1053" E="1063"/>
+<b id="1083" Z="1058" B="1054" E="1065"/>
+</fragment>
+<graphic id="1084" BoundingBox="111.50 187.00 28.50 171.00" GraphicType="Rectangle" RectangleType="RoundEdge"/>
+<t id="1085" p="70.00 183.50" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="1">c  Haworth</s></t>
+<fragment id="1086" BoundingBox="195.60 140.00 224.40 183.20" Z="1017">
+<n id="1087" p="210.00 140.00" Z="1018" NodeType="Fragment"><fragment id="1088"><n id="1089" p="210.00 140.00"/><n id="1090" p="224.40 140.00" Element="8" NumHydrogens="0"/><b id="1091" B="1089" E="1090" Order="2"/><n id="1092" NodeType="ExternalConnectionPoint" p="195.60 140.00" ExternalConnectionNum="1"/><b id="1093" B="1092" E="1089"/></fragment><t id="1094" p="206.75 143.50" BoundingBox="206.75 132.50 223.25 140.00" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">CHO</s></t></n>
+<n id="1095" p="210.00 154.40" Z="1026"/>
+<n id="1096" p="195.60 154.40" Z="1027" Element="1" NumHydrogens="0"><t id="1097" p="192.35 157.90" BoundingBox="192.35 146.90 198.35 154.40" LabelJustification="Right" LabelAlignment="Right"><s font="3" size="10" color="0" face="0">H</s></t></n>
+<n id="1098" p="224.40 154.40" Z="1029" Element="8" NumHydrogens="1"><t id="1099" p="221.15 157.90" BoundingBox="221.15 146.90 232.15 154.40" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<n id="1100" p="210.00 168.80" Z="1031"/>
+<n id="1101" p="195.60 168.80" Z="1032" Element="1" NumHydrogens="0"><t id="1102" p="192.35 172.30" BoundingBox="192.35 161.30 198.35 168.80" LabelJustification="Right" LabelAlignment="Right"><s font="3" size="10" color="0" face="0">H</s></t></n>
+<n id="1103" p="224.40 168.80" Z="1034" Element="8" NumHydrogens="1"><t id="1104" p="221.15 172.30" BoundingBox="221.15 161.30 232.15 168.80" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<n id="1105" p="210.00 183.20" Z="1036" NodeType="Fragment"><fragment id="1106"><n id="1107" p="210.00 183.20"/><n id="1108" p="224.40 183.20" Element="8" NumHydrogens="1"/><b id="1109" B="1107" E="1108"/><n id="1110" NodeType="ExternalConnectionPoint" p="195.60 183.20" ExternalConnectionNum="1"/><b id="1111" B="1110" E="1107"/></fragment><t id="1112" p="206.75 186.70" BoundingBox="206.75 175.70 234.25 183.20" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">CH</s><s font="3" size="10" color="0" face="32">2</s><s font="3" size="10" color="0" face="0">OH</s></t></n>
+<b id="1113" Z="1044" B="1087" E="1095"/>
+<b id="1114" Z="1045" B="1095" E="1096"/>
+<b id="1115" Z="1046" B="1095" E="1098"/>
+<b id="1116" Z="1047" B="1095" E="1100"/>
+<b id="1117" Z="1048" B="1100" E="1101"/>
+<b id="1118" Z="1049" B="1100" E="1103"/>
+<b id="1119" Z="1050" B="1100" E="1105"/>
+</fragment>
+<graphic id="1120" BoundingBox="251.50 203.00 168.50 187.00" GraphicType="Rectangle" RectangleType="RoundEdge"/>
+<t id="1121" p="210.00 199.50" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10" face="1">d  Fischer</s></t>
+</page></CDXML>

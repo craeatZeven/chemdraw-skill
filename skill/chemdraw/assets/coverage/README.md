@@ -17,12 +17,12 @@ Each figure has three files:
 
 | Figure | Type | PNG |
 | --- | --- | --- |
-| `substrate_scope` | Substrate scope grid | yes |
 | `apparatus` | Laboratory apparatus assembled from the Clipware stationery | yes |
 | `binary_phase_diagram` | Binary phase diagram, eutectic | yes |
 | `binary_phase_diagram_isomorphous` | Binary phase diagram, isomorphous | yes |
 | `correlation_diagram` | Correlation diagram between two states | yes |
 | `crystal_field` | Crystal-field splitting diagram | yes |
+| `derivatization` | Divergent route: one substrate, three nucleophiles | yes |
 | `electrochemical_cell` | Electrochemical cell schematic | yes |
 | `electron_configuration` | Electron-configuration orbital box diagram | yes |
 | `ellingham` | Ellingham diagram (oxide formation energy vs T) | yes |
@@ -43,6 +43,7 @@ Each figure has three files:
 | `mechanism` | Mechanism with curved arrows | yes |
 | `mo_diagram` | Molecular-orbital diagram (O2, 2s/2p mixing, spin filling) | yes |
 | `nmr` | NMR spectrum panel (ethanol, synthetic JCAMP-DX) | yes |
+| `optimization_table` | Condition-screening table composed from text and rules | yes |
 | `periodic_table` | Periodic table panel | yes |
 | `phase_diagram` | Phase diagram (one component) | yes |
 | `potential_surface` | Potential-energy surface (contour) | yes |
@@ -54,8 +55,13 @@ Each figure has three files:
 | `preview_levels` | Energy profile, levels style (preview brief) | yes |
 | `preview_mechanism` | Mechanism with curved arrows (preview brief) | yes |
 | `preview_scheme` | Reaction scheme (Henry reaction) | yes |
+| `process_route` | Three-step scalable route with scale annotation | yes |
+| `sar_table` | SAR table: three property fields per structure | yes |
+| `stereo_model` | Chair, Newman, Haworth and Fischer templates in one figure | yes |
+| `substrate_scope` | Substrate scope grid | yes |
 | `tanabe_sugano` | Tanabe-Sugano diagram (d3, C/B = 4.5) | yes |
 | `tlc` | TLC plate with lanes and Rf spots | yes |
+| `total_synthesis` | Four-step linear total synthesis | yes |
 | `unit_cell` | Crystal unit cell | yes |
 | `walsh_diagram` | Walsh diagram (geometry vs orbital energy) | yes |
 
@@ -198,3 +204,22 @@ It is kept as the reference for `docs/journal-figure-parity.md` P4-P12: five str
 top third of a portrait page, `Yield: 92%` instead of `92%`, no header scheme, no highlighted
 varying group, and `LabelSize`/`CaptionSize` at 8 where the baseline is 10. Those are the
 things the parity work is meant to close.
+
+### Six types added to close the declared-type gap
+
+`derivatization`, `optimization_table`, `process_route`, `sar_table`, `stereo_model` and
+`total_synthesis` had no coverage figure at all: the house-style cards declare 23 types and
+these six were unimplemented witnesses. They now exist, and their checks say what they are:
+
+- `total_synthesis`, `process_route`, `optimization_table` and `derivatization` pass the
+  ACS 1996 baseline as drawn.
+- `sar_table` fails on `LabelSize`/`CaptionSize` 8 against 10, the same defect as
+  `substrate_scope`: the scope renderer shrinks the type to fit its grid (parity item P11).
+- `stereo_model` fails on a median bond of 12 pt against 14.4, and the conformer templates
+  ignore the `bond_length` the brief sets — the median stays 12 whatever is asked for, so the
+  figure is drawn at 12 and the check reports the truth. Its three outlier bonds are the
+  chair/Newman geometry itself, which the checker already excludes by name.
+
+`optimization_table` is composed from `text` and `box` primitives because no table object
+exists; `text` has no width parameter, so anything longer than a short label wraps inside its
+own box and cannot be laid out as running text. That is why it carries no footnote.
