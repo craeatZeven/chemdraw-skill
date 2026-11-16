@@ -69,6 +69,34 @@ Native software checks must run on a
 licensed local or self-hosted Windows machine and must identify skipped
 applications explicitly.
 
+### Windows hosts with a non-ASCII profile
+
+A Windows account whose name is not ASCII (for example a Chinese user name) breaks three
+things that have nothing to do with the code under test. All three were measured on one
+such machine; the suite went from 23 failed + 5 errors to 0 failed once they were handled.
+
+**pytest temporary directories.** pytest builds its `tmp_path` under the user profile, so
+the path handed to RDKit, Pillow and OpenCV contains the non-ASCII name; those libraries
+receive a mangled path and fail with `Bad output file` or `Cannot read image`. Run the
+suite with a base directory on an ASCII path:
+
+```powershell
+python -m pytest -m "not network" -q --basetemp=D:/tmp/pytest
+```
+
+**Console code page.** The default is GBK on a Chinese Windows, so any test that reads a
+UTF-8 fixture with `read_text()` and no encoding fails with `UnicodeDecodeError` before its
+assertion runs. Tests must pass `encoding="utf-8"` when they read a fixture (this is the
+rule anyway; the locale only makes it visible). Command-line tools escape characters the
+code page cannot encode rather than dying on them.
+
+**OpenCV cannot write to a non-ASCII path.** `cv2.imwrite` takes the path as a narrow
+string: it writes the bytes to a mojibake file name (the UTF-8 bytes of the real name
+read back as GBK) and still returns `True`. Any crop handed to a recognition engine then
+does not exist. `structure_from_image._write_crop()` keeps `imwrite` for ASCII paths and
+otherwise encodes in memory and writes the bytes through `open()`; do not replace it with
+a bare `imwrite`, and note the same trap applies to any new image output.
+
 ### Live check on macOS
 
 The test suite never starts ChemDraw on macOS, so the AppleScript path
