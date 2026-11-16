@@ -17,6 +17,7 @@ Each figure has three files:
 
 | Figure | Type | PNG |
 | --- | --- | --- |
+| `substrate_scope` | Substrate scope grid | yes |
 | `apparatus` | Laboratory apparatus assembled from the Clipware stationery | yes |
 | `binary_phase_diagram` | Binary phase diagram, eutectic | yes |
 | `binary_phase_diagram_isomorphous` | Binary phase diagram, isomorphous | yes |
@@ -190,3 +191,10 @@ attributes with a tolerance of 0.02, so the 0.01 that ChemDraw's SaveAs introduc
 longer reports while a real deviation (28 pt against 14.4) still does. With that in place
 `nmr`, `tlc` and `apparatus` pass the baseline and only the figures whose geometry is
 deliberately different need `--ignore`.
+
+### `substrate_scope` is the weakest figure in the set
+
+It is kept as the reference for `docs/journal-figure-parity.md` P4-P12: five structures in the
+top third of a portrait page, `Yield: 92%` instead of `92%`, no header scheme, no highlighted
+varying group, and `LabelSize`/`CaptionSize` at 8 where the baseline is 10. Those are the
+things the parity work is meant to close.

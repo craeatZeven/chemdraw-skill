@@ -113,6 +113,7 @@ class DistributionTests(unittest.TestCase):
                 ".github/pull_request_template.md",
                 "docs/guide.md",
                 "docs/guide.zh-cn.md",
+                "docs/journal-figure-parity.md",
                 "docs/zh-cn.md",
                 "docs/website.md",
             },
