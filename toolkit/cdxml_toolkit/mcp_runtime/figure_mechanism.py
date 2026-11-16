@@ -612,9 +612,9 @@ def _arc_xml(curve: dict, ids) -> str:
     (cx, cy), r, pts = arc["centre"], arc["radius"], arc["pts"]
     xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     head = "HalfLeft" if curve["electrons"] == 1 else "Full"
-    # A half head keeps one barb of the full head's 1 : 0.875 : 0.25 shape, which renders as a thin
-    # spike; the fishhook is a right-angled barb as wide as half its length instead.
-    shape = ('HeadSize="1000" ArrowheadCenterSize="1000" ArrowheadWidth="500"' if curve["electrons"] == 1
+    # A half head is the full head's 1 : 0.875 : 0.25 shape at 0.6 of its size, as ChemDraw writes
+    # its own: the thin barb that reads as one electron.
+    shape = ('HeadSize="600" ArrowheadCenterSize="525" ArrowheadWidth="150"' if curve["electrons"] == 1
              else 'HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250"')
     if arc["sweep"] >= 0:
         tail, tip, ends = pts[0], pts[-1], f'ArrowheadHead="{head}"'

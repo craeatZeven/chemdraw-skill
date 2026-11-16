@@ -79,10 +79,11 @@ def test_a_one_electron_move_has_a_half_head():
     arrow = ET.fromstring(M._arc_xml({"arc": arc, "electrons": 1, "pts": arc["pts"]}, iter(range(9)).__next__))
     heads = {arrow.get("ArrowheadHead", "None"), arrow.get("ArrowheadTail", "None")} - {"None"}
     assert heads == {"HalfLeft"}
-    # The full head's 1 : 0.875 : 0.25 shape, halved, renders as a thin spike that does not read as
-    # one electron: a half head is a right-angled barb as wide as half its length, with no notch.
+    # ChemDraw's own half heads (102 of them in the coverage files it saved) keep the full head's
+    # 1 : 0.875 : 0.25 shape at 0.6 of its size: the thin barb journals read as one electron. A
+    # 1 : 1 : 0.5 barb rendered as a solid triangle that read as two.
     assert (arrow.get("HeadSize"), arrow.get("ArrowheadCenterSize"), arrow.get("ArrowheadWidth")) == \
-        ("1000", "1000", "500")
+        ("600", "525", "150")
     full = ET.fromstring(M._arc_xml({"arc": arc, "electrons": 2, "pts": arc["pts"]}, iter(range(9)).__next__))
     assert (full.get("HeadSize"), full.get("ArrowheadCenterSize"), full.get("ArrowheadWidth")) == \
         ("1000", "875", "250")

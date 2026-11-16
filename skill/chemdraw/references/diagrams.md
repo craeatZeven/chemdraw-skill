@@ -311,8 +311,8 @@ that a line, arrow, curve or other caption runs through; it reads ChemDraw's own
 a file ChemDraw saved, and otherwise uses Arial metrics that match them. Lines drawn before a
 white patch under a caption do not count (the contour plot puts such patches under labels the
 contours crowd). The warning `arrows_collide` names curved arrows (arc arrows and curves with a
-head) whose heads come within 6 pt or whose bodies, away from their tails, within 3 pt. A
-half-headed arrow may use the fishhook barb 1 : 1 : 0.5 instead of the 1 : 0.875 : 0.25 head. `--ignore bond_length` accepts the
+head) whose heads come within 6 pt or whose bodies, away from their tails, within 3 pt. Half
+heads keep the 1 : 0.875 : 0.25 proportions (ChemDraw writes them at 600 / 525 / 150). `--ignore bond_length` accepts the
 24 pt bonds of a Newman projection and the foreshortened bonds of the cage templates.
 
 The check cannot see chemistry: a wrong ring size, a misfilled orbital or two isomers drawn alike

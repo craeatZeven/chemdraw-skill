@@ -455,15 +455,10 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
             width = float(arrow.get('ArrowheadWidth', head * 0.25))
         except ValueError:
             continue
-        house = abs(centre - 0.875 * head) <= 1.5 and abs(width - 0.25 * head) <= 1.5
-        # A one-electron (half) head may instead be the fishhook barb: as wide as half its length,
-        # with no notch. The full head's proportions, halved, render as a thin spike.
-        half = any(arrow.get(end, '').startswith('Half') for end in ('ArrowheadHead', 'ArrowheadTail'))
-        fishhook = half and abs(centre - head) <= 1.5 and abs(width - 0.5 * head) <= 1.5
-        if not house and not fishhook:
+        # Half heads keep the same proportions (ChemDraw writes them at 600/525/150).
+        if abs(centre - 0.875 * head) > 1.5 or abs(width - 0.25 * head) > 1.5:
             _issue(warnings, 'arrowhead_ratio', f'<arrow id="{arrow.get("id")}"> head {head:g}/{centre:g}/{width:g} '
-                                                'is not the house 1 : 0.875 : 0.25 shape'
-                                                + (' or the 1 : 1 : 0.5 half-head barb' if half else ''))
+                                                'is not the house 1 : 0.875 : 0.25 shape')
     for line_width in {n.get('LineWidth') for n in root.iter() if n.tag != 'CDXML' and n.get('LineWidth')}:
         if abs(float(line_width) - rules['settings']['LineWidth']) > 1e-6:
             _issue(warnings, 'line_width', f'Some objects set LineWidth {line_width} (the house width is '

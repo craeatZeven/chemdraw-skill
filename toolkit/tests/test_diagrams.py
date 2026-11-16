@@ -728,11 +728,11 @@ def test_a_methyl_halide_is_not_a_bare_terminal_carbon():
 @pytest.mark.parametrize('head, shape, flagged', [
     ('Full', ('1000', '875', '250'), False),
     ('Full', ('1000', '1000', '500'), True),
-    ('HalfLeft', ('1000', '1000', '500'), False),   # the fishhook barb
-    ('HalfLeft', ('600', '525', '150'), False),     # spin arrows as ChemDraw saves them
+    ('HalfLeft', ('1000', '1000', '500'), True),    # a solid barb that reads as two electrons
+    ('HalfLeft', ('600', '525', '150'), False),     # ChemDraw's own half head
     ('HalfLeft', ('1000', '700', '400'), True),
 ])
-def test_a_half_head_may_take_the_fishhook_shape(head, shape, flagged):
+def test_a_half_head_keeps_the_house_proportions(head, shape, flagged):
     arrow = (f'<arrow id="5" ArrowheadHead="{head}" HeadSize="{shape[0]}" ArrowheadCenterSize="{shape[1]}" '
              f'ArrowheadWidth="{shape[2]}" Head3D="60 40 0" Tail3D="20 40 0"/>')
     codes = [w['code'] for w in check_cdxml(_page(arrow))['warnings']]

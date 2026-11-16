@@ -7,7 +7,7 @@
   "tools": [
     {
       "name": "analyze_lcms_series",
-      "signature": "(files: list[str], output_path: Optional[str] = None, rt_tolerance: float = 0.02, mz_tolerance: float = 0.5, trend_threshold: float = 0.2, ignore_instrument: bool = False, internal_standard_mw: Optional[float] = None, internal_standard_rt: Optional[float] = None, internal_standard_name: str = 'IS') -> dict[str, typing.Any]",
+      "signature": "(files: list[str], output_path: str | None = None, rt_tolerance: float = 0.02, mz_tolerance: float = 0.5, trend_threshold: float = 0.2, ignore_instrument: bool = False, internal_standard_mw: float | None = None, internal_standard_rt: float | None = None, internal_standard_name: str = 'IS') -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -15,7 +15,7 @@
     },
     {
       "name": "assemble_lab_book",
-      "signature": "(input_dir: str, experiment: Optional[str] = None, tracking_json: Optional[str] = None, output_path: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(input_dir: str, experiment: str | None = None, tracking_json: str | None = None, output_path: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -95,7 +95,7 @@
     },
     {
       "name": "clean_scheme_layout",
-      "signature": "(input_path: str, output_path: Optional[str] = None, approach: str = 'chemdraw_mimic', render_preview: bool = True) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, output_path: str | None = None, approach: str = 'chemdraw_mimic', render_preview: bool = True) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -119,7 +119,7 @@
     },
     {
       "name": "compare_nmr_shifts",
-      "signature": "(smiles: str, experimental_1h: Optional[list[float]] = None, experimental_13c: Optional[list[float]] = None, predicted_result: Optional[dict[str, Any]] = None, solvent: str = 'CDCl3', engines: str = '', outlier_threshold_1h: float = 0.5, outlier_threshold_13c: float = 5.0) -> dict[str, typing.Any]",
+      "signature": "(smiles: str, experimental_1h: list[float] | None = None, experimental_13c: list[float] | None = None, predicted_result: dict[str, typing.Any] | None = None, solvent: str = 'CDCl3', engines: str = '', outlier_threshold_1h: float = 0.5, outlier_threshold_13c: float = 5.0) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -135,7 +135,7 @@
     },
     {
       "name": "convert_cdx_cdxml",
-      "signature": "(input_path: str, output_path: Optional[str] = None) -> dict",
+      "signature": "(input_path: str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -151,7 +151,7 @@
     },
     {
       "name": "discover_experiment_files",
-      "signature": "(input_dir: str, experiment: Optional[str] = None, output_path: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(input_dir: str, experiment: str | None = None, output_path: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -167,7 +167,7 @@
     },
     {
       "name": "draw_molecule",
-      "signature": "(mol_json: dict, output_path: Optional[str] = None) -> dict",
+      "signature": "(mol_json: dict, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -199,7 +199,7 @@
     },
     {
       "name": "extract_cdxml_from_office",
-      "signature": "(file_path: str, output_dir: Optional[str] = None) -> dict",
+      "signature": "(file_path: str, output_dir: str | None = None) -> dict",
       "group": "official",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -207,7 +207,7 @@
     },
     {
       "name": "extract_structures_from_document",
-      "signature": "(path: str, out_dir: str, pages: Optional[list[int]] = None, engines: str = 'molscribe,molvec', segmenter: str = 'auto', dpi: int = 200, confirm_upload: bool = False, hand_drawn: bool = False) -> dict[str, typing.Any]",
+      "signature": "(path: str, out_dir: str, pages: list[int] | None = None, engines: str = 'molscribe,molvec', segmenter: str = 'auto', dpi: int = 200, confirm_upload: bool = False, hand_drawn: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 3600,
@@ -223,7 +223,7 @@
     },
     {
       "name": "extract_structures_via_decimer_api",
-      "signature": "(image_path: str, hand_drawn: bool = False, output_path: Optional[str] = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: Optional[str] = None, approved_origin: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(image_path: str, hand_drawn: bool = False, output_path: str | None = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: str | None = None, approved_origin: str | None = None) -> dict[str, typing.Any]",
       "group": "remote",
       "resource_class": null,
       "timeout_seconds": null,
@@ -231,7 +231,7 @@
     },
     {
       "name": "fill_office_template",
-      "signature": "(template_path: str, manifest_path: str, output_path: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(template_path: str, manifest_path: str, output_path: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -239,7 +239,7 @@
     },
     {
       "name": "format_lab_entry",
-      "signature": "(entries_json: Union[list[dict], dict, str], output_path: Optional[str] = None) -> dict",
+      "signature": "(entries_json: list[dict] | dict | str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -263,7 +263,7 @@
     },
     {
       "name": "inspect_chemdraw_objects_in_office",
-      "signature": "(input_path: str, output_dir: Optional[str] = None, render_previews: bool = True) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, output_dir: str | None = None, render_previews: bool = True) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -271,7 +271,7 @@
     },
     {
       "name": "inspect_chemscript_sdk",
-      "signature": "(query: Optional[str] = None, type_name: Optional[str] = None, include_infrastructure: bool = False, offset: int = 0, limit: int = 100, output_path: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(query: str | None = None, type_name: str | None = None, include_infrastructure: bool = False, offset: int = 0, limit: int = 100, output_path: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 240,
@@ -335,7 +335,7 @@
     },
     {
       "name": "merge_reaction_schemes",
-      "signature": "(input_paths: list[str], output_path: Optional[str] = None, mode: str = 'auto', equiv_mode: str = 'default', reference_cdxml: Optional[str] = None, allow_adjacent: bool = True, render_preview: bool = True, force_sequential: bool = False) -> dict[str, typing.Any]",
+      "signature": "(input_paths: list[str], output_path: str | None = None, mode: str = 'auto', equiv_mode: str = 'default', reference_cdxml: str | None = None, allow_adjacent: bool = True, render_preview: bool = True, force_sequential: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -343,7 +343,7 @@
     },
     {
       "name": "modify_molecule",
-      "signature": "(mol_json: dict, operation: str, add: Optional[List[dict]] = None, remove: Optional[List[str]] = None, new_smiles: Optional[str] = None, new_name: Optional[str] = None, reaction_name: Optional[str] = None, reagent: Optional[dict] = None, smarts: Optional[str] = None, description: Optional[str] = None) -> dict",
+      "signature": "(mol_json: dict, operation: str, add: List[dict] | None = None, remove: List[str] | None = None, new_smiles: str | None = None, new_name: str | None = None, reaction_name: str | None = None, reagent: dict | None = None, smarts: str | None = None, description: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": 90,
@@ -359,7 +359,7 @@
     },
     {
       "name": "parse_analysis_file",
-      "signature": "(pdf_path: str, output_path: Optional[str] = None) -> dict",
+      "signature": "(pdf_path: str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -367,7 +367,7 @@
     },
     {
       "name": "parse_reaction",
-      "signature": "(cdxml: Optional[str] = None, cdx: Optional[str] = None, csv: Optional[str] = None, rxn: Optional[str] = None, input_dir: Optional[str] = None, output_path: Optional[str] = None) -> dict",
+      "signature": "(cdxml: str | None = None, cdx: str | None = None, csv: str | None = None, rxn: str | None = None, input_dir: str | None = None, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -375,7 +375,7 @@
     },
     {
       "name": "parse_scheme",
-      "signature": "(cdxml_path: str, output_path: Optional[str] = None) -> dict",
+      "signature": "(cdxml_path: str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -383,7 +383,7 @@
     },
     {
       "name": "parse_scifinder_rdf",
-      "signature": "(input_path: str, resolve_cas: bool = False, output_path: Optional[str] = None, confirm_pubchem: bool = False) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, resolve_cas: bool = False, output_path: str | None = None, confirm_pubchem: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -391,7 +391,7 @@
     },
     {
       "name": "polish_reaction_scheme",
-      "signature": "(input_path: str, output_path: Optional[str] = None, merge_conditions: bool = True, approach: str = 'chemdraw_mimic', align_mode: str = 'rdkit', eln_csv: Optional[str] = None, reference_cdxml: Optional[str] = None, render_preview: bool = True) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, output_path: str | None = None, merge_conditions: bool = True, approach: str = 'chemdraw_mimic', align_mode: str = 'rdkit', eln_csv: str | None = None, reference_cdxml: str | None = None, render_preview: bool = True) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -399,7 +399,7 @@
     },
     {
       "name": "predict_conditions",
-      "signature": "(reactants: str, products: str, engine: Optional[str] = None, count: int = 5, timeout_seconds: int = 900) -> dict[str, typing.Any]",
+      "signature": "(reactants: str, products: str, engine: str | None = None, count: int = 5, timeout_seconds: int = 900) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 1200,
@@ -407,7 +407,7 @@
     },
     {
       "name": "predict_nmr",
-      "signature": "(smiles: str, nucleus: str = '1H', solvent: str = 'chloroform', frequency_mhz: float = 400.0, engine: Optional[str] = None, output_path: Optional[str] = None, timeout_seconds: int = 900, experimental_1h: Optional[list[float]] = None, experimental_13c: Optional[list[float]] = None) -> dict[str, typing.Any]",
+      "signature": "(smiles: str, nucleus: str = '1H', solvent: str = 'chloroform', frequency_mhz: float = 400.0, engine: str | None = None, output_path: str | None = None, timeout_seconds: int = 900, experimental_1h: list[float] | None = None, experimental_13c: list[float] | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 1200,
@@ -415,7 +415,7 @@
     },
     {
       "name": "predict_products",
-      "signature": "(reactants: str, reagents: Optional[str] = None, engine: Optional[str] = None, count: int = 5, timeout_seconds: int = 600) -> dict[str, typing.Any]",
+      "signature": "(reactants: str, reagents: str | None = None, engine: str | None = None, count: int = 5, timeout_seconds: int = 600) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 900,
@@ -423,7 +423,7 @@
     },
     {
       "name": "predict_retrosynthesis",
-      "signature": "(product: str, engine: Optional[str] = None, steps: str = 'single', count: int = 5, time_limit: int = 60, timeout_seconds: int = 900, output_cdxml: str = '') -> dict[str, typing.Any]",
+      "signature": "(product: str, engine: str | None = None, steps: str = 'single', count: int = 5, time_limit: int = 60, timeout_seconds: int = 900, output_cdxml: str = '') -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 1200,
@@ -447,7 +447,7 @@
     },
     {
       "name": "recognize_structure",
-      "signature": "(image_path: str, engines: str = 'decimer-api', hand_drawn: bool = False, output_path: Optional[str] = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: Optional[str] = None, approved_origin: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(image_path: str, engines: str = 'decimer-api', hand_drawn: bool = False, output_path: str | None = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: str | None = None, approved_origin: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 1800,
@@ -455,7 +455,7 @@
     },
     {
       "name": "render_cdxml_files",
-      "signature": "(input_paths: list[str], output_dir: Optional[str] = None, format: str = 'png', dpi: int = 300) -> dict[str, typing.Any]",
+      "signature": "(input_paths: list[str], output_dir: str | None = None, format: str = 'png', dpi: int = 300) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -463,7 +463,7 @@
     },
     {
       "name": "render_scheme",
-      "signature": "(yaml_text: Optional[str] = None, compact_text: Optional[str] = None, json_path: Optional[str] = None, layout: str = 'auto', output_path: Optional[str] = None) -> str",
+      "signature": "(yaml_text: str | None = None, compact_text: str | None = None, json_path: str | None = None, layout: str = 'auto', output_path: str | None = None) -> str",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -471,7 +471,7 @@
     },
     {
       "name": "render_to_png",
-      "signature": "(cdxml_path: str, output_path: Optional[str] = None) -> dict",
+      "signature": "(cdxml_path: str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -479,7 +479,7 @@
     },
     {
       "name": "replace_chemdraw_objects_in_office",
-      "signature": "(input_path: str, replacements_manifest: str, output_path: Optional[str] = None, render_pdf_preview: bool = True, resize_frames: bool = False) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, replacements_manifest: str, output_path: str | None = None, render_pdf_preview: bool = True, resize_frames: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -519,7 +519,7 @@
     },
     {
       "name": "segment_large_scheme",
-      "signature": "(cdxml_path: str, output_path: Optional[str] = None, verbose: bool = False) -> dict[str, typing.Any]",
+      "signature": "(cdxml_path: str, output_path: str | None = None, verbose: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -551,7 +551,7 @@
     },
     {
       "name": "summarize_reaction",
-      "signature": "(json_path: str, species_fields: Optional[List[str]] = None, top_fields: Optional[List[str]] = None, eln_fields: Optional[List[str]] = None) -> dict",
+      "signature": "(json_path: str, species_fields: List[str] | None = None, top_fields: List[str] | None = None, eln_fields: List[str] | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
