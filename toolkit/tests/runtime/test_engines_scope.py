@@ -544,7 +544,7 @@ def test_an_nvidia_gpu_gets_a_cuda_build_of_torch_for_an_engine_that_can_use_it(
     assert reqs == [f'torch=={CUDA_TORCH["torch"]}+{CUDA_TORCH["tag"]}',
                     f'torchvision=={CUDA_TORCH["torchvision"]}+{CUDA_TORCH["tag"]}']
     assert report['ok'] and report['device'] == 'cuda'
-    receipt = json.loads((home / 'molparser' / env.RECEIPT).read_text())
+    receipt = json.loads((home / 'molparser' / env.RECEIPT).read_text(encoding="utf-8"))
     assert receipt['device'] == 'cuda'
 
 

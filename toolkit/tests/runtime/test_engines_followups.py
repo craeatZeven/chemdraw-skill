@@ -63,7 +63,7 @@ def test_a_cuda_step_that_fails_after_the_torch_swap_restores_the_cpu_stack(home
     assert restore[0]['reqs'] == spec['requirements'] and restore[1]['reqs'] == spec['extra_requirements']
     assert all(c['find_links'] == spec['find_links'] and c['index'] is None for c in restore)
     assert report['ok'] and report['device'] == 'cpu' and 'CUDA' in report['gpu_error']
-    receipt = json.loads((home / 'magnet' / env.RECEIPT).read_text())
+    receipt = json.loads((home / 'magnet' / env.RECEIPT).read_text(encoding="utf-8"))
     assert receipt['device'] == 'cpu'
 
 
@@ -85,7 +85,7 @@ def test_the_install_fails_when_the_cpu_stack_cannot_be_restored_either(home, mo
 def test_the_device_is_what_torch_reports_after_the_swap(home, monkeypatch):
     report, _ = _cuda_install(home, monkeypatch, lambda calls: None, lambda python: ('2.10.0+cu128', False))
     assert report['ok'] and report['device'] == 'cpu' and 'is_available' in report['gpu_error']
-    assert json.loads((home / 'magnet' / env.RECEIPT).read_text())['device'] == 'cpu'
+    assert json.loads((home / 'magnet' / env.RECEIPT).read_text(encoding="utf-8"))['device'] == 'cpu'
     (home / 'magnet' / env.RECEIPT).unlink()
     report, _ = _cuda_install(home, monkeypatch, lambda calls: None, lambda python: ('2.10.0+cu128', True))
     assert report['device'] == 'cuda'
@@ -196,7 +196,7 @@ def test_status_reads_the_size_from_the_receipt_and_walks_only_old_installs(home
     engines = env.status()['engines']
     assert engines['molscribe']['disk_used_mb'] == 1234.5 and 'molscribe' not in walked
     assert engines['molnextr']['disk_used_mb'] >= 2.0 and 'molnextr' in walked
-    assert json.loads((home / 'molnextr' / env.RECEIPT).read_text())['disk_mb'] >= 2.0  # measured once
+    assert json.loads((home / 'molnextr' / env.RECEIPT).read_text(encoding="utf-8"))['disk_mb'] >= 2.0  # measured once
     walked.clear()
     env.status()
     assert 'molnextr' not in walked
@@ -210,7 +210,7 @@ def test_an_install_records_its_size_in_the_receipt(home, monkeypatch):
     monkeypatch.setattr(env, '_pip', lambda *a, **k: None)
     monkeypatch.setattr(env, 'call', lambda *a, **k: {})
     assert env.install('molscribe')['ok']
-    assert json.loads((home / 'molscribe' / env.RECEIPT).read_text())['disk_mb'] >= 3.0
+    assert json.loads((home / 'molscribe' / env.RECEIPT).read_text(encoding="utf-8"))['disk_mb'] >= 3.0
 
 
 def test_the_mcp_listing_does_not_measure_folders(home, monkeypatch):
@@ -262,7 +262,7 @@ def test_a_timeout_kills_the_children_of_the_engine_too(tmp_path):
             'time.sleep(120)\n')
     with pytest.raises(subprocess.TimeoutExpired):
         env._run([sys.executable, '-c', code], timeout=4)
-    pid = int(pid_file.read_text())
+    pid = int(pid_file.read_text(encoding="utf-8"))
     for _ in range(50):
         if not _alive(pid):
             break

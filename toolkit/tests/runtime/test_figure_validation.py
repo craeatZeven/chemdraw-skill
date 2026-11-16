@@ -58,7 +58,7 @@ def test_validation_report_with_no_native(tmp_path):
     source=tmp_path/'input.cdxml'
     draw_molecule({'smiles':'CCO'},str(source))
     fv.validate_figure(str(source),str(tmp_path/'check'))
-    report=json.loads((tmp_path/'check/report.json').read_text())
+    report=json.loads((tmp_path/'check/report.json').read_text(encoding="utf-8"))
     assert report['basic']['molecule_count']==1
     assert report['native']['status']=='not_run'
     assert report['source_unchanged']
@@ -76,7 +76,7 @@ def test_native_failure_is_not_pass(tmp_path):
     draw_molecule({'smiles':'CCO'},str(source))
     with mock.patch.object(fv,'_worker',return_value={'ok':False,'error':{'code':'native_missing'}}):
         fv.validate_figure(str(source),str(tmp_path/'check'),native=True,cross_reader=True)
-    report=json.loads((tmp_path/'check/report.json').read_text())
+    report=json.loads((tmp_path/'check/report.json').read_text(encoding="utf-8"))
     assert report['native']['status']=='failed'
     assert report['cross_reader']['status']=='not_run'
 
@@ -105,7 +105,7 @@ def test_native_invalid_saved_xml_retains_failed_report(tmp_path):
         return {'ok':True}
     with mock.patch.object(fv,'_worker',side_effect=broken):
         fv.validate_figure(str(source),str(tmp_path/'check'),native=True)
-    report=json.loads((tmp_path/'check/report.json').read_text())
+    report=json.loads((tmp_path/'check/report.json').read_text(encoding="utf-8"))
     assert report['native']['status']=='failed'
 
 

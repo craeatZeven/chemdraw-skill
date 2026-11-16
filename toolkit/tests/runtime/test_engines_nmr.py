@@ -50,8 +50,8 @@ def test_carbon_peaks_and_both_nuclei(engine):
 def test_a_simulated_spectrum_is_a_new_csv_with_the_peaks_where_predicted(engine, tmp_path):
     target = tmp_path / 'ethanol.csv'
     answer = predict_nmr('CCO', '1H', output_path=str(target))
-    rows = [line.split(',') for line in target.read_text().splitlines()[1:]]
-    assert target.read_text().startswith('ppm,intensity\n') and float(rows[0][0]) > float(rows[-1][0])
+    rows = [line.split(',') for line in target.read_text(encoding="utf-8").splitlines()[1:]]
+    assert target.read_text(encoding="utf-8").startswith('ppm,intensity\n') and float(rows[0][0]) > float(rows[-1][0])
     top = max(rows, key=lambda r: float(r[1]))
     assert abs(float(top[0]) - 1.2) < 0.05  # the three-proton methyl is the tallest line
     assert answer['simulated_spectra'] == {'1H': str(target)}
@@ -153,7 +153,7 @@ def test_an_existing_output_file_is_refused_before_the_engine_runs(tmp_path, mon
     (tmp_path / 'spectrum-13C.csv').write_text('keep')
     with pytest.raises(ValueError, match='exists'):
         predict_nmr('CCO', 'both', output_path=str(tmp_path / 'spectrum.csv'))
-    assert (tmp_path / 'spectrum-13C.csv').read_text() == 'keep'
+    assert (tmp_path / 'spectrum-13C.csv').read_text(encoding="utf-8") == 'keep'
 
 
 def test_experimental_peaks_turn_a_prediction_into_a_peak_assignment(engine):

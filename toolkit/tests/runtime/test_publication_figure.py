@@ -35,14 +35,14 @@ def test_create_binding_pagination_and_reproducibility(tmp_path):
     a,b=tmp_path/'a',tmp_path/'b'
     assert execute(spec,a)['ok']
     assert execute(spec,b)['ok']
-    project=json.loads((a/'project.json').read_text())
+    project=json.loads((a/'project.json').read_text(encoding="utf-8"))
     assert len(project['compounds']) == 48
     assert len(project['pages']) > 1
     assert project['compounds']['id2']['input']['values']['value'] == ''
     for page in project['pages']:
         assert (a/page['file']).read_bytes() == (b/page['file']).read_bytes()
-    assert json.loads((a/'checks.json').read_text())['data_binding']['status']=='passed'
-    assert not json.loads((a/'checks.json').read_text())['layout']['issues']
+    assert json.loads((a/'checks.json').read_text(encoding="utf-8"))['data_binding']['status']=='passed'
+    assert not json.loads((a/'checks.json').read_text(encoding="utf-8"))['layout']['issues']
 
 
 @pytest.mark.parametrize('rows', [
@@ -58,7 +58,7 @@ def test_invalid_data_never_published(tmp_path,rows):
 def test_metric_update_preserves_manual_layout_and_annotation(tmp_path):
     spec=request(tmp_path)
     base=tmp_path/'base'; execute(spec,base)
-    project=json.loads((base/'project.json').read_text()); record=project['compounds']['a']
+    project=json.loads((base/'project.json').read_text(encoding="utf-8")); record=project['compounds']['a']
     page=record['page']; tree=ET.parse(base/project['pages'][page]['file'])
     group=tree.find(f".//group[@id='{record['objects']['group']}']")
     from cdxml_toolkit.mcp_runtime.figure_tools import _move
@@ -81,7 +81,7 @@ def test_metric_update_preserves_manual_layout_and_annotation(tmp_path):
 
 def test_concurrent_value_edit_is_conflict_draft(tmp_path):
     spec=request(tmp_path);base=tmp_path/'base';execute(spec,base)
-    p=json.loads((base/'project.json').read_text());r=p['compounds']['a']
+    p=json.loads((base/'project.json').read_text(encoding="utf-8"));r=p['compounds']['a']
     tree=ET.parse(base/p['pages'][r['page']]['file'])
     tree.find(f".//t[@id='{r['objects']['fields']['value']}']/s").text='Result: 77%'
     edited=tmp_path/'edited.cdxml';tree.write(edited)
@@ -96,7 +96,7 @@ def test_concurrent_value_edit_is_conflict_draft(tmp_path):
 
 def test_renumbered_native_ids_use_unique_identity_and_label(tmp_path):
     spec=request(tmp_path);base=tmp_path/'base';execute(spec,base)
-    p=json.loads((base/'project.json').read_text()); tree=ET.parse(base/p['pages'][0]['file'])
+    p=json.loads((base/'project.json').read_text(encoding="utf-8")); tree=ET.parse(base/p['pages'][0]['file'])
     mapping={n.get('id'):str(int(n.get('id'))+100000) for n in tree.iter() if n.get('id')}
     for node in tree.iter():
         if node.get('id'):node.set('id',mapping[node.get('id')])
@@ -110,7 +110,7 @@ def test_renumbered_native_ids_use_unique_identity_and_label(tmp_path):
 def test_missing_group_and_ambiguous_duplicate_are_conflicts(tmp_path):
     from copy import deepcopy
     spec=request(tmp_path,[['a','1',STEREO,'1',''],['b','1',STEREO,'1','']])
-    base=tmp_path/'base';execute(spec,base);p=json.loads((base/'project.json').read_text())
+    base=tmp_path/'base';execute(spec,base);p=json.loads((base/'project.json').read_text(encoding="utf-8"))
     tree=ET.parse(base/p['pages'][0]['file']);page=tree.find('page')
     for group in page.findall('group'):group.set('id',str(int(group.get('id'))+9000))
     edited=tmp_path/'edited.cdxml';tree.write(edited)
@@ -120,10 +120,10 @@ def test_missing_group_and_ambiguous_duplicate_are_conflicts(tmp_path):
 
 def test_new_and_deleted_compounds_keep_existing_pages(tmp_path):
     spec=request(tmp_path);base=tmp_path/'base';execute(spec,base)
-    p=json.loads((base/'project.json').read_text())
+    p=json.loads((base/'project.json').read_text(encoding="utf-8"))
     spec=request(tmp_path,[['a','1',STEREO,'82%','amine'],['c','3',OTHER,'33%','alcohol']],project_path=str(base/'project.json'))
     out=tmp_path/'updated';assert execute(spec,out,'update')['ok']
-    q=json.loads((out/'project.json').read_text())
+    q=json.loads((out/'project.json').read_text(encoding="utf-8"))
     assert set(q['compounds'])=={'a','c'}
     assert q['compounds']['a']['page']==p['compounds']['a']['page']
     assert q['compounds']['c']['page']>=len(p['pages'])
@@ -150,15 +150,15 @@ def test_structure_replacement_has_explicit_core_map(tmp_path):
     spec=request(tmp_path,[['a','1',old,'82%','']]);base=tmp_path/'base';execute(spec,base)
     spec=request(tmp_path,[['a','1',new,'82%','']],project_path=str(base/'project.json'),atom_maps={'a':[[i,j] for j,i in enumerate(match)]})
     out=tmp_path/'updated';result=execute(spec,out,'update')
-    assert result['ok'], (out/'conflicts.json').read_text() if (out/'conflicts.json').exists() else result
-    q=json.loads((out/'project.json').read_text())
+    assert result['ok'], (out/'conflicts.json').read_text(encoding="utf-8") if (out/'conflicts.json').exists() else result
+    q=json.loads((out/'project.json').read_text(encoding="utf-8"))
     from cdxml_toolkit.chemistry_semantics import semantic_key
     assert q['compounds']['a']['displayed_identity']==semantic_key(b)
 
 
 def test_check_rejects_tampered_measurement(tmp_path):
     spec=request(tmp_path);base=tmp_path/'base';execute(spec,base)
-    p=json.loads((base/'project.json').read_text());r=p['compounds']['a']
+    p=json.loads((base/'project.json').read_text(encoding="utf-8"));r=p['compounds']['a']
     tree=ET.parse(base/p['pages'][0]['file']);tree.find(f".//t[@id='{r['objects']['fields']['value']}']/s").text='wrong'
     edited=tmp_path/'edited.cdxml';tree.write(edited)
     spec=request(tmp_path,project_path=str(base/'project.json'),edited_pages={'0':str(edited)})
@@ -193,12 +193,12 @@ def test_unresolved_chemistry_persists_and_existing_output_is_protected(tmp_path
     assert (base/'project.json').read_bytes()==before
     spec=request(tmp_path,project_path=str(base/'project.json'))
     out=tmp_path/'updated';execute(spec,out,'update')
-    assert json.loads((out/'checks.json').read_text())['chemistry']['status']=='unresolved'
+    assert json.loads((out/'checks.json').read_text(encoding="utf-8"))['chemistry']['status']=='unresolved'
 
 
 def test_locked_overflow_is_reported_without_moving(tmp_path):
     spec=request(tmp_path);base=tmp_path/'base';execute(spec,base)
-    p=json.loads((base/'project.json').read_text());tree=ET.parse(base/p['pages'][0]['file'])
+    p=json.loads((base/'project.json').read_text(encoding="utf-8"));tree=ET.parse(base/p['pages'][0]['file'])
     from cdxml_toolkit.mcp_runtime.figure_tools import _move
     _move(tree.find('page/group'),1000,0)
     edited=tmp_path/'edited.cdxml';tree.write(edited)
@@ -229,7 +229,7 @@ def test_xlsx_preserves_decimal_percent_and_explicit_units(tmp_path):
 
 def test_project_page_files_cannot_leave_the_project_folder(tmp_path):
     spec=request(tmp_path);base=tmp_path/'base';execute(spec,base)
-    p=json.loads((base/'project.json').read_text())
+    p=json.loads((base/'project.json').read_text(encoding="utf-8"))
     (tmp_path/'outside.cdxml').write_bytes((base/p['pages'][0]['file']).read_bytes())
     p['pages'][0]['file']='../outside.cdxml'
     (base/'project.json').write_text(json.dumps(p))
