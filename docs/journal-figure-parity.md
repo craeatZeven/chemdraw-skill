@@ -218,6 +218,99 @@ session knows which figures have been brought to this bar and which have not.
 - Reproducibility was checked: rendering `skill/chemdraw/assets/preview/total-synthesis.json` reproduces
   `assets/coverage/total_synthesis.png` with 0 differing pixels.
 
+### P14 — One-line cell captions in a scope
+
+Witness: `journal-corpus/bjoc-articles-22-127-scheme2.png` writes `3a, 64%` — label and value on
+one line. `journal-corpus/nature-communications-pmc13594109-fig4.png` writes them on two, but
+with the value tight under the label.
+Today: a cell is a label line plus one line per field, so three lines for label + yield +
+definition (`assets/parity/p4-p7-p8-scope.png`).
+
+Produce: label and first field on one line when they belong together; a definition keeps its own
+line.
+Done when: a two-field cell is as tall as the witness's and the eighteen-cell panel still fits
+one page.
+
+### P15 — Header scheme above a scope table
+
+Witness: `journal-corpus/bjoc-articles-22-127-scheme2.png` opens with the general reaction —
+substrates with R¹/R² marked, arrow, conditions, product with R¹/R². The grid below then needs
+no structure repeated.
+Today: `assets/parity/p4-p7-p8-scope.png` has a text line reading `Standard conditions`; the
+reader has to infer the transformation from the products.
+
+Produce: an optional `header` block in a scope brief that draws one general scheme above the
+grid, with the varying positions marked.
+Done when: a scope brief with a header renders the scheme and its marks line up with the
+highlighted positions below.
+
+### P16 — Curved arrows around a cycle
+
+Witness: `journal-corpus/bjoc-articles-22-125-scheme4.png` and `...-130-scheme5.png` — a cycle is
+a ring of arcs, each arrow following the circle.
+Today: `assets/parity/p9-cycle-overlay.png` joins species with straight chords, so the "cycle"
+reads as a diamond with stubs, not as a ring.
+
+Produce: the cycle layout draws its steps as arcs on a circle, reusing the arc code P1 added for
+mechanisms.
+Done when: a four-species cycle renders four arcs on one circle, none of them straight.
+
+### P17 — Chemistry formatting everywhere, not just in conditions
+
+Witness: every figure in the corpus subscripts formula digits wherever they appear.
+Today: `conditions` and `definition` are formatted (`H2O`, `K3PO4` come out right) but a
+**species label** is not, and a digit right after a closing parenthesis escapes the rule:
+`PhB(OH)2` renders flat in the five-step route of this session and in
+`assets/parity/p9-cycle-overlay.png`, while `Na2CO3` beside it is correct.
+
+Produce: one formatter for every text the layout emits, with parentheses handled and species
+labels included.
+Done when: `PhB(OH)2` subscripts and no rendered string contains a bare formula digit that the
+corpus would subscript.
+
+### P18 — Wrap a linear route, and draw each intermediate once
+
+Witness: `journal-corpus/bjoc-articles-22-103-figure1.png` — a route moves left to right and
+wraps; an intermediate drawn once serves the arrows on both sides of it.
+Today: `layout: sequential` puts one step per row and redraws the shared structure: a five-step
+route becomes five rows about 107 x 116 mm, with compounds 2, 3, 4 and 5 each drawn twice.
+
+Produce: a layout that fills a row before starting the next, and reuses the structure at each
+junction instead of redrawing it.
+Done when: the five-step route occupies two rows instead of five and no structure appears twice.
+
+### P19 — Branch from one structure to several products
+
+Witness: `journal-corpus/bjoc-articles-22-103-figure1.png` panel (c): the reagent sits in the
+middle and arrows leave it to both sides, to two different products.
+Today: a step has substrates on the left and products on the right, always in a line; it cannot
+express one substrate giving several products from a shared centre.
+
+Produce: a divergent layout where a single structure has arrows leaving in more than one
+direction.
+Done when: a brief with one substrate and three products renders as a fan, not as three stacked
+rows.
+
+### P20 — Panels, boxed titles, and a colour legend
+
+Witness: same figure — panels (a), (b), (c) each carry a boxed one-line title, substrates are
+coloured by class, and the footer carries `R1 = H, MeO, Cl` / `R2 = CF3, CF2CF2H, ...`.
+Today: a figure can hold bands with italic titles (P8) but not boxed panel headers, not a colour
+scheme with a legend, and not a footer legend of variable groups.
+
+Produce: panel groups with a boxed header, a colour assigned to a set of species, and a legend
+block that pairs colours with the groups they stand for.
+Done when: a three-panel figure reproduces the witness's structure — headers, coloured classes,
+footer legend.
+
+## What the layout cannot do yet
+
+The seven items above share one root: the renderer lays a figure out as rows of well-formed
+cells, and every corpus figure that looks like a paper is doing something else — wrapping a
+route, branching from a centre, or laying panels side by side. Until the layout model gains
+those three shapes (P18, P19, P20), a long route will look like a stack and a cycle like a
+diamond, however correct its chemistry.
+
 ## Renders kept beside the parity briefs
 
 `assets/parity/` holds one brief per parity item that needed a figure to argue about, plus the
