@@ -290,7 +290,7 @@ P7, P8 and P9.
 | P3 Newman in a scheme | **defective** | renders and lays out, but the gauche conformation has three label pairs on identical coordinates — `(297.21,160.23)` H/CH3, `(279.75,129.99)` CH3/H, `(262.29,160.23)` H/H twice. The rear set is not rotated against the front one |
 | P4 highlight the varying group | verified | `#FF6600` on the differing atoms and bonds of every cell in `p4-p7-p8-scope` |
 | P5 keep 0 % visible | verified | the publication-figure test renders `Result: 0%` rather than dropping the cell |
-| P6 variable-group rows | **not checked** | no render inspected yet |
+| P6 variable-group rows | **not implemented** | no field or object expresses it. The nearest workaround — a second `fields` entry carrying `Alk = C7H15` — renders as a third line prefixed `Group:` and prints `Group: —` where the value is empty, so every cell would carry a label it does not need. Two further gaps in the same render: field values are not chemistry-formatted (`C7H15` instead of C7H15 with subscripts) although `conditions` are, and the row packs each tall alkyl chain onto its own line |
 | P7 secondary product | verified | `3d′` sits 0-6 pt right of `3d`, grey, with its own `9%b`; the all-grey assertion needed the colour-table dedupe fixed first |
 | P8 section bands | verified | two bands, italic titles, full-width rules |
 | P9 dashed overlay | **defective** | circles identical to 0.0 pt (74.3 x 74.3, radius 37.16) and spelled like the native sample, but one arrow passes 24.0 pt from a centre (inside the radius) and `reductive elimination` overlaps the top-left circle |
