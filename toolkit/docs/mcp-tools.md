@@ -245,6 +245,11 @@ runs that make one line, so a catalyst can be coloured or a reagent set in itali
 title and a species' caption (a line under its compound number) take the same forms. A
 species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
 and its number, with an optional fill drawn behind it.
+overlays [{fragment, species?, shape circle|outline}] draw a dashed outline around one
+fragment (SMILES or SMARTS) in every structure that has it, or in the species listed, at
+the same place on the fragment in each (the unchanged ring through the intermediates of a
+cycle); a listed species without the fragment is refused, and a fragment found more than
+once is marked at its first match, with a warning.
 Only the conditions in the brief are drawn; a
 step without any is reported, never filled in. Structures given as SMILES are used
 as they are; names go through the curated reagent table and, when the network is

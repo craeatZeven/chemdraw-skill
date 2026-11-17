@@ -40,7 +40,7 @@ RELAYOUT_GAP_SCALE = 1.4
 RELAYOUT_WIDTH_FACTOR = 0.75
 RELAYOUT_MIN_LINE_CHARS = 16
 ARROWS = ("solid", "dashed", "failed", "reversible", "resonance")
-BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout"}
+BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout", "overlays"}
 
 JACS_PALETTE = {
     "pastel_blue": "#D6EAF8",
@@ -108,6 +108,8 @@ def _validate(brief: dict) -> list[str]:
         if entry.get("orientation") not in (None, *renderer.ORIENTATIONS):
             errors.append(f"Species {ident}: orientation must be one of {list(renderer.ORIENTATIONS)}.")
         errors += figure_house.species_style_errors(entry)
+
+    errors += figure_house.overlay_errors(brief, ids)
 
     steps = brief.get("steps")
     if not isinstance(steps, list) or not steps:
@@ -667,6 +669,10 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
     # Frames go on after the overlap check: a frame is meant to surround its structure.
     cdxml, applied = figure_house.apply_species_boxes(cdxml, brief, grounded)
     record["applied"] += applied
+    # Overlays too: one rings its fragment, so it crosses that structure's bonds by design.
+    cdxml, applied, warnings = figure_house.apply_fragment_overlays(cdxml, brief, grounded)
+    record["applied"] += applied
+    record["warnings"] += warnings
     cdxml = styled(cdxml, slug)
     if house is not None:
         cdxml, applied, skipped = figure_house.apply_measured_geometry(cdxml, house, slug)
@@ -781,6 +787,11 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     title and a species' caption (a line under its compound number) take the same forms. A
     species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
     and its number, with an optional fill drawn behind it.
+    overlays [{fragment, species?, shape circle|outline}] draw a dashed outline around one
+    fragment (SMILES or SMARTS) in every structure that has it, or in the species listed, at
+    the same place on the fragment in each (the unchanged ring through the intermediates of a
+    cycle); a listed species without the fragment is refused, and a fragment found more than
+    once is marked at its first match, with a warning.
     Only the conditions in the brief are drawn; a
     step without any is reported, never filled in. Structures given as SMILES are used
     as they are; names go through the curated reagent table and, when the network is

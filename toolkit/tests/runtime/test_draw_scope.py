@@ -286,3 +286,12 @@ def test_secondary_of_must_name_another_species():
     brief["species"][0]["secondary_of"] = "nobody"
     report = draw_figure(brief)
     assert report["ok"] is False and any("secondary_of" in e for e in report["errors"])
+
+
+def test_a_secondary_product_does_not_make_later_ids_look_duplicated():
+    brief = {"kind": "scope", "fields": [{"key": "yield"}], "species": [
+        {"id": "3a", "smiles": "CCO", "values": {"yield": "90%"}},
+        {"id": "3a'", "smiles": "CCCO", "secondary_of": "3a", "values": {"yield": "5%"}},
+        {"id": "3b", "smiles": "CCN", "values": {"yield": "80%"}},
+    ]}
+    assert figure_scope._validate(brief) == []

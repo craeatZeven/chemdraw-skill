@@ -111,9 +111,9 @@ def _validate(brief: dict) -> list[str]:
         if not isinstance(entry.get("values") or {}, dict):
             errors.append(f"Species {ident}: values must be an object of field -> value.")
         if entry.get("secondary_of") is not None:
-            ids = {str(e.get("id")) for e in brief.get("species") or [] if isinstance(e, dict)}
+            every_id = {str(e.get("id")) for e in brief.get("species") or [] if isinstance(e, dict)}
             main = str(entry["secondary_of"])
-            if main == str(ident) or main not in ids:
+            if main == str(ident) or main not in every_id:
                 errors.append(f"Species {ident}: secondary_of must name another species of this brief.")
         if entry.get("note") is not None and not isinstance(entry["note"], str):
             errors.append(f"Species {ident}: note must be text (a line under the compound, e.g. 'not formed').")

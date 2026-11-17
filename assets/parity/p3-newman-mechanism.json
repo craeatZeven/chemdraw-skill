@@ -1,0 +1,105 @@
+{
+ "kind": "mechanism",
+ "species": [
+  {
+   "id": "anti",
+   "label": "anti",
+   "newman": {
+    "front": [
+     "CH3",
+     "H",
+     "H"
+    ],
+    "rear": [
+     "CH3",
+     "H",
+     "H"
+    ],
+    "conformation": "staggered"
+   }
+  },
+  {
+   "id": "gauche",
+   "label": "gauche",
+   "newman": {
+    "front": [
+     "CH3",
+     "H",
+     "H"
+    ],
+    "rear": [
+     "CH3",
+     "H",
+     "H"
+    ],
+    "conformation": "staggered",
+    "dihedral_offset": 120
+   }
+  },
+  {
+   "id": "ald",
+   "smiles": "CC=O",
+   "label": "1"
+  },
+  {
+   "id": "hyd",
+   "smiles": "[OH-]"
+  },
+  {
+   "id": "alk",
+   "smiles": "CC([O-])O",
+   "label": "2"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "anti"
+   ],
+   "products": [
+    "gauche"
+   ],
+   "arrow": "reversible",
+   "above": [
+    "rotation"
+   ]
+  },
+  {
+   "substrates": [
+    "ald",
+    "hyd"
+   ],
+   "products": [
+    "alk"
+   ],
+   "above": [
+    "H2O"
+   ],
+   "moves": [
+    {
+     "from": {
+      "species": "hyd",
+      "atom": 0
+     },
+     "to": {
+      "species": "ald",
+      "atom": 1
+     }
+    },
+    {
+     "from": {
+      "species": "ald",
+      "bond": [
+       1,
+       2
+      ]
+     },
+     "to": {
+      "species": "ald",
+      "atom": 2
+     }
+    }
+   ]
+  }
+ ]
+}

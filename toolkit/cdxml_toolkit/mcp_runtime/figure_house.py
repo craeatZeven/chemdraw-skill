@@ -18,7 +18,7 @@ from rdkit import Chem
 from rdkit.Chem import rdDepictor
 
 from ..chemistry_semantics import read_fragments, semantic_key
-from ..constants import ACS_LABEL_FACE, ACS_LABEL_FONT, ACS_LABEL_SIZE
+from ..constants import ACS_BOND_LENGTH, ACS_LABEL_FACE, ACS_LABEL_FONT, ACS_LABEL_SIZE
 from ..chemdraw.style_presets import style_preset
 from ..publication.house_styles import (
     ABBREVIATIONS, APPLIED_FIGURE_CONVENTIONS, CONVENTION_KEYS, HouseStyle, group_name,
@@ -854,6 +854,189 @@ def apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
             page.append(frame)
         count += 1
     return _wrap(root, cdxml), [f"species boxes ({count})"] if count else []
+
+
+OVERLAY_SHAPES = ("circle", "outline")
+OVERLAY_KEYS = {"fragment", "species", "shape"}
+# Clearance between a marked atom and its overlay: clear of a one-letter atom label, inside
+# the gap to a neighbouring structure.
+OVERLAY_PAD = 0.5 * ACS_BOND_LENGTH
+# Handle length of a cubic Bezier quarter of a 45-degree arc, as ChemDraw writes a circle.
+_ARC_KAPPA = 4.0 / 3.0 * math.tan(math.pi / 16.0)
+
+
+def overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]:
+    """Problems with the brief's overlays, for the brief check."""
+    overlays = brief.get("overlays")
+    if overlays is None:
+        return []
+    if not isinstance(overlays, list):
+        return ["overlays must be a list of {fragment, species?, shape?}."]
+    errors: list[str] = []
+    for number, item in enumerate(overlays, 1):
+        where = f"overlays[{number}]"
+        if not isinstance(item, Mapping):
+            errors.append(f"{where} must be an object.")
+            continue
+        unknown = sorted(set(item) - OVERLAY_KEYS)
+        if unknown:
+            errors.append(f"{where} has unknown keys {unknown}; use {sorted(OVERLAY_KEYS)}.")
+        if not isinstance(item.get("fragment"), str) or not item["fragment"].strip():
+            errors.append(f"{where} needs a fragment: the SMILES or SMARTS of the part to mark.")
+        if item.get("shape", "circle") not in OVERLAY_SHAPES:
+            errors.append(f"{where}: shape must be one of {list(OVERLAY_SHAPES)}.")
+        names = item.get("species")
+        if names is not None:
+            if not isinstance(names, list) or not names:
+                errors.append(f"{where}: species must be a list of species ids.")
+            else:
+                for name in names:
+                    if str(name) not in species_ids:
+                        errors.append(f"{where} names {name!r}, which is not in species.")
+    return errors
+
+
+def _closed_curve(anchors: list[tuple[float, float]], tangents: list[tuple[float, float]]) -> str:
+    """(in-handle, anchor, out-handle) triples of a closed curve, the way ChemDraw writes one:
+    no Closed attribute, the last out-handle leading back into the first anchor."""
+    pts = []
+    for (x, y), (tx, ty) in zip(anchors, tangents):
+        pts += [(x - tx, y - ty), (x, y), (x + tx, y + ty)]
+    return " ".join(f"{x:.2f} {y:.2f}" for x, y in pts)
+
+
+def _circle(cx: float, cy: float, r: float) -> str:
+    angles = [math.pi / 4.0 * k for k in range(8)]
+    anchors = [(cx + r * math.cos(a), cy + r * math.sin(a)) for a in angles]
+    tangents = [(-_ARC_KAPPA * r * math.sin(a), _ARC_KAPPA * r * math.cos(a)) for a in angles]
+    return _closed_curve(anchors, tangents)
+
+
+def _hull(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    pts = sorted(set(points))
+    if len(pts) < 3:
+        return pts
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower: list = []
+    upper: list = []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 1e-9:
+            lower.pop()
+        lower.append(p)
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 1e-9:
+            upper.pop()
+        upper.append(p)
+    return lower[:-1] + upper[:-1]
+
+
+def overlay_curve_points(points: list[tuple[float, float]], shape: str = "circle",
+                         radius: float | None = None) -> str:
+    """CurvePoints of a closed outline around ``points``.
+
+    circle: centred on the points' centroid, OVERLAY_PAD outside the farthest one (or of the
+    given radius). outline: the convex hull pushed OVERLAY_PAD outwards, its corners rounded
+    into arcs; fewer than three distinct corners make a circle.
+    """
+    cx = sum(p[0] for p in points) / len(points)
+    cy = sum(p[1] for p in points) / len(points)
+    hull = _hull(points) if shape == "outline" else []
+    if len(hull) < 3:
+        if radius is None:
+            radius = max(math.hypot(x - cx, y - cy) for x, y in points) + OVERLAY_PAD
+        return _circle(cx, cy, radius)
+    anchors: list[tuple[float, float]] = []
+    tangents: list[tuple[float, float]] = []
+    n = len(hull)
+    edges = []
+    for i in range(n):
+        (x1, y1), (x2, y2) = hull[i], hull[(i + 1) % n]
+        length = math.hypot(x2 - x1, y2 - y1)
+        edges.append(((x2 - x1) / length, (y2 - y1) / length))
+    # Walk the hull: at each corner an arc of radius OVERLAY_PAD from the incoming edge's
+    # outward normal to the outgoing one, then straight on along the next edge.
+    sign = 1.0 if sum((hull[i][0] * hull[(i + 1) % n][1] - hull[(i + 1) % n][0] * hull[i][1])
+                      for i in range(n)) > 0 else -1.0
+    for i in range(n):
+        x, y = hull[i]
+        a_in = math.atan2(edges[i - 1][1], edges[i - 1][0]) - sign * math.pi / 2.0
+        a_out = math.atan2(edges[i][1], edges[i][0]) - sign * math.pi / 2.0
+        sweep = (a_out - a_in) * sign % (2.0 * math.pi) * sign
+        steps = max(1, math.ceil(abs(sweep) / (math.pi / 4.0) - 1e-9))
+        k = 4.0 / 3.0 * math.tan(abs(sweep) / steps / 4.0) * OVERLAY_PAD
+        for j in range(steps + 1):
+            a = a_in + sweep * j / steps
+            anchors.append((x + OVERLAY_PAD * math.cos(a), y + OVERLAY_PAD * math.sin(a)))
+            dx, dy = -math.sin(a) * sign, math.cos(a) * sign
+            tangents.append((dx * k, dy * k))
+    # Between corners the curve runs straight on: an arc's last handle and the next arc's first
+    # both lie along the shared edge, so that segment's four control points are collinear.
+    return _closed_curve(anchors, tangents)
+
+
+def apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]:
+    """A dashed outline around one fragment in every structure that carries it.
+
+    Each overlay marks the atoms of ``fragment`` (SMILES, or SMARTS when it is not a SMILES)
+    in the drawn structures of the species it names, or of every species that contains it;
+    the outline is drawn from the drawn atom positions, so it sits on the fragment wherever
+    the structure was placed. A dashed closed outline is a <curve CurveType="2"
+    LineType="Dashed"> with no FillType, as ChemDraw writes it (a dashed oval does not survive
+    import).
+    """
+    overlays = brief.get("overlays") or []
+    if not overlays:
+        return cdxml, [], []
+    root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
+    page = root.find("page")
+    ids = _new_ids(root)
+    smiles = {g["id"]: g.get("smiles") for g in grounded}
+    drawn = _species_fragments(root, str(cdxml), grounded)
+    z = max([int(v) for el in root.iter() for v in [el.get("Z")] if v and v.lstrip("-").isdigit()], default=0)
+    warnings: list[str] = []
+    count = 0
+    for item in overlays:
+        text = str(item["fragment"]).strip()
+        pattern = Chem.MolFromSmiles(text) or Chem.MolFromSmarts(text)
+        if pattern is None:
+            raise ValueError(f"overlay fragment {text!r} is neither a SMILES nor a SMARTS")
+        named = [str(s) for s in item.get("species") or []]
+        marked: set[str] = set()
+        for sp_id, frag_el, frag_mol in drawn:
+            if named and sp_id not in named:
+                continue
+            src = Chem.MolFromSmiles(smiles.get(sp_id) or "")
+            matches = src.GetSubstructMatches(pattern) if src is not None else ()
+            if not matches:
+                if named:
+                    raise ValueError(f"species {sp_id!r} does not contain the overlay fragment {text!r}")
+                continue
+            nodes = _atom_nodes(frag_el, frag_mol, src)
+            if nodes is None:
+                raise ValueError(f"species {sp_id!r}: the drawn structure could not be matched to its "
+                                 "SMILES, so the overlay cannot be placed")
+            if len(matches) > 1 and sp_id not in marked:
+                warnings.append(f"Species {sp_id}: the overlay fragment {text!r} occurs {len(matches)} "
+                                "times; the first match is marked.")
+            points = list(dict.fromkeys(_point(nodes[i]) for i in matches[0]))
+            curve_points = overlay_curve_points(points, shape=item.get("shape", "circle"))
+            v = [float(x) for x in curve_points.split()]
+            z += 1
+            page.append(ET.Element("curve", {
+                "id": str(ids.next()), "Z": str(z), "LineType": "Dashed", "CurveType": "2",
+                "BoundingBox": f"{min(v[0::2]):.2f} {min(v[1::2]):.2f} {max(v[0::2]):.2f} {max(v[1::2]):.2f}",
+                "CurvePoints": curve_points}))
+            marked.add(sp_id)
+            count += 1
+        missing = [s for s in named if s not in marked]
+        if missing:
+            raise ValueError(f"overlay fragment {text!r}: species {missing} are not drawn as structures")
+        if not marked:
+            raise ValueError(f"overlay fragment {text!r} is in none of the drawn structures")
+    return _wrap(root, cdxml), [f"fragment overlays ({count})"] if count else [], warnings
 
 
 def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None,
