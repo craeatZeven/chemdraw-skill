@@ -135,6 +135,9 @@ def draw_panels(brief: dict, output_path: str | None, render: bool) -> dict:
                                                      suffix=".cdxml")
         with artifact_safety.staging_file(target) as stage:
             stage.write_text(merged["cdxml"], encoding="utf-8", newline="")
+            # staging_file only lends a temporary path; without publishing, closing the block
+            # deletes it and the target never exists — which is what check_cdxml then tripped on.
+            artifact_safety.publish_file(stage, target)
     produced = [target]
     native = {"status": "not_run", "reason": "render was not requested"}
     if render:
