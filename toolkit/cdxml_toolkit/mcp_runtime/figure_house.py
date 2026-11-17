@@ -19,7 +19,8 @@ from rdkit.Chem import rdDepictor
 
 from ..chemistry_semantics import read_fragments, semantic_key
 from ..constants import ACS_LABEL_FACE, ACS_LABEL_FONT, ACS_LABEL_SIZE
-from ..overlay_geometry import CLOSED_DASHED_CURVE, OVERLAY_PAD, generic_ring_points, overlay_curve_points  # noqa: F401  (OVERLAY_PAD re-exported)
+from ..overlay_geometry import (CLOSED_DASHED_CURVE, GENERIC_RING_CLEARANCE, OVERLAY_PAD, choose_generic_ring,
+                                overlay_curve_points)  # noqa: F401  (OVERLAY_PAD re-exported)
 from ..chemdraw.style_presets import style_preset
 from ..publication.house_styles import (
     ABBREVIATIONS, APPLIED_FIGURE_CONVENTIONS, CONVENTION_KEYS, HouseStyle, group_name,
@@ -1060,7 +1061,14 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
     page = root.find("page")
     ids = _new_ids(root)
     z = max([int(v) for el in root.iter() for v in [el.get("Z")] if v and v.lstrip("-").isdigit()], default=0)
+    # Every drawn bond on the page: an arc must keep clear of them (its own structure's above all).
+    bonds = []
+    for frag in page.iter("fragment"):
+        where = {n.get("id"): _point(n) for n in frag.iter("n") if n.get("p")}
+        bonds += [(where[b.get("B")], where[b.get("E")]) for b in frag.iter("b")
+                  if b.get("B") in where and b.get("E") in where]
     count = 0
+    warnings: list[str] = []
     for sp_id, frag_el, frag_mol in _species_fragments(root, str(cdxml), grounded):
         if sp_id not in entries:
             continue
@@ -1073,7 +1081,14 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
             (i, j), rest = mark["atoms"], [_point(nodes[k]) for k in mark["away"]]
             away = (sum(p[0] for p in rest) / len(rest), sum(p[1] for p in rest) / len(rest)) if rest else None
             clear = [GENERIC_RING_LABEL_CLEAR if nodes[k].find("t") is not None else 0.0 for k in (i, j)]
-            points = generic_ring_points(_point(nodes[i]), _point(nodes[j]), away, mark["members"], *clear)
+            points, room, size = choose_generic_ring(_point(nodes[i]), _point(nodes[j]), away, mark["members"],
+                                                     bonds, *clear)
+            if room < GENERIC_RING_CLEARANCE:
+                warnings.append(f"Species {sp_id}: the generic ring on atoms {i}-{j} comes {room:.1f} pt from a bond "
+                                "on either side; give the structure more room or another bond.")
+            elif size != mark["members"]:
+                warnings.append(f"Species {sp_id}: the generic ring on atoms {i}-{j} is drawn as a {size}-ring "
+                                f"to keep clear of the structure.")
             v = [float(x) for x in points.split()]
             _clear_label_of_arc(page, frag_el, labels.get(sp_id), (min(v[0::2]), min(v[1::2]), max(v[0::2]), max(v[1::2])))
             z += 1
@@ -1082,7 +1097,7 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
                 "BoundingBox": f"{min(v[0::2]):.2f} {min(v[1::2]):.2f} {max(v[0::2]):.2f} {max(v[1::2]):.2f}",
                 "CurvePoints": points}))
             count += 1
-    return _wrap(root, cdxml), [f"generic rings ({count})"] if count else [], []
+    return _wrap(root, cdxml), [f"generic rings ({count})"] if count else [], warnings
 
 
 def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None,

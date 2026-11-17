@@ -933,7 +933,8 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         return figure_draw._failure([f"The layout failed: {exc}"], kind="mechanism", warnings=warnings)
 
     try:
-        ringed, ring_applied, _ = figure_house.apply_generic_rings(drawing.cdxml, brief, grounded)
+        ringed, ring_applied, ring_warnings = figure_house.apply_generic_rings(drawing.cdxml, brief, grounded)
+        warnings += ring_warnings
     except ValueError as exc:
         return figure_draw._failure([f"The layout failed: {exc}"], kind="mechanism", warnings=warnings)
     if ring_applied:

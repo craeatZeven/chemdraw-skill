@@ -165,3 +165,64 @@ def generic_ring_box(a, b, away=None, members: int = 6) -> tuple[float, float, f
     v = [float(x) for x in generic_ring_points(a, b, away, members).split()]
     xs, ys = v[0::2], v[1::2]
     return (min(xs) - OVERLAY_LINE, min(ys) - OVERLAY_LINE, max(xs) + OVERLAY_LINE, max(ys) + OVERLAY_LINE)
+
+
+def sample_curve(points: str, per_segment: int = 8) -> list[tuple[float, float]]:
+    """Points along an open (in, anchor, out) curve, as ChemDraw draws it."""
+    v = [float(x) for x in points.split()]
+    pts = list(zip(v[0::2], v[1::2]))
+    triples = [pts[i:i + 3] for i in range(0, len(pts) - 2, 3)]
+    out = [triples[0][1]] if triples else []
+    for (_, a, h1), (h2, b, _) in zip(triples, triples[1:]):
+        for n in range(1, per_segment + 1):
+            u = n / per_segment
+            out.append(tuple((1 - u) ** 3 * a[i] + 3 * (1 - u) ** 2 * u * h1[i] + 3 * (1 - u) * u * u * h2[i]
+                             + u ** 3 * b[i] for i in (0, 1)))
+    return out
+
+
+def _segment_distance(p, a, b) -> float:
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length = dx * dx + dy * dy
+    t = 0.0 if not length else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / length))
+    return math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy)
+
+
+# The least room an arc keeps from the molecule's bonds, away from its two ends.
+GENERIC_RING_CLEARANCE = 3.0
+_END_ZONE = 6.0   # samples this close to an end atom are not counted: the arc starts there
+
+
+def arc_clearance(points: str, bonds, ends) -> float:
+    """How close the arc comes to any bond, leaving out the stretch next to its two end atoms."""
+    samples = [p for p in sample_curve(points) if all(math.dist(p, e) > _END_ZONE for e in ends)]
+    if not samples or not bonds:
+        return float("inf")
+    return min(_segment_distance(p, a, b) for p in samples for a, b in bonds)
+
+
+def choose_generic_ring(a, b, away=None, members: int = 6, bonds=(), clear_a: float = 0.0,
+                        clear_b: float = 0.0) -> tuple[str, float, int]:
+    """The generic-ring arc through a and b that keeps clear of the molecule's other bonds.
+
+    Both sides of the bond are tried, the one away from ``away`` first; the side that keeps
+    further from every bond (``arc_clearance``) wins. If neither keeps GENERIC_RING_CLEARANCE,
+    smaller rings are tried, down to four atoms. Returns (CurvePoints, clearance, members);
+    a clearance under GENERIC_RING_CLEARANCE means the arc still meets a bond.
+    """
+    mx, my = (a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0
+    if away is None:
+        sides = [None]
+    else:
+        # The same point reflected through the bond's midpoint puts the arc on the other side.
+        sides = [away, (2 * mx - away[0], 2 * my - away[1])]
+    best = None
+    for size in range(int(members), 3, -1):
+        for side in sides:
+            points = generic_ring_points(a, b, side, size, clear_a, clear_b)
+            room = arc_clearance(points, bonds, (a, b))
+            if best is None or room > best[1] + 1e-6:
+                best = (points, room, size)
+        if best[1] >= GENERIC_RING_CLEARANCE:
+            return best
+    return best

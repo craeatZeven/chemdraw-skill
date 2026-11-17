@@ -162,8 +162,20 @@ def heading_runs(text):
     return runs
 
 
-def _line_width(keys, texts, style):
-    return (sum(text_width(texts[k], style, bold=k == 'label') for k in keys)
+SCRIPT_SCALE = 0.7   # a sub- or superscript is drawn this much smaller than its line
+
+
+def _runs_width(runs, style):
+    size = style['font_size']
+    return sum(text_width(r['text'], style, size * SCRIPT_SCALE if r.get('subscript') or r.get('superscript') else None,
+                          bold=bool(r.get('bold'))) for r in runs)
+
+
+def _line_width(keys, texts, style, runs=None):
+    """Width of a shared caption line: each piece as drawn (its subscripts smaller), joined by ", "."""
+    runs = runs or {}
+    return (sum(_runs_width(runs[k], style) if runs.get(k) else text_width(texts[k], style, bold=k == 'label')
+                for k in keys)
             + text_width(LINE_JOIN, style) * (len(keys) - 1))
 
 
@@ -278,13 +290,14 @@ def prepare(records,spec):
         raw={'label':record['label'],**{f['column']:field_text(record,f) for f in spec.get('fields',[])}}
         raw={k:v for k,v in raw.items() if k=='label' or v!=''}  # an empty optional line is not drawn
         plain={k:caption_runs(v,bold=k=='label')[0] for k,v in raw.items()}
+        first_runs={k:caption_runs(v,bold=k=='label')[1] for k,v in raw.items()}
         # The number and the values marked inline share one line ("3a, 64%"); the rest, one each.
         inline=['label']+[f['column'] for f in spec.get('fields',[]) if f.get('inline') and f['column'] in raw]
         # The cell is as wide as the structure, or as the widest single value. A shared line may
         # widen it by half again; longer, it breaks after the number instead.
         pieces=[text_width(v,style,bold=k=='label') for k,v in plain.items()]
         width=min(max(100,molecule_width,min(usable,max(pieces)+16)),usable)
-        shared=_line_width(inline,plain,style)+16
+        shared=_line_width(inline,plain,style,first_runs)+16
         if len(inline)>1 and shared<=min(usable,1.5*width):
             width=max(width,shared)
         elif len(inline)>1:
@@ -378,13 +391,13 @@ def create_pages(records,spec,stage,start_index=0):
                     'align':align,**({'runs':runs} if runs else {})}
         if p['inline']:
             # One centred line from separate objects, so each value stays bound to its column.
-            lx=cx-_line_width(p['inline'],p['texts'],style)/2
+            lx=cx-_line_width(p['inline'],p['texts'],style,p['runs'])/2
             for i,field in enumerate(p['inline']):
                 if i:
                     objects.append({'type':'text','id':f'{key}_join{i}','text':LINE_JOIN,'position':[lx,ty],'size':size})
                     lx+=text_width(LINE_JOIN,style)
                 objects.append(line(field,lx,'Left'))
-                lx+=text_width(p['texts'][field],style,bold=field=='label')
+                lx+=_line_width([field],p['texts'],style,p['runs'])
             ty+=_caption_advance('',size)
         for field,value in p['texts'].items():
             if field in p['inline']: continue
@@ -418,9 +431,12 @@ def create_pages(records,spec,stage,start_index=0):
         qx=x
         for index,q in enumerate(cell):
             if index:
+                # Midway between the two structures' atoms, not between their (wider) cells.
                 ys=[c[1] for c in cell[0]['coords']]
+                before=cell[index-1]; before_x=qx-SECONDARY_GAP-before['width']
+                gap_mid=(before_x+max(c[0] for c in before['coords'])+qx+min(c[0] for c in q['coords']))/2
                 current['objects'].append({'type':'text','text':'+','align':'Center','size':size,
-                                           'position':[qx-SECONDARY_GAP/2,y+(min(ys)+max(ys))/2+size*0.35]})
+                                           'position':[gap_mid,y+(min(ys)+max(ys))/2+size*0.35]})
             place(current,q,qx,y,None if index==0 else SECONDARY_COLOR)
             qx+=q['width']+SECONDARY_GAP
         x+=p['width']+gap; row_height=max(row_height,p['height'])
@@ -469,7 +485,15 @@ def bounds(node, style):
     if node.tag=='t':
         coords=list(map(float,node.get('p','0 0').split()))
         size=max([float(s.get('size',style['font_size'])) for s in node.findall('s')]+[style['font_size']])
-        text=node_text(node); width=text_width(text,style,size)
+        text=node_text(node)
+        def run_width(run):
+            # As drawn: sub- and superscripts smaller, bold runs wider (face bits 32, 64, 1).
+            face=int(run.get('face','0') or 0) if (run.get('face') or '0').isdigit() else 0
+            run_size=float(run.get('size',size))*(SCRIPT_SCALE if face&96 and face&96!=96 else 1.0)
+            return text_width(run.text or '',style,run_size,bold=bool(face&1))
+        runs=node.findall('s')
+        width=(max(text_width(line,style,size) for line in text.splitlines()) if '\n' in text or not runs
+               else sum(run_width(r) for r in runs))
         left=coords[0]
         if node.get('Justification')=='Center': left-=width/2
         elif node.get('Justification')=='Right':left-=width

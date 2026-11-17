@@ -696,8 +696,9 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
     cdxml, applied, warnings = figure_house.apply_fragment_overlays(cdxml, brief, grounded)
     record["applied"] += applied
     record["warnings"] += warnings
-    cdxml, rings, _ = figure_house.apply_generic_rings(cdxml, brief, grounded)
+    cdxml, rings, ring_warnings = figure_house.apply_generic_rings(cdxml, brief, grounded)
     record["applied"] += rings
+    record["warnings"] += ring_warnings
     if applied or rings:
         record["warnings"] += [f"Overlay: {issue}." for issue in overlays_collide(str(cdxml))]
     cdxml = styled(cdxml, slug)

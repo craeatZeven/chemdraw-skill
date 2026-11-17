@@ -628,3 +628,26 @@ def test_a_scope_brief_header_is_checked():
                             ({'substrates': [{'smiles': 'C'}], 'products': [{}]}, 'smiles or a name'),
                             ({'substrates': [{'smiles': 'C'}], 'products': [{'smiles': 'C'}], 'arrow': 'x'}, 'unknown keys')):
         assert any(message in e for e in _validate({**base, 'header': header})), header
+
+
+def test_a_shared_line_measures_subscripts_at_their_drawn_size():
+    # "Alk = C7H15" was measured with full-size digits, so the ", " after it stood off by a gap.
+    from cdxml_toolkit.publication.layout import _line_width, caption_runs, style_settings, text_width
+    style = style_settings({})
+    plain, runs = caption_runs('Alk = C7H15')
+    full = text_width(plain, style)
+    assert _line_width(['d'], {'d': plain}, style, {'d': runs}) < full
+    assert _line_width(['d'], {'d': plain}, style, {}) == full
+
+
+def test_the_plus_stands_midway_between_the_two_structures(tmp_path):
+    path = _secondary_request(tmp_path, [['a', '14a', STEREO, '61%', '', ''], ['b', '14b', OTHER, '22%', '', 'a']])
+    out = tmp_path/'plus'
+    assert execute(path, out)['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    root = ET.parse(out/project['pages'][0]['file']).getroot()
+    groups = {c: root.find(f".//group[@id='{project['compounds'][c]['objects']['group']}']") for c in 'ab'}
+    right = max(float(n.get('p').split()[0]) for n in groups['a'].find('fragment').iter('n'))
+    left = min(float(n.get('p').split()[0]) for n in groups['b'].find('fragment').iter('n'))
+    plus = next(t for t in root.iter('t') if ''.join(t.itertext()) == '+')
+    assert abs(float(plus.get('p').split()[0]) - (right + left) / 2) < 0.5

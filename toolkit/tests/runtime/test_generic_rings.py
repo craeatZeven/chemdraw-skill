@@ -138,3 +138,23 @@ def test_an_open_chain_is_laid_out_with_room_for_its_ring(tmp_path):
             x, y = (float(v) for v in t.get("p").split()[:2])
             assert not (min(xs) < x < max(xs) and min(ys) < y < max(ys))
     assert not [w for w in report["warnings"] if "overlay" in w.lower()]
+
+
+def test_the_arc_goes_to_the_side_clear_of_the_molecules_other_bonds():
+    # A zigzag chain whose neighbours put the "away" side right across another bond: the arc
+    # is drawn on whichever side keeps clear of the molecule, by distance, not by direction.
+    a, b = (100.0, 100.0), (114.4, 100.0)
+    blocking = [((100.0, 112.0), (114.4, 112.0)), ((96.0, 106.0), (118.0, 120.0))]   # bonds below the pair
+    points, clearance, members = G.choose_generic_ring(a, b, away=(107.2, 90.0), members=6,
+                                                       bonds=blocking + [(a, b)])
+    anchors = _pairs(points)[1::3]
+    assert all(y < 100.0 + 0.5 for _, y in anchors)       # it went up, away from the bonds
+    assert clearance > 3.0 and members == 6
+
+
+def test_a_ring_that_fits_nowhere_is_made_smaller_then_reported():
+    a, b = (100.0, 100.0), (114.4, 100.0)
+    cage = [((80.0, 85.0), (135.0, 85.0)), ((80.0, 115.0), (135.0, 115.0))]   # bonds 15 pt above and below
+    points, clearance, members = G.choose_generic_ring(a, b, away=(107.2, 90.0), members=6,
+                                                       bonds=cage + [(a, b)])
+    assert members < 6 or clearance < 3.0
