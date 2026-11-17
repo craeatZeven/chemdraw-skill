@@ -253,4 +253,6 @@ old output until it is rendered again.
 | P6 a group definition under one structure | `substrate_scope` | generator done through the same `note` line |
 | P13 twelve to eighteen cells on one page at 10 pt | `substrate_scope`, `sar_table` | generator done: twelve benzamides with two fields, or eighteen ungrouped compounds, now fit one page; each group still starts its own row (see P8) |
 | P1 coloured curved arrows routed clear of the structure | `mechanism`, `preview_mechanism` | generator done: ChemDraw arc arrows (`AngularSize`), a hex `color` per move, routing that also avoids bonds; a clockwise arrow renders correctly (head on the tail end). Since then: arrows are routed around one another and `check` reports `arrows_collide` (the red and blue heads now stand apart, confirmed natively); one-electron arrows use ChemDraw's own half head, 600 / 525 / 150, after a 1 : 1 : 0.5 barb rendered as a solid triangle that read as two electrons |
-| P2-P4, P7-P9 | | open |
+| P2 equilibrium arrows between species | `preview_scheme`, cycles | already in the renderer (`arrow: reversible`, or `<=>`), written as ChemDraw writes it (`tests/runtime/data/tautomer-step.cdxml`); now also tested inside a catalytic cycle |
+| P8 section bands | `substrate_scope` | generator done: a rule and an italic name open each group; re-render. Eighteen compounds in three groups of six still take two pages: six band rows at 10 pt need about 717 pt and a page offers about 579, which no padding can close |
+| P3, P4, P7, P9 | | open |

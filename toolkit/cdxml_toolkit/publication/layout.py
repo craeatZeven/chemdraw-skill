@@ -154,10 +154,23 @@ def create_pages(records,spec,stage,start_index=0):
         if conditions:
             objects.append({'type':'text','id':'conditions','text':conditions,'position':[margin,top+size],'size':size})
             top+=(conditions.count('\n')+1)*size*1.5+8
-        current={'index':index,'objects':objects,'entries':[],'top':top,'bottom':top,
+        current={'index':index,'objects':objects,'entries':[],'top':top,'bottom':top,'rules':[],
                  'right':margin+max((text_width(line,style) for line in (title+'\n'+conditions).splitlines()), default=0)}
         manifests.append(current)
         return current,margin,top,0
+    def band(current,y,name):
+        """Open a group: a rule across the panel, then the group's name in italic beneath it.
+
+        The rule is drawn when the page's width is known (it ends at the content's right edge),
+        and the name sits inside the band, clear of the rule and of the structures below.
+        """
+        rule={'type':'line','start':[margin,y],'end':[width-margin,y],'style':'line'}
+        current['objects'].append(rule); current['rules'].append(rule)
+        heading=wrap(name,width-2*margin,style)
+        current['objects'].append({'type':'text','text':heading,'runs':[{'text':heading,'italic':True}],
+                                   'position':[margin,y+4+size],'size':size})
+        current['right']=max(current['right'],margin+text_width(heading,style))
+        return y+4+size+(heading.count('\n'))*size*1.5+size*0.3+8
     for p in arranged:
         group=p['input']['group']
         if current is None: current,x,y,row_height=new_page()
@@ -165,21 +178,13 @@ def create_pages(records,spec,stage,start_index=0):
             if x!=margin: y+=row_height+gap
             x=margin; row_height=0
             if y+p['height']+size*2>bottom: current,x,y,row_height=new_page()
-            if group:
-                heading=wrap(group,width-2*margin,style)
-                current['objects'].append({'type':'text','text':heading,'position':[margin,y+size],'size':size})
-                y+=(heading.count('\n')+1)*size*1.5+8
-                current['right']=max(current['right'],margin+text_width(heading,style))
+            if group: y=band(current,y,group)
             last_group=group
         if x+p['width']>width-margin:
             x=margin; y+=row_height+gap; row_height=0
         if y+p['height']>bottom:
             current,x,y,row_height=new_page()
-            if group:
-                heading=wrap(group+' (continued)',width-2*margin,style)
-                current['objects'].append({'type':'text','text':heading,'position':[margin,y+size],'size':size})
-                y+=(heading.count('\n')+1)*size*1.5+8
-                current['right']=max(current['right'],margin+text_width(heading,style))
+            if group: y=band(current,y,group+' (continued)')
         if y+p['height']>bottom: raise ValueError(f"Compound {p['input']['compound_id']} exceeds page height")
         key=f'c{len(compounds)}'; cid=p['input']['compound_id']
         objects=[{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
@@ -204,6 +209,8 @@ def create_pages(records,spec,stage,start_index=0):
             page_bottom+=8+(footer.count('\n')+1)*size*1.5
             page['right']=max(page['right'],margin+max(text_width(line,style) for line in footer.splitlines()))
         page['width']=min(width,math.ceil(page['right']+margin))
+        for rule in page['rules']:
+            rule['end'][0]=page['right']  # each band's rule spans the panel as laid out
         page['height']=min(height,math.ceil(page_bottom+margin))
     stage=Path(stage)
     for page in manifests:

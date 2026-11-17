@@ -345,3 +345,26 @@ def test_cell_geometry_leaves_the_structure_box_clear_of_its_caption():
     # must clear the padded structure, and each caption the one above it.
     assert CELL['caption_baseline'] * size - size >= 1.2 * size - 1.0
     assert CELL['line_advance'] * size + CELL['line_gap'] >= 1.3 * size + 1.0
+
+
+def test_each_scope_group_is_a_band_with_a_rule_and_an_italic_label(tmp_path):
+    # Nature Communications PMC13594109, fig. 4: labelled bands (para substituents, ...) rather
+    # than a flat grid. The label sits inside the band, between its rule and its structures.
+    project, page, root = _scope_page(tmp_path, [['a', '3a', STEREO, '92%', 'para substituents'],
+                                                 ['b', '3b', OTHER, '81%', 'ortho substituents']])
+    rules = [a for a in root.iter('arrow') if a.get('ArrowheadHead') == 'None'
+             and a.get('Head3D').split()[1] == a.get('Tail3D').split()[1]]
+    assert len(rules) == 2
+    labels = {''.join(t.itertext()): t for t in root.iter('t')}
+    for name, rule in zip(('para substituents', 'ortho substituents'), rules):
+        label = labels[name]
+        assert all(s.get('face') == '2' for s in label.iter('s'))  # italic
+        rule_y = float(rule.get('Tail3D').split()[1])
+        baseline = float(label.get('p').split()[1])
+        assert rule_y < baseline - 10 * 0.84  # the label's capitals stay below the rule
+    tops = sorted(min(float(n.get('p').split()[1]) for n in f.iter('n'))
+                  for f in root.iter('fragment'))
+    second_rule = sorted(float(r.get('Tail3D').split()[1]) for r in rules)[1]
+    assert sum(top > second_rule for top in tops) == 1  # one structure in each band
+    checks = json.loads((tmp_path/'scope'/'checks.json').read_text(encoding='utf-8'))
+    assert not checks['layout']['issues']
