@@ -2887,6 +2887,66 @@ def _union_box(a: Tuple[float, float, float, float], b: Optional[Tuple[float, fl
     return (min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3]))
 
 
+def _cycle_arc_span(cx: float, cy: float, radius: float, a0: float, a1: float,
+                    box0: Tuple[float, float, float, float], box1: Tuple[float, float, float, float],
+                    pad: float, min_length: float) -> Optional[Tuple[float, float]]:
+    """Angles of the arc from the species at a0 to the next at a1 (a1 > a0, both on the circle),
+    clipped where the circle leaves each species' box and ``pad`` beyond; None if too short."""
+    def inside(box, t):
+        x, y = cx + radius * math.cos(t), cy + radius * math.sin(t)
+        return box[0] - pad < x < box[2] + pad and box[1] - pad < y < box[3] + pad
+
+    step = math.radians(0.25)
+    start, end = a0, a1
+    while start < a1 and inside(box0, start):
+        start += step
+    while end > start and inside(box1, end):
+        end -= step
+    if (end - start) * radius < min_length:
+        return None
+    return start, end
+
+
+def _build_cycle_arc(cx: float, cy: float, radius: float, start: float, end: float, ids: _IDGen,
+                     dashed: bool = False) -> Tuple[str, int, List[Tuple[float, float]]]:
+    """A step of a cycle as ChemDraw's own arc arrow, running clockwise on the page from the
+    angle ``start`` to ``end``. Returns (xml, id, points from tail to head).
+
+    ChemDraw runs an arc anticlockwise from Tail3D through AngularSize degrees, so a clockwise
+    arrow is written from its far end with the head on the tail end, as figure_mechanism writes
+    curved arrows (toolkit/tests/data/native-arc-arrows.cdxml).
+    """
+    pts = [(cx + radius * math.cos(start + (end - start) * k / 32), cy + radius * math.sin(start + (end - start) * k / 32))
+           for k in range(33)]
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    aid, z = ids.next(), ids.next()
+    first, last = pts[0], pts[-1]
+    attrs = [
+        f'id="{aid}"', f'BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}"', f'Z="{z}"',
+        'FillType="None"', f'LineWidth="{ACS_LINE_WIDTH}"', 'ArrowheadHead="None"', 'ArrowheadTail="Full"',
+        'ArrowheadType="Solid"', 'HeadSize="1000"', 'ArrowheadCenterSize="875"', 'ArrowheadWidth="250"',
+        f'AngularSize="{math.degrees(end - start):.2f}"',
+        f'Head3D="{first[0]:.2f} {first[1]:.2f} 0"', f'Tail3D="{last[0]:.2f} {last[1]:.2f} 0"',
+        f'Center3D="{cx:.2f} {cy:.2f} 0"', f'MajorAxisEnd3D="{cx + radius:.2f} {cy:.2f} 0"',
+        f'MinorAxisEnd3D="{cx:.2f} {cy - radius:.2f} 0"',
+    ]
+    if dashed:
+        attrs.append('LineType="Dashed"')
+    return f'<arrow {" ".join(attrs)}/>', aid, pts
+
+
+def _along(path: List[Tuple[float, float]], frac: float) -> Tuple[float, float]:
+    """The point a fraction of the way along a polyline, by length."""
+    lengths = [math.dist(a, b) for a, b in zip(path, path[1:])]
+    goal = sum(lengths) * frac
+    for (a, b), length in zip(zip(path, path[1:]), lengths):
+        if goal <= length or length == lengths[-1] and (a, b) == (path[-2], path[-1]):
+            t = 0.0 if length == 0 else min(1.0, goal / length)
+            return a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+        goal -= length
+    return path[-1]
+
+
 def _place_radial_text(
     lines: List[str],
     mx: float,
@@ -3036,10 +3096,28 @@ def _layout_catalytic_cycle(
         placed_boxes.append(fbox)
         lowest_y = max(lowest_y, box_y2)
 
-    # 2. Place chord reaction arrows between consecutive intermediates
+    # 2. Place the step arrows between consecutive intermediates: arcs of the circle the species
+    # sit on (a cycle reads as a ring, BJOC 22-125 scheme 4), or a straight chord for an
+    # equilibrium or failed step, and where the arc left between two species is too short.
     arrow_records: List[Tuple[float, float, float, float, int]] = []
+    arrow_paths: List[List[Tuple[float, float]]] = []
     for k, step in enumerate(steps):
         nk = (k + 1) % n_steps
+        span = None
+        if n_steps >= 2 and step.arrow_style in (None, "solid", "dashed"):
+            span = _cycle_arc_span(cx, cy, radius, angles[k], angles[k] + 2.0 * math.pi / n_steps,
+                                   final_boxes[k], final_boxes[nk], pad, min_arrow_len)
+        if span is not None:
+            arc_xml, arc_id, path = _build_cycle_arc(cx, cy, radius, span[0], span[1], ids,
+                                                     dashed=(step.arrow_style == "dashed"))
+            xml_parts.append(arc_xml)
+            arrow_records.append((path[0][0], path[0][1], path[-1][0], path[-1][1], arc_id))
+            arrow_paths.append(path)
+            for a, b in zip(path[::4], path[4::4] + path[-1:]):
+                placed_boxes.append((min(a[0], b[0]) - 3.0, min(a[1], b[1]) - 3.0,
+                                     max(a[0], b[0]) + 3.0, max(a[1], b[1]) + 3.0))
+            lowest_y = max(lowest_y, max(p[1] for p in path) + 3.0)
+            continue
         x0, y0 = centers[k]
         x1, y1 = centers[nk]
         dx, dy = x1 - x0, y1 - y0
@@ -3065,6 +3143,7 @@ def _layout_catalytic_cycle(
         )
         xml_parts.append(arrow_xml)
         arrow_records.append((tx, ty, hx, hy, arrow_id))
+        arrow_paths.append([(tx, ty), (hx, hy)])
         abox = (min(tx, hx) - 1.5, min(ty, hy) - 3.0, max(tx, hx) + 1.5, max(ty, hy) + 3.0)
         placed_boxes.append(abox)
         lowest_y = max(lowest_y, abox[3])
@@ -3085,7 +3164,7 @@ def _layout_catalytic_cycle(
             continue
 
         tx, ty, hx, hy, _aid = arrow_records[k]
-        mx_, my_ = (tx + hx) / 2.0, (ty + hy) / 2.0
+        mx_, my_ = _along(arrow_paths[k], 0.5)
         rx_, ry_ = mx_ - cx, my_ - cy
         r_norm = math.hypot(rx_, ry_) or 1.0
         rx_, ry_ = rx_ / r_norm, ry_ / r_norm
@@ -3098,8 +3177,7 @@ def _layout_catalytic_cycle(
                 # stagger along the chord so an entering and a leaving species
                 # belonging to the same step do not land on top of each other
                 frac = 0.16 if kind == "in" else 0.84
-                ax = tx + (hx - tx) * frac
-                ay = ty + (hy - ty) * frac
+                ax, ay = _along(arrow_paths[k], frac)
                 dist = radius * 0.48 + 34.0 + 30.0 * j
                 px_ = ax + rx_ * dist
                 py_ = ay + ry_ * dist
@@ -3155,7 +3233,7 @@ def _layout_catalytic_cycle(
     for k, step in enumerate(steps):
         nk = (k + 1) % n_steps
         tx, ty, hx, hy, arrow_id = arrow_records[k]
-        mx, my = (tx + hx) / 2.0, (ty + hy) / 2.0
+        mx, my = _along(arrow_paths[k], 0.5)
         rx, ry = mx - cx, my - cy
         r_norm = math.hypot(rx, ry)
         if r_norm > 1e-6:

@@ -98,4 +98,6 @@ def test_a_catalytic_cycle_draws_equilibria_between_intermediates(tmp_path):
     arrows = _arrows(renderer.render(scheme))
     kinds = [(a.get("ArrowheadHead"), a.get("ArrowheadTail"), a.get("ArrowShaftSpacing")) for a in arrows]
     assert kinds.count(("HalfLeft", "HalfLeft", "300")) == 2
-    assert kinds.count(("Full", None, None)) == 1
+    # The forward step is an arc of the cycle's circle, its head on the tail end (P16).
+    arcs = [a for a in arrows if a.get("AngularSize")]
+    assert len(arcs) == 1 and (arcs[0].get("ArrowheadHead"), arcs[0].get("ArrowheadTail")) == ("None", "Full")
