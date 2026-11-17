@@ -39,6 +39,8 @@ MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_at
 SPECIES_KEYS = {"id", "smiles", "name", "label", "newman"}
 NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset"}
 NEWMAN_SPOKE = 1.4 * ACS_BOND_LENGTH   # a projection's spokes, sized beside 14.4 pt bonds
+# Closest a rear spoke may come to a front one; ChemDraw-style eclipsed drawings use 14.
+NEWMAN_MIN_APART = 10.0
 STEP_KEYS = {"substrates", "products", "above", "below", "yield", "arrow", "moves"}
 MOVE_KEYS = {"from", "to", "electrons", "color"}
 END_KEYS = {"species", "atom", "bond"}
@@ -194,6 +196,14 @@ def _newman_errors(ident: str, spec: Any) -> list[str]:
     offset = spec.get("dihedral_offset")
     if offset is not None and (isinstance(offset, bool) or not isinstance(offset, (int, float))):
         errors.append(f"Species {ident}: newman dihedral_offset must be a number of degrees.")
+    elif offset is not None:
+        # The three front spokes are 120 degrees apart, so a rear set turned by a multiple of
+        # 120 lies on them, and each rear label is printed over a front one.
+        apart = abs((float(offset) + 60.0) % 120.0 - 60.0)
+        if apart < NEWMAN_MIN_APART:
+            errors.append(f"Species {ident}: newman dihedral_offset {offset:g} puts the rear spokes on top of the "
+                          f"front ones ({apart:g} degrees apart); it is the rear set's angle from the front set, "
+                          "60 for staggered, 14 for a visible eclipsed one. For another conformer, reorder rear.")
     return errors
 
 

@@ -287,17 +287,17 @@ P7, P8 and P9.
 | P1 arc arrows | verified | three native `<arrow AngularSize>`, per-move colours land in the colortable, `crossings: []`, clockwise arcs put the head on the tail end |
 | P1 half arrow | verified | head size back to ChemDraw's own 600/525/150 (a half arrow is the full set at 0.6, not a different ratio); renders as a single thin barb |
 | P2 equilibrium arrows | verified | the Newman figure draws its reversible pair as a double half-headed arrow |
-| P3 Newman in a scheme | **defective** | renders and lays out, but the gauche conformation has three label pairs on identical coordinates — `(297.21,160.23)` H/CH3, `(279.75,129.99)` CH3/H, `(262.29,160.23)` H/H twice. The rear set is not rotated against the front one |
+| P3 Newman in a scheme | **fixed, to re-render** | the render was right for the brief, the brief was wrong: `dihedral_offset` is the rear set's angle from the front one (60 = staggered), so 120 put every rear spoke and label on a front one. Such offsets (within 10 degrees of a multiple of 120) are now refused with that explanation, the docs say the conformer is chosen by the order of `rear`, and `p3-newman-mechanism.json` draws anti (rear `H, CH3, H`) and gauche (rear `CH3, H, H`), both staggered; six distinct label places are asserted for every accepted offset |
 | P4 highlight the varying group | verified | `#FF6600` on the differing atoms and bonds of every cell in `p4-p7-p8-scope` |
 | P5 keep 0 % visible | verified | the publication-figure test renders `Result: 0%` rather than dropping the cell |
-| P6 variable-group rows | **not implemented** | no field or object expresses it. The nearest workaround — a second `fields` entry carrying `Alk = C7H15` — renders as a third line prefixed `Group:` and prints `Group: —` where the value is empty, so every cell would carry a label it does not need. Two further gaps in the same render: field values are not chemistry-formatted (`C7H15` instead of C7H15 with subscripts) although `conditions` are, and the row packs each tall alkyl chain onto its own line |
+| P6 variable-group rows | **implemented, to render** | a species' `definition` (`"Alk = C7H15"`) is an unnamed line straight under the number, drawn only where given; a field may set `show_label: false` (unnamed beside other fields) and `optional: true` (no dash where empty); formula digits in every caption line but the label, and in the conditions, are subscripts by the scheme rule (`text_formatting.subscript_matches`). `p6-family-scope.json` has 3p/3q with definitions among plain cells. Not done: one structure standing for two compounds (the witness draws "Alk" once with 3p and 3q under it) |
 | P7 secondary product | verified | `3d′` sits 0-6 pt right of `3d`, grey, with its own `9%b`; the all-grey assertion needed the colour-table dedupe fixed first |
 | P8 section bands | verified | two bands, italic titles, full-width rules |
-| P9 dashed overlay | **defective** | circles identical to 0.0 pt (74.3 x 74.3, radius 37.16) and spelled like the native sample, but one arrow passes 24.0 pt from a centre (inside the radius) and `reductive elimination` overlaps the top-left circle |
+| P9 dashed overlay | **fixed, to re-render** | the cycle layout now treats each marked structure's outline as part of it: chord arrows are clipped at the outline's box, entering/leaving arrows start outside it, step labels are placed clear of it and a number that would sit inside goes under it. Anything left is a warning (`overlay_collides`: arrows within 3 pt, as in `arrows_collide`, and captions the dashed line runs through); other layouts only warn. The routing test fails with routing switched off |
 | P10 page fits content | verified | the scope page crops to its content; `check` passes |
 | P11 10 pt type | verified | `LabelSize`/`CaptionSize` are 10, not 8 |
 | P12 yield, not "Yield:" | verified | cells read `3a` over `92%` |
 | P13 dense grid | verified | twelve compounds on one page, and an eighteen-compound benzamide panel on one page |
 
-Two defects remain open (P3, P9) and one item has no render behind it (P6). Nothing else in the
-list is unverified.
+P3, P6 and P9 have changed since the last render and need one more; nothing else in the list
+is unverified.

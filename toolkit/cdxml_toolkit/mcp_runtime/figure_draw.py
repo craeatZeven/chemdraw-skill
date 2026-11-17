@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 
 from rdkit import Chem
 
+from ..cdxml_check import overlays_collide
 from ..chemistry_semantics import document_inventory, read_fragments, semantic_key
 from ..render import renderer
 from ..render.route_graph import classify_route
@@ -210,9 +211,12 @@ def _scheme(brief: dict, grounded: list[dict], max_width: float | None, gap_scal
             line_chars: int | None = None, house: HouseStyle | None = None) -> SchemeDescriptor:
     orientation = {str(sp.get("id")): sp.get("orientation") for sp in brief.get("species") or []
                    if isinstance(sp, dict) and sp.get("orientation")}
+    # The atoms each overlay will mark, so the layout keeps arrows and captions off them.
+    marks = figure_house.overlay_matches(brief, grounded)[0] if brief.get("overlays") else {}
     structures = {
         g["id"]: StructureRef(id=g["id"], smiles=g["smiles"], label=(str(g["label"]) if g["label"] else None),
-                              orientation=orientation.get(g["id"]))
+                              orientation=orientation.get(g["id"]),
+                              overlays=tuple({"atoms": m["atoms"], "shape": m["shape"]} for m in marks.get(g["id"], ())))
         for g in grounded
     }
     steps = _step_descriptors(brief, line_chars, house)
@@ -673,6 +677,8 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
     cdxml, applied, warnings = figure_house.apply_fragment_overlays(cdxml, brief, grounded)
     record["applied"] += applied
     record["warnings"] += warnings
+    if applied:
+        record["warnings"] += [f"Overlay: {issue}." for issue in overlays_collide(str(cdxml))]
     cdxml = styled(cdxml, slug)
     if house is not None:
         cdxml, applied, skipped = figure_house.apply_measured_geometry(cdxml, house, slug)
@@ -805,14 +811,16 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     in the temp directory, and an existing output_path is refused.
 
     kind "scope" draws a substrate-scope panel instead: species [{id, smiles or name,
-    label?, group?, values {field: text}, note?, secondary_of?, color?, atom_colors?, bond_colors?,
-    abbreviate?}], optional fields [{key, label?, unit?, show_label?}] (default: the keys
+    label?, group?, values {field: text}, definition?, note?, secondary_of?, color?, atom_colors?,
+    bond_colors?, abbreviate?}], optional fields [{key, label?, unit?, show_label?, optional?}] (default: the keys
     used in values), conditions, footnotes, title, width_mm, height_mm and
     highlight_varying (true or a hex colour: what differs from the core every compound
     shares is drawn in that colour, #FF6600 by default). One field is
     shown as its value alone under the label (3a over 92%); show_label true, or several
-    fields, names it on each line. note is an extra line under one compound ("not
-    formed", "Alk = C7H15"). secondary_of names the main product a minor one is drawn beside,
+    fields, names it on each line (show_label false keeps one unnamed; optional leaves it out
+    where empty instead of drawing a dash). definition is an unnamed line straight under the
+    number ("Alk = C7H15") and note an extra line under one compound ("not formed"); formula
+    digits in every line but the label are subscripts. secondary_of names the main product a minor one is drawn beside,
     in grey with its own label and values. Text stays at 10 pt and each page is cropped to its
     content. The
     structures are packed onto as many editable pages as needed, grouped in first-seen
@@ -823,7 +831,9 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
     lists: species [{id, smiles or name, label?}] (or {id, newman {front, rear,
     conformation?, dihedral_offset?}, label?} for a Newman projection placed among them,
-    which arrows cannot point at and whose steps need no moves) and steps [{substrates, products, above?,
+    which arrows cannot point at and whose steps need no moves; the order of rear picks the
+    conformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered)
+    and steps [{substrates, products, above?,
     below?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs
     from {species, atom} or {species, bond [i, j]} to the same kind of end, in species that
     are substrates of the step; atoms are numbered from 0 in SMILES order (the report lists

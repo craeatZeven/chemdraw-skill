@@ -302,6 +302,55 @@ def arrows_collide(source) -> list[str]:
     return found
 
 
+def _overlay_outlines(root) -> list[tuple[str, list[tuple[float, float]]]]:
+    """Dashed closed outlines that mark a fragment, sampled all the way round.
+
+    A dashed curve with no arrowhead and no fill; ChemDraw writes it as (in, anchor, out)
+    triples with the last out-handle leading back into the first anchor.
+    """
+    found = []
+    for curve in root.iter('curve'):
+        if curve.get('LineType') != 'Dashed' or curve.get('FillType') \
+                or any(curve.get(end, 'None') != 'None' for end in ('ArrowheadHead', 'ArrowheadTail')):
+            continue
+        v = [float(x) for x in curve.get('CurvePoints', '').split()]
+        pts = list(zip(v[0::2], v[1::2]))
+        triples = [pts[i:i + 3] for i in range(0, len(pts) - 2, 3)]
+        if len(triples) < 2:
+            continue
+        ring = []
+        for (_, a, out), (into, b, _) in zip(triples, triples[1:] + triples[:1]):
+            ring += [tuple((1 - u) ** 3 * a[i] + 3 * (1 - u) ** 2 * u * out[i] + 3 * (1 - u) * u * u * into[i]
+                           + u ** 3 * b[i] for i in (0, 1)) for u in (n / 8 for n in range(8))]
+        found.append((f'<curve id="{curve.get("id")}">', ring + ring[:1]))
+    return found
+
+
+def overlays_collide(source) -> list[str]:
+    """Arrows within 3 pt of a dashed overlay (the gap ``arrows_collide`` allows between two
+    arrows) and captions that the overlay's line runs through."""
+    root = source if hasattr(source, 'iter') else ET.fromstring(
+        re.sub(r'<!DOCTYPE[^>]*>', '', re.sub(r'^\s*<\?xml[^>]*\?>', '', str(source), count=1), count=1).encode('utf-8'))
+    outlines = _overlay_outlines(root)
+    if not outlines:
+        return []
+    arrows = [(f'<arrow id="{a.get("id")}">', [_point3(a.get('Tail3D')), _point3(a.get('Head3D'))])
+              for a in root.iter('arrow')
+              if a.get('Head3D') and a.get('Tail3D') and not a.get('Center3D')]
+    arrows += _curved_arrows(root)
+    captions = _free_text_boxes(root)
+    found = []
+    for name, ring in outlines:
+        pieces = list(zip(ring, ring[1:]))
+        for arrow, path in arrows:
+            if any(_segment_gap(p, q, a, b) < 3.0 for p, q in zip(path, path[1:]) for a, b in pieces):
+                found.append(f'{arrow} runs into the overlay {name}')
+        for markup, (x0, y0, x1, y1) in captions:
+            if any(_crosses(a, b, (x0 + 1.0, y0 + 1.0, x1 - 1.0, y1 - 1.0)) for a, b in pieces):
+                found.append(f'{markup!r} sits on the overlay {name}')
+    return found
+
+
 def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile',
                 allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03,
                 ignore: Iterable[str] = ()) -> dict[str, Any]:
@@ -517,6 +566,10 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
     if collided:
         _issue(warnings, 'arrows_collide', f'{len(collided)} pair(s) of curved arrows meet: ' + '; '.join(collided[:5]),
                cases=collided)
+    blocked = overlays_collide(root)
+    if blocked:
+        _issue(warnings, 'overlay_collides', f'{len(blocked)} arrow(s) or caption(s) meet a dashed overlay: '
+               + '; '.join(blocked[:5]), cases=blocked)
     crowded = text_over_ink(root)
     if crowded:
         _issue(warnings, 'text_over_ink', f'{len(crowded)} caption(s) sit on other ink: ' + '; '.join(crowded[:5]),

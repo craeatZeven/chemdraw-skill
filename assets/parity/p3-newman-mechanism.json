@@ -11,8 +11,8 @@
      "H"
     ],
     "rear": [
-     "CH3",
      "H",
+     "CH3",
      "H"
     ],
     "conformation": "staggered"
@@ -32,8 +32,7 @@
      "H",
      "H"
     ],
-    "conformation": "staggered",
-    "dihedral_offset": 120
+    "conformation": "staggered"
    }
   },
   {

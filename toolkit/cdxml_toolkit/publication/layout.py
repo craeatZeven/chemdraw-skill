@@ -9,6 +9,7 @@ from rdkit import Chem
 from rdkit.Chem import rdDepictor, rdFMCS
 from ..chemistry_semantics import read_molecules, semantic_key, document_inventory
 from ..mcp_runtime.figure_tools import compose_chemical_figure, _move
+from ..text_formatting import subscript_matches
 from .data import field_text, write_json
 
 
@@ -103,6 +104,28 @@ SECONDARY_GAP = 4.0          # between a main product and a secondary one in the
 SECONDARY_COLOR = '#808080'  # a secondary product is drawn in grey, subordinate to the main one
 
 
+def chemical_runs(text):
+    """Runs for a caption or conditions line whose formula digits are subscripts.
+
+    The same rule as the scheme conditions (``text_formatting.subscript_matches``): digits
+    after a letter or ")" are counts ("C7H15", "Pd2(dba)3"); yields, ratios and compound
+    labels such as "L1" are left alone. None when nothing needs a subscript.
+    """
+    matches = subscript_matches(text)
+    if not matches:
+        return None
+    runs, offset = [], 0
+    for m in matches:
+        start, end = m.start(2), m.end(2)
+        if start > offset:
+            runs.append({'text': text[offset:start]})
+        runs.append({'text': text[start:end], 'subscript': True})
+        offset = end
+    if offset < len(text):
+        runs.append({'text': text[offset:]})
+    return runs
+
+
 def _caption_advance(value, size):
     return value.count('\n')*size*CELL['wrapped_line']+size*CELL['line_advance']+CELL['line_gap']
 
@@ -162,7 +185,9 @@ def create_pages(records,spec,stage,start_index=0):
         objects=[{'type':'text','id':'title','text':title,'position':[margin,margin+size],'size':size}]
         top=margin+(title.count('\n')+1)*size*1.5+8
         if conditions:
-            objects.append({'type':'text','id':'conditions','text':conditions,'position':[margin,top+size],'size':size})
+            runs=chemical_runs(conditions)
+            objects.append({'type':'text','id':'conditions','text':conditions,'position':[margin,top+size],'size':size,
+                            **({'runs':runs} if runs else {})})
             top+=(conditions.count('\n')+1)*size*1.5+8
         current={'index':index,'objects':objects,'entries':[],'top':top,'bottom':top,'rules':[],
                  'right':margin+max((text_width(line,style) for line in (title+'\n'+conditions).splitlines()), default=0)}
@@ -187,8 +212,9 @@ def create_pages(records,spec,stage,start_index=0):
                   'coordinates':[[a+x,b+y] for a,b in p['coords']],**({'color':color} if color else {})}]
         ty=y+p['molecule_bottom']+size*CELL['caption_baseline']
         for field,value in p['texts'].items():
+            runs=None if field=='label' else chemical_runs(value)  # a compound number is never a formula
             objects.append({'type':'text','id':key+'_'+field,'text':value,'position':[x+6,ty],'size':size,
-                            **({'color':color} if color else {})})
+                            **({'color':color} if color else {}),**({'runs':runs} if runs else {})})
             ty+=_caption_advance(value,size)
         current['objects'].extend(objects)
         entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']]}

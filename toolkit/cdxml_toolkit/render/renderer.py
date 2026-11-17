@@ -47,6 +47,7 @@ from ..constants import (
     LAYOUT_ROW_GAP,
 )
 from ..cdxml_utils import LABEL_H_WIDTH, drawn_fragment_bbox, hydrogens_lead
+from ..overlay_geometry import overlay_box
 from ..text_formatting import build_formatted_s_xml, normalize_condition_text
 
 from .route_graph import convergent_sections
@@ -2849,6 +2850,31 @@ def _text_box_at(lines: List[str], x: float, y: float) -> Tuple[float, float, fl
     return (x - w / 2.0, top, x + w / 2.0, bottom)
 
 
+def _overlay_box(atoms: List[Dict], overlays: Any) -> Optional[Tuple[float, float, float, float]]:
+    """Box of the dashed outlines a brief will draw over this structure, or None.
+
+    ``overlays`` are [{atoms, shape}] with 0-based SMILES atom indices; atom dicts carry the
+    1-based ``index`` of the same order. The box holds the outline as it will be drawn.
+    """
+    by_index = {a.get("index"): a for a in atoms}
+    box: Optional[Tuple[float, float, float, float]] = None
+    for item in overlays or ():
+        points = [(float(by_index[i + 1]["x"]), float(by_index[i + 1]["y"]))
+                  for i in item.get("atoms") or () if i + 1 in by_index]
+        if not points:
+            continue
+        part = overlay_box(list(dict.fromkeys(points)), shape=item.get("shape", "circle"))
+        box = part if box is None else _union_box(box, part)
+    return box
+
+
+def _union_box(a: Tuple[float, float, float, float], b: Optional[Tuple[float, float, float, float]]
+               ) -> Tuple[float, float, float, float]:
+    if b is None:
+        return a
+    return (min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3]))
+
+
 def _place_radial_text(
     lines: List[str],
     mx: float,
@@ -2917,6 +2943,11 @@ def _layout_catalytic_cycle(
         if frag is None:
             raise ValueError(f"Could not prepare structure '{sub_id}' in catalytic cycle.")
         inter_frags.append(frag)
+    # A dashed overlay drawn over an intermediate later (its fragment marked in every one) is
+    # part of what the arrows and captions must clear.
+    inter_overlays = [scheme.structures[s.substrates[0]].overlays if getattr(scheme.structures[s.substrates[0]],
+                      "overlays", ()) else () for s in steps]
+    inter_rel = [_overlay_box(frag.atoms, ov) for frag, ov in zip(inter_frags, inter_overlays)]
 
     pad = 8.0 * gap_scale
     min_arrow_len = 28.0
@@ -2926,11 +2957,17 @@ def _layout_catalytic_cycle(
         angles = [-math.pi / 2.0 + 2.0 * math.pi * k / n_steps for k in range(n_steps)]
         centers = [(cx + radius * math.cos(a), cy + radius * math.sin(a)) for a in angles]
         boxes: List[Tuple[float, float, float, float]] = []
-        for (ix, iy), frag in zip(centers, inter_frags):
+        for (ix, iy), frag, rel in zip(centers, inter_frags, inter_rel):
             hw = _bbox_width(frag.bbox) / 2.0
             hh = _bbox_height(frag.bbox) / 2.0
             lbl_extra = (14.0 + _DESCENT) if frag.ref.label else 0.0
-            boxes.append((ix - hw, iy - hh, ix + hw, iy + hh + lbl_extra))
+            if rel is not None:
+                dx_, dy_ = ix - frag.cx, iy - frag.cy
+                rel_box = (rel[0] + dx_, rel[1] + dy_, rel[2] + dx_, rel[3] + dy_)
+                lbl_extra += max(0.0, rel_box[3] - (iy + hh))
+                boxes.append(_union_box((ix - hw, iy - hh, ix + hw, iy + hh + lbl_extra), rel_box))
+            else:
+                boxes.append((ix - hw, iy - hh, ix + hw, iy + hh + lbl_extra))
 
         any_struct_overlap = any(
             _boxes_overlap(
@@ -2973,14 +3010,16 @@ def _layout_catalytic_cycle(
         xml_parts.append(frag_xml)
         frag_ids.append(fid)
 
+        ring = _overlay_box(frag.atoms, inter_overlays[k])
         box_y2 = frag.bbox[3]
         if frag.ref.label:
-            lbl_y = frag.bbox[3] + 14.0
+            # The number goes under the overlay when the outline reaches below the structure.
+            lbl_y = max(frag.bbox[3], ring[3] if ring else frag.bbox[3]) + 14.0
             lbl_xml, _ = _build_label_element(frag.ref.label, frag.cx, lbl_y, ids)
             xml_parts.append(lbl_xml)
             box_y2 = lbl_y + _DESCENT
 
-        fbox = (frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0)
+        fbox = _union_box((frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0), ring)
         final_boxes.append(fbox)
         placed_boxes.append(fbox)
         lowest_y = max(lowest_y, box_y2)
@@ -3068,14 +3107,15 @@ def _layout_catalytic_cycle(
                 frag_xml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
                 xml_parts.append(frag_xml)
 
+                ring = _overlay_box(frag.atoms, getattr(struct, "overlays", ()))
                 box_y2 = frag.bbox[3]
                 if frag.ref.label:
-                    lbl_y = frag.bbox[3] + 14.0
+                    lbl_y = max(frag.bbox[3], ring[3] if ring else frag.bbox[3]) + 14.0
                     lbl_xml, _ = _build_label_element(frag.ref.label, frag.cx, lbl_y, ids)
                     xml_parts.append(lbl_xml)
                     box_y2 = lbl_y + _DESCENT
 
-                fbox = (frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0)
+                fbox = _union_box((frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0), ring)
                 placed_boxes.append(fbox)
                 lowest_y = max(lowest_y, box_y2)
 

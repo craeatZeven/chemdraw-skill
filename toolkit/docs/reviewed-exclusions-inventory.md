@@ -65,8 +65,9 @@
 ## `cdxml_check`
 
 - **function**, line 284: `arrows_collide(source) -> list[str]` - Pairs of curved arrows whose heads come within 6 pt or whose bodies within 3 pt.
-- **function**, line 305: `check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile', allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03, ignore: Iterable[str] = ()) -> dict[str, Any]` - Check one CDXML file or text. Returns ``{"ok", "errors", "warnings", "summary"}``.
+- **function**, line 354: `check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile', allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03, ignore: Iterable[str] = ()) -> dict[str, Any]` - Check one CDXML file or text. Returns ``{"ok", "errors", "warnings", "summary"}``.
 - **function**, line 59: `normalize_palette(palette: Iterable[str] | None)` - No public docstring in the audited version.
+- **function**, line 329: `overlays_collide(source) -> list[str]` - Arrows within 3 pt of a dashed overlay (the gap ``arrows_collide`` allows between two arrows) and captions that the overlay's line runs through.
 - **function**, line 39: `pages_needed(width, height)` - WidthPages and HeightPages that keep a drawing of this size from wrapping its text.
 - **function**, line 190: `text_over_ink(source, inset: float = 1.0) -> list[str]` - Captions (not atom labels) that a line, arrow, curve or another caption runs through.
 
@@ -349,13 +350,13 @@
 
 ## `mcp_runtime.figure_draw`
 
-- **function**, line 628: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
-- **function**, line 594: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
-- **function**, line 602: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
-- **function**, line 750: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
-- **function**, line 583: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
-- **function**, line 618: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
-- **function**, line 609: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
+- **function**, line 632: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
+- **function**, line 598: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
+- **function**, line 606: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
+- **function**, line 756: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
+- **function**, line 587: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
+- **function**, line 622: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
+- **function**, line 613: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
 
 ## `mcp_runtime.figure_editing`
 
@@ -364,26 +365,26 @@
 
 ## `mcp_runtime.figure_house`
 
-- **function**, line 76: `add_highlight_fills(brief: dict, grounded: list[dict], house: HouseStyle | None) -> str | None` - Ask the ring_fills decoration for the largest ring of each final product.
-- **function**, line 771: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
-- **function**, line 267: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
-- **function**, line 980: `apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - A dashed outline around one fragment in every structure that carries it.
-- **function**, line 319: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
-- **function**, line 212: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
-- **function**, line 1042: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
-- **function**, line 812: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
-- **function**, line 584: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
-- **function**, line 505: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
-- **function**, line 524: `condition_text(line: Any) -> str` - The plain text of a condition line.
-- **function**, line 66: `final_products(brief: Mapping) -> list[str]` - No public docstring in the audited version.
-- **function**, line 37: `format_yield(text: str, template: str | None) -> str` - ``template`` filled with the number of a yield such as "85%"; other text is kept.
-- **function**, line 204: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
-- **function**, line 936: `overlay_curve_points(points: list[tuple[float, float]], shape: str = 'circle', radius: float | None = None) -> str` - CurvePoints of a closed outline around ``points``.
-- **function**, line 868: `overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]` - Problems with the brief's overlays, for the brief check.
-- **function**, line 692: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
-- **function**, line 470: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
-- **function**, line 57: `split_conditions(above: list[str], below: list[str], house: HouseStyle | None) -> tuple[list, list]` - No public docstring in the audited version.
-- **function**, line 45: `step_yield(step: Mapping, house: HouseStyle | None) -> str | None` - The yield text drawn under the arrow, or None when the house style moves it.
+- **function**, line 77: `add_highlight_fills(brief: dict, grounded: list[dict], house: HouseStyle | None) -> str | None` - Ask the ring_fills decoration for the largest ring of each final product.
+- **function**, line 772: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
+- **function**, line 268: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
+- **function**, line 930: `apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - A dashed outline around one fragment in every structure that carries it.
+- **function**, line 320: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
+- **function**, line 213: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
+- **function**, line 974: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
+- **function**, line 813: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
+- **function**, line 585: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
+- **function**, line 506: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
+- **function**, line 525: `condition_text(line: Any) -> str` - The plain text of a condition line.
+- **function**, line 67: `final_products(brief: Mapping) -> list[str]` - No public docstring in the audited version.
+- **function**, line 38: `format_yield(text: str, template: str | None) -> str` - ``template`` filled with the number of a yield such as "85%"; other text is kept.
+- **function**, line 205: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
+- **function**, line 864: `overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]` - Problems with the brief's overlays, for the brief check.
+- **function**, line 895: `overlay_matches(brief: Mapping, grounded: list[dict]) -> tuple[dict[str, list[dict]], list[str]]` - The atoms each overlay marks, by species: {id: [{atoms, shape, fragment}]}, and warnings.
+- **function**, line 693: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
+- **function**, line 471: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
+- **function**, line 58: `split_conditions(above: list[str], below: list[str], house: HouseStyle | None) -> tuple[list, list]` - No public docstring in the audited version.
+- **function**, line 46: `step_yield(step: Mapping, house: HouseStyle | None) -> str | None` - The yield text drawn under the arrow, or None when the house style moves it.
 
 ## `mcp_runtime.figure_lint`
 
@@ -391,11 +392,11 @@
 
 ## `mcp_runtime.figure_mechanism`
 
-- **function**, line 864: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+- **function**, line 874: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 274: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 296: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_tools`
 
@@ -616,6 +617,11 @@
 - **function**, line 319: `load(path: str | Path) -> Document` - No public docstring in the audited version.
 - **function**, line 301: `parse(source: str | bytes) -> Document` - Parse CDXML text or bytes; the root must be ``CDXML``.
 
+## `overlay_geometry`
+
+- **function**, line 100: `overlay_box(points: list[tuple[float, float]], shape: str = 'circle') -> tuple[float, float, float, float]` - Box that holds the outline drawn around ``points``, its line included.
+- **function**, line 56: `overlay_curve_points(points: list[tuple[float, float]], shape: str = 'circle', radius: float | None = None) -> str` - CurvePoints of a closed outline around ``points``.
+
 ## `publication.data`
 
 - **function**, line 167: `field_text(record, field)` - No public docstring in the audited version.
@@ -641,18 +647,19 @@
 
 ## `publication.layout`
 
-- **function**, line 263: `bounds(node, style)` - No public docstring in the audited version.
-- **function**, line 285: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 140: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
-- **function**, line 27: `font_for(style, size = None)` - No public docstring in the audited version.
-- **function**, line 55: `fragment_mol(fragment)` - No public docstring in the audited version.
-- **function**, line 66: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
-- **function**, line 62: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 281: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 110: `prepare(records, spec)` - No public docstring in the audited version.
-- **function**, line 15: `style_settings(spec)` - No public docstring in the audited version.
-- **function**, line 38: `text_width(value, style, size = None)` - No public docstring in the audited version.
-- **function**, line 43: `wrap(value, width, style)` - No public docstring in the audited version.
+- **function**, line 289: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 311: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 107: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
+- **function**, line 163: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 28: `font_for(style, size = None)` - No public docstring in the audited version.
+- **function**, line 56: `fragment_mol(fragment)` - No public docstring in the audited version.
+- **function**, line 67: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
+- **function**, line 63: `node_text(node)` - No public docstring in the audited version.
+- **function**, line 307: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 133: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 16: `style_settings(spec)` - No public docstring in the audited version.
+- **function**, line 39: `text_width(value, style, size = None)` - No public docstring in the audited version.
+- **function**, line 44: `wrap(value, width, style)` - No public docstring in the audited version.
 
 ## `publication.update`
 

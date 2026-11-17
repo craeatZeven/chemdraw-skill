@@ -416,3 +416,71 @@ def test_a_secondary_product_must_name_a_main_product(tmp_path, rows, message):
     with pytest.raises(ValueError, match=message):
         execute(path, tmp_path/'bad')
     assert not (tmp_path/'bad').exists()
+
+
+def test_scope_brief_fields_can_drop_their_name_and_their_dash():
+    from cdxml_toolkit.mcp_runtime.figure_scope import _cell_fields, _fields
+    fields, errors = _fields({'species': [], 'fields': [
+        'yield', {'key': 'group', 'show_label': False, 'optional': True}]})
+    assert errors == []
+    assert _cell_fields(fields, notes=False) == [
+        {'column': 'v1', 'label': 'yield'}, {'column': 'v2', 'label': '', 'optional': True}]
+    _, errors = _fields({'species': [], 'fields': [{'key': 'group', 'optional': 'yes'}]})
+    assert any('optional must be true or false' in e for e in errors)
+
+
+def test_a_definition_line_follows_the_number_without_a_field_name():
+    from cdxml_toolkit.mcp_runtime.figure_scope import _cell_fields
+    yield_field = {'key': 'yield', 'label': 'Yield', 'unit': None, 'show_label': False}
+    assert _cell_fields([yield_field], notes=False, definitions=True) == [
+        {'column': 'definition', 'label': '', 'optional': True}, {'column': 'v1', 'label': ''}]
+
+
+def test_a_scope_definition_is_checked():
+    from cdxml_toolkit.mcp_runtime.figure_scope import _validate
+    brief = {'kind': 'scope', 'fields': ['yield'], 'species': [
+        {'id': '3p', 'smiles': 'CCCCCCCc1ccccc1', 'definition': 'Alk = C7H15', 'values': {'yield': '63%'}},
+        {'id': '3q', 'smiles': 'CCc1ccccc1', 'definition': 5, 'values': {'yield': '60%'}}]}
+    assert _validate(brief) == ['Species 3q: definition must be text (a line such as "Alk = C7H15").']
+    clash = {'kind': 'scope', 'fields': ['definition'], 'species': [{'id': 'a', 'smiles': 'C'}]}
+    assert any('reserved' in e for e in _validate(clash))
+
+
+def test_formula_digits_in_a_caption_line_are_subscripts():
+    from cdxml_toolkit.publication.layout import chemical_runs
+    assert chemical_runs('Alk = C7H15') == [
+        {'text': 'Alk = C'}, {'text': '7', 'subscript': True}, {'text': 'H'}, {'text': '15', 'subscript': True}]
+    assert chemical_runs('92%') is None and chemical_runs('dr 3:1') is None and chemical_runs('L1') is None
+
+
+def test_a_family_caption_is_drawn_as_its_own_line_and_clears_the_next_row(tmp_path):
+    # Witness: the scope figure whose 3p/3q cells read "Alk = C7H15" and "Alk = C18H37" under one structure.
+    rows = [['p', '3p', 'CCCCCCCc1ccccc1', '63%', '', 'Alk = C7H15'],
+            ['q', '3q', 'CCCCCCCCCCCCCCCCCCc1ccccc1', '60%', '', 'Alk = C18H37'],
+            ['r', '3r', 'Cc1ccccc1', '71%', '', '']]
+    table = tmp_path/'family.csv'
+    with table.open('w', newline='', encoding='utf-8') as stream:
+        writer = csv.writer(stream)
+        writer.writerow(['compound_id', 'label', 'smiles', 'value', 'group', 'definition'])
+        writer.writerows(rows)
+    spec = {'table': str(table), 'mode': 'scope', 'native_render': False, 'width_mm': 60,
+            'fields': [{'column': 'definition', 'label': '', 'optional': True}, {'column': 'value', 'label': ''}]}
+    path = tmp_path/'family.json'; path.write_text(json.dumps(spec))
+    out = tmp_path/'family'
+    assert execute(path, out)['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    assert project['compounds']['p']['display'] == {'label': '3p', 'definition': 'Alk = C7H15', 'value': '63%'}
+    assert project['compounds']['r']['display'] == {'label': '3r', 'value': '71%'}
+    root = ET.parse(out/project['pages'][0]['file']).getroot()
+    line = root.find(f".//t[@id='{project['compounds']['p']['objects']['fields']['definition']}']")
+    runs = [(s.text, int(s.get('face')) & 32) for s in line.findall('s')]
+    assert runs == [('Alk = C', 0), ('7', 32), ('H', 0), ('15', 32)]
+    texts = [t for t in root.iter('t') if ''.join(s.text or '' for s in t.iter('s')) not in ('', )]
+    assert not any(''.join(s.text or '' for s in t.iter('s')).startswith(('definition:', '—')) for t in texts)
+    boxes = sorted((c['bbox'] for c in project['compounds'].values()), key=lambda b: (b[1], b[0]))
+    for upper in boxes:
+        for lower in boxes:
+            if lower[1] > upper[1]:
+                assert lower[1] >= upper[3]          # a later row starts below the whole caption
+    checks = json.loads((out/'checks.json').read_text(encoding='utf-8'))
+    assert checks['data_binding']['status'] == 'passed' and not checks['layout']['issues']

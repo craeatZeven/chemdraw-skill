@@ -84,6 +84,11 @@ A field with `"optional": true` is a line that is left out where its value is em
 when the page was laid out cannot be filled by an update: that is reported as a
 conflict, and needs a new layout.
 
+Formula digits in the conditions and in every caption line except the compound label are
+written as subscripts (`C7H15`, `Pd2(dba)3`), by the rule scheme conditions use; give a
+group definition such as `Alk = C7H15` as an optional field with an empty `label`, listed
+first, so it reads as its own unnamed line under the number.
+
 ## ChemDraw editing and incremental updates
 
 Keep the generated project directory unchanged. Save hand-edited pages separately,

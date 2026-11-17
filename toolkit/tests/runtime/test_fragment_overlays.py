@@ -160,3 +160,74 @@ def test_a_cycle_marks_the_ring_in_every_intermediate(tmp_path):
         my = sum(y for _, y in anchors) / len(anchors)
         radii.add(round(math.hypot(anchors[0][0] - mx, anchors[0][1] - my), 1))
     assert len(radii) == 1
+
+
+def _overlay_page(*extra: str) -> str:
+    ring = figure_house.overlay_curve_points([(100.0, 100.0)], shape="circle", radius=20.0)
+    return ('<?xml version="1.0" encoding="UTF-8" ?><CDXML><page id="1">'
+            f'<curve id="7" LineType="Dashed" CurveType="2" CurvePoints="{ring}"/>' + "".join(extra) + "</page></CDXML>")
+
+
+def test_an_arrow_or_caption_on_an_overlay_is_reported():
+    from cdxml_toolkit.cdxml_check import check_cdxml, overlays_collide
+    crossing = '<arrow id="20" Head3D="140 100 0" Tail3D="60 100 0" ArrowheadHead="Full"/>'
+    clear = '<arrow id="21" Head3D="260 100 0" Tail3D="200 100 0" ArrowheadHead="Full"/>'
+    on_rim = '<t id="30" p="96 83"><s size="10">reductive elimination</s></t>'
+    far = '<t id="31" p="200 200"><s size="10">transmetalation</s></t>'
+    found = overlays_collide(ET.fromstring(_overlay_page(crossing, clear, on_rim, far).split("?>", 1)[1]))
+    assert len(found) == 2, found
+    assert any('<arrow id="20">' in f and "overlay" in f for f in found)
+    assert any("reductive elimination" in f for f in found)
+    codes = {w["code"] for w in check_cdxml(_overlay_page(crossing, on_rim), palette=None)["warnings"]}
+    assert "overlay_collides" in codes
+
+
+def test_an_overlay_with_nothing_on_it_is_not_reported():
+    from cdxml_toolkit.cdxml_check import overlays_collide
+    clear = '<arrow id="21" Head3D="260 100 0" Tail3D="200 100 0" ArrowheadHead="Full"/>'
+    assert overlays_collide(ET.fromstring(_overlay_page(clear).split("?>", 1)[1])) == []
+
+
+def test_the_overlay_box_covers_the_drawn_outline():
+    from cdxml_toolkit.render.renderer import _overlay_box
+    atoms = [{"index": i + 1, "x": 100 + 14.4 * math.cos(math.pi / 3 * i), "y": 100 + 14.4 * math.sin(math.pi / 3 * i)}
+             for i in range(6)] + [{"index": 7, "x": 300.0, "y": 300.0}]
+    for shape in ("circle", "outline"):
+        box = _overlay_box(atoms, [{"atoms": list(range(6)), "shape": shape}])
+        pts = _pairs(figure_house.overlay_curve_points([(a["x"], a["y"]) for a in atoms[:6]], shape=shape))
+        assert box[0] <= min(x for x, _ in pts) and box[2] >= max(x for x, _ in pts)
+        assert box[1] <= min(y for _, y in pts) and box[3] >= max(y for _, y in pts)
+        assert box[2] < 150  # the unmarked atom is not part of it
+    assert _overlay_box(atoms, []) is None
+
+
+def test_cycle_arrows_and_labels_keep_off_an_intermediates_overlay():
+    from cdxml_toolkit.cdxml_check import overlays_collide
+    from cdxml_toolkit.render import renderer as R
+    from cdxml_toolkit.render.schema import ArrowContent, SchemeDescriptor, StepDescriptor, StructureRef
+    ring = "COc1ccc(cc1)"
+    structures = {
+        "I": StructureRef(id="I", smiles=ring + "[Pd]I", label="I", overlays=({"atoms": list(range(8)), "shape": "circle"},)),
+        "II": StructureRef(id="II", smiles=ring + "[Pd]c1ccccc1", label="II",
+                           overlays=({"atoms": list(range(8)), "shape": "circle"},)),
+        "Pd": StructureRef(id="Pd", smiles="[Pd]", label="Pd(0)"),
+    }
+    steps = [StepDescriptor(substrates=["Pd"], products=["I"], above_arrow=ArrowContent(text=["oxidative addition"])),
+             StepDescriptor(substrates=["I"], products=["II"], above_arrow=ArrowContent(text=["transmetalation"])),
+             StepDescriptor(substrates=["II"], products=["Pd"], above_arrow=ArrowContent(text=["reductive elimination"]))]
+    scheme = SchemeDescriptor(structures=structures, steps=steps, layout="catalytic-cycle")
+    xml, _ = R._layout_catalytic_cycle(scheme, R._IDGen())
+    page = ET.fromstring(f"<page>{xml}</page>")
+    frags = {f.get("id"): f for f in page.findall("fragment")}
+    curves = []
+    for frag in frags.values():
+        nodes = frag.findall("n")
+        if len(nodes) < 8:  # the bare Pd(0) has one atom; I and II carry the anisyl ring
+            continue
+        pts = [tuple(float(v) for v in n.get("p").split()) for n in nodes[:8]]
+        curves.append(f'<curve id="9{len(curves)}" LineType="Dashed" CurveType="2" '
+                      f'CurvePoints="{figure_house.overlay_curve_points(pts)}"/>')
+    assert len(curves) == 2
+    for curve in curves:
+        page.append(ET.fromstring(curve))
+    assert overlays_collide(ET.fromstring(f"<CDXML>{ET.tostring(page, encoding='unicode')}</CDXML>")) == []

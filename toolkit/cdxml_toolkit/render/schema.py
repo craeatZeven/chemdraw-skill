@@ -21,6 +21,9 @@ class StructureRef:
     cdxml_id: Optional[int] = None   # existing fragment ID
     label: Optional[str] = None      # compound number displayed below (e.g. "1")
     orientation: Optional[str] = None  # "flip_horizontal", "flip_vertical" or "rotate_180"
+    # Dashed outlines drawn over this structure later, [{atoms (0-based SMILES indices), shape}]:
+    # the layout keeps arrows and captions off them.
+    overlays: tuple = ()
 
 
 @dataclass

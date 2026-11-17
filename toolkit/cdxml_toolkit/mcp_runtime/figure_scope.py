@@ -30,8 +30,11 @@ SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "
               "highlight_varying"}
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
-SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", "secondary_of", *SPECIES_STYLE}
+SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", "definition", "secondary_of",
+                *SPECIES_STYLE}
 NOTE_COLUMN = "note"
+# A line naming what a structure stands for ("Alk = C7H15"), drawn under its number.
+DEFINITION_COLUMN = "definition"
 SECONDARY_COLUMN = "secondary_of"
 MAX_SPECIES = 1000
 
@@ -41,7 +44,8 @@ def _fields(brief: dict) -> tuple[list[dict], list[str]]:
     given = brief.get("fields")
     if given is None:
         keys = list(dict.fromkeys(k for e in brief["species"] if isinstance(e, dict) for k in (e.get("values") or {})))
-        return [{"key": k, "label": k, "unit": None, "show_label": False} for k in keys], errors
+        return [{"key": k, "label": k, "unit": None, "show_label": False, "hide_label": False, "optional": False}
+                for k in keys], errors
     if not isinstance(given, list):
         return [], ["fields must be a list of keys or {key, label, unit} objects."]
     fields: list[dict] = []
@@ -56,10 +60,14 @@ def _fields(brief: dict) -> tuple[list[dict], list[str]]:
             errors.append(f"Field {key}: duplicate key.")
             continue
         label = item.get("label", key)
-        if "show_label" in item and not isinstance(item["show_label"], bool):
-            errors.append(f"Field {key}: show_label must be true or false.")
+        for flag in ("show_label", "optional"):
+            if flag in item and not isinstance(item[flag], bool):
+                errors.append(f"Field {key}: {flag} must be true or false.")
+        # show_label false keeps a field's line unnamed even beside other fields; optional
+        # leaves the line out where the value is empty instead of drawing a dash.
         fields.append({"key": key, "label": "" if label is None else str(label), "unit": item.get("unit") or None,
-                       "show_label": item.get("show_label") is True})
+                       "show_label": item.get("show_label") is True, "hide_label": item.get("show_label") is False,
+                       "optional": item.get("optional") is True})
     return fields, errors
 
 
@@ -115,6 +123,8 @@ def _validate(brief: dict) -> list[str]:
             main = str(entry["secondary_of"])
             if main == str(ident) or main not in every_id:
                 errors.append(f"Species {ident}: secondary_of must name another species of this brief.")
+        if entry.get("definition") is not None and not isinstance(entry["definition"], str):
+            errors.append(f'Species {ident}: definition must be text (a line such as "Alk = C7H15").')
         if entry.get("note") is not None and not isinstance(entry["note"], str):
             errors.append(f"Species {ident}: note must be text (a line under the compound, e.g. 'not formed').")
 
@@ -122,6 +132,9 @@ def _validate(brief: dict) -> list[str]:
     errors += field_errors
     if any(f["key"] == NOTE_COLUMN for f in fields):
         errors.append(f"{NOTE_COLUMN!r} is reserved for the per-compound note; name the field otherwise.")
+    if any(f["key"] == DEFINITION_COLUMN for f in fields):
+        errors.append(f"{DEFINITION_COLUMN!r} is reserved for the per-compound definition line; name the field "
+                      "otherwise.")
     known = {f["key"] for f in fields}
     for entry in species:
         if isinstance(entry, dict) and isinstance(entry.get("values") or {}, dict):
@@ -199,18 +212,24 @@ def _highlight_brief(brief: dict, grounded: list[dict]) -> tuple[dict, dict[str,
     return styled, counts, []
 
 
-def _cell_fields(fields: list[dict], notes: bool) -> list[dict]:
+def _cell_fields(fields: list[dict], notes: bool, definitions: bool = False) -> list[dict]:
     """The lines under each structure, as the publication layout reads them.
 
     One field reads as the corpus scope tables do, its value alone under the label
     (``3a`` over ``92%``); say what the number is in a footnote or the conditions, or set
     ``show_label``. With several fields each line names its field. A note, when any
-    compound has one, is an extra unlabelled line that is left out where it is empty.
+    compound has one, is an extra unlabelled line that is left out where it is empty, and
+    so is a definition ("Alk = C7H15"), which comes first, straight under the number.
+    A field with ``show_label`` false is unnamed even beside others; an ``optional`` one is
+    left out where its value is empty rather than drawn as a dash.
     """
     columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
     compact = len(fields) == 1 and not fields[0].get("show_label")
-    cells = [{"column": columns[f["key"]], "label": "" if compact else f["label"],
-              **({"unit": f["unit"]} if f["unit"] else {})} for f in fields]
+    cells = [{"column": columns[f["key"]], "label": "" if compact or f.get("hide_label") else f["label"],
+              **({"unit": f["unit"]} if f["unit"] else {}), **({"optional": True} if f.get("optional") else {})}
+             for f in fields]
+    if definitions:
+        cells.insert(0, {"column": DEFINITION_COLUMN, "label": "", "optional": True})
     if notes:
         cells.append({"column": NOTE_COLUMN, "label": "", "optional": True})
     return cells
@@ -219,10 +238,12 @@ def _cell_fields(fields: list[dict], notes: bool) -> list[dict]:
 def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[dict], render: bool) -> Path:
     columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
     notes = any(isinstance(e, dict) and e.get("note") for e in brief["species"])
+    definitions = any(isinstance(e, dict) and e.get("definition") for e in brief["species"])
     secondary = any(isinstance(e, dict) and e.get("secondary_of") for e in brief["species"])
     with (work / "table.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(["compound_id", "smiles", "label", "group", *columns.values(), *([NOTE_COLUMN] if notes else []),
+                         *([DEFINITION_COLUMN] if definitions else []),
                          *([SECONDARY_COLUMN] if secondary else [])])
         by_id = {str(e["id"]): e for e in brief["species"]}
         for item in grounded:
@@ -231,6 +252,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
             writer.writerow([item["id"], item["smiles"], _text(entry.get("label")), _text(entry.get("group")),
                              *(_text(values.get(f["key"])) for f in fields),
                              *([_text(entry.get("note"))] if notes else []),
+                             *([_text(entry.get("definition"))] if definitions else []),
                              *([_text(entry.get("secondary_of"))] if secondary else [])])
     style = {k: brief[k] for k in ("width_mm", "height_mm") if brief.get(k) is not None}
     slug = brief_style(brief)[0]
@@ -242,7 +264,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
     spec = {
         "mode": "scope", "table": "table.csv", "label_column": "label", "group_column": "group",
         **({"secondary_column": SECONDARY_COLUMN} if secondary else {}),
-        "fields": _cell_fields(fields, notes),
+        "fields": _cell_fields(fields, notes, definitions),
         "title": brief.get("title") or "Substrate scope",
         "conditions": brief.get("conditions") or "",
         "footnotes": brief.get("footnotes") or [],

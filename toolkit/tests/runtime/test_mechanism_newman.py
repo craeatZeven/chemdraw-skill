@@ -96,3 +96,24 @@ def test_two_projections_lay_out_among_the_structures_without_overlap(tmp_path, 
     root = ET.parse(tmp_path / "newman.cdxml").getroot()
     discs = [g for g in root.iter("graphic") if g.get("OvalType") == "Circle Filled"]
     assert len(discs) == 2
+
+
+@pytest.mark.parametrize("offset", [0, 120, 240, -120, 365, 125])
+def test_a_rear_set_on_top_of_the_front_set_is_refused(offset):
+    # dihedral_offset is the rear set's angle from the front set (60 is staggered), not an
+    # addition to it: 120 puts every rear spoke and label on a front one.
+    spec = {"front": ["CH3", "H", "H"], "rear": ["CH3", "H", "H"], "dihedral_offset": offset}
+    errors = M._newman_errors("g", spec)
+    assert any("on top of the front" in e for e in errors), errors
+
+
+@pytest.mark.parametrize("spec", [
+    {"conformation": "staggered"}, {"conformation": "eclipsed"}, {"dihedral_offset": 60},
+    {"dihedral_offset": 14}, {"dihedral_offset": -14}, {"dihedral_offset": 180},
+])
+def test_every_label_of_an_accepted_projection_has_a_place_of_its_own(spec):
+    spec = {"front": ["CH3", "H", "H"], "rear": ["H", "CH3", "H"], **spec}
+    assert M._newman_errors("p", spec) == []
+    frag = M._newman_frag("p", spec, "p")
+    places = [(round(a["x"], 1), round(a["y"], 1)) for a in frag.atoms if a.get("show_label")]
+    assert len(places) == 6 and len(set(places)) == 6
