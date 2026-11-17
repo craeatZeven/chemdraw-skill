@@ -392,5 +392,21 @@ P7, P8 and P9.
 | P12 yield, not "Yield:" | verified | cells read `3a` over `92%` |
 | P13 dense grid | verified | twelve compounds on one page, and an eighteen-compound benzamide panel on one page |
 
-P3, P6 and P9 have changed since the last render and need one more; nothing else in the list
-is unverified.
+P3, P6 and P9 are closed too, verified on this machine after the fixes: the P6 definition line
+renders without a field name and with subscripts, the P3 labels no longer share a coordinate, and
+every arrow in P9 clears every circle by at least 9.0 pt (`Overlay:` warnings 0,
+`overlay_collides` 0).
+
+| Item | State | Evidence |
+| --- | --- | --- |
+| P14 one-line cell captions | not implemented | a cell is a label line plus one line per field |
+| P15 header scheme above a scope | not implemented | the scope carries a text line reading `Standard conditions` |
+| P16 curved cycle arrows | not implemented | `assets/parity/p9-cycle-overlay.png` joins species with straight chords |
+| P17 formatting everywhere | partly | `H2O` and `K3PO4` subscript in conditions and definitions; a species label does not, and `PhB(OH)2` renders flat because the digit follows a closing parenthesis |
+| P18 wrap the route, draw an intermediate once | not implemented | five steps become five rows, 107 x 116 mm, with compounds 2-5 each drawn twice |
+| P19 branch from one structure | not implemented | a step is always substrates-left, products-right |
+| P20 panels, boxed titles, colour legend | not implemented | bands exist (P8); panels and legends do not |
+
+P1-P13 are closed as far as this machine can check them. P14-P20 are not polish: the layout draws
+rows of well-formed cells, while every corpus figure that reads like a paper wraps a route,
+branches from one centre, or lays panels side by side.
