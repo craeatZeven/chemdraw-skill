@@ -45,6 +45,28 @@ def _annotation(hint) -> str:
     return inspect.formatannotation(hint)
 
 
+def _hinted(function, name: str, hints: dict, raw: dict):
+    """Annotation for one parameter, without the Optional a 3.10 interpreter invents.
+
+    ``typing.get_type_hints`` on Python 3.10 wraps a parameter whose default is ``None`` in
+    ``Optional[...]``; later versions do not. The wrapper is not in the source, so it made a
+    reference generated here read as stale elsewhere. Drop it when the annotation itself
+    never mentioned None.
+    """
+    hint = hints.get(name, raw.get(name))
+    original = raw.get(name)
+    if original is None:
+        return hint
+    text = original if isinstance(original, str) else inspect.formatannotation(original)
+    if "None" in text or "Optional" in text:
+        return hint
+    if typing.get_origin(hint) is typing.Union:
+        kept = [argument for argument in typing.get_args(hint) if argument is not type(None)]
+        if len(kept) == 1:
+            return kept[0]
+    return hint
+
+
 def _signature(function) -> str:
     try:
         hints = typing.get_type_hints(function)
@@ -54,8 +76,9 @@ def _signature(function) -> str:
 
     def shown(value):
         return value if value is inspect.Parameter.empty else _Shown(_annotation(value))
+    raw = getattr(function, "__annotations__", {})
     parameters = [
-        parameter.replace(annotation=shown(hints.get(parameter.name, parameter.annotation)))
+        parameter.replace(annotation=shown(_hinted(function, parameter.name, hints, raw)))
         for parameter in signature.parameters.values()
     ]
     return str(

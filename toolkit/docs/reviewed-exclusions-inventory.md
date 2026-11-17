@@ -409,9 +409,9 @@
 
 ## `mcp_runtime.generate_reference`
 
-- **function**, line 69: `manifest(profile: str = 'full') -> dict` - No public docstring in the audited version.
-- **function**, line 94: `render_markdown(profile: str = 'full') -> str` - No public docstring in the audited version.
-- **function**, line 129: `render_reference(profile: str = 'full') -> str` - Signature reference used by the Skill's catalog checks.
+- **function**, line 92: `manifest(profile: str = 'full') -> dict` - No public docstring in the audited version.
+- **function**, line 117: `render_markdown(profile: str = 'full') -> str` - No public docstring in the audited version.
+- **function**, line 152: `render_reference(profile: str = 'full') -> str` - Signature reference used by the Skill's catalog checks.
 
 ## `mcp_runtime.install_decimer_models`
 

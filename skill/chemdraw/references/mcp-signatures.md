@@ -527,7 +527,7 @@ never a new accepted project. Native PNG/SVG rendering defaults on, through
 isolated locked workers; native failure is reported as pending validation.
 This checks reader consistency and data binding, not experimental chemistry.
 
-### `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict`
+### `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs: None) -> dict`
 
 Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs,
 r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like,
