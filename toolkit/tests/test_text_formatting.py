@@ -178,3 +178,20 @@ def test_render_scheme_subscripts_reagents_above_the_arrow():
     )
     xml = render(scheme)
     assert re.search(r'face="96">K</s><s [^>]*face="32">2</s>', xml)
+
+
+import pytest as _pytest
+
+
+@_pytest.mark.parametrize("label, formula", [
+    ("PhB(OH)2", True), ("K2CO3", True), ("Et3N", True), ("Pd(OAc)2", True), ("Pd2(dba)3", True),
+    ("CH2Cl2", True), ("N2", True), ("S2", True), ("n-Bu3SnH", True), ("[Rh2(OAc)4]", True),
+    ("3a", False), ("L1", False), ("A2", False), ("Pd(0)", False), ("Int-2", False), ("TS2", False),
+    ("INT3", False), ("IM1", False), ("cat2", False), ("2 or 7", False), ("V-1", False), ("", False),
+    ("Ar—Pd—I", False),
+])
+def test_a_label_is_set_as_a_formula_only_when_it_reads_as_one(label, formula):
+    # A compound number stays as written (TS2, INT3, IM1 are not formulas); a label made only of
+    # element symbols, groups (Ph, Et, OAc, dba, ...), brackets and counts gets its subscripts.
+    from cdxml_toolkit.text_formatting import is_formula_label
+    assert is_formula_label(label) is formula

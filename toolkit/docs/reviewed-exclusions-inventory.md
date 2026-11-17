@@ -366,26 +366,26 @@
 ## `mcp_runtime.figure_house`
 
 - **function**, line 77: `add_highlight_fills(brief: dict, grounded: list[dict], house: HouseStyle | None) -> str | None` - Ask the ring_fills decoration for the largest ring of each final product.
-- **function**, line 772: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
-- **function**, line 268: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
-- **function**, line 930: `apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - A dashed outline around one fragment in every structure that carries it.
-- **function**, line 1028: `apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Draw each species' generic rings: a dashed open arc through two bonded atoms that stands for an unspecified ring fused there (BJOC 22-125 scheme 4), on every drawing of it.
-- **function**, line 320: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
-- **function**, line 213: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
-- **function**, line 1064: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
-- **function**, line 813: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
-- **function**, line 585: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
-- **function**, line 506: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
-- **function**, line 525: `condition_text(line: Any) -> str` - The plain text of a condition line.
+- **function**, line 778: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
+- **function**, line 274: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
+- **function**, line 936: `apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - A dashed outline around one fragment in every structure that carries it.
+- **function**, line 1034: `apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Draw each species' generic rings: a dashed open arc through two bonded atoms that stands for an unspecified ring fused there (BJOC 22-125 scheme 4), on every drawing of it.
+- **function**, line 326: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
+- **function**, line 219: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
+- **function**, line 1070: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
+- **function**, line 819: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
+- **function**, line 591: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
+- **function**, line 512: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
+- **function**, line 531: `condition_text(line: Any) -> str` - The plain text of a condition line.
 - **function**, line 67: `final_products(brief: Mapping) -> list[str]` - No public docstring in the audited version.
 - **function**, line 38: `format_yield(text: str, template: str | None) -> str` - ``template`` filled with the number of a yield such as "85%"; other text is kept.
-- **function**, line 980: `generic_ring_errors(entry: Mapping) -> list[str]` - Problems with a species' generic rings, for the brief check.
-- **function**, line 1008: `generic_ring_marks(entry: Mapping, smiles: str) -> list[dict]` - [{atoms, shape "ring", away, members}] for a species' generic rings, checked against its SMILES: both atoms exist and are bonded. ``away`` are the atoms beside them, which the ring is drawn away from.
-- **function**, line 205: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
-- **function**, line 864: `overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]` - Problems with the brief's overlays, for the brief check.
-- **function**, line 895: `overlay_matches(brief: Mapping, grounded: list[dict]) -> tuple[dict[str, list[dict]], list[str]]` - The atoms each overlay marks, by species: {id: [{atoms, shape, fragment}]}, and warnings.
-- **function**, line 693: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
-- **function**, line 471: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
+- **function**, line 986: `generic_ring_errors(entry: Mapping) -> list[str]` - Problems with a species' generic rings, for the brief check.
+- **function**, line 1014: `generic_ring_marks(entry: Mapping, smiles: str) -> list[dict]` - [{atoms, shape "ring", away, members}] for a species' generic rings, checked against its SMILES: both atoms exist and are bonded. ``away`` are the atoms beside them, which the ring is drawn away from.
+- **function**, line 211: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
+- **function**, line 870: `overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]` - Problems with the brief's overlays, for the brief check.
+- **function**, line 901: `overlay_matches(brief: Mapping, grounded: list[dict]) -> tuple[dict[str, list[dict]], list[str]]` - The atoms each overlay marks, by species: {id: [{atoms, shape, fragment}]}, and warnings.
+- **function**, line 699: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
+- **function**, line 477: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
 - **function**, line 58: `split_conditions(above: list[str], below: list[str], house: HouseStyle | None) -> tuple[list, list]` - No public docstring in the audited version.
 - **function**, line 46: `step_yield(step: Mapping, house: HouseStyle | None) -> str | None` - The yield text drawn under the arrow, or None when the house style moves it.
 
@@ -652,18 +652,18 @@
 
 ## `publication.layout`
 
-- **function**, line 390: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 393: `bounds(node, style)` - No public docstring in the audited version.
 - **function**, line 121: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 412: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 167: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
-- **function**, line 240: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 415: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 170: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
+- **function**, line 243: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
-- **function**, line 149: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
+- **function**, line 152: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 408: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 193: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 411: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 196: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
 - **function**, line 42: `text_width(value, style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 47: `wrap(value, width, style)` - No public docstring in the audited version.

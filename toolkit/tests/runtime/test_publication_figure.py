@@ -580,3 +580,10 @@ def test_a_structure_is_centred_in_a_cell_widened_by_its_caption(tmp_path):
     box = project['compounds']['a']['bbox']
     xs = [float(n.get('p').split()[0]) for n in root.iter('n') if n.get('p')]
     assert abs((min(xs) + max(xs)) / 2 - (box[0] + box[2]) / 2) < 1
+
+
+def test_a_formula_label_gets_its_subscripts_and_stays_bold():
+    from cdxml_toolkit.publication.layout import caption_runs
+    assert caption_runs('PhB(OH)2', bold=True) == ('PhB(OH)2', [{'text': 'PhB(OH)', 'bold': True},
+                                                              {'text': '2', 'subscript': True, 'bold': True}])
+    assert caption_runs('TS2', bold=True) == ('TS2', [{'text': 'TS2', 'bold': True}])

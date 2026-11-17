@@ -158,6 +158,45 @@ def needs_subscript(text: str) -> bool:
     return bool(subscript_matches(text))
 
 
+_ELEMENTS = frozenset("""H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn
+Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd
+Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf
+Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og""".split())  # no D or T: TS2 is a number
+# Groups that a formula label writes as one token (PhB(OH)2, Pd(OAc)2, Pd2(dba)3, n-Bu3SnH).
+_FORMULA_GROUPS = frozenset("""Ph Me Et Pr Bu Ar Ac Bn Bz Ts Ms Tf Tol Mes Cy Cp Py py Boc Cbz Piv Fmoc Tr
+Trt TMS TBS TIPS TES OAc OTf OMe OEt dba cod acac pin Bpin dppf dppe dppp bipy phen Ad Np Xyl""".split())
+_FORMULA_PUNCTUATION = set("()[]{}\u00b7.+-\u2212\u2013\u2014=")
+
+
+def is_formula_label(text: str) -> bool:
+    """Whether a label is a formula, to be set with subscripts like condition text.
+
+    Conditions are formulas almost always; labels are compound numbers almost always, and the
+    condition rule would print TS2, INT3 or IM1 with subscripts. So a label counts as a formula
+    only when, past an italic prefix (``n-``), it is made entirely of element symbols, common
+    groups (Ph, Et, OAc, dba, ...), brackets and counts, and has a count to subscript: PhB(OH)2,
+    K2CO3 and Et3N do; TS2, IM1, 3a and L1 do not. A lone element with a count other than 1
+    (S2, N2) reads as a formula, as it does in conditions.
+    """
+    rest = split_italic_prefix(text)[1]
+    if not rest or not subscript_matches(rest):
+        return False
+    i = 0
+    while i < len(rest):
+        ch = rest[i]
+        if ch.isdigit() or ch in _FORMULA_PUNCTUATION:
+            i += 1
+            continue
+        for size in (4, 3, 2, 1):
+            token = rest[i:i + size]
+            if len(token) == size and (token in _FORMULA_GROUPS or token in _ELEMENTS):
+                i += size
+                break
+        else:
+            return False
+    return True
+
+
 # Private-name alias for callers that import ``_needs_subscript``.
 _needs_subscript = needs_subscript
 

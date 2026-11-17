@@ -125,6 +125,12 @@ def _point(el: ET.Element) -> tuple[float, float]:
     return float(x), float(y)
 
 
+def _with_weight(face: str | None, bold: bool) -> str:
+    """A run's face made bold or plain, its other bits (italic, subscript, formula) kept."""
+    value = int(face or 0) if str(face or "0").isdigit() else 0
+    return str((value & ~1) | (1 if bold else 0))
+
+
 def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict]):
     """(species id, fragment element, fragment mol) for every drawn species, in document order."""
     page = root.find("page")
@@ -343,7 +349,7 @@ def apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict],
     if face in ("bold", "plain"):
         for _, t in label_els:
             for s in t.iter("s"):
-                s.set("face", "1" if face == "bold" else "0")
+                s.set("face", _with_weight(s.get("face"), face == "bold"))
         applied.append(f"compound_label_face={face}")
     if label_color and label_color.upper() != "#000000":
         index = colors.index(label_color)
@@ -1090,7 +1096,7 @@ def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], ho
             for t in label_els:
                 for s in t.iter("s"):
                     if not int(s.get("face") or 0) & 64:  # a footnote mark stays a superscript
-                        s.set("face", "1" if face == "bold" else "0")
+                        s.set("face", _with_weight(s.get("face"), face == "bold"))
             applied.append(f"compound_label_face={face}")
         label_color = house.convention("compound_label_color")
         if label_color and label_color.upper() != "#000000" and label_els:

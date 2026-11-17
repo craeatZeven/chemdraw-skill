@@ -10,7 +10,7 @@ from rdkit import Chem
 from rdkit.Chem import rdDepictor, rdFMCS
 from ..chemistry_semantics import read_molecules, semantic_key, document_inventory
 from ..mcp_runtime.figure_tools import compose_chemical_figure, _move
-from ..text_formatting import subscript_matches
+from ..text_formatting import is_formula_label, subscript_matches
 from .data import field_text, write_json
 
 
@@ -122,8 +122,9 @@ def caption_runs(text, bold=False):
     """(the text as it reads, runs or None) for a caption line.
 
     ``^b`` marks a footnote letter: it is drawn as an italic superscript and reads back as the
-    letter alone ("40%^b" reads "40%b"). The compound number (``bold``) is drawn bold and is
-    never a formula; other lines get formula subscripts (``chemical_runs``).
+    letter alone ("40%^b" reads "40%b"). The compound label (``bold``) is drawn bold, with
+    subscripts only when it is a formula (``is_formula_label``: PhB(OH)2, not TS2); other lines
+    get formula subscripts (``chemical_runs``).
     """
     pieces, offset = [], 0
     for m in _FOOTNOTE.finditer(text):
@@ -136,6 +137,8 @@ def caption_runs(text, bold=False):
             continue
         if mark:
             runs.append({'text': piece, 'superscript': True, 'italic': True})
+        elif bold and is_formula_label(piece):
+            runs += [{**r, 'bold': True} for r in chemical_runs(piece)]
         elif bold:
             runs.append({'text': piece, 'bold': True})
         else:

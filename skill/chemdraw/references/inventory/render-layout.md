@@ -99,9 +99,9 @@
 
 ## `render.renderer`
 
-- **function**, line 3347: `render(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> str` - Render a scheme and retain per-fragment output-derived validation receipts.
-- **function**, line 3369: `render_to_file(scheme: SchemeDescriptor, output_path: str, yaml_dir: Optional[str] = None) -> None` - Render and write to a file.
-- **function**, line 3335: `render_with(build) -> str` - Build page content with ``build(ids) -> inner_xml`` and wrap it like a rendered scheme.
+- **function**, line 3348: `render(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> str` - Render a scheme and retain per-fragment output-derived validation receipts.
+- **function**, line 3370: `render_to_file(scheme: SchemeDescriptor, output_path: str, yaml_dir: Optional[str] = None) -> None` - Render and write to a file.
+- **function**, line 3336: `render_with(build) -> str` - Build page content with ``build(ids) -> inner_xml`` and wrap it like a rendered scheme.
 - **class**, line 150: `ResolvedFragment` - A structure that has been resolved to atom/bond data + XML.
 - **class**, line 165: `ResolvedStep` - A step with all structures resolved and laid out.
 
@@ -137,8 +137,9 @@
 
 ## `text_formatting`
 
-- **function**, line 189: `build_formatted_s_xml(text: str, font: str = '3', size: str = '10', color: str = '0', italic_font: str | None = None) -> str` - Build one or more CDXML ``<s>`` elements with correct chemical styling.
+- **function**, line 228: `build_formatted_s_xml(text: str, font: str = '3', size: str = '10', color: str = '0', italic_font: str | None = None) -> str` - Build one or more CDXML ``<s>`` elements with correct chemical styling.
+- **function**, line 171: `is_formula_label(text: str) -> bool` - Whether a label is a formula, to be set with subscripts like condition text.
 - **function**, line 123: `needs_subscript(text: str) -> bool` - Determine whether *text* contains chemical-formula digits that should be rendered as subscripts in ChemDraw.
 - **function**, line 105: `normalize_condition_text(text: str) -> str` - Write temperatures, room temperature and times the way papers do.
-- **function**, line 165: `split_italic_prefix(text: str) -> Tuple[str, str]` - Split *text* into ``(italic_prefix, remainder)`` if it starts with a recognised chemistry italic prefix (see :data:`ITALIC_PREFIXES`).
+- **function**, line 204: `split_italic_prefix(text: str) -> Tuple[str, str]` - Split *text* into ``(italic_prefix, remainder)`` if it starts with a recognised chemistry italic prefix (see :data:`ITALIC_PREFIXES`).
 - **function**, line 65: `subscript_matches(text: str) -> list[re.Match]` - Formula digit groups in *text* that should be subscripted.

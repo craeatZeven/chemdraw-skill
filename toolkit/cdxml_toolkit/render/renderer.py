@@ -48,7 +48,7 @@ from ..constants import (
 )
 from ..cdxml_utils import LABEL_H_WIDTH, drawn_fragment_bbox, hydrogens_lead
 from ..overlay_geometry import generic_ring_box, overlay_box
-from ..text_formatting import build_formatted_s_xml, normalize_condition_text
+from ..text_formatting import build_formatted_s_xml, is_formula_label, normalize_condition_text
 
 from .route_graph import convergent_sections
 from .schema import (
@@ -739,9 +739,10 @@ def _build_label_element(
     y: float,
     ids: _IDGen,
 ) -> Tuple[str, int]:
-    """Build a compound number label (e.g. "1", "2") centered below a structure."""
+    """Build a compound label centered below a structure: a number ("1", "TS2") as written, a
+    formula ("PhB(OH)2") with its subscripts."""
     return _build_text_element(
-        [label], x, y, ids, justification="Center", use_formatting=False,
+        [label], x, y, ids, justification="Center", use_formatting=is_formula_label(label),
     )
 
 
