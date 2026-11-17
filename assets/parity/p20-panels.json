@@ -2,80 +2,123 @@
  "kind": "panels",
  "panels": [
   {
-   "title": "(a) previous work: oxazoles from acyl chlorides",
-   "brief": {
-    "species": [
-     {
-      "id": "RCOCl",
-      "smiles": "CC(=O)Cl",
-      "color": "#C62828"
-     },
-     {
-      "id": "NC",
-      "smiles": "[C-]#[N+]Cc1ccccc1",
-      "color": "#1F4E9E"
-     },
-     {
-      "id": "Ox",
-      "smiles": "Cc1ocnc1-c1ccccc1",
-      "label": "A"
-     }
-    ],
-    "steps": [
-     {
-      "substrates": [
-       "RCOCl",
-       "NC"
-      ],
-      "products": [
-       "Ox"
-      ],
-      "above": [
-       "base"
-      ]
-     }
-    ]
-   }
+   "title": "(a) examples of 2-arylpyrroles",
+   "gallery": [
+    {
+     "id": "p1",
+     "smiles": "c1ccc(-c2ccc[nH]2)cc1",
+     "caption": [
+      "2-phenylpyrrole"
+     ],
+     "color": "#1F4E9E"
+    },
+    {
+     "id": "p2",
+     "smiles": "Cn1cccc1-c1ccccc1",
+     "caption": [
+      "1-methyl-",
+      "2-phenylpyrrole"
+     ],
+     "color": "#1F4E9E"
+    },
+    {
+     "id": "p3",
+     "smiles": "Clc1ccc(-c2ccc[nH]2)cc1",
+     "caption": [
+      "2-(4-chlorophenyl)pyrrole"
+     ],
+     "color": "#1F4E9E"
+    },
+    {
+     "id": "p4",
+     "smiles": "COc1ccc(-c2ccc[nH]2)cc1",
+     "caption": [
+      "2-(4-methoxyphenyl)pyrrole"
+     ],
+     "color": "#1F4E9E"
+    }
+   ]
   },
   {
-   "title": "(b) previous work: imidazoles",
-   "brief": {
-    "species": [
-     {
-      "id": "ArNC",
-      "smiles": "[C-]#[N+]c1ccccc1",
-      "color": "#C62828"
-     },
-     {
-      "id": "NC",
-      "smiles": "[C-]#[N+]Cc1ccccc1",
-      "color": "#1F4E9E"
-     },
-     {
-      "id": "Im",
-      "smiles": "c1ccc(-n2cnc(-c3ccccc3)c2)cc1",
-      "label": "B"
-     }
-    ],
-    "steps": [
-     {
-      "substrates": [
-       "ArNC",
-       "NC"
+   "title": "(b) synthesis of five-membered heterocycles via [3 + 2] cycloaddition of benzyl isocyanides",
+   "sections": [
+    {
+     "title": "L. Grimaud 2009 [35]",
+     "brief": {
+      "species": [
+       {
+        "id": "RCOCl",
+        "smiles": "CC(=O)Cl",
+        "color": "#C62828"
+       },
+       {
+        "id": "NC",
+        "smiles": "[C-]#[N+]Cc1ccccc1",
+        "color": "#1F4E9E"
+       },
+       {
+        "id": "Ox",
+        "smiles": "Cc1ocnc1-c1ccccc1",
+        "label": "A"
+       }
       ],
-      "products": [
-       "Im"
-      ],
-      "above": [
-       "base",
-       "catalyst"
+      "steps": [
+       {
+        "substrates": [
+         "RCOCl",
+         "NC"
+        ],
+        "products": [
+         "Ox"
+        ],
+        "above": [
+         "base"
+        ]
+       }
       ]
      }
-    ]
-   }
+    },
+    {
+     "title": "S. H. Hong 2014 [36]",
+     "brief": {
+      "species": [
+       {
+        "id": "ArNC",
+        "smiles": "[C-]#[N+]c1ccccc1",
+        "color": "#C62828"
+       },
+       {
+        "id": "NC",
+        "smiles": "[C-]#[N+]Cc1ccccc1",
+        "color": "#1F4E9E"
+       },
+       {
+        "id": "Im",
+        "smiles": "c1ccc(-n2cnc(-c3ccccc3)c2)cc1",
+        "label": "B"
+       }
+      ],
+      "steps": [
+       {
+        "substrates": [
+         "ArNC",
+         "NC"
+        ],
+        "products": [
+         "Im"
+        ],
+        "above": [
+         "base",
+         "catalyst"
+        ]
+       }
+      ]
+     }
+    }
+   ]
   },
   {
-   "title": "(c) this work: one ketone taken four ways",
+   "title": "(c) this work",
    "brief": {
     "layout": "fan",
     "species": [
@@ -121,7 +164,7 @@
        "NaBH4"
       ],
       "below": [
-       "MeOH, 0 \u00b0C"
+       "MeOH, 0 °C"
       ]
      },
      {

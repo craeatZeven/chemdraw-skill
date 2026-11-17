@@ -403,7 +403,7 @@
 
 ## `mcp_runtime.figure_panels`
 
-- **function**, line 93: `draw_panels(brief: dict, output_path: str | None, render: bool) -> dict` - Draw each panel with draw_figure, then stack them under boxed titles on one page.
+- **function**, line 271: `draw_panels(brief: dict, output_path: str | None, render: bool) -> dict` - Draw each panel with draw_figure, then stack them under boxed titles on one page.
 
 ## `mcp_runtime.figure_scope`
 

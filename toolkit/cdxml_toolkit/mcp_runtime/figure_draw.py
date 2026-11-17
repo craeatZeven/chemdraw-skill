@@ -824,9 +824,13 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
     and its number, with an optional fill drawn behind it.
     kind "panels" sets several scheme or mechanism briefs one above the other on one page:
-    {kind: "panels", panels [{title, brief}], legend? [lines], style?, max_width?}; each panel
-    is drawn and checked as its own brief, under a boxed one-line title as wide as the widest
-    panel, and the legend lines (text or coloured runs) go under the last one.
+    {kind: "panels", panels [{title, brief | gallery | sections}], legend? [lines], style?,
+    max_width?}; each panel is drawn and checked as its own brief, under a boxed one-line title
+    as wide as the widest panel, and the legend lines (text or coloured runs) go under the last
+    one. gallery [{id, smiles or name, caption? (lines), color?, atom_colors?, bond_colors?,
+    abbreviate?}] draws structures with their names and no arrows, in rows spread to the widest;
+    sections [{title, brief}] draws several briefs in one panel, each opened by its title in a
+    box on a dashed rule across the figure ("L. Grimaud 2009 [35]").
     layout "fan" draws one starting material in the middle with an arrow leaving it for each of
     two to four products (left, right, down, up); two products from one compound are a fan by
     default (layout "divergent" keeps them stacked, as does a fan wider than max_width).
