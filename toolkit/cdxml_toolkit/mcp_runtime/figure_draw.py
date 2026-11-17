@@ -300,6 +300,12 @@ def _route_layout(steps: list[StepDescriptor], requested_layout: str | None = No
             raise ValueError("layout fan needs one starting material with two to four products, each made from it "
                              "in one step (arrows leave it left, right, down and up).")
         return "fan", order
+    if requested_layout is None and kind == "divergent" and len(steps) == 2:
+        # One compound taken two ways reads best with an arrow to each side (BJOC 22-103
+        # figure 1, panel c); the renderer falls back to the stacked layout when it is too wide.
+        shared = set(steps[0].substrates) & set(steps[1].substrates)
+        if shared:
+            return "fan", order
     if kind == "linear":
         return ("sequential" if len(steps) > 1 else "linear"), order
     return kind, order
@@ -674,11 +680,13 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
     try:
         if arrow_bonds:
             renderer.MIN_ARROW_BONDS = arrow_bonds
-        cdxml = renderer.render(_scheme(brief, grounded, layout_width / scale, gap_scale, line_chars, house))
+        scheme = _scheme(brief, grounded, layout_width / scale, gap_scale, line_chars, house)
+        cdxml = renderer.render(scheme)
     finally:
         renderer.MIN_ARROW_BONDS = saved
     cdxml = _apply_decorations(cdxml, brief, grounded)
-    record: dict = {"applied": [], "skipped": [], "warnings": []}
+    # The layout drawn, which may differ from the one chosen (a fan too wide is drawn stacked).
+    record: dict = {"applied": [], "skipped": [], "warnings": [], "layout": getattr(scheme, "drawn_layout", None)}
     if house is not None:
         cdxml, record["applied"], record["skipped"], record["warnings"] = figure_house.apply_house_conventions(
             cdxml, brief, grounded, house)
@@ -820,7 +828,8 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     is drawn and checked as its own brief, under a boxed one-line title as wide as the widest
     panel, and the legend lines (text or coloured runs) go under the last one.
     layout "fan" draws one starting material in the middle with an arrow leaving it for each of
-    two to four products (left, right, down, up).
+    two to four products (left, right, down, up); two products from one compound are a fan by
+    default (layout "divergent" keeps them stacked, as does a fan wider than max_width).
     A route longer than max_width wraps: by default (wrap "continue") the next row starts with
     the arrow that leaves the structure the row above ended with, so each structure is drawn
     once; "repeat" draws that structure again at the start of the row, "serpentine" zigzags.
@@ -972,7 +981,7 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
         "ok": True,
         "operation": "draw_figure",
         "output_path": str(target),
-        "layout": _route_layout(_step_descriptors(brief), brief.get("layout"))[0],
+        "layout": house_record.get("layout") or _route_layout(_step_descriptors(brief), brief.get("layout"))[0],
         "species": [{k: g[k] for k in ("id", "label", "name", "smiles", "source")} for g in grounded],
         "steps": balance,
         "style": style_report(brief_style(brief)[0], house,

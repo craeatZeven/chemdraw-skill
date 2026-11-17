@@ -2006,8 +2006,9 @@ def _layout_fan(
     then down and up (BJOC 22-103 figure 1 panel c). Each branch keeps its conditions, and its
     co-substrates stand over its arrow (beside a vertical one) and count as reactants.
 
-    Routes that are not one starting material with two to four products, or that have steps
-    not starting from it, are drawn by the divergent layout instead.
+    Routes that are not one starting material with two to four products, that have steps not
+    starting from it, or that would be wider than ``max_row_width``, are drawn by the divergent
+    layout instead.
     """
     from collections import Counter
 
@@ -2016,6 +2017,7 @@ def _layout_fan(
     shared_id = counts.most_common(1)[0][0] if counts else None
     shared = [s for s in steps if shared_id in s.substrates]
     if shared_id is None or not 2 <= len(shared) <= len(_FAN_DIRECTIONS) or len(shared) != len(steps):
+        scheme.drawn_layout = "divergent"
         return _layout_divergent(scheme, ids, source_data=source_data, reference_mol=reference_mol)
 
     def get_ref(sid: str) -> StructureRef:
@@ -2063,6 +2065,11 @@ def _layout_fan(
         return frag_gap * 1.3 + branch["len"] + size
 
     left = max((reach(b) for b in branches if b["dir"] == "left"), default=0.0)
+    right = max((reach(b) for b in branches if b["dir"] == "right"), default=0.0)
+    if scheme.max_row_width and left + sm_w + right > scheme.max_row_width:
+        # Wider than the row budget: the stacked divergent layout fits where the fan does not.
+        scheme.drawn_layout = "divergent"
+        return _layout_divergent(scheme, ids, source_data=source_data, reference_mol=reference_mol)
     up = max((reach(b) for b in branches if b["dir"] == "up"), default=0.0)
     over_tall = max((_bbox_height(f.bbox) + 40.0 for b in branches if b["dir"] in ("left", "right")
                      for f, _ in b["over"]), default=0.0)

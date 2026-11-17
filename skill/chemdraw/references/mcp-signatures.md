@@ -250,7 +250,8 @@ kind "panels" sets several scheme or mechanism briefs one above the other on one
 is drawn and checked as its own brief, under a boxed one-line title as wide as the widest
 panel, and the legend lines (text or coloured runs) go under the last one.
 layout "fan" draws one starting material in the middle with an arrow leaving it for each of
-two to four products (left, right, down, up).
+two to four products (left, right, down, up); two products from one compound are a fan by
+default (layout "divergent" keeps them stacked, as does a fan wider than max_width).
 A route longer than max_width wraps: by default (wrap "continue") the next row starts with
 the arrow that leaves the structure the row above ended with, so each structure is drawn
 once; "repeat" draws that structure again at the start of the row, "serpentine" zigzags.

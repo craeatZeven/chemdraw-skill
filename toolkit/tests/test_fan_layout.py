@@ -84,3 +84,38 @@ def test_a_brief_can_ask_for_a_fan():
     chain = {"species": brief["species"], "layout": "fan",
              "steps": [{"substrates": ["SM"], "products": ["A"]}, {"substrates": ["A"], "products": ["B"]}]}
     assert any("fan" in e for e in figure_draw._validate(chain))
+
+
+def test_two_products_from_one_compound_default_to_a_fan_and_more_stay_stacked():
+    from cdxml_toolkit.mcp_runtime import figure_draw
+    two = {"species": [{"id": "SM", "smiles": "CCN"}, {"id": "A", "smiles": "CCO"}, {"id": "B", "smiles": "CCCl"}],
+           "steps": [{"substrates": ["SM"], "products": ["A"]}, {"substrates": ["SM"], "products": ["B"]}]}
+    steps = figure_draw._step_descriptors(two)
+    assert figure_draw._route_layout(steps, None)[0] == "fan"
+    assert figure_draw._route_layout(steps, "divergent")[0] == "divergent"
+    three = dict(two, species=two["species"] + [{"id": "C", "smiles": "CCBr"}],
+                 steps=two["steps"] + [{"substrates": ["SM"], "products": ["C"]}])
+    assert figure_draw._route_layout(figure_draw._step_descriptors(three), None)[0] == "divergent"
+
+
+def test_a_fan_too_wide_for_the_row_budget_is_drawn_stacked():
+    page = _fan(2)
+    xs = [float(n.get("p").split()[0]) for n in page.iter("n")]
+    smiles = {"SM": "CCN", "P1": "CCO", "P2": "CCCl"}
+    structures = {k: StructureRef(id=k, smiles=v, label=k) for k, v in smiles.items()}
+    steps = [StepDescriptor(substrates=["SM"], products=[f"P{k}"], above_arrow=ArrowContent(text=["base"]))
+             for k in (1, 2)]
+    narrow = SchemeDescriptor(structures=structures, steps=steps, layout="fan",
+                              max_row_width=(max(xs) - min(xs)) / 2)
+    xml, _ = R._layout_fan(narrow, R._IDGen())
+    arrows = ET.fromstring(f"<page>{xml}</page>").findall("arrow")
+    assert all(float(a.get("Head3D").split()[0]) > float(a.get("Tail3D").split()[0]) for a in arrows)  # all point right
+
+
+def test_the_scheme_records_when_a_fan_is_drawn_stacked():
+    smiles = {"SM": "CCN", "P1": "CCO", "P2": "CCCl"}
+    structures = {k: StructureRef(id=k, smiles=v, label=k) for k, v in smiles.items()}
+    steps = [StepDescriptor(substrates=["SM"], products=[f"P{k}"]) for k in (1, 2)]
+    scheme = SchemeDescriptor(structures=structures, steps=steps, layout="fan", max_row_width=10.0)
+    R._layout_fan(scheme, R._IDGen())
+    assert scheme.drawn_layout == "divergent"
