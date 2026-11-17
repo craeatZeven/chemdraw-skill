@@ -48,6 +48,31 @@
    "id": "alk",
    "smiles": "CC([O-])O",
    "label": "2"
+  },
+  {
+   "id": "v4",
+   "label": "V-4",
+   "newman": {
+    "front": [
+     "*",
+     "H",
+     "Ph"
+    ],
+    "rear": [
+     "H",
+     "CO2Me",
+     "H"
+    ],
+    "conformation": "staggered",
+    "attach": {
+     "smiles": "O=C([*])C1CCCCC1"
+    }
+   }
+  },
+  {
+   "id": "v4p",
+   "label": "V-4 (flat)",
+   "smiles": "O=C(C1CCCCC1)C(c1ccccc1)CC(=O)OC"
   }
  ],
  "steps": [
@@ -99,6 +124,15 @@
      }
     }
    ]
+  },
+  {
+   "substrates": [
+    "v4"
+   ],
+   "products": [
+    "v4p"
+   ],
+   "arrow": "reversible"
   }
  ]
 }

@@ -392,8 +392,14 @@ def newman_projection(
     cx: float = 180.0,
     cy: float = 160.0,
     bond_length: float = 24.0,
+    attach: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
+
+    ``attach`` bonds the front carbon to the rest of a molecule (BJOC 22-125 scheme 4): the
+    front substituent written ``"*"`` is replaced by a drawn group ``{"root", "atoms",
+    "bonds"}`` whose coordinates put the root at the origin with the bond into it arriving
+    from -x; the group is turned so its +x runs outward along that spoke.
 
     The molecule is a connected substituted ethane: the front carbon and one rear carbon share
     the projection centre and are bonded; rear bonds belong to the rear carbon and sit beneath
@@ -427,11 +433,22 @@ def newman_projection(
     rear_spoke_starts: list[tuple[float, float]] = []
     rear_spoke_ends: list[tuple[float, float]] = []
 
+    if attach is not None and list(front).count("*") != 1:
+        raise ValueError('An attached group replaces exactly one front substituent written "*".')
+    if attach is None and "*" in front:
+        raise ValueError('A front substituent "*" needs an attached group.')
+    attached: list[tuple[float, int]] = []
     for theta_deg, label in zip(front_angles, front):
         rad = math.radians(theta_deg)
         ex = cx + L * math.cos(rad)
         ey = cy + L * math.sin(rad)
         front_spoke_ends.append((ex, ey))
+        if label == "*":
+            attached.append((rad, len(atoms) + 1))
+            atoms.append({"index": len(atoms) + 1, "symbol": "*", "x": ex, "y": ey})  # replaced below
+            bonds.append({"index": len(bonds) + 1, "atom1": 1, "atom2": len(atoms), "order": 1,
+                          "role": "front_spoke"})
+            continue
         sub_idx = len(atoms) + 1
         atoms.append({
             "index": sub_idx,
@@ -488,6 +505,30 @@ def newman_projection(
             "role": "rear_spoke",
             "z": 5 + len(bonds),
         })
+
+    if attached:
+        rad, slot = attached[0]
+        cos, sin = math.cos(rad), math.sin(rad)
+        spoke = atoms[slot - 1]
+        number: dict[int, int] = {}
+        for entry in attach["atoms"]:
+            gx, gy = float(entry["x"]), float(entry["y"])
+            local = int(entry["index"])
+            if local == int(attach["root"]):
+                number[local] = slot
+                target = spoke
+            else:
+                number[local] = len(atoms) + 1
+                target = {"index": number[local]}
+                atoms.append(target)
+            target.update({k: v for k, v in entry.items() if k not in ("index", "x", "y")})
+            target.update({"x": spoke["x"] + gx * cos - gy * sin, "y": spoke["y"] + gx * sin + gy * cos,
+                           "role": "attached_root" if local == int(attach["root"]) else "attached"})
+            target.setdefault("show_label", target.get("symbol", "C") != "C")
+        for entry in attach["bonds"]:
+            bonds.append({**{k: v for k, v in entry.items() if k not in ("atom1", "atom2", "index")},
+                          "index": len(bonds) + 1, "atom1": number[int(entry["atom1"])],
+                          "atom2": number[int(entry["atom2"])], "role": "attached"})
 
     circle_graphic = (
         f'<graphic id="950" GraphicType="Oval" OvalType="Circle Filled" color="2" Z="100" '

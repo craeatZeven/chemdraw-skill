@@ -881,9 +881,11 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
 
     kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
     lists: species [{id, smiles or name, label?, generic_rings?}] (or {id, newman {front, rear,
-    conformation?, dihedral_offset?}, label?} for a Newman projection placed among them,
+    conformation?, dihedral_offset?, attach?}, label?} for a Newman projection placed among them,
     which arrows cannot point at and whose steps need no moves; the order of rear picks the
-    conformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered)
+    conformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered;
+    attach {smiles with one [*]} bonds the front carbon to the rest of the molecule, in place of
+    the front substituent written "*")
     and steps [{substrates, products, above?,
     below?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs
     from {species, atom} or {species, bond [i, j]} to the same kind of end, in species that

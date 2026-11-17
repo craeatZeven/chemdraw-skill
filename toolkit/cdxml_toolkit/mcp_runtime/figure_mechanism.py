@@ -38,7 +38,7 @@ from . import artifact_safety, figure_draw, figure_house, figure_lint
 
 MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers"}
 SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "generic_rings"}
-NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset"}
+NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset", "attach"}
 NEWMAN_SPOKE = 1.4 * ACS_BOND_LENGTH   # a projection's spokes, sized beside 14.4 pt bonds
 # Closest a rear spoke may come to a front one; ChemDraw-style eclipsed drawings use 14.
 NEWMAN_MIN_APART = 10.0
@@ -193,6 +193,7 @@ def _newman_errors(ident: str, spec: Any) -> list[str]:
         group = spec.get(side)
         if not (isinstance(group, list) and len(group) == 3 and all(isinstance(g, str) and g for g in group)):
             errors.append(f"Species {ident}: newman {side} must list three substituents, e.g. [\"Me\", \"H\", \"H\"].")
+    errors += _attach_errors(ident, spec)
     if spec.get("conformation", "staggered") not in ("staggered", "eclipsed"):
         errors.append(f"Species {ident}: newman conformation must be staggered or eclipsed.")
     offset = spec.get("dihedral_offset")
@@ -209,12 +210,89 @@ def _newman_errors(ident: str, spec: Any) -> list[str]:
     return errors
 
 
+def _attach_errors(ident: str, spec: dict) -> list[str]:
+    """attach bonds the front carbon to the rest of the molecule, in place of the front "*"."""
+    front = spec.get("front") if isinstance(spec.get("front"), list) else []
+    rear = spec.get("rear") if isinstance(spec.get("rear"), list) else []
+    attach = spec.get("attach")
+    where = f"Species {ident}: newman attach"
+    if attach is None:
+        return [f'{where} is missing: a front substituent "*" stands for an attached group '
+                '({"smiles": "O=C([*])c1ccccc1"}).'] if "*" in front else []
+    errors = []
+    if not isinstance(attach, dict) or set(attach) != {"smiles"} or not isinstance(attach.get("smiles"), str):
+        errors.append(f'{where} must be {{"smiles": "..."}}, the group with [*] where it meets the front carbon.')
+    elif attach["smiles"].count("*") != 1:
+        errors.append(f"{where} smiles must hold exactly one [*], where the group meets the front carbon.")
+    if front.count("*") != 1:
+        errors.append(f'{where} replaces exactly one front substituent, written "*".')
+    if "*" in rear:
+        errors.append(f'{where} meets the front carbon only; write the rear substituents out.')
+    return errors
+
+
+_ATTACHED: dict[str, dict] = {}
+
+
+def _attach_group(smiles: str) -> dict:
+    """The attached group as drawn coordinates: root at the origin, the bond into it from -x,
+    bonds 14.4 pt, Kekulé bond orders; the [*] itself is left out."""
+    if smiles in _ATTACHED:
+        return _ATTACHED[smiles]
+    from rdkit.Chem import AllChem
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f"the attached group {smiles!r} is not valid SMILES")
+    stars = [a for a in mol.GetAtoms() if a.GetAtomicNum() == 0]
+    if len(stars) != 1 or stars[0].GetDegree() != 1:
+        raise ValueError(f"the attached group {smiles!r} needs one [*] bonded to one atom")
+    if any(a.GetFormalCharge() or a.GetNumRadicalElectrons() for a in mol.GetAtoms()):
+        raise ValueError(f"the attached group {smiles!r} carries a charge or radical, which a projection "
+                         "cannot draw yet; draw that species as an ordinary structure")
+    Chem.Kekulize(mol, clearAromaticFlags=True)
+    AllChem.Compute2DCoords(mol)
+    conf = mol.GetConformer()
+    xy = {a.GetIdx(): (conf.GetAtomPosition(a.GetIdx()).x, -conf.GetAtomPosition(a.GetIdx()).y)
+          for a in mol.GetAtoms()}   # y down, as on the page
+    lengths = [math.dist(xy[b.GetBeginAtomIdx()], xy[b.GetEndAtomIdx()]) for b in mol.GetBonds()]
+    scale = ACS_BOND_LENGTH / (sum(lengths) / len(lengths))
+    star = stars[0].GetIdx()
+    root = stars[0].GetNeighbors()[0].GetIdx()
+    angle = math.atan2(xy[root][1] - xy[star][1], xy[root][0] - xy[star][0])
+    cos, sin = math.cos(-angle), math.sin(-angle)
+    from ..templates.conformers import _HYDRIDE_LABELS, _SIMPLE_ELEMENTS
+    atoms = []
+    for atom in mol.GetAtoms():
+        if atom.GetIdx() == star:
+            continue
+        symbol, hydrogens = atom.GetSymbol(), atom.GetTotalNumHs()
+        label = symbol if symbol == "C" or not hydrogens else symbol + "H" + (str(hydrogens) if hydrogens > 1 else "")
+        if symbol not in _SIMPLE_ELEMENTS or (label != symbol and label not in _HYDRIDE_LABELS):
+            raise ValueError(f"the attached group {smiles!r} has an atom a projection cannot label ({label})")
+        dx, dy = (xy[atom.GetIdx()][0] - xy[root][0]) * scale, (xy[atom.GetIdx()][1] - xy[root][1]) * scale
+        atoms.append({"index": atom.GetIdx() + 1, "symbol": label,
+                      "num_hydrogens": hydrogens, "show_label": symbol != "C",
+                      "x": dx * cos - dy * sin, "y": dx * sin + dy * cos})
+    bonds = [{"atom1": b.GetBeginAtomIdx() + 1, "atom2": b.GetEndAtomIdx() + 1,
+              "order": int(b.GetBondTypeAsDouble())}
+             for b in mol.GetBonds() if star not in (b.GetBeginAtomIdx(), b.GetEndAtomIdx())]
+    _ATTACHED[smiles] = {"root": root + 1, "atoms": atoms, "bonds": bonds}
+    return _ATTACHED[smiles]
+
+
+def _projection(spec: dict, cx: float = 0.0, cy: float = 0.0) -> dict:
+    """The template drawn from a species' newman entry, its attached group included."""
+    from ..templates.conformers import newman_projection
+    attach = spec.get("attach")
+    return newman_projection(conformation=spec.get("conformation", "staggered"),
+                             dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
+                             rear=tuple(spec["rear"]), cx=cx, cy=cy, bond_length=NEWMAN_SPOKE,
+                             attach=_attach_group(attach["smiles"]) if attach else None)
+
+
 def _newman_frag(ident: str, spec: dict, label: str | None) -> Any:
     """A Newman projection as a structure the row layout can place: atoms, bonds, box, label."""
-    from ..templates.conformers import newman_projection
-    drawn = newman_projection(conformation=spec.get("conformation", "staggered"),
-                              dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
-                              rear=tuple(spec["rear"]), cx=0.0, cy=0.0, bond_length=NEWMAN_SPOKE)
+    drawn = _projection(spec)
     atoms = [dict(a) for a in drawn["atoms"]]
     frag = SimpleNamespace(atoms=atoms, bonds=[dict(b) for b in drawn["bonds"]], newman=dict(spec),
                            ref=StructureRef(id=ident, label=label))
@@ -229,12 +307,8 @@ def _newman_xml(frag: Any, next_id) -> list[str]:
     The template orders its parts by Z (rear spokes, then the filled disc, then the front
     spokes); new Z values keep that order, so the disc still hides the rear spokes' roots.
     """
-    from ..templates.conformers import newman_projection
     centre = frag.atoms[0]  # the front carbon, at the centre of the projection
-    spec = frag.newman
-    drawn = newman_projection(conformation=spec.get("conformation", "staggered"),
-                              dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
-                              rear=tuple(spec["rear"]), cx=centre["x"], cy=centre["y"], bond_length=NEWMAN_SPOKE)
+    drawn = _projection(frag.newman, centre["x"], centre["y"])
     elements = [ET.fromstring(drawn["fragment_xml"])] + [ET.fromstring(g) for g in drawn["graphics_xml"]]
     every = [node for element in elements for node in element.iter()]
     renumber = {node.get("id"): str(next_id()) for node in every if node.get("id")}
@@ -253,10 +327,7 @@ def _newman_inventory(spec: dict) -> list[str]:
     """What the readback finds for this projection: the template read the way pages are read."""
     import tempfile
     from ..chemistry_semantics import document_inventory
-    from ..templates.conformers import newman_projection
-    drawn = newman_projection(conformation=spec.get("conformation", "staggered"),
-                              dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
-                              rear=tuple(spec["rear"]), bond_length=NEWMAN_SPOKE)
+    drawn = _projection(spec)
     with tempfile.TemporaryDirectory(prefix="newman-") as scratch:
         path = Path(scratch) / "newman.cdxml"
         path.write_text(drawn["cdxml"], encoding="utf-8")
@@ -881,6 +952,14 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     # A Newman projection is drawn from its substituents, not from a structure to ground.
     projections = [e for e in brief["species"] if "newman" in e]
     grounded, errors = figure_draw._ground([e for e in brief["species"] if "newman" not in e])
+    if errors:
+        return figure_draw._failure(errors, kind="mechanism")
+    for e in projections:
+        if e["newman"].get("attach"):
+            try:
+                _attach_group(e["newman"]["attach"]["smiles"])
+            except ValueError as error:
+                errors.append(f"Species {e['id']}: {error}.")
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
     grounded += [{"id": str(e["id"]), "label": e.get("label"), "name": None, "smiles": None, "source": "newman",
