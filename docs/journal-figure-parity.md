@@ -353,10 +353,7 @@ No known defect.
 Two butane conformers (anti, gauche) joined by a reversible arrow, and the hydrate mechanism
 from the preview set below them.
 
-**Known defect:** in the gauche conformation the rear substituents are not rotated relative to
-the front ones, so three label pairs land on identical coordinates — `(297.21, 160.23)` H/CH3,
-`(279.75, 129.99)` CH3/H, and `(262.29, 160.23)` H/H drawn twice — and the PNG shows a
-collided glyph. The anti conformation is clean.
+**Fixed.** The collision came from the brief, not the code: `dihedral_offset` is the rear set angle relative to the front one, and the brief asked for 120 — a multiple of 120, so the rear spokes landed on the front ones. Angles within 10 degrees of a multiple of 120 are now rejected with an explanation, the brief carries two staggered conformations, and the render shows thirteen labels with no shared coordinate (measured after the fix).
 
 ## `p9-cycle-overlay.json`
 
@@ -369,14 +366,16 @@ because `CurveType` 2 is the dashed flag alone and ChemDraw draws no segment bac
 Overlays are now written with `CurveType="3"` (closed and dashed), `Closed="yes"`, and the first
 anchor repeated at the end.
 
-**Two known defects:**
+**Both defects are fixed, and the sample itself was wrong.** The circles in
+`toolkit/tests/data/native-dashed-overlay.cdxml` were open — first and last anchor 27.56 pt
+apart, `CurveType="2"`, no `Closed` — so the reference this task was built on carried the very
+bug being fixed. It has been replaced with a closed pair (`CurveType="3"`, `Closed="yes"`, the
+first anchor repeated), verified in the render. After the fix: four circles closed, every arrow
+at least 9.0 pt outside every circle, `Overlay:` warnings 0 and `overlay_collides` 0.
 
-- the arrow `(296,171) -> (349,263)` passes 24.0 pt from a circle centre, inside its radius
-  of 37.16, so it cuts through the dashed overlay;
-- the step label `reductive elimination` overlaps the top-left circle.
-
-Neither is caught by a check yet; `arrows_collide` covers arrow against arrow and bond, not
-arrow or label against an overlay.
+A separate finding stands: a generic-ring arc of `p9-generic-ring.json` runs **through** the
+molecule — the closest sample point sits 0.00 pt from a bond, 13 points within 10 pt of one —
+and the compound label sits inside the arc, which the checker does report (`Overlay:`).
 
 ## Where each gap stands
 
