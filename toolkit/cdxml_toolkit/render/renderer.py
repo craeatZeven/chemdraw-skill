@@ -1375,16 +1375,25 @@ def _auto_steps_per_row(
                     if scheme.wrap == "serpentine"
                     else _split_into_rows(steps, per_row))
             widest = 0.0
-            for row in rows:
+            for index, row in enumerate(rows):
+                carried = scheme.wrap == "continue" and index > 0 and _continues(rows[index - 1], row)
                 _, _, edge_x, _ = _layout_steps_row(
                     scheme, row, _IDGen(1), start_x=_ROW_START_X, arrow_y=300.0,
-                    source_data=source_data, reference_mol=reference_mol)
+                    source_data=source_data, reference_mol=reference_mol,
+                    skip_first_substrate_id=-1 if carried else None,
+                    skip_first_substrate_cursor_x=_ROW_START_X if carried else None)
                 widest = max(widest, edge_x - _ROW_START_X)
             if widest <= budget:
                 return per_row
         return 1
     finally:
         _fragment_receipts.reset(token)
+
+
+def _continues(previous: List[StepDescriptor], row: List[StepDescriptor]) -> bool:
+    """Whether a row's first step starts from the structure the previous row ended with."""
+    return bool(previous and row and previous[-1].products and row[0].substrates
+                and row[0].substrates[0] == previous[-1].products[-1])
 
 
 def _layout_sequential(
@@ -1396,21 +1405,23 @@ def _layout_sequential(
     """
     Layout a multi-step sequential scheme.
 
-    Supports wrap:repeat (multi-row L->R with repeated structures),
-    wrap:serpentine (zigzag with vertical arrows between rows), and
-    single-row (no wrapping).
+    Supports wrap:continue (multi-row L->R; a row after the first starts with
+    the arrow that leaves the structure the row above ended with, so every
+    structure is drawn once), wrap:repeat (the same, but each row starts by
+    drawing that structure again), wrap:serpentine (zigzag with vertical
+    arrows between rows), and single-row (no wrapping).
 
     Returns (inner_xml, lowest_y).
     """
     wrap = scheme.wrap
     steps_per_row = scheme.steps_per_row
     if (steps_per_row is None and scheme.max_row_width
-            and wrap in ("repeat", "serpentine") and len(scheme.steps) > 1):
+            and wrap in ("repeat", "continue", "serpentine") and len(scheme.steps) > 1):
         steps_per_row = _auto_steps_per_row(
             scheme, scheme.max_row_width, source_data, reference_mol)
 
     # Single row: no wrapping needed
-    if (wrap not in ("repeat", "serpentine")
+    if (wrap not in ("repeat", "continue", "serpentine")
             or steps_per_row is None
             or steps_per_row >= len(scheme.steps)):
         xml, lowest_y, _, _ = _layout_steps_row(
@@ -1440,20 +1451,29 @@ def _layout_sequential(
     lowest_y = arrow_y
     previous_bottom: Optional[float] = None
 
+    last_product_id: Optional[int] = None
     for row_idx, row_steps in enumerate(rows):
         row_ra = row_run_arrows.get(row_idx, [])
+        # wrap:continue: the structure that ended the row above is not drawn again; this row
+        # starts at the margin with the arrow that leaves it.
+        carried = (wrap == "continue" and row_idx > 0 and last_product_id is not None
+                   and _continues(rows[row_idx - 1], row_steps))
 
-        def layout(at_y: float, row_ids: _IDGen, row_steps=row_steps, row_ra=row_ra):
+        def layout(at_y: float, row_ids: _IDGen, row_steps=row_steps, row_ra=row_ra, carried=carried,
+                   carried_id=last_product_id):
             return _layout_steps_row(
                 scheme, row_steps, row_ids,
                 start_x=80.0, arrow_y=at_y,
                 source_data=source_data,
                 run_arrows=row_ra,
                 reference_mol=reference_mol,
+                skip_first_substrate_id=carried_id if carried else None,
+                skip_first_substrate_cursor_x=80.0 if carried else None,
             )
 
         arrow_y = _next_arrow_y(layout, arrow_y, previous_bottom, LAYOUT_ROW_GAP)
-        row_xml, row_lowest, _, _ = layout(arrow_y, ids)
+        row_xml, row_lowest, _, row_info = layout(arrow_y, ids)
+        last_product_id = row_info.get("last_product_id")
         xml_parts.append(row_xml)
         previous_bottom = _drawn_extent(row_xml)[1]
         lowest_y = max(row_lowest, previous_bottom)
@@ -2254,6 +2274,7 @@ def _layout_steps_row(
     _last_product_bottom: float = arrow_y
     _first_substrate_cx: float = start_x
     _stack_bottom: float = arrow_y
+    _last_product_id: Optional[int] = None
 
     for step_idx, rs in enumerate(resolved_steps):
         step_meta: Dict[str, Any] = {
@@ -2538,6 +2559,7 @@ def _layout_steps_row(
             # Track last product info for serpentine callers
             _last_product_cx = prod.cx
             _last_product_bottom = prod_bottom
+            _last_product_id = getattr(prod, "frag_id", None)
 
             if is_rtl:
                 cursor_x = prod.bbox[0] - inter_gap
@@ -2647,6 +2669,7 @@ def _layout_steps_row(
         "last_product_cx": _last_product_cx,
         "last_product_bottom": _last_product_bottom,
         "first_substrate_cx": _first_substrate_cx,
+        "last_product_id": _last_product_id,
     }
     return "\n".join(xml_parts), lowest_y, row_edge_x, row_info
 

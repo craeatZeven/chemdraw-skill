@@ -41,7 +41,9 @@ RELAYOUT_GAP_SCALE = 1.4
 RELAYOUT_WIDTH_FACTOR = 0.75
 RELAYOUT_MIN_LINE_CHARS = 16
 ARROWS = ("solid", "dashed", "failed", "reversible", "resonance")
-BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout", "overlays"}
+BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout", "overlays",
+              "wrap"}
+WRAPS = ("continue", "repeat", "serpentine")
 
 JACS_PALETTE = {
     "pastel_blue": "#D6EAF8",
@@ -89,6 +91,8 @@ def _validate(brief: dict) -> list[str]:
     width = brief.get("max_width")
     if width is not None and not (isinstance(width, (int, float)) and width > 0):
         errors.append("max_width must be a positive number of points.")
+    if brief.get("wrap", "continue") not in WRAPS:
+        errors.append(f"wrap must be one of {list(WRAPS)}: how a long route goes on to its next row.")
     errors += figure_house.panel_errors(brief)
 
     species = brief.get("species")
@@ -232,6 +236,9 @@ def _scheme(brief: dict, grounded: list[dict], max_width: float | None, gap_scal
     return SchemeDescriptor(
         structures=structures, steps=[steps[i] for i in order], layout=layout,
         max_row_width=max_width, gap_scale=gap_scale, title=brief.get("title"),
+        # A long route goes on to the next row with the arrow that leaves the structure the row
+        # above ended with, so that structure is drawn once.
+        wrap=brief.get("wrap", "continue"),
         substrate_layout="stacked_plus" if stacked else "inline",
     )
 
@@ -802,6 +809,9 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     title and a species' caption (a line under its compound number) take the same forms. A
     species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
     and its number, with an optional fill drawn behind it.
+    A route longer than max_width wraps: by default (wrap "continue") the next row starts with
+    the arrow that leaves the structure the row above ended with, so each structure is drawn
+    once; "repeat" draws that structure again at the start of the row, "serpentine" zigzags.
     A species' generic_rings [{atoms [i, j], members?}] draws an unspecified ring fused at the
     bond i-j: a dashed arc the long way round on the far side of the bond.
     overlays [{fragment, species?, shape circle|outline}] draw a dashed outline around one
