@@ -64,11 +64,11 @@
 
 ## `cdxml_check`
 
-- **function**, line 283: `arrows_collide(source) -> list[str]` - Pairs of curved arrows whose heads come within 6 pt or whose bodies within 3 pt.
-- **function**, line 304: `check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile', allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03, ignore: Iterable[str] = ()) -> dict[str, Any]` - Check one CDXML file or text. Returns ``{"ok", "errors", "warnings", "summary"}``.
-- **function**, line 58: `normalize_palette(palette: Iterable[str] | None)` - No public docstring in the audited version.
-- **function**, line 38: `pages_needed(width, height)` - WidthPages and HeightPages that keep a drawing of this size from wrapping its text.
-- **function**, line 189: `text_over_ink(source, inset: float = 1.0) -> list[str]` - Captions (not atom labels) that a line, arrow, curve or another caption runs through.
+- **function**, line 284: `arrows_collide(source) -> list[str]` - Pairs of curved arrows whose heads come within 6 pt or whose bodies within 3 pt.
+- **function**, line 305: `check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile', allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03, ignore: Iterable[str] = ()) -> dict[str, Any]` - Check one CDXML file or text. Returns ``{"ok", "errors", "warnings", "summary"}``.
+- **function**, line 59: `normalize_palette(palette: Iterable[str] | None)` - No public docstring in the audited version.
+- **function**, line 39: `pages_needed(width, height)` - WidthPages and HeightPages that keep a drawing of this size from wrapping its text.
+- **function**, line 190: `text_over_ink(source, inset: float = 1.0) -> list[str]` - Captions (not atom labels) that a line, arrow, curve or another caption runs through.
 
 ## `cdxml_compose`
 
@@ -392,7 +392,7 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 264: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 274: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_tools`
 
@@ -615,12 +615,12 @@
 
 ## `publication.data`
 
-- **function**, line 146: `field_text(record, field)` - No public docstring in the audited version.
+- **function**, line 167: `field_text(record, field)` - No public docstring in the audited version.
 - **function**, line 83: `load_records(spec, base)` - No public docstring in the audited version.
 - **function**, line 15: `local_path(base, value)` - No public docstring in the audited version.
 - **function**, line 11: `sha256(path)` - No public docstring in the audited version.
 - **function**, line 36: `table_rows(path, sheet = None)` - No public docstring in the audited version.
-- **function**, line 157: `write_json(path, value)` - No public docstring in the audited version.
+- **function**, line 178: `write_json(path, value)` - No public docstring in the audited version.
 
 ## `publication.house_styles`
 
@@ -638,15 +638,15 @@
 
 ## `publication.layout`
 
-- **function**, line 243: `bounds(node, style)` - No public docstring in the audited version.
-- **function**, line 265: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 136: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 263: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 285: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 140: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 27: `font_for(style, size = None)` - No public docstring in the audited version.
 - **function**, line 55: `fragment_mol(fragment)` - No public docstring in the audited version.
 - **function**, line 66: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 62: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 261: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 106: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 281: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 110: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 15: `style_settings(spec)` - No public docstring in the audited version.
 - **function**, line 38: `text_width(value, style, size = None)` - No public docstring in the audited version.
 - **function**, line 43: `wrap(value, width, style)` - No public docstring in the audited version.

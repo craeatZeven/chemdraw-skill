@@ -204,6 +204,9 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
                if f['column'] not in ids['fields'] and desired[f['column']]!='']
         if added:
             conflicts.append({'compound_id':cid,'fields':added,'reason':'new_line_requires_explicit_relayout'});continue
+        if (new.get('secondary_of') or '')!=(old_input.get('secondary_of') or ''):
+            # Moving a compound into or out of another's cell changes the grid.
+            conflicts.append({'compound_id':cid,'reason':'secondary_requires_explicit_relayout'});continue
         if new['identity']!=old_input['identity']:
             if identity!=record['displayed_identity'] and identity!=new['identity']:
                 conflicts.append({'compound_id':cid,'reason':'both_sides_changed_structure'});continue

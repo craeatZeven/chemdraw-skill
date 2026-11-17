@@ -266,3 +266,23 @@ def test_highlight_varying_needs_something_in_common(tmp_path):
     report = draw_figure(brief, output_path=str(tmp_path / "scope"))
     assert report["ok"] is True and report["highlighted"] == {}
     assert any("highlight_varying" in w for w in report["warnings"])
+
+
+def test_a_secondary_product_is_drawn_beside_its_main_product(tmp_path):
+    brief = _brief()
+    brief["species"].insert(1, {"id": "3a-minor", "smiles": "Cc1cccc(C)c1", "label": "3a'",
+                                "values": {"yield": "9%"}, "secondary_of": "3a"})
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True and report["readback"]["status"] == "matched"
+    assert report["checks_passed"] is True
+    (root,) = _pages(report)
+    table = [tuple(round(float(c.get(k)) * 255) for k in "rgb") for c in root.find("colortable").findall("color")]
+    grey = str(table.index((0x80, 0x80, 0x80)) + 2)
+    assert sum(f.get("color") == grey for f in root.iter("fragment")) == 1
+
+
+def test_secondary_of_must_name_another_species():
+    brief = _brief()
+    brief["species"][0]["secondary_of"] = "nobody"
+    report = draw_figure(brief)
+    assert report["ok"] is False and any("secondary_of" in e for e in report["errors"])

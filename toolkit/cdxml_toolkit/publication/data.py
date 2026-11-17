@@ -95,6 +95,7 @@ def load_records(spec, base):
         raise ValueError('structure.format must be smiles, mol, or sdf')
     required = {id_column, *(f['column'] for f in fields)}
     if spec.get('group_column'): required.add(spec['group_column'])
+    if spec.get('secondary_column'): required.add(spec['secondary_column'])
     if spec.get('label_column'): required.add(spec['label_column'])
     if fmt != 'sdf': required.add(structure.get('column', 'smiles' if fmt=='smiles' else 'structure_file'))
     if required - set(header):
@@ -137,10 +138,30 @@ def load_records(spec, base):
         records.append({'compound_id':cid, 'row':row_number,
                         'label':row.get(spec.get('label_column','label'), '') or cid,
                         'group':row.get(spec.get('group_column',''), ''),
+                        'secondary_of':(row.get(spec['secondary_column']) or '').strip() if spec.get('secondary_column') else '',
                         # New layout must not import old CX coordinates/wedge directives.
                         'smiles':semantic_key(mol), 'identity':semantic_key(mol),
                         'values':{f['column']:row[f['column']] for f in fields}})
+    _check_secondaries(records)
     return records, sources
+
+
+def _check_secondaries(records):
+    """A secondary product names a main product of the same group, one level deep."""
+    by_id={r['compound_id']:r for r in records}
+    for record in records:
+        main=record.get('secondary_of')
+        if not main:
+            continue
+        where=f"row {record['row']} ({record['compound_id']})"
+        if main==record['compound_id']:
+            raise ValueError(f'{where}: a compound cannot be its own secondary product')
+        if main not in by_id:
+            raise ValueError(f'{where}: secondary of an unknown compound {main!r}')
+        if by_id[main].get('secondary_of'):
+            raise ValueError(f'{where}: {main!r} is itself a secondary product; name its main product')
+        if by_id[main]['group']!=record['group']:
+            raise ValueError(f'{where}: a secondary product sits in the same group as {main!r}')
 
 
 def field_text(record, field):

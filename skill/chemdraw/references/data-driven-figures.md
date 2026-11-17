@@ -54,7 +54,10 @@ invalid structures and missing or ambiguous SDF matches are errors with row cont
 Use `mode: "scope"`. Select yields, ee/dr, conditions and footnotes from the actual
 data. Rows are grouped in first-occurrence order; order within a group follows the
 table. Each group is a band: a rule across the panel, the group's name in italic
-beneath it, then its rows (a band continued on the next page says so). Labels and
+beneath it, then its rows (a band continued on the next page says so). A
+`secondary_column` names, for a minor product, the compound ID of the main product it
+stands beside: in the same cell, in grey, with its own label and values. It must be in
+the same group, and a secondary product has none of its own. Labels and
 measurements remain tied to IDs during pagination.
 
 ## Full-structure SAR

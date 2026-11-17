@@ -30,8 +30,9 @@ SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "
               "highlight_varying"}
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
-SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", *SPECIES_STYLE}
+SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", "secondary_of", *SPECIES_STYLE}
 NOTE_COLUMN = "note"
+SECONDARY_COLUMN = "secondary_of"
 MAX_SPECIES = 1000
 
 
@@ -109,6 +110,11 @@ def _validate(brief: dict) -> list[str]:
             errors.append(f"Species {ident} needs a smiles or a name.")
         if not isinstance(entry.get("values") or {}, dict):
             errors.append(f"Species {ident}: values must be an object of field -> value.")
+        if entry.get("secondary_of") is not None:
+            ids = {str(e.get("id")) for e in brief.get("species") or [] if isinstance(e, dict)}
+            main = str(entry["secondary_of"])
+            if main == str(ident) or main not in ids:
+                errors.append(f"Species {ident}: secondary_of must name another species of this brief.")
         if entry.get("note") is not None and not isinstance(entry["note"], str):
             errors.append(f"Species {ident}: note must be text (a line under the compound, e.g. 'not formed').")
 
@@ -213,16 +219,19 @@ def _cell_fields(fields: list[dict], notes: bool) -> list[dict]:
 def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[dict], render: bool) -> Path:
     columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
     notes = any(isinstance(e, dict) and e.get("note") for e in brief["species"])
+    secondary = any(isinstance(e, dict) and e.get("secondary_of") for e in brief["species"])
     with (work / "table.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["compound_id", "smiles", "label", "group", *columns.values(), *([NOTE_COLUMN] if notes else [])])
+        writer.writerow(["compound_id", "smiles", "label", "group", *columns.values(), *([NOTE_COLUMN] if notes else []),
+                         *([SECONDARY_COLUMN] if secondary else [])])
         by_id = {str(e["id"]): e for e in brief["species"]}
         for item in grounded:
             entry = by_id[item["id"]]
             values = entry.get("values") or {}
             writer.writerow([item["id"], item["smiles"], _text(entry.get("label")), _text(entry.get("group")),
                              *(_text(values.get(f["key"])) for f in fields),
-                             *([_text(entry.get("note"))] if notes else [])])
+                             *([_text(entry.get("note"))] if notes else []),
+                             *([_text(entry.get("secondary_of"))] if secondary else [])])
     style = {k: brief[k] for k in ("width_mm", "height_mm") if brief.get(k) is not None}
     slug = brief_style(brief)[0]
     if slug != DEFAULT_STYLE_PRESET:
@@ -232,6 +241,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         style.update(preset)
     spec = {
         "mode": "scope", "table": "table.csv", "label_column": "label", "group_column": "group",
+        **({"secondary_column": SECONDARY_COLUMN} if secondary else {}),
         "fields": _cell_fields(fields, notes),
         "title": brief.get("title") or "Substrate scope",
         "conditions": brief.get("conditions") or "",

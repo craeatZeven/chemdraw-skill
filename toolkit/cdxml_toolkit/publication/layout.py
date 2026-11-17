@@ -99,6 +99,10 @@ CELL = {
 }
 
 
+SECONDARY_GAP = 4.0          # between a main product and a secondary one in the same cell
+SECONDARY_COLOR = '#808080'  # a secondary product is drawn in grey, subordinate to the main one
+
+
 def _caption_advance(value, size):
     return value.count('\n')*size*CELL['wrapped_line']+size*CELL['line_advance']+CELL['line_gap']
 
@@ -139,7 +143,13 @@ def create_pages(records,spec,stage,start_index=0):
     margin=16; gap=12; size=style['font_size']; pages=[]; compounds={}
     # Keep first-occurrence group order, and preserve row order within each group.
     groups=list(dict.fromkeys(p['input']['group'] for p in prepared))
-    arranged=[p for group in groups for p in prepared if p['input']['group']==group]
+    # A secondary product (a minor isomer, a by-product) shares its main product's cell, drawn
+    # beside it in grey (Nature Communications PMC13594109, fig. 4: 14b beside 14a).
+    minors={}
+    for p in prepared:
+        if p['input'].get('secondary_of'): minors.setdefault(p['input']['secondary_of'],[]).append(p)
+    arranged=[p for group in groups for p in prepared
+              if p['input']['group']==group and not p['input'].get('secondary_of')]
     manifests=[]; current=None; x=y=row_height=0; last_group=None
     footer='\n'.join(spec.get('footnotes',[]))
     footer=wrap(footer,width-2*margin,style) if footer else ''
@@ -171,7 +181,26 @@ def create_pages(records,spec,stage,start_index=0):
                                    'position':[margin,y+4+size],'size':size})
         current['right']=max(current['right'],margin+text_width(heading,style))
         return y+4+size+(heading.count('\n'))*size*1.5+size*0.3+8
-    for p in arranged:
+    def place(current,p,x,y,color=None):
+        key=f'c{len(compounds)}'; cid=p['input']['compound_id']
+        objects=[{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
+                  'coordinates':[[a+x,b+y] for a,b in p['coords']],**({'color':color} if color else {})}]
+        ty=y+p['molecule_bottom']+size*CELL['caption_baseline']
+        for field,value in p['texts'].items():
+            objects.append({'type':'text','id':key+'_'+field,'text':value,'position':[x+6,ty],'size':size,
+                            **({'color':color} if color else {})})
+            ty+=_caption_advance(value,size)
+        current['objects'].extend(objects)
+        entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']]}
+        current['entries'].append(entry)
+        current['bottom']=max(current['bottom'],y+p['height']); current['right']=max(current['right'],x+p['width'])
+        compounds[cid]={'input':p['input'],'page':current['index'],'bbox':entry['bbox'],
+                        'display':p['texts'],'locked':False}
+    for main in arranged:
+        cell=[main,*minors.get(main['input']['compound_id'],[])]
+        # The cell is the pair (or more) side by side, SECONDARY_GAP apart.
+        p={'input':main['input'],'width':sum(q['width'] for q in cell)+SECONDARY_GAP*(len(cell)-1),
+           'height':max(q['height'] for q in cell)}
         group=p['input']['group']
         if current is None: current,x,y,row_height=new_page()
         if group!=last_group:
@@ -186,19 +215,10 @@ def create_pages(records,spec,stage,start_index=0):
             current,x,y,row_height=new_page()
             if group: y=band(current,y,group+' (continued)')
         if y+p['height']>bottom: raise ValueError(f"Compound {p['input']['compound_id']} exceeds page height")
-        key=f'c{len(compounds)}'; cid=p['input']['compound_id']
-        objects=[{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
-                  'coordinates':[[a+x,b+y] for a,b in p['coords']]}]
-        ty=y+p['molecule_bottom']+size*CELL['caption_baseline']
-        for field,value in p['texts'].items():
-            objects.append({'type':'text','id':key+'_'+field,'text':value,'position':[x+6,ty],'size':size})
-            ty+=_caption_advance(value,size)
-        current['objects'].extend(objects)
-        entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']]}
-        current['entries'].append(entry)
-        current['bottom']=max(current['bottom'],y+p['height']); current['right']=max(current['right'],x+p['width'])
-        compounds[cid]={'input':p['input'],'page':current['index'],'bbox':entry['bbox'],
-                        'display':p['texts'],'locked':False}
+        qx=x
+        for index,q in enumerate(cell):
+            place(current,q,qx,y,None if index==0 else SECONDARY_COLOR)
+            qx+=q['width']+SECONDARY_GAP
         x+=p['width']+gap; row_height=max(row_height,p['height'])
     # Each page is cropped to what it holds: the footnotes follow the last row (rather than
     # sitting at the foot of the full-height page) and the page ends a margin past them.

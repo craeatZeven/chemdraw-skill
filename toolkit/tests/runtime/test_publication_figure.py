@@ -368,3 +368,51 @@ def test_each_scope_group_is_a_band_with_a_rule_and_an_italic_label(tmp_path):
     assert sum(top > second_rule for top in tops) == 1  # one structure in each band
     checks = json.loads((tmp_path/'scope'/'checks.json').read_text(encoding='utf-8'))
     assert not checks['layout']['issues']
+
+
+def _secondary_request(tmp_path, rows):
+    table = tmp_path/'minor.csv'
+    with table.open('w', newline='', encoding='utf-8') as stream:
+        writer = csv.writer(stream)
+        writer.writerow(['compound_id', 'label', 'smiles', 'value', 'group', 'minor_of'])
+        writer.writerows(rows)
+    spec = {'table': str(table), 'mode': 'scope', 'native_render': False, 'secondary_column': 'minor_of',
+            'fields': [{'column': 'value', 'label': ''}]}
+    path = tmp_path/'minor.json'; path.write_text(json.dumps(spec))
+    return path
+
+
+def test_a_secondary_product_stands_beside_its_main_product_in_grey(tmp_path):
+    # Nature Communications PMC13594109, fig. 4: 14b drawn in grey next to 14a, with its own yield.
+    path = _secondary_request(tmp_path, [['a', '14a', STEREO, '61%', '', ''], ['b', '14b', OTHER, '22%', '', 'a'],
+                                         ['c', '15', STEREO, '70%', '', '']])
+    out = tmp_path/'minor'
+    assert execute(path, out)['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    a, b, c = (project['compounds'][k]['bbox'] for k in 'abc')
+    assert b[1] == a[1] and 0 < b[0] - a[2] <= 6       # on the same row, just right of its main product
+    assert c[0] >= b[2] + 12                           # the next cell starts after the pair
+    root = ET.parse(out/project['pages'][0]['file']).getroot()
+    table = [tuple(round(float(x.get(k)) * 255) for k in 'rgb') for x in root.find('colortable').findall('color')]
+    grey = str(table.index((0x80, 0x80, 0x80)) + 2) if (0x80, 0x80, 0x80) in table else 'missing'
+    group_b = root.find(f".//group[@id='{project['compounds']['b']['objects']['group']}']")
+    assert {e.get('color') for e in group_b.iter() if e.tag in ('fragment', 't', 's') and e.get('color')} == {grey}
+    group_a = root.find(f".//group[@id='{project['compounds']['a']['objects']['group']}']")
+    assert grey not in {e.get('color') for e in group_a.iter()}
+    checks = json.loads((out/'checks.json').read_text(encoding='utf-8'))
+    assert checks['data_binding']['status'] == 'passed' and not checks['layout']['issues']
+
+
+@pytest.mark.parametrize('rows, message', [
+    ([['a', '1', STEREO, '1%', '', 'z']], 'secondary of an unknown compound'),
+    ([['a', '1', STEREO, '1%', '', 'a']], 'its own secondary'),
+    ([['a', '1', STEREO, '1%', '', ''], ['b', '2', OTHER, '2%', '', 'a'], ['c', '3', STEREO, '3%', '', 'b']],
+     'itself a secondary'),
+    ([['a', '1', STEREO, '1%', 'g1', ''], ['b', '2', OTHER, '2%', 'g2', 'a']], 'same group'),
+])
+def test_a_secondary_product_must_name_a_main_product(tmp_path, rows, message):
+    path = _secondary_request(tmp_path, rows)
+    spec = json.loads(path.read_text()); spec['group_column'] = 'group'; path.write_text(json.dumps(spec))
+    with pytest.raises(ValueError, match=message):
+        execute(path, tmp_path/'bad')
+    assert not (tmp_path/'bad').exists()
