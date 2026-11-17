@@ -195,3 +195,11 @@ def test_a_label_is_set_as_a_formula_only_when_it_reads_as_one(label, formula):
     # element symbols, groups (Ph, Et, OAc, dba, ...), brackets and counts gets its subscripts.
     from cdxml_toolkit.text_formatting import is_formula_label
     assert is_formula_label(label) is formula
+
+def test_a_mechanism_designator_keeps_its_number_on_the_baseline():
+    from cdxml_toolkit.publication.layout import caption_runs
+
+    # Sn2 is S_N2: the 2 is a step count, not a sulfur count. S2 (disulfide) is still a formula.
+    assert [r for r in caption_runs("Sn2", bold=True)[1] if r.get("subscript")] == []
+    assert [r for r in caption_runs("Sn1", bold=True)[1] if r.get("subscript")] == []
+    assert [r["text"] for r in caption_runs("S2", bold=True)[1] if r.get("subscript")] == ["2"]

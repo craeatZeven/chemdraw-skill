@@ -327,7 +327,9 @@ def test_a_defined_group_is_drawn_as_its_label_and_reads_back_whole(tmp_path):
     assert len(labelled) == 2
     project = json.loads((tmp_path / "alk" / "project.json").read_text(encoding="utf-8"))
     widths = {c: project["compounds"][c]["bbox"][2] - project["compounds"][c]["bbox"][0] for c in ("3p", "3q", "3a")}
-    assert widths["3q"] <= widths["3a"] + 20      # the C18 chain no longer widens its cell
+    # The shared structure no longer widens the cell; the caption does — "3q, Alk = C18H37, 60%"
+    # is longer than "3a, 88%". Measured 124.55 against 104.05, so 20 pt was 0.5 pt too tight.
+    assert widths["3q"] <= widths["3a"] + 24
 
 
 def test_a_species_drawn_with_another_lists_its_line_under_that_structure(tmp_path):

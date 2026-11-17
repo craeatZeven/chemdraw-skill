@@ -1228,8 +1228,11 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 return node
 
             node = arrow(start, end, style_name == 'equilibrium')
-            if style_name == 'line':
+            # A "line" object is never an arrow, whatever its style: a dashed rule used to keep
+            # ArrowheadHead="Full" and drew a real arrowhead on a section title.
+            if kind == 'line':
                 node.set('ArrowheadHead', 'None')
+                node.set('ArrowheadWidth', '0')
             if style_name == 'dashed':
                 node.set('LineType', 'Dashed')
             if style_name == 'failed':

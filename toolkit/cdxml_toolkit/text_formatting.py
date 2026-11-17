@@ -62,9 +62,17 @@ def _is_compound_label(text: str, m: re.Match) -> bool:
     return letter not in _SINGLE_LETTER_ELEMENTS or digits == "1"
 
 
+# Mechanism designators, where the trailing digit is a step count and stays on the baseline:
+# "Sn2" is written S_N2, never as a subscripted sulfur count. "S2" (disulfide) is a formula and
+# still subscripts, so only these whole tokens are exempt.
+_MECHANISM_TOKEN = re.compile(r'(?<![\w])Sn[12](?![\w])')
+
+
 def subscript_matches(text: str) -> list[re.Match]:
     """Formula digit groups in *text* that should be subscripted."""
-    return [m for m in SUBSCRIPT_RE.finditer(text) if not _is_compound_label(text, m)]
+    exempt = [(m.start(), m.end()) for m in _MECHANISM_TOKEN.finditer(text)]
+    return [m for m in SUBSCRIPT_RE.finditer(text)
+            if not _is_compound_label(text, m) and not any(a <= m.start(1) < b for a, b in exempt)]
 
 # ---------------------------------------------------------------------------
 # Italic prefixes recognised in organic chemistry nomenclature.

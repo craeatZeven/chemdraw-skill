@@ -411,7 +411,7 @@
 
 ## `mcp_runtime.figure_tools`
 
-- **function**, line 1507: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
+- **function**, line 1510: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
 - **function**, line 632: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
 - **function**, line 165: `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict` - Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs, r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like, enumerate_markush.
 
