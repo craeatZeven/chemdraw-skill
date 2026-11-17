@@ -274,3 +274,30 @@ The circles come out identical (74.3 x 74.3 pt, radius 37.16, spread 0.0) and us
 
 Neither is caught by a check yet; `arrows_collide` covers arrow against arrow and bond, not
 arrow or label against an overlay.
+
+## Where each gap stands
+
+Code exists for all thirteen items. What follows is what has been checked on a machine with
+ChemDraw and RDKit, and how; an item is only "verified" here when a render was inspected and
+the numbers quoted were measured. `assets/parity/` holds the briefs and renders for P3, P4,
+P7, P8 and P9.
+
+| Item | State | Evidence |
+| --- | --- | --- |
+| P1 arc arrows | verified | three native `<arrow AngularSize>`, per-move colours land in the colortable, `crossings: []`, clockwise arcs put the head on the tail end |
+| P1 half arrow | verified | head size back to ChemDraw's own 600/525/150 (a half arrow is the full set at 0.6, not a different ratio); renders as a single thin barb |
+| P2 equilibrium arrows | verified | the Newman figure draws its reversible pair as a double half-headed arrow |
+| P3 Newman in a scheme | **defective** | renders and lays out, but the gauche conformation has three label pairs on identical coordinates — `(297.21,160.23)` H/CH3, `(279.75,129.99)` CH3/H, `(262.29,160.23)` H/H twice. The rear set is not rotated against the front one |
+| P4 highlight the varying group | verified | `#FF6600` on the differing atoms and bonds of every cell in `p4-p7-p8-scope` |
+| P5 keep 0 % visible | verified | the publication-figure test renders `Result: 0%` rather than dropping the cell |
+| P6 variable-group rows | **not checked** | no render inspected yet |
+| P7 secondary product | verified | `3d′` sits 0-6 pt right of `3d`, grey, with its own `9%b`; the all-grey assertion needed the colour-table dedupe fixed first |
+| P8 section bands | verified | two bands, italic titles, full-width rules |
+| P9 dashed overlay | **defective** | circles identical to 0.0 pt (74.3 x 74.3, radius 37.16) and spelled like the native sample, but one arrow passes 24.0 pt from a centre (inside the radius) and `reductive elimination` overlaps the top-left circle |
+| P10 page fits content | verified | the scope page crops to its content; `check` passes |
+| P11 10 pt type | verified | `LabelSize`/`CaptionSize` are 10, not 8 |
+| P12 yield, not "Yield:" | verified | cells read `3a` over `92%` |
+| P13 dense grid | verified | twelve compounds on one page, and an eighteen-compound benzamide panel on one page |
+
+Two defects remain open (P3, P9) and one item has no render behind it (P6). Nothing else in the
+list is unverified.
