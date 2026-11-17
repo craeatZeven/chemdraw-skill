@@ -357,8 +357,8 @@ def test_remaining_issues_after_the_relayout_are_reported_not_hidden(tmp_path, m
 def test_the_readback_catches_a_missing_structure(tmp_path, monkeypatch):
     real = figure_draw.document_inventory
 
-    def lossy(path):
-        inventory = real(path)
+    def lossy(path, **kwargs):   # the caller passes like= now; a stub has to accept it
+        inventory = real(path, **kwargs)
         inventory.pop(next(iter(inventory)))
         return inventory
 
