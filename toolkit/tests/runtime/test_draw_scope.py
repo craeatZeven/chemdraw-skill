@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -306,3 +307,24 @@ def test_a_definition_is_written_to_its_own_unnamed_line(tmp_path):
     lines = ["".join(s.text or "" for s in t.iter("s")) for t in root.iter("t")]
     assert "Alk = C7H15" in lines
     assert not any(line.startswith("definition") or line == "—" for line in lines)
+
+
+def test_a_defined_group_is_drawn_as_its_label_and_reads_back_whole(tmp_path):
+    # BJOC 22-127 scheme 2: 3p and 3q draw "NH-Alk" and say under it what Alk is, instead of a
+    # heptyl or octadecyl chain that would widen the cell.
+    brief = {"kind": "scope", "fields": ["yield"], "species": [
+        {"id": "3p", "smiles": "CCCCCCCNC(=O)c1nc2ccccc2s1", "label": "3p", "definition": "Alk = C7H15",
+         "values": {"yield": "63%"}},
+        {"id": "3q", "smiles": "CCCCCCCCCCCCCCCCCCNC(=O)c1nc2ccccc2s1", "label": "3q",
+         "definition": "Alk = C18H37", "values": {"yield": "60%"}},
+        {"id": "3a", "smiles": "Cc1ccc(NC(=O)c2nc3ccccc3s2)cc1", "label": "3a", "values": {"yield": "64%"}}]}
+    report = draw_figure(brief, output_path=str(tmp_path / "alk"))
+    assert report["ok"], report
+    assert report["readback"]["status"] == "matched"
+    root = ET.parse(report["pages"][0]["path"]).getroot()
+    labelled = [n for n in root.iter("n") if n.get("NodeType") == "Fragment"
+                and "".join(n.find("t").itertext()).strip() == "Alk"]
+    assert len(labelled) == 2
+    project = json.loads((tmp_path / "alk" / "project.json").read_text(encoding="utf-8"))
+    widths = {c: project["compounds"][c]["bbox"][2] - project["compounds"][c]["bbox"][0] for c in ("3p", "3q", "3a")}
+    assert widths["3q"] <= widths["3a"] + 20      # the C18 chain no longer widens its cell

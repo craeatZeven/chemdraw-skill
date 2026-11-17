@@ -91,7 +91,7 @@ print it; the others each take a centred line of their own, and a shared line th
 not fit the cell breaks after the label. Formula digits in the conditions and in every
 caption line except the compound label are written as subscripts (`C7H15`, `Pd2(dba)3`),
 by the rule scheme conditions use; give a group definition such as `Alk = C7H15` as an
-optional, inline field with an empty `label`, listed first. `^` marks a footnote letter
+optional, inline field with an empty `label`, listed first; `"label_groups_from": "<column>"` also draws the group a definition names (the one substituent of that formula) as its label, a ChemDraw abbreviation that keeps the group whole. `^` marks a footnote letter
 (`12^b`, `40%^c`): it is drawn as an italic superscript and reads back as the letter.
 
 ## ChemDraw editing and incremental updates

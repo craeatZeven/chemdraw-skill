@@ -10,7 +10,7 @@ from rdkit import Chem
 from rdkit.Chem import rdDepictor, rdFMCS
 from ..chemistry_semantics import read_molecules, semantic_key, document_inventory
 from ..mcp_runtime.figure_tools import compose_chemical_figure, _move
-from ..text_formatting import is_formula_label, subscript_matches
+from ..text_formatting import _ELEMENTS, is_formula_label, subscript_matches
 from .data import field_text, write_json
 
 
@@ -201,6 +201,59 @@ def chemical_runs(text):
     return runs
 
 
+_DEFINITION = re.compile(r"^\s*([A-Za-z][A-Za-z']*)\s*=\s*((?:[A-Z][a-z]?\d*)+)\s*$")
+
+
+def parse_definition(text):
+    """(label, {element: count}) for a definition such as "Alk = C7H15", else None."""
+    m = _DEFINITION.match(text or '')
+    if not m:
+        return None
+    counts = {}
+    for symbol, number in re.findall(r'([A-Z][a-z]?)(\d*)', m.group(2)):
+        if symbol not in _ELEMENTS:
+            return None
+        counts[symbol] = counts.get(symbol, 0) + int(number or 1)
+    return m.group(1), counts
+
+
+def label_group(mol, definition):
+    """The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
+
+    The group is the far side of a single, non-ring bond whose atoms (with their hydrogens)
+    make exactly the defined formula: "Alk = C7H15" finds the heptyl group. ``atoms`` starts
+    with the atom bonded to the rest (``outside``). None when nothing matches, or the match is
+    not unique.
+    """
+    parsed = parse_definition(definition)
+    if parsed is None or mol is None:
+        return None
+    label, want = parsed
+    found = []
+    for bond in mol.GetBonds():
+        if bond.IsInRing() or bond.GetBondType() != Chem.BondType.SINGLE:
+            continue
+        for root, outside in ((bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()),
+                              (bond.GetEndAtomIdx(), bond.GetBeginAtomIdx())):
+            side, queue = [root], [root]
+            while queue:
+                for nb in mol.GetAtomWithIdx(queue.pop()).GetNeighbors():
+                    k = nb.GetIdx()
+                    if k != outside and k not in side:
+                        side.append(k); queue.append(k)
+            if len(side) >= mol.GetNumAtoms():
+                continue
+            counts = {}
+            for k in side:
+                atom = mol.GetAtomWithIdx(k)
+                counts[atom.GetSymbol()] = counts.get(atom.GetSymbol(), 0) + 1
+                if atom.GetTotalNumHs():
+                    counts['H'] = counts.get('H', 0) + atom.GetTotalNumHs()
+            if counts == want:
+                found.append({'label': label, 'atoms': tuple(side), 'outside': outside})
+    return found[0] if len(found) == 1 else None
+
+
 def header_identities(spec):
     """What the header scheme draws, as the page check counts structures (R numbers removed)."""
     header = spec.get('header') or {}
@@ -284,7 +337,25 @@ def prepare(records,spec):
         mol,xy,warning=molecule_coordinates(Chem.MolFromSmiles(record['smiles']),style['bond_length'],refs.get(group))
         refs.setdefault(group,mol)
         if warning: warnings.append({'compound_id':record['compound_id'],'message':warning})
-        xs,ys=zip(*xy); pad=size*CELL['pad']; molecule_width=max(xs)-min(xs)+2*pad
+        # A substituent the compound's definition names ("Alk = C7H15") is drawn as its label:
+        # for the layout its atoms stand just past the attachment atom, and the label's width
+        # counts instead of the chain's.
+        named=None; extent=list(xy)
+        source=spec.get('label_groups_from')
+        if source and record['values'].get(source):
+            try:
+                named=label_group(mol,record['values'][source])
+            except Exception:
+                named=None
+        if named:
+            rx,ry=xy[named['atoms'][0]]; ox,oy=xy[named['outside']]
+            d=math.hypot(rx-ox,ry-oy) or 1.0; ux,uy=(rx-ox)/d,(ry-oy)/d
+            xy=list(xy)
+            for n,k in enumerate(named['atoms'][1:],1):
+                xy[k]=(rx+ux*0.6*n,ry+uy*0.6*n)
+            reach=text_width(named['label'],style,ACS_LABEL_SIZE_FALLBACK)+2
+            extent=[p for k,p in enumerate(xy)]+[(rx+(reach if ux>=0 else -reach),ry)]
+        xs,ys=zip(*extent); pad=size*CELL['pad']; molecule_width=max(xs)-min(xs)+2*pad
         if molecule_width>usable:
             raise ValueError(f"Structure {record['compound_id']} exceeds figure width at requested bond length")
         raw={'label':record['label'],**{f['column']:field_text(record,f) for f in spec.get('fields',[])}}
@@ -314,7 +385,7 @@ def prepare(records,spec):
         # The structure stands in the middle of its cell, over its centred caption.
         shift=pad+(width-molecule_width)/2
         coords=[[x-min(xs)+shift,y-min(ys)+pad] for x,y in xy]
-        prepared.append({'input':record,'coords':coords,'texts':texts,'runs':runs,'inline':joined,
+        prepared.append({'input':record,'coords':coords,'texts':texts,'runs':runs,'inline':joined,'named':named,
                          'width':width,'height':height,'molecule_bottom':max(y for x,y in coords)})
     return prepared,warnings
 
@@ -404,7 +475,7 @@ def create_pages(records,spec,stage,start_index=0):
             objects.append(line(field,cx,'Center'))
             ty+=_caption_advance(value,size)
         current['objects'].extend(objects)
-        entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']]}
+        entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']],'named':p.get('named')}
         current['entries'].append(entry)
         current['bottom']=max(current['bottom'],y+p['height']); current['right']=max(current['right'],x+p['width'])
         compounds[cid]={'input':p['input'],'page':current['index'],'bbox':entry['bbox'],
@@ -474,11 +545,32 @@ def create_pages(records,spec,stage,start_index=0):
             for oid in [object_ids['fragment'],object_ids['label'],*object_ids['fields'].values(),*joins]:
                 node=next(n for n in native_page if n.get('id')==oid)
                 native_page.remove(node);group.append(node)
+            if entry.get('named'):
+                next_id=_draw_as_label(group.find('fragment'),record['input']['smiles'],entry['named'],next_id)
             record['objects']=object_ids
             record['displayed_identity']=semantic_key(fragment_mol(group.find('fragment')))
         tree.write(stage/name,encoding='utf-8',xml_declaration=True)
         pages.append({'file':name,'width_pt':page['width'],'height_pt':page['height']})
     return pages,compounds,warnings
+
+
+ACS_LABEL_SIZE_FALLBACK = 10.0
+
+
+def _draw_as_label(fragment, smiles, named, next_id):
+    """Contract a named substituent into one labelled node that keeps it whole (ChemDraw's
+    NodeType="Fragment" abbreviation), as house-style abbreviations are drawn."""
+    from ..mcp_runtime.figure_house import _atom_nodes, _contract
+    from ..render.renderer import _IDGen
+    src = Chem.MolFromSmiles(smiles)
+    nodes = _atom_nodes(fragment, fragment_mol(fragment), src)
+    if nodes is None:
+        return next_id
+    root = named['atoms'][0]
+    expansion = Chem.MolFragmentToSmiles(src, atomsToUse=list(named['atoms']), rootedAtAtom=root, canonical=False)
+    ids = _IDGen(next_id)
+    _contract(fragment, nodes, named['atoms'], named['outside'], expansion, named['label'], named['label'], ids)
+    return max(int(n.get('id')) for n in fragment.iter() if n.get('id') and n.get('id').isdigit()) + 1
 
 
 def bounds(node, style):
@@ -499,7 +591,7 @@ def bounds(node, style):
         elif node.get('Justification')=='Right':left-=width
         return [left,coords[1]-size,left+width,coords[1]+max(0,text.count('\n'))*size*1.5+size*.3]
     points=[]
-    for n in node.iter('n'):
+    for n in node.findall('n'):   # an abbreviation's inner fragment is not drawn
         if n.get('p'): points.append(list(map(float,n.get('p').split()))[:2])
     if not points: return None
     pad=style['font_size']*1.2

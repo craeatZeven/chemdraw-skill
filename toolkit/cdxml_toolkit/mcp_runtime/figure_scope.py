@@ -308,6 +308,8 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
     spec = {
         "mode": "scope", "table": "table.csv", "label_column": "label", "group_column": "group",
         **({"secondary_column": SECONDARY_COLUMN} if secondary else {}),
+        # A definition such as "Alk = C7H15" also draws that group as its label.
+        **({"label_groups_from": DEFINITION_COLUMN} if definitions else {}),
         "fields": _cell_fields(fields, notes, definitions),
         "title": brief.get("title") or "Substrate scope",
         "conditions": brief.get("conditions") or "",

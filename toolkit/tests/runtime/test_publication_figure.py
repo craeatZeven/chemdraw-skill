@@ -651,3 +651,12 @@ def test_the_plus_stands_midway_between_the_two_structures(tmp_path):
     left = min(float(n.get('p').split()[0]) for n in groups['b'].find('fragment').iter('n'))
     plus = next(t for t in root.iter('t') if ''.join(t.itertext()) == '+')
     assert abs(float(plus.get('p').split()[0]) - (right + left) / 2) < 0.5
+
+
+@pytest.mark.parametrize('text, parsed', [
+    ('Alk = C7H15', ('Alk', {'C': 7, 'H': 15})), ("R' = C18H37", ("R'", {'C': 18, 'H': 37})),
+    ('Ar = C6H4OMe', None), ('not formed', None), ('Alk=CH3', ('Alk', {'C': 1, 'H': 3})),
+])
+def test_a_definition_names_a_label_and_a_formula(text, parsed):
+    from cdxml_toolkit.publication.layout import parse_definition
+    assert parse_definition(text) == parsed
