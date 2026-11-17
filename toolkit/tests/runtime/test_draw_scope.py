@@ -353,3 +353,17 @@ def test_drawn_with_must_name_a_species_drawn_on_its_own(drawn_with, message):
     brief["species"][2]["drawn_with"] = drawn_with if drawn_with == "nobody" else "3b"
     report = draw_figure(brief)
     assert report["ok"] is False and any(message in e for e in report["errors"]), report["errors"]
+
+
+def test_header_r_marks_share_the_highlight_colour(tmp_path):
+    # BJOC 22-127 scheme 2: R1 and R2 over the grid in the colour of what varies in it.
+    brief = _brief(highlight_varying=True, header={
+        "substrates": [{"smiles": "c1ccc([*:1])cc1", "label": "1"}],
+        "products": [{"smiles": "Cc1ccc([*:1])cc1", "label": "3"}]})
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True, report
+    (root,) = _pages(report)
+    table = [tuple(round(float(c.get(k)) * 255) for k in "rgb") for c in root.find("colortable").findall("color")]
+    orange = str(table.index((0xFF, 0x66, 0x00)) + 2)
+    marks = [n for n in root.iter("n") if n.get("NodeType") == "GenericNickname"]
+    assert marks and all(n.get("color") == orange for n in marks)

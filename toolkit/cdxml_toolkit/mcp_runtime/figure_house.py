@@ -1100,6 +1100,25 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
     return _wrap(root, cdxml), [f"generic rings ({count})"] if count else [], warnings
 
 
+def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
+    """Colour the R marks of a scope's general reaction like what varies in the grid below
+    (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents). Marks are generic nodes
+    outside every compound group; the R and its raised number are both painted. Returns the
+    page and how many marks were painted."""
+    root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
+    page = root.find("page")
+    if page is None:
+        return cdxml, 0
+    in_cells = {id(n) for g in page.iter("group") for n in g.iter("n")}
+    marks = [n for n in page.iter("n") if n.get("NodeType") == "GenericNickname" and id(n) not in in_cells]
+    if not marks:
+        return cdxml, 0
+    index = _Colors(root).index(color)
+    for node in marks:
+        _paint(node, index)
+    return _wrap(root, cdxml), len(marks)
+
+
 def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None,
                             slug: str) -> tuple[Any, list[str], list[str], list[str]]:
     """A scope page already in its preset: compound-number face and colour, the brief's species

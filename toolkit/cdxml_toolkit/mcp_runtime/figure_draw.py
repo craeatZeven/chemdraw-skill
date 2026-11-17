@@ -853,19 +853,21 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     in the temp directory, and an existing output_path is refused.
 
     kind "scope" draws a substrate-scope panel instead: species [{id, smiles or name,
-    label?, group?, values {field: text}, definition?, note?, secondary_of?, color?, atom_colors?,
+    label?, group?, values {field: text}, definition?, note?, secondary_of?, drawn_with?, color?, atom_colors?,
     bond_colors?, abbreviate?}], optional fields [{key, label?, unit?, show_label?, optional?}] (default: the keys
     used in values), conditions, footnotes, title, width_mm, height_mm, header {substrates,
     products, above?, below?} (the general reaction over the grid, R groups as [*:1]) and
     highlight_varying (true or a hex colour: what differs from the core every compound
-    shares is drawn in that colour, #FF6600 by default). Captions are centred, the number in
+    shares is drawn in that colour, #FF6600 by default, and so are the header's R marks). Captions are centred, the number in
     bold; one field joins the number's line ("3a, 92%"); show_label true, or several fields,
     gives each field its own line, named (show_label false keeps one unnamed; optional leaves
     it out where empty instead of drawing a dash). definition joins the number's line
     ("3p, Alk = C7H15, 63%") and note is an extra line under one compound ("not formed");
     formula digits in every line but the label are subscripts, and "^b" marks a footnote
     letter. secondary_of names the main product a minor one is drawn beside, after a "+",
-    the structure grey and its own number and values black. A group is a band, its name on
+    the structure grey and its own number and values black. drawn_with names a species whose
+    structure also stands for this one: none is drawn for it, and its caption line ("3q, Alk =
+    C18H37, 60%") follows that species' under the same structure. A group is a band, its name on
     the rule with only its locants in italic. Text stays at 10 pt and each page is cropped to its
     content. The
     structures are packed onto as many editable pages as needed, grouped in first-seen

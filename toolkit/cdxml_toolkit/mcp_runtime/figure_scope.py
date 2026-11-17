@@ -420,6 +420,16 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
             path.write_text(str(text), encoding="utf-8")
             applied += [a for a in page_applied if a not in applied]
             style_warnings += [w for w in warned if w not in style_warnings]
+    if header and highlighted:
+        # The general reaction's R marks take the colour of what varies below (BJOC 22-127).
+        wanted = brief.get("highlight_varying")
+        colour = wanted if isinstance(wanted, str) else HIGHLIGHT
+        for page in pages:
+            path = Path(page["path"])
+            text, painted = figure_house.paint_header_marks(path.read_text(encoding="utf-8"), colour)
+            if painted:
+                path.write_text(str(text), encoding="utf-8")
+                applied.append("header_marks_highlighted")
     if render:
         # Rendering is not a styling step: a plain panel needs its PNG too. This used
         # to sit inside ``if restyle`` so an unstyled scope panel with render=true
