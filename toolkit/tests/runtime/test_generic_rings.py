@@ -108,3 +108,33 @@ def test_a_ring_through_atoms_that_are_not_bonded_is_refused(tmp_path):
              "steps": [{"substrates": ["I"], "products": ["P"]}]}
     report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "bad.cdxml"))
     assert not report["ok"] and any("bonded" in e for e in report["errors"])
+
+
+def _segment_gap(p, a, b):
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    t = max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy or 1.0)))
+    return math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy)
+
+
+def test_an_open_chain_is_laid_out_with_room_for_its_ring(tmp_path):
+    # The first render drew 4-pentynoic acid zigzag and the arc ran through the alkyne, with the
+    # compound number inside it: a chain is now depicted as if the ring were there.
+    brief = {"species": [{"id": "S", "smiles": "OC(=O)CCC#C", "label": "1", "generic_rings": [{"atoms": [3, 4]}]},
+                         {"id": "P", "smiles": "C=C1CCC(=O)O1", "label": "2"}],
+             "steps": [{"substrates": ["S"], "products": ["P"]}]}
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "chain.cdxml"))
+    assert report["ok"], report
+    root = ET.parse(tmp_path / "chain.cdxml").getroot()
+    arc = next(c for c in root.iter("curve") if c.get("LineType") == "Dashed")
+    pts = _pairs(arc.get("CurvePoints"))[1::3]
+    frag = min(root.iter("fragment"), key=lambda f: min(float(n.get("p").split()[0]) for n in f.iter("n")))
+    nodes = {n.get("id"): tuple(float(v) for v in n.get("p").split()[:2]) for n in frag.iter("n")}
+    bonds = [(nodes[b.get("B")], nodes[b.get("E")]) for b in frag.iter("b")]
+    inner = pts[2:-2]   # leave the ends, which sit on the two ring atoms
+    assert min(_segment_gap(p, a, b) for p in inner for a, b in bonds) > 4.0
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    for t in root.iter("t"):
+        if "".join(t.itertext()).strip() == "1":
+            x, y = (float(v) for v in t.get("p").split()[:2])
+            assert not (min(xs) < x < max(xs) and min(ys) < y < max(ys))
+    assert not [w for w in report["warnings"] if "overlay" in w.lower()]

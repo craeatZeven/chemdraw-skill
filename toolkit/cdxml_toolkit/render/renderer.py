@@ -203,13 +203,14 @@ def _smiles_to_fragment_data(
     smiles: str,
     center_x: float = 200.0,
     center_y: float = 300.0,
+    ring_hints: Tuple[Tuple[int, int, int], ...] = (),
 ) -> Optional[Tuple[List[Dict], List[Dict]]]:
     """
     Convert SMILES to atom/bond dicts in CDXML point coordinates.
 
     Returns (atoms, bonds) or None on failure.
     """
-    cache_key = ("smiles", smiles, round(center_x, 4), round(center_y, 4))
+    cache_key = ("smiles", smiles, round(center_x, 4), round(center_y, 4), tuple(ring_hints))
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
@@ -224,7 +225,8 @@ def _smiles_to_fragment_data(
     if mol is None:
         return None
 
-    AllChem.Compute2DCoords(mol)
+    if not ring_hints or not _depict_with_rings(mol, ring_hints):
+        AllChem.Compute2DCoords(mol)
 
     source_mol = Chem.Mol(mol)
 
@@ -249,6 +251,36 @@ def _smiles_to_fragment_data(
 
     _cache_put(cache_key, atoms, bonds)
     return atoms, bonds
+
+
+def _depict_with_rings(mol: Any, ring_hints) -> bool:
+    """2D coordinates for a structure drawn with generic rings, laid out as if each ring were
+    there: a ring of ``members`` carbons is added through each bonded pair (i, j), the whole
+    is depicted, and the added atoms are dropped. The arc then takes the ring's place instead
+    of crossing a chain that RDKit drew zigzag across it. False when that cannot be done."""
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+
+    try:
+        work = Chem.RWMol(mol)
+        for i, j, members in ring_hints:
+            previous = i
+            for _ in range(int(members) - 2):
+                added = work.AddAtom(Chem.Atom(6))
+                work.AddBond(previous, added, Chem.BondType.SINGLE)
+                previous = added
+            work.AddBond(previous, j, Chem.BondType.SINGLE)
+        Chem.SanitizeMol(work)
+        rdDepictor.Compute2DCoords(work)
+        placed = work.GetConformer()
+        conf = Chem.Conformer(mol.GetNumAtoms())
+        for k in range(mol.GetNumAtoms()):
+            conf.SetAtomPosition(k, placed.GetAtomPosition(k))
+        mol.RemoveAllConformers()
+        mol.AddConformer(conf, assignId=True)
+        return True
+    except Exception:
+        return False
 
 
 def _extract_mol_atom_bond_dicts(mol: Any, source_mol: Optional[Any] = None) -> Tuple[List[Dict], List[Dict]]:
@@ -1192,8 +1224,11 @@ def _resolve_structure_unoriented(
 
     # Tier 2: Declared SMILES
     if smiles:
+        # A structure with generic rings is depicted with room for them (see _depict_with_rings).
+        ring_hints = tuple((o["atoms"][0], o["atoms"][1], int(o.get("members", 6)))
+                           for o in getattr(ref, "overlays", ()) or () if o.get("shape") == "ring")
         # Try MCS alignment to reference if available
-        if reference_mol is not None:
+        if reference_mol is not None and not ring_hints:
             try:
                 from rdkit import Chem
                 target_mol = Chem.MolFromSmiles(smiles)
@@ -1216,7 +1251,7 @@ def _resolve_structure_unoriented(
             except Exception:
                 pass  # Fall through to standard coords
 
-        result = _smiles_to_fragment_data(smiles, center_x, center_y)
+        result = _smiles_to_fragment_data(smiles, center_x, center_y, ring_hints)
         if result is None:
             raise ValueError(f"Failed to generate 2D coords for '{ref.id}' (SMILES: {smiles})")
         atoms, bonds = result

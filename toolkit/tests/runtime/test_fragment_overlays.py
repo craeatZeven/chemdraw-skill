@@ -23,17 +23,19 @@ def _pairs(text: str) -> list[tuple[float, float]]:
     return list(zip(v[0::2], v[1::2]))
 
 
-def test_a_circle_overlay_is_written_the_way_chemdraw_writes_one_and_closes():
-    # ChemDraw's own circle (native-dashed-overlay.cdxml) has the same control points but is
-    # drawn open: it is CurveType="2" (dashed, no closed bit) and nothing leads from the last
-    # anchor back to the first, so its render has a gap at the upper right.
+def test_a_circle_overlay_is_written_the_way_chemdraw_writes_a_closed_one():
+    # native-dashed-overlay.cdxml: ChemDraw's own closed dashed circle, CurveType="3" with
+    # Closed="yes" and the first (in, anchor, out) repeated last. (Its first version was
+    # CurveType="2", which ChemDraw draws open, with a gap at the upper right.)
     sample = (DATA / "native-dashed-overlay.cdxml").read_text(encoding="utf-8")
-    native = _floats(re.search(r'<curve\s+id="9001".*?CurvePoints="([^"]+)"', sample, re.S).group(1))
+    curve = re.search(r'<curve\s+id="9001"[^>]*>', sample, re.S).group(0)
+    native = _floats(re.search(r'CurvePoints="([^"]+)"', curve).group(1))
+    assert 'CurveType="3"' in curve and 'Closed="yes"' in curve
     ours = _floats(figure_house.overlay_curve_points([(70.0, 95.0)], shape="circle", radius=36.0))
-    assert len(native) == 48 and len(ours) == 54
+    assert len(native) == len(ours) == 54
     for a, b in zip(ours, native):
         assert a == pytest.approx(b, abs=0.02)
-    assert ours[48:] == ours[:6]  # the first (in, anchor, out) again: the last segment returns to the start
+    assert ours[48:] == ours[:6]  # the last segment returns to the start
 
 
 def test_an_outline_ends_where_it_starts():

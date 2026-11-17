@@ -1011,6 +1011,22 @@ def generic_ring_errors(entry: Mapping) -> list[str]:
     return errors
 
 
+def _clear_label_of_arc(page: ET.Element, frag_el: ET.Element, label: str | None,
+                       box: tuple[float, float, float, float]) -> None:
+    """Move a compound number that the arc of a generic ring would enclose to just under it."""
+    t = _label_of(page, frag_el, label)
+    if t is None:
+        return
+    x, y = _point(t)
+    if not (box[0] - 4 <= x <= box[2] + 4 and box[1] - 4 <= y <= box[3] + 10):
+        return
+    dy = box[3] + 12.0 - y
+    t.set("p", f"{x:.2f} {y + dy:.2f}")
+    if t.get("BoundingBox"):
+        b = [float(v) for v in t.get("BoundingBox").split()]
+        t.set("BoundingBox", f"{b[0]:.2f} {b[1] + dy:.2f} {b[2]:.2f} {b[3] + dy:.2f}")
+
+
 def generic_ring_marks(entry: Mapping, smiles: str) -> list[dict]:
     """[{atoms, shape "ring", away, members}] for a species' generic rings, checked against its
     SMILES: both atoms exist and are bonded. ``away`` are the atoms beside them, which the
@@ -1039,6 +1055,7 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
     if not entries:
         return cdxml, [], []
     smiles = {g["id"]: g.get("smiles") for g in grounded}
+    labels = {g["id"]: (str(g["label"]) if g.get("label") else None) for g in grounded}
     root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
     page = root.find("page")
     ids = _new_ids(root)
@@ -1058,6 +1075,7 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
             clear = [GENERIC_RING_LABEL_CLEAR if nodes[k].find("t") is not None else 0.0 for k in (i, j)]
             points = generic_ring_points(_point(nodes[i]), _point(nodes[j]), away, mark["members"], *clear)
             v = [float(x) for x in points.split()]
+            _clear_label_of_arc(page, frag_el, labels.get(sp_id), (min(v[0::2]), min(v[1::2]), max(v[0::2]), max(v[1::2])))
             z += 1
             page.append(ET.Element("curve", {
                 "id": str(ids.next()), "Z": str(z), "LineType": "Dashed", "CurveType": "2",
