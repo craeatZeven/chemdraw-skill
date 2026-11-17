@@ -1,0 +1,88 @@
+{
+ "kind": "scope",
+ "title": "Substrate scope",
+ "header": {
+  "substrates": [
+   {
+    "smiles": "Nc1ccc([*:1])cc1I",
+    "label": "1a\u2013d"
+   },
+   {
+    "smiles": "ClCC(=O)N[*:2]",
+    "label": "2a,c\u2013r"
+   }
+  ],
+  "products": [
+   {
+    "smiles": "O=C(N[*:2])c1nc2cc([*:1])ccc2s1",
+    "label": "3a\u2013t"
+   }
+  ],
+  "above": [
+   "Cu(OAc)2 (20 mol %)",
+   "bipy (20 mol %)",
+   "DIPEA (3.0 equiv), S8"
+  ],
+  "below": [
+   "H2O, 100 \u00b0C, 24 h"
+  ]
+ },
+ "fields": [
+  {
+   "key": "yield",
+   "label": "Yield"
+  }
+ ],
+ "highlight_varying": true,
+ "species": [
+  {
+   "id": "3a",
+   "smiles": "Cc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+   "label": "3a",
+   "values": {
+    "yield": "64%"
+   }
+  },
+  {
+   "id": "3b",
+   "smiles": "Cc1cccc(NC(=O)c2nc3ccccc3s2)c1",
+   "label": "3b",
+   "values": {
+    "yield": "64%"
+   }
+  },
+  {
+   "id": "3c",
+   "smiles": "Cc1ccccc1NC(=O)c1nc2ccccc2s1",
+   "label": "3c",
+   "values": {
+    "yield": "51%"
+   }
+  },
+  {
+   "id": "3e",
+   "smiles": "COc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+   "label": "3e",
+   "values": {
+    "yield": "63%"
+   }
+  },
+  {
+   "id": "3j",
+   "smiles": "O=C(Nc1ccc(I)cc1)c1nc2ccccc2s1",
+   "label": "3j",
+   "values": {
+    "yield": "0%"
+   }
+  },
+  {
+   "id": "3p",
+   "smiles": "CCCCCCCNC(=O)c1nc2ccccc2s1",
+   "label": "3p",
+   "definition": "Alk = C7H15",
+   "values": {
+    "yield": "63%"
+   }
+  }
+ ]
+}

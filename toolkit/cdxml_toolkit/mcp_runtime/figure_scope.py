@@ -27,7 +27,8 @@ from .figure_draw import (
 from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manifest_style
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
-              "highlight_varying"}
+              "highlight_varying", "header"}
+HEADER_KEYS = {"substrates", "products", "above", "below"}
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
 SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", "definition", "secondary_of",
@@ -71,11 +72,37 @@ def _fields(brief: dict) -> tuple[list[dict], list[str]]:
     return fields, errors
 
 
+def _header_errors(header) -> list[str]:
+    """Problems with a scope's header scheme (the general reaction over the grid)."""
+    if not isinstance(header, dict):
+        return ["header must be an object: {substrates, products, above?, below?}."]
+    errors = []
+    unknown = sorted(set(header) - HEADER_KEYS)
+    if unknown:
+        errors.append(f"header has unknown keys {unknown}; use {sorted(HEADER_KEYS)}.")
+    for side in ("substrates", "products"):
+        items = header.get(side)
+        if not isinstance(items, list) or not items:
+            errors.append(f"header {side}: list at least one structure, each {{smiles or name, label?}}.")
+            continue
+        for number, item in enumerate(items, 1):
+            if not isinstance(item, dict) or not (item.get("smiles") or item.get("name")):
+                errors.append(f"header {side}[{number}] needs a smiles or a name; write R groups as [*:1], [*:2].")
+            elif set(item) - {"smiles", "name", "label"}:
+                errors.append(f"header {side}[{number}] has unknown keys {sorted(set(item) - {'smiles', 'name', 'label'})}.")
+    for side in ("above", "below"):
+        if side in header and not (isinstance(header[side], list) and all(isinstance(t, str) for t in header[side])):
+            errors.append(f"header {side} must be a list of condition lines.")
+    return errors
+
+
 def _validate(brief: dict) -> list[str]:
     errors: list[str] = []
     unknown = sorted(set(brief) - SCOPE_KEYS)
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
+    if brief.get("header") is not None:
+        errors += _header_errors(brief["header"])
     style_error = style_preset_error(brief.get("style"))
     if style_error:
         errors.append(style_error)
@@ -236,7 +263,23 @@ def _cell_fields(fields: list[dict], notes: bool, definitions: bool = False) -> 
     return cells
 
 
-def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[dict], render: bool) -> Path:
+def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
+    """The header with every structure as a checked SMILES (names resolved like species)."""
+    if not header:
+        return None, []
+    out = {k: list(header.get(k) or []) for k in ("above", "below")}
+    errors: list[str] = []
+    for side in ("substrates", "products"):
+        items = [{"id": f"header {side} {n}", **item} for n, item in enumerate(header[side], 1)]
+        grounded, more = _ground([{k: v for k, v in i.items() if k != "label"} for i in items])
+        errors += more
+        out[side] = [{"smiles": g["smiles"], **({"label": str(i["label"])} if i.get("label") else {})}
+                     for g, i in zip(grounded, items)]
+    return out, errors
+
+
+def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[dict], render: bool,
+                  header: dict | None = None) -> Path:
     columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
     notes = any(isinstance(e, dict) and e.get("note") for e in brief["species"])
     definitions = any(isinstance(e, dict) and e.get("definition") for e in brief["species"])
@@ -271,16 +314,20 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         "footnotes": brief.get("footnotes") or [],
         "style": style,
         "native_render": render,
+        **({"header": header} if header else {}),
     }
     path = work / "spec.json"
     path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
     return path
 
 
-def _readback(pages: list[Path], grounded: list[dict]) -> dict:
+def _readback(pages: list[Path], grounded: list[dict], header: dict | None = None) -> dict:
     wanted: Counter = Counter()
     for item in grounded:
         wanted.update(semantic_key(m) for m in Chem.GetMolFrags(Chem.MolFromSmiles(item["smiles"]), asMols=True))
+    if header:
+        from ..publication.layout import header_identities
+        wanted.update(header_identities({"header": header}))
     found: Counter = Counter()
     for page in pages:
         found.update(document_inventory(page))
@@ -304,6 +351,9 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     grounded, errors = _ground(brief["species"])
     if errors:
         return _failure(errors, kind="scope")
+    header, errors = _ground_header(brief.get("header"))
+    if errors:
+        return _failure(errors, kind="scope")
     fields, _ = _fields(brief)
 
     target = Path(output_path).expanduser().resolve() if output_path else _free_directory()
@@ -320,7 +370,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     try:
         with tempfile.TemporaryDirectory(prefix="scope-inputs-") as scratch:
             # A page that is edited afterwards is rendered after the edit, not by the builder.
-            spec = _write_inputs(Path(scratch), brief, grounded, fields, render and not restyle)
+            spec = _write_inputs(Path(scratch), brief, grounded, fields, render and not restyle, header)
             result = publication.publication_figure("create", str(spec), str(target))
     except Exception as exc:
         return _failure([f"The scope panel could not be drawn: {exc}"], kind="scope")
@@ -357,7 +407,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
             checks.setdefault("native_preview", {})["status"] = "rendered_pending_visual_review"
         except Exception as exc:
             checks.setdefault("native_preview", {})["error"] = str(exc)
-    readback = _readback([Path(p["path"]) for p in pages], grounded)
+    readback = _readback([Path(p["path"]) for p in pages], grounded, header)
 
     notes: list[str] = []
     warnings: list[str] = []

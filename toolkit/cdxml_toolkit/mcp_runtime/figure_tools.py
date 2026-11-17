@@ -954,6 +954,11 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             if record.get('file'):
                 record['file'] = str(local_path(record['file']))
             mol = _mol(record)
+            # A numbered R group ([*:1]) is drawn R1; the number is a label, not chemistry.
+            r_numbers = {a.GetIdx(): a.GetAtomMapNum() for a in mol.GetAtoms()
+                         if a.GetAtomicNum() == 0 and a.GetAtomMapNum()}
+            for index in r_numbers:
+                mol.GetAtomWithIdx(index).SetAtomMapNum(0)
             if item.get('multi_attachments'):
                 expected_inventory.update([semantic_key(mol)])
             else:
@@ -998,6 +1003,8 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                     rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
             Chem.Kekulize(mol, clearAromaticFlags=True)
             atoms, bonds = _rdkit_mol_to_atom_bond_dicts(mol)
+            for index, number in r_numbers.items():
+                atoms[index]['generic_number'] = number
             angle = math.radians(float(item.get('rotation', 0)))
             cx = sum(a['x'] for a in atoms) / len(atoms)
             cy = sum(a['y'] for a in atoms) / len(atoms)

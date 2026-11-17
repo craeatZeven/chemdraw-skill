@@ -31,7 +31,7 @@ from .schema import (
 # Valid layout and wrap keywords
 VALID_LAYOUTS = {
     "linear", "sequential", "divergent", "stacked-rows",
-    "numbered-parallel", "convergent",
+    "numbered-parallel", "convergent", "fan",
 }
 VALID_WRAPS = {"repeat", "continue", "serpentine", "none"}
 VALID_ARROW_STYLES = {"solid", "dashed", "failed", "reversible", "resonance"}

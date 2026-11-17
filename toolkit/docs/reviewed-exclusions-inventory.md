@@ -399,11 +399,11 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 297: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 344: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_tools`
 
-- **function**, line 1500: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
+- **function**, line 1507: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
 - **function**, line 632: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
 - **function**, line 165: `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict` - Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs, r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like, enumerate_markush.
 
@@ -652,18 +652,20 @@
 
 ## `publication.layout`
 
-- **function**, line 393: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 468: `bounds(node, style)` - No public docstring in the audited version.
 - **function**, line 121: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 415: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 490: `check_pages(project, roots, spec)` - No public docstring in the audited version.
 - **function**, line 170: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
-- **function**, line 243: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 309: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
+- **function**, line 192: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
+- **function**, line 204: `header_objects(spec, style, left, top)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, the products with their labels. Returns (objects, bottom, right).
 - **function**, line 152: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 411: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 196: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 486: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 262: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
 - **function**, line 42: `text_width(value, style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 47: `wrap(value, width, style)` - No public docstring in the audited version.

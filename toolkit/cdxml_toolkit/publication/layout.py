@@ -189,6 +189,72 @@ def chemical_runs(text):
     return runs
 
 
+def header_identities(spec):
+    """What the header scheme draws, as the page check counts structures (R numbers removed)."""
+    header = spec.get('header') or {}
+    found = []
+    for item in [*header.get('substrates', []), *header.get('products', [])]:
+        mol = Chem.MolFromSmiles(item['smiles'])
+        for atom in mol.GetAtoms():
+            atom.SetAtomMapNum(0)
+        found += [semantic_key(m) for m in Chem.GetMolFrags(mol, asMols=True)]
+    return found
+
+
+def header_objects(spec, style, left, top):
+    """The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined
+    by "+", the arrow with its conditions, the products with their labels. Returns (objects,
+    bottom, right)."""
+    header = spec['header']; size = style['font_size']; gap = size * 1.2
+    def shape(item):
+        mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), style['bond_length'])
+        xs, ys = [p[0] for p in xy], [p[1] for p in xy]
+        return {'item': item, 'xy': xy, 'w': max(xs) - min(xs), 'h': max(ys) - min(ys),
+                'x0': min(xs), 'y0': min(ys)}
+    subs = [shape(i) for i in header.get('substrates', [])]
+    prods = [shape(i) for i in header.get('products', [])]
+    above = [caption_runs(t) for t in header.get('above', [])]
+    below = [caption_runs(t) for t in header.get('below', [])]
+    line = size * 1.2
+    above_h = len(above) * line + 4
+    tallest = max(s['h'] for s in subs + prods)
+    mid = top + max(tallest / 2 + gap, above_h + 4)
+    arrow_len = max([text_width(p, style) for p, _ in above + below] + [6 * style['bond_length']]) + 16
+    objects = []; x = left; bottom = mid
+    def molecule(s, key):
+        nonlocal x, bottom
+        dx = x + gap - s['x0']; dy = mid - s['y0'] - s['h'] / 2
+        objects.append({'type': 'molecule', 'id': key, 'smiles': s['item']['smiles'],
+                        'coordinates': [[px + dx, py + dy] for px, py in s['xy']]})
+        bottom = max(bottom, mid + s['h'] / 2 + gap)
+        if s['item'].get('label'):
+            plain, runs = caption_runs(s['item']['label'], bold=True)
+            objects.append({'type': 'text', 'text': plain, 'align': 'Center', 'size': size,
+                            'position': [x + gap + s['w'] / 2, mid + s['h'] / 2 + gap + size],
+                            **({'runs': runs} if runs else {})})
+            bottom = mid + s['h'] / 2 + gap + size * 1.3
+        x += s['w'] + 2 * gap
+    for i, s in enumerate(subs):
+        if i:
+            objects.append({'type': 'text', 'text': '+', 'align': 'Center', 'size': size,
+                            'position': [x, mid + size * 0.35]})
+            x += gap
+        molecule(s, f'header_{i}')
+    start = x; end = x + arrow_len
+    objects.append({'type': 'arrow', 'start': [start, mid], 'end': [end, mid]})
+    for n, (plain, runs) in enumerate(reversed(above)):
+        objects.append({'type': 'text', 'text': plain, 'align': 'Center', 'size': size,
+                        'position': [(start + end) / 2, mid - 4 - n * line - size * 0.3], **({'runs': runs} if runs else {})})
+    for n, (plain, runs) in enumerate(below):
+        objects.append({'type': 'text', 'text': plain, 'align': 'Center', 'size': size,
+                        'position': [(start + end) / 2, mid + 4 + size * 0.84 + n * line], **({'runs': runs} if runs else {})})
+        bottom = max(bottom, mid + 4 + size + n * line + size * 0.3)
+    x = end + gap * 0.5
+    for i, s in enumerate(prods):
+        molecule(s, f'header_p{i}')
+    return objects, bottom, x
+
+
 def _caption_advance(value, size):
     return value.count('\n')*size*CELL['wrapped_line']+size*CELL['line_advance']+CELL['line_gap']
 
@@ -269,8 +335,17 @@ def create_pages(records,spec,stage,start_index=0):
             objects.append({'type':'text','id':'conditions','text':conditions,'position':[margin,top+size],'size':size,
                             **({'runs':runs} if runs else {})})
             top+=(conditions.count('\n')+1)*size*1.5+8
-        current={'index':index,'objects':objects,'entries':[],'top':top,'bottom':top,'rules':[],
-                 'right':margin+max((text_width(line,style) for line in (title+'\n'+conditions).splitlines()), default=0)}
+        right=margin+max((text_width(line,style) for line in (title+'\n'+conditions).splitlines()), default=0)
+        rules=[]
+        if index==0 and spec.get('header'):
+            # The general reaction stands over the first page's grid, a rule under it.
+            drawn,header_bottom,header_right=header_objects(spec,style,margin,top)
+            objects+=drawn; right=max(right,header_right)
+            rule={'type':'line','start':[margin,header_bottom+4],'end':[width-margin,header_bottom+4],'style':'line'}
+            objects.append(rule); rules.append(rule)
+            top=header_bottom+4+size+4
+        current={'index':index,'objects':objects,'entries':[],'top':top,'bottom':top,'rules':rules,
+                 'right':right}
         manifests.append(current)
         return current,margin,top,0
     def band(current,y,name):
@@ -415,6 +490,8 @@ def overlap(a,b):
 def check_pages(project, roots, spec):
     style=style_settings(spec); issues=[]; errors=[]
     expected=[Counter() for _ in roots]; boxes=[[] for _ in roots]
+    if roots and spec.get('header'):
+        expected[0].update(header_identities(spec))  # the general reaction over the first grid
     for cid,record in project['compounds'].items():
         index=record['page']; root=roots[index]; ids=record['objects']
         group=root.find(f".//group[@id='{ids['group']}']")

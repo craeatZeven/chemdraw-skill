@@ -30,3 +30,13 @@ def test_a_bold_house_label_keeps_its_subscripts():
     assert _with_weight("32", bold=True) == "33" and _with_weight("96", bold=True) == "97"
     assert _with_weight("33", bold=False) == "32" and _with_weight("0", bold=True) == "1"
     assert _with_weight(None, bold=True) == "1"
+
+
+def test_a_numbered_r_group_is_drawn_as_r_with_its_number_raised():
+    atoms = [{"index": 1, "symbol": "*", "x": 0.0, "y": 0.0, "atomic_number": 0, "generic_number": 2},
+             {"index": 2, "symbol": "C", "x": 14.4, "y": 0.0, "atomic_number": 6}]
+    bonds = [{"index": 1, "atom1": 1, "atom2": 2, "order": 1}]
+    xml, _, _ = R._build_fragment(atoms, bonds, R._IDGen(10))
+    node = ET.fromstring(xml).find("n")
+    assert node.get("GenericNickname") == "R2"
+    assert [(s.text, s.get("face")) for s in node.iter("s")][-1] == ("2", "64")

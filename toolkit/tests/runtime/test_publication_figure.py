@@ -587,3 +587,44 @@ def test_a_formula_label_gets_its_subscripts_and_stays_bold():
     assert caption_runs('PhB(OH)2', bold=True) == ('PhB(OH)2', [{'text': 'PhB(OH)', 'bold': True},
                                                               {'text': '2', 'subscript': True, 'bold': True}])
     assert caption_runs('TS2', bold=True) == ('TS2', [{'text': 'TS2', 'bold': True}])
+
+
+HEADER = {'substrates': [{'smiles': 'Ic1ccc([*:1])cc1N'}, {'smiles': 'ClCC(=O)N[*:2]'}],
+          'products': [{'smiles': 'O=C(N[*:2])c1nc2cc([*:1])ccc2s1', 'label': '3a–t'}],
+          'above': ['Cu(OAc)2 (20 mol %)', 'S8'], 'below': ['H2O, 100 °C, 24 h']}
+
+
+def test_a_header_scheme_stands_above_the_grid(tmp_path):
+    # BJOC 22-127 scheme 2 opens with the general reaction, R1 and R2 marked, over a rule.
+    rows = [['a', '3a', STEREO, '64%', ''], ['b', '3b', OTHER, '51%', '']]
+    out = tmp_path/'header'
+    spec = request(tmp_path, rows, header=HEADER, fields=[{'column': 'value', 'label': '', 'inline': True}])
+    result = execute(spec, out)
+    assert result['ok'], (result, (out/'checks.json').read_text(encoding='utf-8') if (out/'checks.json').exists() else '')
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    root = ET.parse(out/project['pages'][0]['file']).getroot()
+    page = root.find('page')
+    grouped = {id(f) for g in page.iter('group') for f in g.iter('fragment')}
+    header_frags = [f for f in page.iter('fragment') if id(f) not in grouped]
+    assert len(header_frags) == 3
+    header_arrow = [a for a in page.iter('arrow') if a.get('ArrowheadHead') == 'Full']
+    assert len(header_arrow) == 1
+    arrow_y = float(header_arrow[0].get('Head3D').split()[1])
+    cell_tops = [project['compounds'][c]['bbox'][1] for c in 'ab']
+    rules = [a for a in page.iter('arrow') if a.get('ArrowheadHead') == 'None']
+    assert rules and all(arrow_y < float(r.get('Tail3D').split()[1]) < min(cell_tops) for r in rules)
+    texts = {''.join(t.itertext()).strip() for t in page.iter('t')}
+    assert 'S8' in texts and 'Cu(OAc)2 (20 mol %)' in texts
+    checks = json.loads((out/'checks.json').read_text(encoding='utf-8'))
+    assert checks['data_binding']['status'] == 'passed' and not checks['layout']['issues']
+
+
+def test_a_scope_brief_header_is_checked():
+    from cdxml_toolkit.mcp_runtime.figure_scope import _validate
+    base = {'kind': 'scope', 'fields': ['yield'], 'species': [{'id': 'a', 'smiles': 'CCO', 'values': {'yield': '9%'}}]}
+    assert _validate({**base, 'header': {'substrates': [{'smiles': 'CC'}], 'products': [{'smiles': 'CCO'}],
+                                         'above': ['O2']}}) == []
+    for header, message in (({'products': [{'smiles': 'C'}]}, 'substrates'),
+                            ({'substrates': [{'smiles': 'C'}], 'products': [{}]}, 'smiles or a name'),
+                            ({'substrates': [{'smiles': 'C'}], 'products': [{'smiles': 'C'}], 'arrow': 'x'}, 'unknown keys')):
+        assert any(message in e for e in _validate({**base, 'header': header})), header

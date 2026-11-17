@@ -841,7 +841,8 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     kind "scope" draws a substrate-scope panel instead: species [{id, smiles or name,
     label?, group?, values {field: text}, definition?, note?, secondary_of?, color?, atom_colors?,
     bond_colors?, abbreviate?}], optional fields [{key, label?, unit?, show_label?, optional?}] (default: the keys
-    used in values), conditions, footnotes, title, width_mm, height_mm and
+    used in values), conditions, footnotes, title, width_mm, height_mm, header {substrates,
+    products, above?, below?} (the general reaction over the grid, R groups as [*:1]) and
     highlight_varying (true or a hex colour: what differs from the core every compound
     shares is drawn in that colour, #FF6600 by default). Captions are centred, the number in
     bold; one field joins the number's line ("3a, 92%"); show_label true, or several fields,

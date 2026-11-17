@@ -533,7 +533,9 @@ def _build_fragment(
             # ChemDraw. Use its native generic substituent node instead.
             if charge or isotope:
                 raise ValueError('Charged or isotopically labelled variable atoms are unsupported')
-            attrs.extend(['NodeType="GenericNickname"', 'GenericNickname="R"'])
+            # A numbered R group ([*:2] in the SMILES) is R2, drawn R with a raised 2.
+            number = a.get('generic_number')
+            attrs.extend(['NodeType="GenericNickname"', f'GenericNickname="R{number or ""}"'])
         elif not is_carbon:
             attrs.append(f'Element="{elem_num}"')
             if nh is not None:
@@ -592,6 +594,11 @@ def _build_fragment(
                 f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                 f'color="0" face="{ACS_LABEL_FACE}">{xml_escape(display_text)}</s>'
             )
+            if is_variable and a.get('generic_number'):
+                lines.append(
+                    f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
+                    f'color="0" face="64">{int(a["generic_number"])}</s>'
+                )
             if charge:
                 charge_text = (str(abs(charge)) if abs(charge) > 1 else '') + ('+' if charge > 0 else '-')
                 lines.append(
