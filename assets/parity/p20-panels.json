@@ -1,0 +1,194 @@
+{
+ "kind": "panels",
+ "panels": [
+  {
+   "title": "(a) previous work: oxazoles from acyl chlorides",
+   "brief": {
+    "species": [
+     {
+      "id": "RCOCl",
+      "smiles": "CC(=O)Cl",
+      "color": "#C62828"
+     },
+     {
+      "id": "NC",
+      "smiles": "[C-]#[N+]Cc1ccccc1",
+      "color": "#1F4E9E"
+     },
+     {
+      "id": "Ox",
+      "smiles": "Cc1ocnc1-c1ccccc1",
+      "label": "A"
+     }
+    ],
+    "steps": [
+     {
+      "substrates": [
+       "RCOCl",
+       "NC"
+      ],
+      "products": [
+       "Ox"
+      ],
+      "above": [
+       "base"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "title": "(b) previous work: imidazoles",
+   "brief": {
+    "species": [
+     {
+      "id": "ArNC",
+      "smiles": "[C-]#[N+]c1ccccc1",
+      "color": "#C62828"
+     },
+     {
+      "id": "NC",
+      "smiles": "[C-]#[N+]Cc1ccccc1",
+      "color": "#1F4E9E"
+     },
+     {
+      "id": "Im",
+      "smiles": "c1ccc(-n2cnc(-c3ccccc3)c2)cc1",
+      "label": "B"
+     }
+    ],
+    "steps": [
+     {
+      "substrates": [
+       "ArNC",
+       "NC"
+      ],
+      "products": [
+       "Im"
+      ],
+      "above": [
+       "base",
+       "catalyst"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "title": "(c) this work: one ketone taken four ways",
+   "brief": {
+    "layout": "fan",
+    "species": [
+     {
+      "id": "SM",
+      "smiles": "CC(=O)c1ccccc1",
+      "label": "1"
+     },
+     {
+      "id": "NH2OH",
+      "smiles": "NO"
+     },
+     {
+      "id": "A",
+      "smiles": "CC(O)c1ccccc1",
+      "label": "2"
+     },
+     {
+      "id": "B",
+      "smiles": "CC(=NO)c1ccccc1",
+      "label": "3"
+     },
+     {
+      "id": "C",
+      "smiles": "C=C(C)c1ccccc1",
+      "label": "4"
+     },
+     {
+      "id": "D",
+      "smiles": "OC(=O)c1ccccc1",
+      "label": "5"
+     }
+    ],
+    "steps": [
+     {
+      "substrates": [
+       "SM"
+      ],
+      "products": [
+       "A"
+      ],
+      "above": [
+       "NaBH4"
+      ],
+      "below": [
+       "MeOH, 0 \u00b0C"
+      ]
+     },
+     {
+      "substrates": [
+       "SM",
+       "NH2OH"
+      ],
+      "products": [
+       "B"
+      ],
+      "above": [
+       "NaOAc"
+      ],
+      "below": [
+       "EtOH, reflux"
+      ]
+     },
+     {
+      "substrates": [
+       "SM"
+      ],
+      "products": [
+       "C"
+      ],
+      "above": [
+       "Ph3P=CH2"
+      ],
+      "below": [
+       "THF"
+      ]
+     },
+     {
+      "substrates": [
+       "SM"
+      ],
+      "products": [
+       "D"
+      ],
+      "above": [
+       "NaOCl"
+      ],
+      "below": [
+       "then HCl"
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "legend": [
+  [
+   {
+    "text": "red",
+    "color": "#C62828"
+   },
+   {
+    "text": ": the electrophile"
+   }
+  ],
+  [
+   {
+    "text": "blue",
+    "color": "#1F4E9E"
+   },
+   {
+    "text": ": the isocyanide"
+   }
+  ]
+ ]
+}

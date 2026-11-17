@@ -814,6 +814,10 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     title and a species' caption (a line under its compound number) take the same forms. A
     species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
     and its number, with an optional fill drawn behind it.
+    kind "panels" sets several scheme or mechanism briefs one above the other on one page:
+    {kind: "panels", panels [{title, brief}], legend? [lines], style?, max_width?}; each panel
+    is drawn and checked as its own brief, under a boxed one-line title as wide as the widest
+    panel, and the legend lines (text or coloured runs) go under the last one.
     layout "fan" draws one starting material in the middle with an arrow leaving it for each of
     two to four products (left, right, down, up).
     A route longer than max_width wraps: by default (wrap "continue") the next row starts with
@@ -878,6 +882,10 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     draft so the moves can be checked.
     """
     brief, errors = _read_brief(brief)
+    if brief is not None and brief.get("kind") == "panels":
+        from .figure_panels import draw_panels
+
+        return draw_panels(brief, output_path, render)
     if brief is not None and brief.get("kind") == "scope":
         from .figure_scope import draw_scope
 

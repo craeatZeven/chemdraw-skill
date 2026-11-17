@@ -69,6 +69,8 @@ Turn the request into a brief, then run `cdx.py draw brief.json out.cdxml --rend
 
   These are applied after the house style, so a colour the brief asks for wins over the card's; the report's `style.applied` lists them and `warnings` names any atom, bond or run that could not be found.
 
+Several schemes set one above the other, as journal figures do ("(a) ... (b) previous work (c) this work"), are one brief of `"kind": "panels"`: `{"kind": "panels", "panels": [{"title": "(a) previous work", "brief": {...a scheme brief...}}, {"title": "(b) this work", "brief": {...}}], "legend": [[{"text": "R1", "color": "#1F4E9E"}, {"text": " = H, MeO, Cl"}]]}`. Each panel is drawn and checked as its own scheme or mechanism brief (`style` and `max_width` given at the top apply to all), under a boxed one-line title as wide as the widest panel; the legend lines, plain text or coloured runs, go under the last panel. Colour a class of substrates with the species' own `color` or `atom_colors` and say what the colour stands for in the legend. The report lists each panel's layout, readback and warnings, and `checks_passed` holds only when every panel passed.
+
 Read the report before you answer:
 
 | Field | Meaning |
