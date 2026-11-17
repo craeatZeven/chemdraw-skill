@@ -4,7 +4,9 @@ Both used to be caught only by the Skill suite, after a push. The interface inve
 read from the toolkit's source, so it is checked here with the standard library. The tool
 signatures come from the live tool registry, which imports the toolkit's dependencies, so
 that check runs in the toolkit runtime ``cdx.py py`` selects, against this checkout's
-toolkit, and is skipped (saying so) on a machine without a runtime.
+toolkit, and is skipped (saying so) on a machine without a runtime. So do the generator's own
+tests, which hold the signatures to one spelling on every Python: they first caught that
+Python 3.10 adds an Optional to a parameter whose default is None and 3.13 does not.
 """
 
 from __future__ import annotations
@@ -49,6 +51,20 @@ class GeneratedReferenceTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 3, "the signatures are stale: run "
                                                   "`python skill/chemdraw/scripts/cdx.py regen-signatures`")
         self.assertEqual(result.returncode, 0, (result.stdout + result.stderr)[-3000:])
+
+
+    def test_the_reference_generator_reads_the_same_on_this_python(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPTS / "cdx.py"), "py", "-m", "pytest", "-q", "-p", "no:cacheprovider",
+             "tests/runtime/test_generate_reference.py"],
+            cwd=str(TOOLKIT), capture_output=True, text=True, encoding="utf-8", timeout=900,
+        )
+        output = result.stdout + result.stderr
+        if result.returncode != 0 and NO_RUNTIME in output:
+            self.skipTest("no toolkit runtime on this machine; the toolkit suite runs these tests")
+        if result.returncode != 0 and "No module named pytest" in output:
+            self.skipTest("the toolkit runtime has no pytest; the toolkit suite runs these tests")
+        self.assertEqual(result.returncode, 0, output[-3000:])
 
 
 if __name__ == "__main__":
