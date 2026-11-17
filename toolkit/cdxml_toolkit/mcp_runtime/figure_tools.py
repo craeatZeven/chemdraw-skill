@@ -12,7 +12,7 @@ from xml.etree import ElementTree as ET
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdCIPLabeler, rdDepictor
 
-from ..chemistry_semantics import semantic_key, validate_fragment, document_inventory, read_molecules
+from ..chemistry_semantics import semantic_key, validate_fragment, document_inventory, read_molecules, inventory_keys
 from ..vision import stereo_audit
 from . import artifact_safety
 
@@ -1474,9 +1474,9 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             if serialized.find('.//*[@NodeType="MultiAttachment"]') is not None:
                 cleaned_root = _strip_multi_attachments_for_inventory(serialized.getroot())
                 cleaned_xml = ET.tostring(cleaned_root, encoding='unicode')
-                after = Counter(semantic_key(m) for m in read_molecules(cleaned_xml))
+                after = inventory_keys(read_molecules(cleaned_xml), expected_inventory)
             else:
-                after = document_inventory(stage)
+                after = document_inventory(stage, like=expected_inventory)
         else:
             after = Counter()
         if after != expected_inventory:

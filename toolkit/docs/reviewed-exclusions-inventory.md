@@ -92,13 +92,16 @@
 
 ## `chemistry_semantics`
 
-- **function**, line 135: `document_inventory(path)` - No public docstring in the audited version.
-- **function**, line 68: `read_fragments(value)` - Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order.
-- **function**, line 114: `read_molecules(value)` - No public docstring in the audited version.
+- **function**, line 189: `document_inventory(path, like = None)` - Counter of the semantic keys of a document's molecules (see ``inventory_keys`` for ``like``).
+- **function**, line 103: `inventory_keys(mols, like = None)` - Semantic keys of drawn molecules; with ``like`` (the keys expected), a molecule that is one of them drawn with a geometry its source left open counts as that key.
+- **function**, line 77: `loose_key(mol)` - The semantic key without double-bond geometry (E/Z).
+- **function**, line 120: `read_fragments(value)` - Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order.
+- **function**, line 166: `read_molecules(value)` - No public docstring in the audited version.
 - **function**, line 36: `require_supported(mol, *, allow_radicals: bool = False, allow_dative: bool = True, allow_atropisomers: bool = True)` - No public docstring in the audited version.
+- **function**, line 87: `same_compound(source, drawn)` - "exact", "drawn_geometry" or None: whether a drawn molecule is the source compound.
 - **function**, line 10: `semantic_key(mol)` - No public docstring in the audited version.
-- **function**, line 139: `validate_document_preserved(source, output)` - No public docstring in the audited version.
-- **function**, line 118: `validate_fragment(smiles, xml, *, allow_radicals: bool = True)` - No public docstring in the audited version.
+- **function**, line 195: `validate_document_preserved(source, output)` - No public docstring in the audited version.
+- **function**, line 170: `validate_fragment(smiles, xml, *, allow_radicals: bool = True)` - No public docstring in the audited version.
 
 ## `engines.accel`
 

@@ -158,3 +158,37 @@ def test_a_ring_that_fits_nowhere_is_made_smaller_then_reported():
     points, clearance, members = G.choose_generic_ring(a, b, away=(107.2, 90.0), members=6,
                                                        bonds=cage + [(a, b)])
     assert members < 6 or clearance < 3.0
+
+
+def _linear_page(overlays):
+    from cdxml_toolkit.render import renderer as R
+    from cdxml_toolkit.render.schema import ArrowContent, SchemeDescriptor, StepDescriptor, StructureRef
+    structures = {"S": StructureRef(id="S", smiles="OC(=O)CCC#C", label="1", overlays=overlays),
+                  "P": StructureRef(id="P", smiles="CCO", label="2")}
+    steps = [StepDescriptor(substrates=["S"], products=["P"], above_arrow=ArrowContent(text=["[Au]"]))]
+    xml, _ = R._layout_linear(SchemeDescriptor(structures=structures, steps=steps, layout="linear"), R._IDGen())
+    return ET.fromstring(f"<page>{xml}</page>")
+
+
+def test_a_linear_layout_keeps_the_arrow_and_the_number_off_a_generic_ring():
+    # The open-chain render: the arc cleared the bonds, but the step arrow ran into it and the
+    # number sat inside it, because only a cycle made room for it. Every layout does now: the
+    # arc's box is part of the structure's.
+    ring = ({"atoms": [1, 3], "shape": "ring", "away": [0, 2, 4], "members": 6},)
+    page = _linear_page(ring)
+    frag = page.findall("fragment")[0]
+    where = {n.get("id"): tuple(float(v) for v in n.get("p").split()) for n in frag.findall("n")}
+    nodes = list(where.values())
+    rest = [nodes[0], nodes[2], nodes[4]]
+    away = (sum(p[0] for p in rest) / 3, sum(p[1] for p in rest) / 3)
+    bonds = [(where[b.get("B")], where[b.get("E")]) for b in frag.findall("b")]
+    points, _, _ = G.choose_generic_ring(nodes[1], nodes[3], away, 6, bonds)
+    xs = [p[0] for p in _pairs(points)]; ys = [p[1] for p in _pairs(points)]
+    arrow = page.find("arrow")
+    tail_x = min(float(arrow.get("Tail3D").split()[0]), float(arrow.get("Head3D").split()[0]))
+    arrow_y = float(arrow.get("Tail3D").split()[1])
+    assert tail_x > max(xs) or not (min(ys) <= arrow_y <= max(ys))   # the arrow starts past the arc
+    label = next(t for t in page.findall("t") if "".join(t.itertext()).strip() == "1")
+    lx, ly = (float(v) for v in label.get("p").split()[:2])
+    # The number's glyphs (8.4 pt above its baseline) stay out of the arc's box.
+    assert not (min(xs) - 4 < lx < max(xs) + 4 and ly - 8.4 < max(ys) and ly > min(ys))

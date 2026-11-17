@@ -752,7 +752,7 @@ def _readback(target: Path, grounded: list[dict], used: set[str], fragments: dic
             keys = item["inventory"] if "inventory" in item else [semantic_key(Chem.MolFromSmiles(item["smiles"]))]
             for key in keys:
                 wanted.setdefault(key, []).append(item["id"])
-    found = Counter(document_inventory(target))
+    found = Counter(document_inventory(target, like=wanted))
     missing = [i for key, ids in wanted.items() if key not in found for i in ids]
     extra = sum(1 for key in found if key not in wanted)
     return {

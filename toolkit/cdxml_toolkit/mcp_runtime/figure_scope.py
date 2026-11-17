@@ -332,7 +332,7 @@ def _readback(pages: list[Path], grounded: list[dict], header: dict | None = Non
         wanted.update(header_identities({"header": header}))
     found: Counter = Counter()
     for page in pages:
-        found.update(document_inventory(page))
+        found.update(document_inventory(page, like=wanted))
     missing = sorted((wanted - found).elements())
     extra = sorted((found - wanted).elements())
     return {

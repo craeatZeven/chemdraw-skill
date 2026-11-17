@@ -47,7 +47,7 @@ from ..constants import (
     LAYOUT_ROW_GAP,
 )
 from ..cdxml_utils import LABEL_H_WIDTH, drawn_fragment_bbox, hydrogens_lead
-from ..overlay_geometry import generic_ring_box, overlay_box
+from ..overlay_geometry import OVERLAY_LINE, choose_generic_ring, overlay_box
 from ..text_formatting import build_formatted_s_xml, is_formula_label, normalize_condition_text
 
 from .route_graph import convergent_sections
@@ -1083,6 +1083,12 @@ def _fragment_bbox(atoms: List[Dict]) -> Tuple[float, float, float, float]:
     labels such as "Br" or "OH".  A lone atom's label is drawn on one side,
     as ChemDraw writes it (OH-, Br- rightwards; H2O, HCl leftwards).
     """
+    reach = [(a["x"] + dx, a["y"] + dy) for a in atoms for dx, dy in a.get("reach", ())]
+    if reach:
+        # A dashed arc or outline drawn over the structure later is part of what it occupies.
+        x1, y1, x2, y2 = _fragment_bbox([{k: v for k, v in a.items() if k != "reach"} for a in atoms])
+        return (min([x1] + [p[0] for p in reach]), min([y1] + [p[1] for p in reach]),
+                max([x2] + [p[0] for p in reach]), max([y2] + [p[1] for p in reach]))
     if len(atoms) == 1:
         atom = atoms[0]
         overhang = _label_overhang(atom)
@@ -1179,12 +1185,21 @@ def _resolve_structure(
     source_data: Optional[Dict[str, Dict]] = None,
     reference_mol: Optional[Any] = None,
 ) -> ResolvedFragment:
-    """Resolve a StructureRef, then mirror or turn it as ``ref.orientation`` asks."""
+    """Resolve a StructureRef, then mirror or turn it as ``ref.orientation`` asks; a structure
+    with generic rings or overlays then claims the room they will be drawn in."""
     frag = _resolve_structure_unoriented(ref, center_x, center_y, source_data, reference_mol)
-    if not ref.orientation:
-        return frag
-    frag = _orient_fragment(frag, ref.orientation)
-    frag.ref = dataclass_replace(frag.ref, orientation=ref.orientation)
+    if ref.orientation:
+        frag = _orient_fragment(frag, ref.orientation)
+        frag.ref = dataclass_replace(frag.ref, orientation=ref.orientation)
+    marks = getattr(ref, "overlays", ()) or ()
+    if marks and frag.atoms:
+        box = _overlay_box(frag.atoms, marks, frag.bonds)
+        if box is not None:
+            # Kept as offsets from one atom, so they move with the structure wherever it is placed.
+            anchor = frag.atoms[0]
+            anchor["reach"] = [(box[0] - anchor["x"], box[1] - anchor["y"]), (box[2] - anchor["x"], box[3] - anchor["y"])]
+            frag.bbox = _fragment_bbox(frag.atoms)
+            frag.cx, frag.cy = _bbox_center(frag.bbox)
     return frag
 
 
@@ -3115,7 +3130,8 @@ def _text_box_at(lines: List[str], x: float, y: float) -> Tuple[float, float, fl
     return (x - w / 2.0, top, x + w / 2.0, bottom)
 
 
-def _overlay_box(atoms: List[Dict], overlays: Any) -> Optional[Tuple[float, float, float, float]]:
+def _overlay_box(atoms: List[Dict], overlays: Any, bonds: Optional[List[Dict]] = None
+                 ) -> Optional[Tuple[float, float, float, float]]:
     """Box of the dashed outlines a brief will draw over this structure, or None.
 
     ``overlays`` are [{atoms, shape}] with 0-based SMILES atom indices; atom dicts carry the
@@ -3132,7 +3148,14 @@ def _overlay_box(atoms: List[Dict], overlays: Any) -> Optional[Tuple[float, floa
                     for i in item.get("away") or () if i + 1 in by_index]
             if len(ends) == 2:
                 away = (sum(p[0] for p in rest) / len(rest), sum(p[1] for p in rest) / len(rest)) if rest else None
-                part = generic_ring_box(ends[0], ends[1], away, item.get("members", 6))
+                # The side the drawing step will choose: clear of the structure's own bonds.
+                segments = [((float(by_index[b["atom1"]]["x"]), float(by_index[b["atom1"]]["y"])),
+                             (float(by_index[b["atom2"]]["x"]), float(by_index[b["atom2"]]["y"])))
+                            for b in bonds or () if b.get("atom1") in by_index and b.get("atom2") in by_index]
+                points = choose_generic_ring(ends[0], ends[1], away, item.get("members", 6), segments)[0]
+                v = [float(x) for x in points.split()]
+                part = (min(v[0::2]) - OVERLAY_LINE, min(v[1::2]) - OVERLAY_LINE,
+                        max(v[0::2]) + OVERLAY_LINE, max(v[1::2]) + OVERLAY_LINE)
                 box = part if box is None else _union_box(box, part)
             continue
         points = [(float(by_index[i + 1]["x"]), float(by_index[i + 1]["y"]))
@@ -3283,7 +3306,7 @@ def _layout_catalytic_cycle(
     # part of what the arrows and captions must clear.
     inter_overlays = [scheme.structures[s.substrates[0]].overlays if getattr(scheme.structures[s.substrates[0]],
                       "overlays", ()) else () for s in steps]
-    inter_rel = [_overlay_box(frag.atoms, ov) for frag, ov in zip(inter_frags, inter_overlays)]
+    inter_rel = [_overlay_box(frag.atoms, ov, frag.bonds) for frag, ov in zip(inter_frags, inter_overlays)]
 
     pad = 8.0 * gap_scale
     min_arrow_len = 28.0
@@ -3346,7 +3369,7 @@ def _layout_catalytic_cycle(
         xml_parts.append(frag_xml)
         frag_ids.append(fid)
 
-        ring = _overlay_box(frag.atoms, inter_overlays[k])
+        ring = _overlay_box(frag.atoms, inter_overlays[k], frag.bonds)
         box_y2 = frag.bbox[3]
         if frag.ref.label:
             # The number goes under the overlay when the outline reaches below the structure.
@@ -3461,7 +3484,7 @@ def _layout_catalytic_cycle(
                 frag_xml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
                 xml_parts.append(frag_xml)
 
-                ring = _overlay_box(frag.atoms, getattr(struct, "overlays", ()))
+                ring = _overlay_box(frag.atoms, getattr(struct, "overlays", ()), frag.bonds)
                 box_y2 = frag.bbox[3]
                 if frag.ref.label:
                     lbl_y = max(frag.bbox[3], ring[3] if ring else frag.bbox[3]) + 14.0

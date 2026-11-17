@@ -8,7 +8,7 @@ from xml.etree import ElementTree as ET
 from PIL import ImageFont
 from rdkit import Chem
 from rdkit.Chem import rdDepictor, rdFMCS
-from ..chemistry_semantics import read_molecules, semantic_key, document_inventory
+from ..chemistry_semantics import inventory_keys, read_molecules, semantic_key, document_inventory
 from ..mcp_runtime.figure_tools import compose_chemical_figure, _move
 from ..text_formatting import _ELEMENTS, is_formula_label, subscript_matches
 from .data import field_text, write_json
@@ -647,7 +647,8 @@ def check_pages(project, roots, spec):
             if box:boxes[index].append(('annotation',node.get('id'),box))
             if any(float(run.get('size',style['font_size']))<7 for run in node.findall('s')):
                 issues.append({'page':index+1,'object_id':node.get('id'),'issue':'text_below_7pt'})
-        actual=Counter(semantic_key(m) for m in read_molecules(ET.tostring(root,encoding='unicode'))) if root.find('.//fragment') is not None else Counter()
+        actual=(inventory_keys(read_molecules(ET.tostring(root,encoding='unicode')),expected[index])
+                if root.find('.//fragment') is not None else Counter())
         if actual!=expected[index]: errors.append({'page':index+1,'error':'document_inventory_changed'})
         page=project['pages'][index]
         for cid,oid,box in boxes[index]:
