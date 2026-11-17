@@ -660,3 +660,62 @@ def test_the_plus_stands_midway_between_the_two_structures(tmp_path):
 def test_a_definition_names_a_label_and_a_formula(text, parsed):
     from cdxml_toolkit.publication.layout import parse_definition
     assert parse_definition(text) == parsed
+
+
+def _family_request(tmp_path, rows):
+    table = tmp_path/'fam.csv'
+    with table.open('w', newline='', encoding='utf-8') as stream:
+        writer = csv.writer(stream)
+        writer.writerow(['compound_id', 'label', 'smiles', 'value', 'group', 'definition', 'with'])
+        writer.writerows(rows)
+    spec = {'table': str(table), 'mode': 'scope', 'native_render': False, 'drawn_with_column': 'with',
+            'fields': [{'column': 'definition', 'label': '', 'optional': True, 'inline': True},
+                       {'column': 'value', 'label': '', 'inline': True}]}
+    path = tmp_path/'fam.json'; path.write_text(json.dumps(spec))
+    return path
+
+
+FAMILY = [['p', '3p', STEREO, '63%', '', 'Alk = C7H15', ''], ['q', '3q', OTHER, '60%', '', 'Alk = C18H37', 'p'],
+          ['r', '3r', STEREO, '62%', '', '', '']]
+
+
+def test_compounds_drawn_with_one_structure_list_under_it(tmp_path):
+    # BJOC 22-127 scheme 2: one NH-Alk structure, "3p, Alk = C7H15, 63%" and "3q, Alk = C18H37, 60%" under it.
+    out = tmp_path/'fam'
+    assert execute(_family_request(tmp_path, FAMILY), out)['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    root = ET.parse(out/project['pages'][0]['file']).getroot()
+    assert len(root.findall('.//fragment')) == 2                       # 3p's (for both) and 3r's
+    q = project['compounds']['q']
+    assert q['objects']['fragment'] is None and q['display']['label'] == '3q'
+    p_label = root.find(f".//t[@id='{project['compounds']['p']['objects']['label']}']")
+    q_label = root.find(f".//t[@id='{q['objects']['label']}']")
+    assert float(q_label.get('p').split()[1]) > float(p_label.get('p').split()[1])   # the next line down
+    p_box, q_box = project['compounds']['p']['bbox'], q['bbox']
+    assert q_box[0] >= p_box[0] - 1 and q_box[2] <= p_box[2] + 1                    # inside 3p's cell
+    checks = json.loads((out/'checks.json').read_text(encoding='utf-8'))
+    assert checks['data_binding']['status'] == 'passed' and not checks['layout']['issues']
+
+
+@pytest.mark.parametrize('rows, message', [
+    ([['p', '3p', STEREO, '1%', '', '', 'z']], 'drawn with an unknown compound'),
+    ([['p', '3p', STEREO, '1%', '', '', 'p']], 'its own structure'),
+    ([['p', '3p', STEREO, '1%', '', '', ''], ['q', '3q', OTHER, '1%', '', '', 'p'], ['s', '3s', STEREO, '1%', '', '', 'q']],
+     'itself drawn with'),
+])
+def test_drawn_with_must_name_a_compound_that_has_its_own_structure(tmp_path, rows, message):
+    with pytest.raises(ValueError, match=message):
+        execute(_family_request(tmp_path, rows), tmp_path/'bad')
+
+
+def test_a_value_under_a_shared_structure_updates_in_place(tmp_path):
+    base = tmp_path/'base'
+    assert execute(_family_request(tmp_path, FAMILY), base)['ok']
+    rows = [list(r) for r in FAMILY]; rows[1][3] = '61%'
+    spec = _family_request(tmp_path, rows)
+    data = json.loads(spec.read_text()); data['project_path'] = str(base/'project.json'); spec.write_text(json.dumps(data))
+    out = tmp_path/'next'
+    result = execute(spec, out, operation='update')
+    assert result['ok'], result
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    assert project['compounds']['q']['display']['value'] == '61%'

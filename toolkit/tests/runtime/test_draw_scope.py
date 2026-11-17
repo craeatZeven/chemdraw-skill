@@ -328,3 +328,28 @@ def test_a_defined_group_is_drawn_as_its_label_and_reads_back_whole(tmp_path):
     project = json.loads((tmp_path / "alk" / "project.json").read_text(encoding="utf-8"))
     widths = {c: project["compounds"][c]["bbox"][2] - project["compounds"][c]["bbox"][0] for c in ("3p", "3q", "3a")}
     assert widths["3q"] <= widths["3a"] + 20      # the C18 chain no longer widens its cell
+
+
+def test_a_species_drawn_with_another_lists_its_line_under_that_structure(tmp_path):
+    # BJOC 22-127, fig. 3: 3q (Alk = C18H37) shares 3p's NH-Alk structure and adds one line.
+    brief = _brief()
+    brief["species"][0]["definition"] = "Alk = C7H15"
+    brief["species"].insert(1, {"id": "3a-long", "smiles": "CCCCCCCCCCc1ccccc1", "label": "3e",
+                                "definition": "Alk = C18H37", "values": {"yield": "60%"}, "drawn_with": "3a"})
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True, report
+    assert report["readback"]["status"] == "matched" and report["checks_passed"] is True
+    (root,) = _pages(report)
+    assert len(list(root.iter("fragment"))) == 4   # 3a, 3b, 3c, 3d; 3e has none of its own
+    lines = ["".join(s.text or "" for s in t.iter("s")) for t in root.iter("t")]
+    assert "3e" in lines and "Alk = C18H37" in lines
+
+
+@pytest.mark.parametrize("drawn_with, message", [
+    ("nobody", "another species"), ("3a", "drawn with its own"), ])
+def test_drawn_with_must_name_a_species_drawn_on_its_own(drawn_with, message):
+    brief = _brief()
+    brief["species"][1]["drawn_with"] = "3a"
+    brief["species"][2]["drawn_with"] = drawn_with if drawn_with == "nobody" else "3b"
+    report = draw_figure(brief)
+    assert report["ok"] is False and any(message in e for e in report["errors"]), report["errors"]

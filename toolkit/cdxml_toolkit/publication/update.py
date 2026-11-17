@@ -37,8 +37,12 @@ def matching_group(root, record):
 def match_objects(group, record):
     ids=record['objects']; result={'group':group.get('id'),'fields':{}}
     fragments=group.findall('fragment')
-    if len(fragments)!=1: raise ValueError('compound group must contain exactly one chemical fragment')
-    result['fragment']=fragments[0].get('id')
+    if ids.get('fragment') is None and record['input'].get('drawn_with'):
+        # Drawn with another compound's structure: its group holds its caption lines only.
+        if fragments: raise ValueError('a compound drawn with another structure has no fragment of its own')
+        result['fragment']=None
+    elif len(fragments)!=1: raise ValueError('compound group must contain exactly one chemical fragment')
+    else: result['fragment']=fragments[0].get('id')
     used=set()
     for field,oid in {'label':ids['label'],**ids['fields']}.items():
         matches=[t for t in group.findall('t') if t.get('id')==oid]
@@ -170,8 +174,9 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
         try: ids=match_objects(group,record)
         except ValueError as exc:
             conflicts.append({'compound_id':cid,'reason':str(exc)});continue
-        old_input=record['input']; fragment=group.find(f"fragment[@id='{ids['fragment']}']")
-        identity=semantic_key(fragment_mol(fragment))
+        old_input=record['input']
+        fragment=group.find(f"fragment[@id='{ids['fragment']}']") if ids['fragment'] else None
+        identity=semantic_key(fragment_mol(fragment)) if fragment is not None else None
         current={field:node_text(group.find(f"t[@id='{oid}']")) for field,oid in {'label':ids['label'],**ids['fields']}.items()}
         manual=identity!=record['displayed_identity'] or current!=record['display']
         if new is None:
@@ -206,6 +211,10 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
                if f['column'] not in ids['fields'] and desired[f['column']]!='']
         if added:
             conflicts.append({'compound_id':cid,'fields':added,'reason':'new_line_requires_explicit_relayout'});continue
+        if (new.get('drawn_with') or '')!=(old_input.get('drawn_with') or '') or (
+                fragment is None and new['identity']!=old_input['identity']):
+            # Joining or leaving a shared structure, or giving it a different one, redraws cells.
+            conflicts.append({'compound_id':cid,'reason':'drawn_with_requires_explicit_relayout'});continue
         if (new.get('secondary_of') or '')!=(old_input.get('secondary_of') or ''):
             # Moving a compound into or out of another's cell changes the grid.
             conflicts.append({'compound_id':cid,'reason':'secondary_requires_explicit_relayout'});continue

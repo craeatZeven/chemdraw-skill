@@ -32,11 +32,13 @@ HEADER_KEYS = {"substrates", "products", "above", "below"}
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
 SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", "definition", "secondary_of",
-                *SPECIES_STYLE}
+                "drawn_with", *SPECIES_STYLE}
 NOTE_COLUMN = "note"
 # A line naming what a structure stands for ("Alk = C7H15"), drawn under its number.
 DEFINITION_COLUMN = "definition"
 SECONDARY_COLUMN = "secondary_of"
+# A compound listed under another's structure (BJOC 22-127: 3q under 3p's NH-Alk).
+DRAWN_WITH_COLUMN = "drawn_with"
 MAX_SPECIES = 1000
 
 
@@ -150,6 +152,17 @@ def _validate(brief: dict) -> list[str]:
             main = str(entry["secondary_of"])
             if main == str(ident) or main not in every_id:
                 errors.append(f"Species {ident}: secondary_of must name another species of this brief.")
+        if entry.get("drawn_with") is not None:
+            by_id = {str(e.get("id")): e for e in brief.get("species") or [] if isinstance(e, dict)}
+            main = by_id.get(str(entry["drawn_with"]))
+            if main is None or main is entry:
+                errors.append(f"Species {ident}: drawn_with must name another species of this brief.")
+            elif main.get("drawn_with") is not None or main.get("secondary_of") is not None:
+                errors.append(f"Species {ident}: drawn_with must name a species drawn with its own structure.")
+            elif entry.get("secondary_of") is not None:
+                errors.append(f"Species {ident}: a species is a secondary product or drawn with another, not both.")
+            elif _text(main.get("group")) != _text(entry.get("group")):
+                errors.append(f"Species {ident}: drawn_with must name a species of the same group.")
         if entry.get("definition") is not None and not isinstance(entry["definition"], str):
             errors.append(f'Species {ident}: definition must be text (a line such as "Alk = C7H15").')
         if entry.get("note") is not None and not isinstance(entry["note"], str):
@@ -284,11 +297,13 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
     notes = any(isinstance(e, dict) and e.get("note") for e in brief["species"])
     definitions = any(isinstance(e, dict) and e.get("definition") for e in brief["species"])
     secondary = any(isinstance(e, dict) and e.get("secondary_of") for e in brief["species"])
+    family = any(isinstance(e, dict) and e.get("drawn_with") for e in brief["species"])
     with (work / "table.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(["compound_id", "smiles", "label", "group", *columns.values(), *([NOTE_COLUMN] if notes else []),
                          *([DEFINITION_COLUMN] if definitions else []),
-                         *([SECONDARY_COLUMN] if secondary else [])])
+                         *([SECONDARY_COLUMN] if secondary else []),
+                         *([DRAWN_WITH_COLUMN] if family else [])])
         by_id = {str(e["id"]): e for e in brief["species"]}
         for item in grounded:
             entry = by_id[item["id"]]
@@ -297,7 +312,8 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
                              *(_text(values.get(f["key"])) for f in fields),
                              *([_text(entry.get("note"))] if notes else []),
                              *([_text(entry.get("definition"))] if definitions else []),
-                             *([_text(entry.get("secondary_of"))] if secondary else [])])
+                             *([_text(entry.get("secondary_of"))] if secondary else []),
+                             *([_text(entry.get("drawn_with"))] if family else [])])
     style = {k: brief[k] for k in ("width_mm", "height_mm") if brief.get(k) is not None}
     slug = brief_style(brief)[0]
     if slug != DEFAULT_STYLE_PRESET:
@@ -308,6 +324,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
     spec = {
         "mode": "scope", "table": "table.csv", "label_column": "label", "group_column": "group",
         **({"secondary_column": SECONDARY_COLUMN} if secondary else {}),
+        **({"drawn_with_column": DRAWN_WITH_COLUMN} if family else {}),
         # A definition such as "Alk = C7H15" also draws that group as its label.
         **({"label_groups_from": DEFINITION_COLUMN} if definitions else {}),
         "fields": _cell_fields(fields, notes, definitions),
@@ -323,9 +340,12 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
     return path
 
 
-def _readback(pages: list[Path], grounded: list[dict], header: dict | None = None) -> dict:
+def _readback(pages: list[Path], grounded: list[dict], header: dict | None = None,
+              drawn_with: set[str] | None = None) -> dict:
     wanted: Counter = Counter()
     for item in grounded:
+        if item["id"] in (drawn_with or set()):
+            continue  # shown by the structure it is drawn with
         wanted.update(semantic_key(m) for m in Chem.GetMolFrags(Chem.MolFromSmiles(item["smiles"]), asMols=True))
     if header:
         from ..publication.layout import header_identities
@@ -357,6 +377,9 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     if errors:
         return _failure(errors, kind="scope")
     fields, _ = _fields(brief)
+    # Species listed under another's structure have no fragment of their own on the page.
+    members = {str(e["id"]) for e in brief["species"] if e.get("drawn_with") is not None}
+    drawn = [g for g in grounded if g["id"] not in members]
 
     target = Path(output_path).expanduser().resolve() if output_path else _free_directory()
     if target.exists():
@@ -364,7 +387,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
 
     house = brief_house(brief)
     try:
-        styled, highlighted, highlight_warnings = _highlight_brief(brief, grounded)
+        styled, highlighted, highlight_warnings = _highlight_brief(brief, drawn)
     except Exception as exc:  # a failed comparison leaves the panel uncoloured, and says so
         styled, highlighted, highlight_warnings = brief, {}, [f"highlight_varying could not compare the compounds: {exc}"]
     restyle = house is not None or any(isinstance(e, dict) and any(k in e for k in SPECIES_STYLE)
@@ -393,7 +416,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
         for page in pages:
             path = Path(page["path"])
             text, page_applied, skipped, warned = figure_house.apply_scope_conventions(
-                path.read_text(encoding="utf-8"), styled, grounded, house, slug)
+                path.read_text(encoding="utf-8"), styled, drawn, house, slug)
             path.write_text(str(text), encoding="utf-8")
             applied += [a for a in page_applied if a not in applied]
             style_warnings += [w for w in warned if w not in style_warnings]
@@ -409,7 +432,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
             checks.setdefault("native_preview", {})["status"] = "rendered_pending_visual_review"
         except Exception as exc:
             checks.setdefault("native_preview", {})["error"] = str(exc)
-    readback = _readback([Path(p["path"]) for p in pages], grounded, header)
+    readback = _readback([Path(p["path"]) for p in pages], grounded, header, members)
 
     notes: list[str] = []
     warnings: list[str] = []

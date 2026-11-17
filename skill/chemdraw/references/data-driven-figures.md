@@ -58,7 +58,12 @@ italic (*para* substituents, *N*-heterocycles), then its rows (a band continued 
 next page says so). A `secondary_column` names, for a minor product, the compound ID of
 the main product it stands beside: in the same cell, after a "+", the structure in grey
 and its own label and values in black. It must be in
-the same group, and a secondary product has none of its own. Labels and
+the same group, and a secondary product has none of its own. A `drawn_with_column`
+names, for a compound shown by another's structure (3q under 3p's NH–Alk), that compound's
+ID: no structure is drawn for it, and its own caption line follows the other's, in the same
+cell. It names a compound of the same group drawn with a structure of its own; the page
+check reads only its text, and an update that changes its structure or `drawn_with` is a
+conflict that asks for a new layout. Labels and
 measurements remain tied to IDs during pagination.
 
 ## Full-structure SAR

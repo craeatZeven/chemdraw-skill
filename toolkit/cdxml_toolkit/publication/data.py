@@ -96,6 +96,7 @@ def load_records(spec, base):
     required = {id_column, *(f['column'] for f in fields)}
     if spec.get('group_column'): required.add(spec['group_column'])
     if spec.get('secondary_column'): required.add(spec['secondary_column'])
+    if spec.get('drawn_with_column'): required.add(spec['drawn_with_column'])
     if spec.get('label_column'): required.add(spec['label_column'])
     if fmt != 'sdf': required.add(structure.get('column', 'smiles' if fmt=='smiles' else 'structure_file'))
     if required - set(header):
@@ -139,11 +140,34 @@ def load_records(spec, base):
                         'label':row.get(spec.get('label_column','label'), '') or cid,
                         'group':row.get(spec.get('group_column',''), ''),
                         'secondary_of':(row.get(spec['secondary_column']) or '').strip() if spec.get('secondary_column') else '',
+                        'drawn_with':(row.get(spec['drawn_with_column']) or '').strip() if spec.get('drawn_with_column') else '',
                         # New layout must not import old CX coordinates/wedge directives.
                         'smiles':semantic_key(mol), 'identity':semantic_key(mol),
                         'values':{f['column']:row[f['column']] for f in fields}})
     _check_secondaries(records)
+    _check_drawn_with(records)
     return records, sources
+
+
+def _check_drawn_with(records):
+    """A compound drawn with another's structure (3q under 3p's NH-Alk) names one of the same
+    group that has a structure of its own."""
+    by_id={r['compound_id']:r for r in records}
+    for record in records:
+        main=record.get('drawn_with')
+        if not main:
+            continue
+        where=f"row {record['row']} ({record['compound_id']})"
+        if main==record['compound_id']:
+            raise ValueError(f'{where}: a compound is drawn with its own structure already; leave drawn_with empty')
+        if main not in by_id:
+            raise ValueError(f'{where}: drawn with an unknown compound {main!r}')
+        if by_id[main].get('drawn_with') or by_id[main].get('secondary_of'):
+            raise ValueError(f'{where}: {main!r} is itself drawn with another structure; name that one')
+        if record.get('secondary_of'):
+            raise ValueError(f'{where}: a compound is either a secondary product or drawn with another, not both')
+        if by_id[main]['group']!=record['group']:
+            raise ValueError(f'{where}: a compound drawn with {main!r} sits in its group')
 
 
 def _check_secondaries(records):

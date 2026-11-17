@@ -385,7 +385,11 @@ def prepare(records,spec):
         # The structure stands in the middle of its cell, over its centred caption.
         shift=pad+(width-molecule_width)/2
         coords=[[x-min(xs)+shift,y-min(ys)+pad] for x,y in xy]
+        caption=((_caption_advance('',size) if joined else 0)
+                 +sum(_caption_advance(v,size) for k,v in texts.items() if k not in joined))
         prepared.append({'input':record,'coords':coords,'texts':texts,'runs':runs,'inline':joined,'named':named,
+                         'caption':caption,'caption_width':max([_line_width(joined,texts,style,runs)]+
+                                                              [text_width(v,style) for k,v in texts.items() if k not in joined]),
                          'width':width,'height':height,'molecule_bottom':max(y for x,y in coords)})
     return prepared,warnings
 
@@ -401,8 +405,19 @@ def create_pages(records,spec,stage,start_index=0):
     minors={}
     for p in prepared:
         if p['input'].get('secondary_of'): minors.setdefault(p['input']['secondary_of'],[]).append(p)
+    # Compounds drawn with another's structure (BJOC 22-127: 3q under 3p's NH-Alk) add their
+    # caption lines under that structure's and draw nothing of their own.
+    family={}
+    for p in prepared:
+        if p['input'].get('drawn_with'): family.setdefault(p['input']['drawn_with'],[]).append(p)
+    for p in prepared:
+        extra=family.get(p['input']['compound_id'],[])
+        if extra:
+            p['height']+=sum(q['caption'] for q in extra)
+            p['width']=min(width-2*margin,max([p['width']]+[q['caption_width']+16 for q in extra]))
+            p['family']=extra
     arranged=[p for group in groups for p in prepared
-              if p['input']['group']==group and not p['input'].get('secondary_of')]
+              if p['input']['group']==group and not p['input'].get('secondary_of') and not p['input'].get('drawn_with')]
     manifests=[]; current=None; x=y=row_height=0; last_group=None
     footer='\n'.join(spec.get('footnotes',[]))
     footer=wrap(footer,width-2*margin,style) if footer else ''
@@ -450,12 +465,16 @@ def create_pages(records,spec,stage,start_index=0):
         current['rules'].append(tail)
         current['right']=max(current['right'],after)
         return baseline+heading.count('\n')*size*1.5+size*0.3+8
-    def place(current,p,x,y,color=None):
-        key=f'c{len(compounds)}'; cid=p['input']['compound_id']
-        objects=[{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
+    keys=[]   # one per placed compound; a family member is placed inside its main compound's call
+    def place(current,p,x,y,color=None,ty=None,cx=None):
+        key=f'c{len(keys)}'; keys.append(key); cid=p['input']['compound_id']
+        text_only=ty is not None   # a compound drawn with another's structure: its caption alone
+        objects=[] if text_only else [{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
                   'coordinates':[[a+x,b+y] for a,b in p['coords']],**({'color':color} if color else {})}]
-        ty=y+p['molecule_bottom']+size*CELL['caption_baseline']
-        cx=x+p['width']/2
+        top=ty
+        if ty is None:
+            ty=y+p['molecule_bottom']+size*CELL['caption_baseline']
+        cx=x+p['width']/2 if cx is None else cx
         def line(field,at,align):
             runs=p['runs'].get(field)
             return {'type':'text','id':key+'_'+field,'text':p['texts'][field],'position':[at,ty],'size':size,
@@ -475,6 +494,15 @@ def create_pages(records,spec,stage,start_index=0):
             objects.append(line(field,cx,'Center'))
             ty+=_caption_advance(value,size)
         current['objects'].extend(objects)
+        if text_only:
+            half=p['caption_width']/2
+            entry={'key':key,'cid':cid,'bbox':[cx-half,top-size,cx+half,ty-size],'text_only':True}
+            current['entries'].append(entry)
+            compounds[cid]={'input':p['input'],'page':current['index'],'bbox':entry['bbox'],
+                            'display':p['texts'],'locked':False}
+            return ty
+        for member in p.get('family',[]):
+            ty=place(current,member,x,y,ty=ty,cx=cx)
         entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']],'named':p.get('named')}
         current['entries'].append(entry)
         current['bottom']=max(current['bottom'],y+p['height']); current['right']=max(current['right'],x+p['width'])
@@ -538,17 +566,18 @@ def create_pages(records,spec,stage,start_index=0):
         for entry in page['entries']:
             record=compounds[entry['cid']]; key=entry['key']
             group=ET.SubElement(native_page,'group',{'id':str(next_id)});next_id+=1
-            object_ids={'group':group.get('id'),'fragment':ids[key+'_mol'],'label':ids[key+'_label'],
+            object_ids={'group':group.get('id'),'fragment':ids.get(key+'_mol'),'label':ids[key+'_label'],
                         'fields':{f['column']:ids[key+'_'+f['column']] for f in spec.get('fields',[])
                                   if key+'_'+f['column'] in ids}}
             joins=[ids[k] for k in ids if k.startswith(key+'_join')]  # the ", " of a shared line
-            for oid in [object_ids['fragment'],object_ids['label'],*object_ids['fields'].values(),*joins]:
+            for oid in [o for o in [object_ids['fragment'],object_ids['label'],*object_ids['fields'].values(),*joins] if o]:
                 node=next(n for n in native_page if n.get('id')==oid)
                 native_page.remove(node);group.append(node)
             if entry.get('named'):
                 next_id=_draw_as_label(group.find('fragment'),record['input']['smiles'],entry['named'],next_id)
             record['objects']=object_ids
-            record['displayed_identity']=semantic_key(fragment_mol(group.find('fragment')))
+            # A compound drawn with another's structure has none of its own to read back.
+            record['displayed_identity']=None if entry.get('text_only') else semantic_key(fragment_mol(group.find('fragment')))
         tree.write(stage/name,encoding='utf-8',xml_declaration=True)
         pages.append({'file':name,'width_pt':page['width'],'height_pt':page['height']})
     return pages,compounds,warnings
@@ -613,6 +642,16 @@ def check_pages(project, roots, spec):
         group=root.find(f".//group[@id='{ids['group']}']")
         if group is None:
             errors.append({'page':index+1,'compound_id':cid,'error':'missing_group'});continue
+        if ids.get('fragment') is None and record['input'].get('drawn_with'):
+            # Its structure is the one it is drawn with; only its own lines are bound here.
+            for field,oid in {'label':ids['label'],**ids['fields']}.items():
+                node=group.find(f"t[@id='{oid}']")
+                if node is None or node_text(node)!=record['display'][field]:
+                    errors.append({'page':index+1,'compound_id':cid,'error':'label_binding_changed','field':field})
+            for element in group.findall('t'):
+                box=bounds(element,style)
+                if box: boxes[index].append((cid,element.get('id'),box))
+            continue
         fragment=group.find(f"fragment[@id='{ids['fragment']}']")
         if fragment is None:
             errors.append({'page':index+1,'compound_id':cid,'error':'missing_structure'});continue

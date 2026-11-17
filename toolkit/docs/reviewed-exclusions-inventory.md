@@ -406,7 +406,7 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 346: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 366: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_tools`
 
@@ -639,12 +639,12 @@
 
 ## `publication.data`
 
-- **function**, line 167: `field_text(record, field)` - No public docstring in the audited version.
+- **function**, line 191: `field_text(record, field)` - No public docstring in the audited version.
 - **function**, line 83: `load_records(spec, base)` - No public docstring in the audited version.
 - **function**, line 15: `local_path(base, value)` - No public docstring in the audited version.
 - **function**, line 11: `sha256(path)` - No public docstring in the audited version.
 - **function**, line 36: `table_rows(path, sheet = None)` - No public docstring in the audited version.
-- **function**, line 178: `write_json(path, value)` - No public docstring in the audited version.
+- **function**, line 202: `write_json(path, value)` - No public docstring in the audited version.
 
 ## `publication.house_styles`
 
@@ -662,11 +662,11 @@
 
 ## `publication.layout`
 
-- **function**, line 576: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 605: `bounds(node, style)` - No public docstring in the audited version.
 - **function**, line 121: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 606: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 635: `check_pages(project, roots, spec)` - No public docstring in the audited version.
 - **function**, line 182: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
-- **function**, line 393: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 397: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
 - **function**, line 257: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
@@ -675,7 +675,7 @@
 - **function**, line 220: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 602: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 631: `overlap(a, b)` - No public docstring in the audited version.
 - **function**, line 207: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
 - **function**, line 327: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
@@ -686,9 +686,9 @@
 
 - **function**, line 37: `match_objects(group, record)` - No public docstring in the audited version.
 - **function**, line 16: `matching_group(root, record)` - No public docstring in the audited version.
-- **function**, line 56: `replace_text(node, old, new)` - Preserve unchanged rich runs; single-run labels retain all their style.
-- **function**, line 86: `replacement_fragment(old_fragment, new_smiles, atom_map, stage, root, cid)` - No public docstring in the audited version.
-- **function**, line 151: `update_pages(base_project, base_dir, records, spec, spec_dir, stage)` - No public docstring in the audited version.
+- **function**, line 60: `replace_text(node, old, new)` - Preserve unchanged rich runs; single-run labels retain all their style.
+- **function**, line 90: `replacement_fragment(old_fragment, new_smiles, atom_map, stage, root, cid)` - No public docstring in the audited version.
+- **function**, line 155: `update_pages(base_project, base_dir, records, spec, spec_dir, stage)` - No public docstring in the audited version.
 
 ## `reaction_calculator.annotate`
 
