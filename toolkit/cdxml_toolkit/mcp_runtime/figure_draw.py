@@ -169,6 +169,12 @@ def _check_balance(brief: dict, smiles: dict[str, str]) -> tuple[list[dict], lis
     reports: list[dict] = []
     warnings: list[str] = []
     for number, step in enumerate(brief["steps"], 1):
+        members = _as_list(step["substrates"]) + _as_list(step["products"])
+        if any(i not in smiles for i in members):
+            # A Newman projection is a drawing of a conformer, with no formula to balance.
+            reports.append({"step": number, "balanced": None, "missing": None,
+                            "error": "the step shows a Newman projection, so its balance is not checked"})
+            continue
         reaction = {
             "reactants": [{"smiles": smiles[i], "label": i} for i in _as_list(step["substrates"])],
             "agents": [],
@@ -700,8 +706,10 @@ def _readback(target: Path, grounded: list[dict], used: set[str], fragments: dic
     wanted: dict[str, list[str]] = {}
     for item in grounded:
         if item["id"] in used:
-            key = semantic_key(Chem.MolFromSmiles(item["smiles"]))
-            wanted.setdefault(key, []).append(item["id"])
+            # A drawing without a SMILES (a Newman projection) brings the keys its own drawing reads as.
+            keys = item["inventory"] if "inventory" in item else [semantic_key(Chem.MolFromSmiles(item["smiles"]))]
+            for key in keys:
+                wanted.setdefault(key, []).append(item["id"])
     found = Counter(document_inventory(target))
     missing = [i for key, ids in wanted.items() if key not in found for i in ids]
     extra = sum(1 for key in found if key not in wanted)
@@ -802,7 +810,9 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     PNGs in png/ with render=True) and the report lists the pages.
 
     kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
-    lists: species [{id, smiles or name, label?}] and steps [{substrates, products, above?,
+    lists: species [{id, smiles or name, label?}] (or {id, newman {front, rear,
+    conformation?, dihedral_offset?}, label?} for a Newman projection placed among them,
+    which arrows cannot point at and whose steps need no moves) and steps [{substrates, products, above?,
     below?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs
     from {species, atom} or {species, bond [i, j]} to the same kind of end, in species that
     are substrates of the step; atoms are numbered from 0 in SMILES order (the report lists

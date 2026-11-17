@@ -15,6 +15,7 @@ from __future__ import annotations
 import math
 import re
 import xml.etree.ElementTree as ET
+from types import SimpleNamespace
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -35,7 +36,9 @@ from ..text_formatting import normalize_condition_text
 from . import artifact_safety, figure_draw, figure_house, figure_lint
 
 MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers"}
-SPECIES_KEYS = {"id", "smiles", "name", "label"}
+SPECIES_KEYS = {"id", "smiles", "name", "label", "newman"}
+NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset"}
+NEWMAN_SPOKE = 1.4 * ACS_BOND_LENGTH   # a projection's spokes, sized beside 14.4 pt bonds
 STEP_KEYS = {"substrates", "products", "above", "below", "yield", "arrow", "moves"}
 MOVE_KEYS = {"from", "to", "electrons", "color"}
 END_KEYS = {"species", "atom", "bond"}
@@ -109,6 +112,7 @@ def _validate(brief: dict) -> list[str]:
 
     species = brief.get("species")
     ids: set[str] = set()
+    newman_ids: set[str] = set()
     if not isinstance(species, list) or not species:
         errors.append("species: list every structure that is drawn, each with an id and a smiles or a name.")
         species = []
@@ -123,8 +127,11 @@ def _validate(brief: dict) -> list[str]:
         extra = sorted(set(entry) - SPECIES_KEYS)
         if extra:
             errors.append(f"Species {ident}: unknown keys {extra}.")
-        if not entry.get("smiles") and not entry.get("name"):
-            errors.append(f"Species {ident} needs a smiles or a name.")
+        if "newman" in entry:
+            newman_ids.add(ident)
+            errors += _newman_errors(ident, entry["newman"])
+        elif not entry.get("smiles") and not entry.get("name"):
+            errors.append(f"Species {ident} needs a smiles or a name (or a newman projection).")
 
     steps = brief.get("steps")
     if not isinstance(steps, list) or not steps:
@@ -154,13 +161,97 @@ def _validate(brief: dict) -> list[str]:
         if step.get("arrow", "solid") not in MECH_ARROWS:
             errors.append(f"Step {number}: arrow must be one of {list(MECH_ARROWS)}.")
         moves = step.get("moves")
+        conformers = bool(newman_ids & set(members["substrates"] + members["products"]))
+        if conformers and moves in (None, []):
+            continue  # a change of conformation, or a step drawn on projections, has no arrows to list
         if not isinstance(moves, list) or not moves:
             errors.append(f"Step {number} needs moves: list each electron move as from and to "
                           "(an atom number or a bond). A mechanism is never inferred.")
             continue
         for index, move in enumerate(moves, 1):
             errors += _move_errors(number, index, move, members["substrates"], ids)
+            for side in ("from", "to"):
+                end = move.get(side) if isinstance(move, dict) else None
+                if isinstance(end, dict) and str(end.get("species")) in newman_ids:
+                    errors.append(f"Step {number} move {index} {side}: a Newman projection has no numbered "
+                                  "atoms for an arrow; point it at a structure given by smiles or name.")
     return errors
+
+
+def _newman_errors(ident: str, spec: Any) -> list[str]:
+    if not isinstance(spec, dict):
+        return [f"Species {ident}: newman must be an object with front and rear substituents."]
+    errors = []
+    extra = sorted(set(spec) - NEWMAN_KEYS)
+    if extra:
+        errors.append(f"Species {ident}: unknown newman keys {extra}.")
+    for side in ("front", "rear"):
+        group = spec.get(side)
+        if not (isinstance(group, list) and len(group) == 3 and all(isinstance(g, str) and g for g in group)):
+            errors.append(f"Species {ident}: newman {side} must list three substituents, e.g. [\"Me\", \"H\", \"H\"].")
+    if spec.get("conformation", "staggered") not in ("staggered", "eclipsed"):
+        errors.append(f"Species {ident}: newman conformation must be staggered or eclipsed.")
+    offset = spec.get("dihedral_offset")
+    if offset is not None and (isinstance(offset, bool) or not isinstance(offset, (int, float))):
+        errors.append(f"Species {ident}: newman dihedral_offset must be a number of degrees.")
+    return errors
+
+
+def _newman_frag(ident: str, spec: dict, label: str | None) -> Any:
+    """A Newman projection as a structure the row layout can place: atoms, bonds, box, label."""
+    from ..templates.conformers import newman_projection
+    drawn = newman_projection(conformation=spec.get("conformation", "staggered"),
+                              dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
+                              rear=tuple(spec["rear"]), cx=0.0, cy=0.0, bond_length=NEWMAN_SPOKE)
+    atoms = [dict(a) for a in drawn["atoms"]]
+    frag = SimpleNamespace(atoms=atoms, bonds=[dict(b) for b in drawn["bonds"]], newman=dict(spec),
+                           ref=StructureRef(id=ident, label=label))
+    frag.bbox = R._fragment_bbox(atoms)
+    frag.cx, frag.cy = R._bbox_center(frag.bbox)
+    return frag
+
+
+def _newman_xml(frag: Any, next_id) -> list[str]:
+    """The projection drawn where the layout put it, with ids from the page's own sequence.
+
+    The template orders its parts by Z (rear spokes, then the filled disc, then the front
+    spokes); new Z values keep that order, so the disc still hides the rear spokes' roots.
+    """
+    from ..templates.conformers import newman_projection
+    centre = frag.atoms[0]  # the front carbon, at the centre of the projection
+    spec = frag.newman
+    drawn = newman_projection(conformation=spec.get("conformation", "staggered"),
+                              dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
+                              rear=tuple(spec["rear"]), cx=centre["x"], cy=centre["y"], bond_length=NEWMAN_SPOKE)
+    elements = [ET.fromstring(drawn["fragment_xml"])] + [ET.fromstring(g) for g in drawn["graphics_xml"]]
+    every = [node for element in elements for node in element.iter()]
+    renumber = {node.get("id"): str(next_id()) for node in every if node.get("id")}
+    for node in every:
+        if node.get("id"):
+            node.set("id", renumber[node.get("id")])
+        for key in ("B", "E"):
+            if node.get(key) in renumber:
+                node.set(key, renumber[node.get(key)])
+    for node in sorted((n for n in every if n.get("Z")), key=lambda n: int(n.get("Z"))):
+        node.set("Z", str(next_id()))
+    return [ET.tostring(element, encoding="unicode") for element in elements]
+
+
+def _newman_inventory(spec: dict) -> list[str]:
+    """What the readback finds for this projection: the template read the way pages are read."""
+    import tempfile
+    from ..chemistry_semantics import document_inventory
+    from ..templates.conformers import newman_projection
+    drawn = newman_projection(conformation=spec.get("conformation", "staggered"),
+                              dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
+                              rear=tuple(spec["rear"]), bond_length=NEWMAN_SPOKE)
+    with tempfile.TemporaryDirectory(prefix="newman-") as scratch:
+        path = Path(scratch) / "newman.cdxml"
+        path.write_text(drawn["cdxml"], encoding="utf-8")
+        try:
+            return list(document_inventory(path).elements())
+        except ValueError:
+            return []
 
 
 def _as_ids(value: Any) -> list[str]:
@@ -200,7 +291,7 @@ def _index_errors(brief: dict, mols: dict[str, Any]) -> list[str]:
     """Atom and bond numbers must exist in the grounded structures."""
     errors: list[str] = []
     for number, step in enumerate(brief["steps"], 1):
-        for index, move in enumerate(step["moves"], 1):
+        for index, move in enumerate(step.get("moves") or [], 1):
             for side in ("from", "to"):
                 end = move[side]
                 mol = mols[end["species"]]
@@ -305,10 +396,16 @@ def _arrange(brief: dict, grounded: list[dict], width: float, gap_scale: float):
     insts: list[_Inst] = []
     notes: list[str] = []
 
+    def structure(species: str, label: str | None = None) -> Any:
+        item = by_id[species]
+        if item.get("newman"):
+            return _newman_frag(species, item["newman"], label)
+        return R._resolve_structure(StructureRef(id=species, smiles=item["smiles"], label=label))
+
     def new(species: str) -> _Inst:
         item = by_id[species]
         label = str(item["label"]) if item["label"] else None
-        inst = _Inst(len(insts), species, R._resolve_structure(StructureRef(id=species, smiles=item["smiles"], label=label)))
+        inst = _Inst(len(insts), species, structure(species, label))
         insts.append(inst)
         return inst
 
@@ -335,7 +432,7 @@ def _arrange(brief: dict, grounded: list[dict], width: float, gap_scale: float):
         arrow_len = max(max(R._estimate_text_width(above), R._estimate_text_width(below)) + 10.0, 5.0 * bond)
         product_widths = []
         for species in products:
-            probe = R._resolve_structure(StructureRef(id=species, smiles=by_id[species]["smiles"]))
+            probe = structure(species)
             product_widths.append(R._bbox_width(probe.bbox))
         after_arrow = 0.3 * frag_gap + arrow_len + frag_gap + sum(product_widths) + inter_gap * (len(products) - 1)
 
@@ -568,7 +665,7 @@ def _row_curves(brief: dict, step_insts: list[dict], rows: list[list[dict]], bul
     curves: dict[int, list[dict]] = {i: [] for i in range(len(rows))}
     for number, step in enumerate(brief["steps"], 1):
         subs = step_insts[number - 1]["subs"]
-        for index, move in enumerate(step["moves"], 1):
+        for index, move in enumerate(step.get("moves") or [], 1):
             src_inst, dst_inst = subs[move["from"]["species"]], subs[move["to"]["species"]]
             (sx, sy), src_r, src_keys = _anchor(src_inst, move["from"])
             (tx, ty), dst_r, dst_keys = _anchor(dst_inst, move["to"])
@@ -678,8 +775,11 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
                 for item in row:
                     if item["t"] == "frag":
                         frag = item["inst"].frag
-                        xml, _, _ = R._build_fragment(frag.atoms, frag.bonds, ids)
-                        parts.append(xml)
+                        if getattr(frag, "newman", None):
+                            parts += _newman_xml(frag, ids.next)
+                        else:
+                            xml, _, _ = R._build_fragment(frag.atoms, frag.bonds, ids)
+                            parts.append(xml)
                         if frag.ref.label:
                             label, _ = R._build_label_element(frag.ref.label, frag.cx, frag.bbox[3] + 14.0, ids)
                             parts.append(label)
@@ -748,7 +848,7 @@ def _move_report(brief: dict, mols: dict[str, Any]) -> tuple[list[dict], list[st
     report: list[dict] = []
     warnings: list[str] = []
     for number, step in enumerate(brief["steps"], 1):
-        for index, move in enumerate(step["moves"], 1):
+        for index, move in enumerate(step.get("moves") or [], 1):
             checks = _move_checks(move, mols[move["from"]["species"]])
             report.append({
                 "step": number, "move": index,
@@ -766,14 +866,18 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     errors = _validate(brief)
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
-    grounded, errors = figure_draw._ground(brief["species"])
+    # A Newman projection is drawn from its substituents, not from a structure to ground.
+    projections = [e for e in brief["species"] if "newman" in e]
+    grounded, errors = figure_draw._ground([e for e in brief["species"] if "newman" not in e])
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
-    mols = {g["id"]: Chem.MolFromSmiles(g["smiles"]) for g in grounded}
+    grounded += [{"id": str(e["id"]), "label": e.get("label"), "name": None, "smiles": None, "source": "newman",
+                  "newman": e["newman"], "inventory": _newman_inventory(e["newman"])} for e in projections]
+    mols = {g["id"]: Chem.MolFromSmiles(g["smiles"]) for g in grounded if g.get("smiles")}
     errors = _index_errors(brief, mols)
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
-    smiles = {g["id"]: g["smiles"] for g in grounded}
+    smiles = {g["id"]: g["smiles"] for g in grounded if g.get("smiles")}
 
     balance, warnings = figure_draw._check_balance(brief, smiles)
     moves, move_warnings = _move_report(brief, mols)
@@ -869,7 +973,10 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     species = []
     for g in grounded:
         entry = {k: g[k] for k in ("id", "label", "name", "smiles", "source")}
-        entry["atoms"] = ", ".join(f"{a.GetIdx()} {a.GetSymbol()}" for a in mols[g["id"]].GetAtoms())
+        if g["id"] in mols:
+            entry["atoms"] = ", ".join(f"{a.GetIdx()} {a.GetSymbol()}" for a in mols[g["id"]].GetAtoms())
+        else:
+            entry["newman"] = g["newman"]  # drawn from its substituents; no atoms to number
         species.append(entry)
     report = {
         "ok": True,

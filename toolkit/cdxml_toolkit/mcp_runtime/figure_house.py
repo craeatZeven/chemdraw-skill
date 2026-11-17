@@ -130,6 +130,8 @@ def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict]):
     frag_els = {f.get("id", ""): f for f in page.iter("fragment")}
     key_to_ids: dict[str, list[str]] = {}
     for g in grounded:
+        if not g.get("smiles"):
+            continue  # a drawing with no structure behind it (a Newman projection)
         mol = Chem.MolFromSmiles(g["smiles"])
         if mol is not None:
             key_to_ids.setdefault(semantic_key(mol), []).append(g["id"])

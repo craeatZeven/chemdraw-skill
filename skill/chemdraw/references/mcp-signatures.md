@@ -274,7 +274,9 @@ dash and listed in the notes. output_path is then a new folder (page-001.cdxml, 
 PNGs in png/ with render=True) and the report lists the pages.
 
 kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
-lists: species [{id, smiles or name, label?}] and steps [{substrates, products, above?,
+lists: species [{id, smiles or name, label?}] (or {id, newman {front, rear,
+conformation?, dihedral_offset?}, label?} for a Newman projection placed among them,
+which arrows cannot point at and whose steps need no moves) and steps [{substrates, products, above?,
 below?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs
 from {species, atom} or {species, bond [i, j]} to the same kind of end, in species that
 are substrates of the step; atoms are numbered from 0 in SMILES order (the report lists

@@ -257,4 +257,5 @@ old output until it is rendered again.
 | P8 section bands | `substrate_scope` | generator done: a rule and an italic name open each group; re-render. Eighteen compounds in three groups of six still take two pages: six band rows at 10 pt need about 717 pt and a page offers about 579, which no padding can close |
 | P4 the varying group in a second colour | `substrate_scope` | generator done (`highlight_varying`, the common core by maximum common substructure, default `#FF6600`); its tests need RDKit; re-render with `"highlight_varying": true` in the scope brief |
 | P7 a secondary product beside the main one | `substrate_scope` | generator done (`secondary_of` on a species, `secondary_column` in a table): same cell, grey `#808080` (added to the default check palette), its own label and values; same bond length, so the check's bond rule still holds |
-| P3, P9 | | open |
+| P3 Newman projections inside a scheme | `mechanism` | generator done: a species with `newman` is laid out among the structures (spokes 1.4 bond lengths), re-numbered into the page so its disc still hides the rear spokes, and read back as drawn; the whole-brief test needs RDKit; render a brief with two projections |
+| P9 | | open |
