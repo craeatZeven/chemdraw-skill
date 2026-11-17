@@ -1,0 +1,93 @@
+{
+ "layout": "fan",
+ "species": [
+  {
+   "id": "SM",
+   "smiles": "CC(=O)c1ccccc1",
+   "label": "1"
+  },
+  {
+   "id": "NH2OH",
+   "smiles": "NO"
+  },
+  {
+   "id": "A",
+   "smiles": "CC(O)c1ccccc1",
+   "label": "2"
+  },
+  {
+   "id": "B",
+   "smiles": "CC(=NO)c1ccccc1",
+   "label": "3"
+  },
+  {
+   "id": "C",
+   "smiles": "C=C(C)c1ccccc1",
+   "label": "4"
+  },
+  {
+   "id": "D",
+   "smiles": "OC(=O)c1ccccc1",
+   "label": "5"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "SM"
+   ],
+   "products": [
+    "A"
+   ],
+   "above": [
+    "NaBH4"
+   ],
+   "below": [
+    "MeOH, 0 \u00b0C"
+   ]
+  },
+  {
+   "substrates": [
+    "SM",
+    "NH2OH"
+   ],
+   "products": [
+    "B"
+   ],
+   "above": [
+    "NaOAc"
+   ],
+   "below": [
+    "EtOH, reflux"
+   ]
+  },
+  {
+   "substrates": [
+    "SM"
+   ],
+   "products": [
+    "C"
+   ],
+   "above": [
+    "Ph3P=CH2"
+   ],
+   "below": [
+    "THF"
+   ]
+  },
+  {
+   "substrates": [
+    "SM"
+   ],
+   "products": [
+    "D"
+   ],
+   "above": [
+    "NaOCl"
+   ],
+   "below": [
+    "then HCl"
+   ]
+  }
+ ]
+}

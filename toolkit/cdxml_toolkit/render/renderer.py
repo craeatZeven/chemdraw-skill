@@ -1951,6 +1951,198 @@ def _layout_divergent(
     return "\n".join(xml_parts), lowest_y
 
 
+_FAN_DIRECTIONS = ("left", "right", "down", "up")
+
+
+def _layout_fan(
+    scheme: SchemeDescriptor,
+    ids: _IDGen,
+    source_data: Optional[Dict[str, Dict]] = None,
+    reference_mol: Optional[Any] = None,
+) -> Tuple[str, float]:
+    """One starting material in the middle, an arrow leaving it for each product: left, right,
+    then down and up (BJOC 22-103 figure 1 panel c). Each branch keeps its conditions, and its
+    co-substrates stand over its arrow (beside a vertical one) and count as reactants.
+
+    Routes that are not one starting material with two to four products, or that have steps
+    not starting from it, are drawn by the divergent layout instead.
+    """
+    from collections import Counter
+
+    steps = scheme.steps
+    counts = Counter(sid for step in steps for sid in step.substrates)
+    shared_id = counts.most_common(1)[0][0] if counts else None
+    shared = [s for s in steps if shared_id in s.substrates]
+    if shared_id is None or not 2 <= len(shared) <= len(_FAN_DIRECTIONS) or len(shared) != len(steps):
+        return _layout_divergent(scheme, ids, source_data=source_data, reference_mol=reference_mol)
+
+    def get_ref(sid: str) -> StructureRef:
+        return scheme.structures.get(sid) or StructureRef(id=sid)
+
+    def resolve(sid: str) -> _ResolvedFragment:
+        return _resolve_structure(get_ref(sid), source_data=source_data, reference_mol=reference_mol)
+
+    bond_len = ACS_BOND_LENGTH
+    frag_gap = bond_len * LAYOUT_FRAG_GAP_BONDS * scheme.gap_scale
+    inter_gap = max(bond_len * LAYOUT_INTER_GAP_BONDS, LAYOUT_PLUS_GAP) * scheme.gap_scale
+    min_arrow_len = MIN_ARROW_BONDS * bond_len
+    label_room = 14.0 + _DESCENT
+
+    branches = []
+    for step, direction in zip(shared, _FAN_DIRECTIONS):
+        above = [normalize_condition_text(t) for t in step.above_arrow.text] if step.above_arrow else []
+        below = [normalize_condition_text(t) for t in step.below_arrow.text] if step.below_arrow else []
+        if step.yield_:
+            below.append(step.yield_)
+        over = [(resolve(sid), "reactant") for sid in step.substrates if sid != shared_id]
+        if step.above_arrow:
+            over += [(resolve(sid), "above") for sid in step.above_arrow.structures]
+        products = [resolve(sid) for sid in step.products]
+        over_w = sum(_bbox_width(f.bbox) for f, _ in over) + inter_gap * max(0, len(over) - 1)
+        if direction in ("left", "right"):
+            length = max(_estimate_text_width(above) + 10.0, _estimate_text_width(below) + 10.0,
+                         over_w + 10.0, min_arrow_len)
+        else:
+            lines = len(above) + len(below)
+            length = max(min_arrow_len, lines * _LINE_ADVANCE + 10.0)
+        branches.append({"step": step, "dir": direction, "above": above, "below": below, "over": over,
+                         "products": products, "len": length, "over_w": over_w})
+
+    sm = resolve(shared_id)
+    sm_w, sm_h = _bbox_width(sm.bbox), _bbox_height(sm.bbox)
+
+    def reach(branch) -> float:
+        """How far a branch reaches from the starting material's edge along its direction."""
+        prods = branch["products"]
+        if branch["dir"] in ("left", "right"):
+            size = sum(_bbox_width(f.bbox) for f in prods) + inter_gap * max(0, len(prods) - 1)
+        else:
+            size = max((_bbox_height(f.bbox) + (label_room if f.ref.label else 0.0) for f in prods), default=0.0)
+        return frag_gap * 1.3 + branch["len"] + size
+
+    left = max((reach(b) for b in branches if b["dir"] == "left"), default=0.0)
+    up = max((reach(b) for b in branches if b["dir"] == "up"), default=0.0)
+    over_tall = max((_bbox_height(f.bbox) + 40.0 for b in branches if b["dir"] in ("left", "right")
+                     for f, _ in b["over"]), default=0.0)
+    cx = 80.0 + left + sm_w / 2.0
+    cy = 120.0 + max(up, over_tall) + sm_h / 2.0
+    _shift_atoms(sm.atoms, cx - sm.cx, cy - sm.cy)
+    sm.bbox = _fragment_bbox(sm.atoms)
+    sm.cx, sm.cy = _bbox_center(sm.bbox)
+
+    xml_parts: List[str] = []
+    sm_xml, _, sm_id = _build_fragment(sm.atoms, sm.bonds, ids)
+    xml_parts.append(sm_xml)
+    sm_bottom = sm.bbox[3]
+    if sm.ref.label:
+        lbl_xml, _ = _build_label_element(sm.ref.label, sm.cx, sm.bbox[3] + 14.0, ids)
+        xml_parts.append(lbl_xml)
+        sm_bottom = sm.bbox[3] + label_room
+    lowest_y = sm_bottom
+
+    def place(frag, x, y, meta_key, meta):
+        _shift_atoms(frag.atoms, x - frag.cx, y - frag.cy)
+        frag.bbox = _fragment_bbox(frag.atoms)
+        frag.cx, frag.cy = _bbox_center(frag.bbox)
+        fxml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
+        xml_parts.append(fxml)
+        meta[meta_key].append(fid)
+        bottom = frag.bbox[3]
+        if frag.ref.label:
+            lxml, _ = _build_label_element(frag.ref.label, frag.cx, frag.bbox[3] + 14.0, ids)
+            xml_parts.append(lxml)
+            bottom += label_room
+        return bottom
+
+    metadata: List[Dict[str, Any]] = []
+    for b in branches:
+        meta: Dict[str, Any] = {"reactant_ids": [sm_id], "product_ids": [], "arrow_id": 0,
+                                "above_ids": [], "below_ids": []}
+        step = b["step"]
+        if b["dir"] in ("left", "right"):
+            sign = -1.0 if b["dir"] == "left" else 1.0
+            y = sm.cy
+            tail = (sm.bbox[0] - frag_gap * 0.3) if sign < 0 else (sm.bbox[2] + frag_gap * 0.3)
+            head = tail + sign * b["len"]
+            tail_xy, head_xy = (tail, y), (head, y)
+            mid = (tail + head) / 2.0
+            text_h = 0.0
+            if b["above"]:
+                text_h = max(0, len(b["above"]) - 1) * _LINE_ADVANCE + _DESCENT + _CAP_HEIGHT
+                txt, tid = _build_text_element(b["above"], mid, y - LAYOUT_BELOW_GAP - (text_h - _CAP_HEIGHT), ids,
+                                               use_formatting=True)
+                xml_parts.append(txt)
+                meta["above_ids"].append(tid)
+            if b["below"]:
+                txt, tid = _build_text_element(b["below"], mid, y + LAYOUT_BELOW_GAP + _CAP_HEIGHT, ids)
+                xml_parts.append(txt)
+                meta["below_ids"].append(tid)
+                lowest_y = max(lowest_y, y + LAYOUT_BELOW_GAP + _CAP_HEIGHT
+                               + (len(b["below"]) - 1) * _LINE_ADVANCE + _DESCENT)
+            base = (LAYOUT_BELOW_GAP + text_h + 4.0) if b["above"] else LAYOUT_ABOVE_GAP
+            ox = mid - b["over_w"] / 2.0
+            for frag, role in b["over"]:
+                fw, fh = _bbox_width(frag.bbox), _bbox_height(frag.bbox)
+                lift = _LABEL_ROOM_ABOVE if frag.ref.label else 0.0
+                place(frag, ox + fw / 2.0, y - base - lift - fh / 2.0,
+                      "reactant_ids" if role == "reactant" else "above_ids", meta)
+                ox += fw + inter_gap
+            cursor = head + sign * frag_gap
+            for frag in b["products"]:
+                fw = _bbox_width(frag.bbox)
+                lowest_y = max(lowest_y, place(frag, cursor + sign * fw / 2.0, y, "product_ids", meta))
+                cursor += sign * (fw + inter_gap)
+        else:
+            sign = 1.0 if b["dir"] == "down" else -1.0
+            x = sm.cx
+            tail = (sm_bottom + frag_gap * 0.3) if sign > 0 else (sm.bbox[1] - frag_gap * 0.3)
+            head = tail + sign * b["len"]
+            tail_xy, head_xy = (x, tail), (x, head)
+            mid = (tail + head) / 2.0
+            lines = b["above"] + b["below"]
+            if lines:
+                block = (len(lines) - 1) * _LINE_ADVANCE + _CAP_HEIGHT + _DESCENT
+                txt, tid = _build_text_element(lines, x + 6.0, mid - block / 2.0 + _CAP_HEIGHT, ids,
+                                               justification="Left", use_formatting=True)
+                xml_parts.append(txt)
+                meta["above_ids"].append(tid)
+            ox = x - 8.0
+            for frag, role in b["over"]:
+                fw = _bbox_width(frag.bbox)
+                place(frag, ox - fw / 2.0, mid, "reactant_ids" if role == "reactant" else "above_ids", meta)
+                ox -= fw + inter_gap
+            for frag in b["products"]:
+                fh = _bbox_height(frag.bbox)
+                if sign > 0:
+                    y = head + frag_gap + fh / 2.0
+                else:
+                    y = head - frag_gap - (label_room if frag.ref.label else 0.0) - fh / 2.0
+                lowest_y = max(lowest_y, place(frag, x, y, "product_ids", meta))
+        arrow_xml, arrow_id = _build_arrow(tail_xy[0], tail_xy[1], head_xy[0], head_xy[1], ids,
+                                           dashed=(step.arrow_style == "dashed"),
+                                           nogo=(step.arrow_style == "failed"),
+                                           kind=_arrow_kind(step.arrow_style))
+        xml_parts.append(arrow_xml)
+        meta["arrow_id"] = arrow_id
+        lowest_y = max(lowest_y, head_xy[1])
+        metadata.append(meta)
+
+    scheme_parts = [f'<scheme id="{ids.next()}">']
+    for meta in metadata:
+        attrs = [f'id="{ids.next()}"',
+                 f'ReactionStepReactants="{" ".join(str(x) for x in meta["reactant_ids"])}"',
+                 f'ReactionStepProducts="{" ".join(str(x) for x in meta["product_ids"])}"',
+                 f'ReactionStepArrows="{meta["arrow_id"]}"']
+        if meta["above_ids"]:
+            attrs.append(f'ReactionStepObjectsAboveArrow="{" ".join(str(x) for x in meta["above_ids"])}"')
+        if meta["below_ids"]:
+            attrs.append(f'ReactionStepObjectsBelowArrow="{" ".join(str(x) for x in meta["below_ids"])}"')
+        scheme_parts.append(f'<step {" ".join(attrs)}/>')
+    scheme_parts.append('</scheme>')
+    xml_parts.append("\n".join(scheme_parts))
+    return "\n".join(xml_parts), lowest_y
+
+
 def _layout_divergent_stacked(
     scheme: SchemeDescriptor,
     ids: _IDGen,
@@ -3386,6 +3578,8 @@ def _render_impl(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> st
     elif scheme.layout == "divergent":
         inner_xml, lowest_y = _layout_divergent(scheme, ids, source_data=source_data,
                                                  reference_mol=ref_mol)
+    elif scheme.layout == "fan":
+        inner_xml, lowest_y = _layout_fan(scheme, ids, source_data=source_data, reference_mol=ref_mol)
     elif scheme.layout == "stacked-rows":
         inner_xml, lowest_y = _layout_stacked_rows(scheme, ids, source_data=source_data,
                                                     reference_mol=ref_mol)

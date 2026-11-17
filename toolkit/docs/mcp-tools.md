@@ -245,6 +245,8 @@ runs that make one line, so a catalyst can be coloured or a reagent set in itali
 title and a species' caption (a line under its compound number) take the same forms. A
 species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
 and its number, with an optional fill drawn behind it.
+layout "fan" draws one starting material in the middle with an arrow leaving it for each of
+two to four products (left, right, down, up).
 A route longer than max_width wraps: by default (wrap "continue") the next row starts with
 the arrow that leaves the structure the row above ended with, so each structure is drawn
 once; "repeat" draws that structure again at the start of the row, "serpentine" zigzags.

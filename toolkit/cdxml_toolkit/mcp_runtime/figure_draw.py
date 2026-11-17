@@ -295,6 +295,11 @@ def _route_layout(steps: list[StepDescriptor], requested_layout: str | None = No
 
         return "catalytic-cycle", cycle_order(steps)
     kind, order = classify_route(steps)
+    if requested_layout == "fan":
+        if kind != "divergent" or not 2 <= len(steps) <= 4:
+            raise ValueError("layout fan needs one starting material with two to four products, each made from it "
+                             "in one step (arrows leave it left, right, down and up).")
+        return "fan", order
     if kind == "linear":
         return ("sequential" if len(steps) > 1 else "linear"), order
     return kind, order
@@ -809,6 +814,8 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     title and a species' caption (a line under its compound number) take the same forms. A
     species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
     and its number, with an optional fill drawn behind it.
+    layout "fan" draws one starting material in the middle with an arrow leaving it for each of
+    two to four products (left, right, down, up).
     A route longer than max_width wraps: by default (wrap "continue") the next row starts with
     the arrow that leaves the structure the row above ended with, so each structure is drawn
     once; "repeat" draws that structure again at the start of the row, "serpentine" zigzags.
