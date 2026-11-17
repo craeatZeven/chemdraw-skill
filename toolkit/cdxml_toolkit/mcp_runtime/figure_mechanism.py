@@ -22,6 +22,7 @@ from typing import Any
 
 from rdkit import Chem
 
+from ..cdxml_check import overlays_collide
 from ..constants import (
     ACS_BOND_LENGTH,
     ACS_LINE_WIDTH,
@@ -36,7 +37,7 @@ from ..text_formatting import normalize_condition_text
 from . import artifact_safety, figure_draw, figure_house, figure_lint
 
 MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers"}
-SPECIES_KEYS = {"id", "smiles", "name", "label", "newman"}
+SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "generic_rings"}
 NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset"}
 NEWMAN_SPOKE = 1.4 * ACS_BOND_LENGTH   # a projection's spokes, sized beside 14.4 pt bonds
 # Closest a rear spoke may come to a front one; ChemDraw-style eclipsed drawings use 14.
@@ -134,6 +135,7 @@ def _validate(brief: dict) -> list[str]:
             errors += _newman_errors(ident, entry["newman"])
         elif not entry.get("smiles") and not entry.get("name"):
             errors.append(f"Species {ident} needs a smiles or a name (or a newman projection).")
+        errors += figure_house.generic_ring_errors(entry)
 
     steps = brief.get("steps")
     if not isinstance(steps, list) or not steps:
@@ -930,8 +932,14 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     except Exception as exc:
         return figure_draw._failure([f"The layout failed: {exc}"], kind="mechanism", warnings=warnings)
 
+    try:
+        ringed, ring_applied, _ = figure_house.apply_generic_rings(drawing.cdxml, brief, grounded)
+    except ValueError as exc:
+        return figure_draw._failure([f"The layout failed: {exc}"], kind="mechanism", warnings=warnings)
+    if ring_applied:
+        warnings += [f"Generic ring: {issue}." for issue in overlays_collide(str(ringed))]
     house = figure_draw.brief_house(brief)
-    final = figure_draw.styled(drawing.cdxml, slug)
+    final = figure_draw.styled(ringed, slug)
     house_applied: list[str] = []
     house_skipped = ["the reaction-scheme conventions (labels, yields, abbreviations) apply to schemes only"]
     if house is not None:
@@ -940,6 +948,7 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         house_applied += applied
         house_skipped += more
     final = _color_moves(final, drawing.curves)
+    house_applied += ring_applied
     try:
         target = artifact_safety.resolve_destination(
             source=None, output_path=output_path, tag="figure", suffix=".cdxml")

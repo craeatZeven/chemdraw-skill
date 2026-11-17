@@ -284,7 +284,7 @@ def test_an_optional_note_is_drawn_only_where_it_is_given(tmp_path):
 def test_one_scope_field_reads_as_the_value_alone():
     from cdxml_toolkit.mcp_runtime.figure_scope import _cell_fields
     yield_field = {'key': 'yield', 'label': 'Yield', 'unit': None, 'show_label': False}
-    assert _cell_fields([yield_field], notes=False) == [{'column': 'v1', 'label': ''}]
+    assert _cell_fields([yield_field], notes=False) == [{'column': 'v1', 'label': '', 'inline': True}]
     assert _cell_fields([{**yield_field, 'show_label': True}], notes=False) == [{'column': 'v1', 'label': 'Yield'}]
     ee = {'key': 'ee', 'label': 'ee', 'unit': None, 'show_label': False}
     assert [c['label'] for c in _cell_fields([yield_field, ee], notes=True)] == ['Yield', 'ee', '']
@@ -347,24 +347,27 @@ def test_cell_geometry_leaves_the_structure_box_clear_of_its_caption():
     assert CELL['line_advance'] * size + CELL['line_gap'] >= 1.3 * size + 1.0
 
 
-def test_each_scope_group_is_a_band_with_a_rule_and_an_italic_label(tmp_path):
-    # Nature Communications PMC13594109, fig. 4: labelled bands (para substituents, ...) rather
-    # than a flat grid. The label sits inside the band, between its rule and its structures.
+def test_each_scope_group_is_named_on_its_rule(tmp_path):
+    # Nature Communications PMC13594109, fig. 4: "— para substituents ———" — the group's name
+    # sits on the rule, which stops short of it on both sides, and only the locant is italic.
     project, page, root = _scope_page(tmp_path, [['a', '3a', STEREO, '92%', 'para substituents'],
-                                                 ['b', '3b', OTHER, '81%', 'ortho substituents']])
+                                                 ['b', '3b', OTHER, '81%', 'N-heterocycles']])
     rules = [a for a in root.iter('arrow') if a.get('ArrowheadHead') == 'None'
              and a.get('Head3D').split()[1] == a.get('Tail3D').split()[1]]
-    assert len(rules) == 2
+    assert len(rules) == 4  # a short piece before each name and a long one after it
     labels = {''.join(t.itertext()): t for t in root.iter('t')}
-    for name, rule in zip(('para substituents', 'ortho substituents'), rules):
+    for name, italic in (('para substituents', 'para'), ('N-heterocycles', 'N')):
         label = labels[name]
-        assert all(s.get('face') == '2' for s in label.iter('s'))  # italic
-        rule_y = float(rule.get('Tail3D').split()[1])
-        baseline = float(label.get('p').split()[1])
-        assert rule_y < baseline - 10 * 0.84  # the label's capitals stay below the rule
+        assert [s.text for s in label.iter('s') if int(s.get('face')) & 2] == [italic]
+        x, baseline = (float(v) for v in label.get('p').split())
+        pieces = [r for r in rules if abs(float(r.get('Tail3D').split()[1]) - (baseline - 3.5)) < 0.5]
+        assert len(pieces) == 2
+        ends = sorted((min(float(r.get('Tail3D').split()[0]), float(r.get('Head3D').split()[0])),
+                       max(float(r.get('Tail3D').split()[0]), float(r.get('Head3D').split()[0]))) for r in pieces)
+        assert ends[0][1] < x < ends[1][0]  # the name stands in the gap between the two pieces
     tops = sorted(min(float(n.get('p').split()[1]) for n in f.iter('n'))
                   for f in root.iter('fragment'))
-    second_rule = sorted(float(r.get('Tail3D').split()[1]) for r in rules)[1]
+    second_rule = sorted(float(r.get('Tail3D').split()[1]) for r in rules)[-1]
     assert sum(top > second_rule for top in tops) == 1  # one structure in each band
     checks = json.loads((tmp_path/'scope'/'checks.json').read_text(encoding='utf-8'))
     assert not checks['layout']['issues']
@@ -390,13 +393,17 @@ def test_a_secondary_product_stands_beside_its_main_product_in_grey(tmp_path):
     assert execute(path, out)['ok']
     project = json.loads((out/'project.json').read_text(encoding='utf-8'))
     a, b, c = (project['compounds'][k]['bbox'] for k in 'abc')
-    assert b[1] == a[1] and 0 < b[0] - a[2] <= 6       # on the same row, just right of its main product
+    assert b[1] == a[1] and 0 < b[0] - a[2] <= 24      # on the same row, right of its main product
     assert c[0] >= b[2] + 12                           # the next cell starts after the pair
     root = ET.parse(out/project['pages'][0]['file']).getroot()
     table = [tuple(round(float(x.get(k)) * 255) for k in 'rgb') for x in root.find('colortable').findall('color')]
     grey = str(table.index((0x80, 0x80, 0x80)) + 2) if (0x80, 0x80, 0x80) in table else 'missing'
     group_b = root.find(f".//group[@id='{project['compounds']['b']['objects']['group']}']")
-    assert {e.get('color') for e in group_b.iter() if e.tag in ('fragment', 't', 's') and e.get('color')} == {grey}
+    # Only the structure is grey; its number and yield stay black, as in fig. 4 (14b, 52% yield).
+    assert {e.get('color') for e in group_b.find('fragment').iter() if e.get('color')} == {grey}
+    assert grey not in {s.get('color') for t in group_b.findall('t') for s in t.iter('s')}
+    plus = [t for t in root.iter('t') if ''.join(t.itertext()) == '+']
+    assert len(plus) == 1 and a[2] < float(plus[0].get('p').split()[0]) < b[0]
     group_a = root.find(f".//group[@id='{project['compounds']['a']['objects']['group']}']")
     assert grey not in {e.get('color') for e in group_a.iter()}
     checks = json.loads((out/'checks.json').read_text(encoding='utf-8'))
@@ -424,7 +431,7 @@ def test_scope_brief_fields_can_drop_their_name_and_their_dash():
         'yield', {'key': 'group', 'show_label': False, 'optional': True}]})
     assert errors == []
     assert _cell_fields(fields, notes=False) == [
-        {'column': 'v1', 'label': 'yield'}, {'column': 'v2', 'label': '', 'optional': True}]
+        {'column': 'v1', 'label': 'yield'}, {'column': 'v2', 'label': '', 'optional': True}]  # two fields: own lines
     _, errors = _fields({'species': [], 'fields': [{'key': 'group', 'optional': 'yes'}]})
     assert any('optional must be true or false' in e for e in errors)
 
@@ -433,7 +440,8 @@ def test_a_definition_line_follows_the_number_without_a_field_name():
     from cdxml_toolkit.mcp_runtime.figure_scope import _cell_fields
     yield_field = {'key': 'yield', 'label': 'Yield', 'unit': None, 'show_label': False}
     assert _cell_fields([yield_field], notes=False, definitions=True) == [
-        {'column': 'definition', 'label': '', 'optional': True}, {'column': 'v1', 'label': ''}]
+        {'column': 'definition', 'label': '', 'optional': True, 'inline': True},
+        {'column': 'v1', 'label': '', 'inline': True}]
 
 
 def test_a_scope_definition_is_checked():
@@ -464,7 +472,8 @@ def test_a_family_caption_is_drawn_as_its_own_line_and_clears_the_next_row(tmp_p
         writer.writerow(['compound_id', 'label', 'smiles', 'value', 'group', 'definition'])
         writer.writerows(rows)
     spec = {'table': str(table), 'mode': 'scope', 'native_render': False, 'width_mm': 60,
-            'fields': [{'column': 'definition', 'label': '', 'optional': True}, {'column': 'value', 'label': ''}]}
+            'fields': [{'column': 'definition', 'label': '', 'optional': True, 'inline': True},
+                       {'column': 'value', 'label': '', 'inline': True}]}
     path = tmp_path/'family.json'; path.write_text(json.dumps(spec))
     out = tmp_path/'family'
     assert execute(path, out)['ok']
@@ -475,6 +484,11 @@ def test_a_family_caption_is_drawn_as_its_own_line_and_clears_the_next_row(tmp_p
     line = root.find(f".//t[@id='{project['compounds']['p']['objects']['fields']['definition']}']")
     runs = [(s.text, int(s.get('face')) & 32) for s in line.findall('s')]
     assert runs == [('Alk = C', 0), ('7', 32), ('H', 0), ('15', 32)]
+    label = root.find(f".//t[@id='{project['compounds']['p']['objects']['label']}']")
+    value = root.find(f".//t[@id='{project['compounds']['p']['objects']['fields']['value']}']")
+    # BJOC 22-127 scheme 2: "3p, Alk = C7H15, 63%" is one line under the structure.
+    assert label.get('p').split()[1] == line.get('p').split()[1] == value.get('p').split()[1]
+    assert float(label.get('p').split()[0]) < float(line.get('p').split()[0]) < float(value.get('p').split()[0])
     texts = [t for t in root.iter('t') if ''.join(s.text or '' for s in t.iter('s')) not in ('', )]
     assert not any(''.join(s.text or '' for s in t.iter('s')).startswith(('definition:', '—')) for t in texts)
     boxes = sorted((c['bbox'] for c in project['compounds'].values()), key=lambda b: (b[1], b[0]))
@@ -484,3 +498,85 @@ def test_a_family_caption_is_drawn_as_its_own_line_and_clears_the_next_row(tmp_p
                 assert lower[1] >= upper[3]          # a later row starts below the whole caption
     checks = json.loads((out/'checks.json').read_text(encoding='utf-8'))
     assert checks['data_binding']['status'] == 'passed' and not checks['layout']['issues']
+
+
+def _caption_line(root, project, cid):
+    ids = project['compounds'][cid]['objects']
+    return [root.find(f".//t[@id='{oid}']") for oid in (ids['label'], *ids['fields'].values())]
+
+
+def test_a_number_and_its_yield_are_one_centred_line_in_bold_then_plain(tmp_path):
+    # BJOC 22-127 scheme 2: "3a, 64%" under the structure, the number bold, the line centred.
+    rows = [['a', '3a', STEREO, '64%', '']]
+    out = tmp_path/'one'
+    spec = request(tmp_path, rows, fields=[{'column': 'value', 'label': '', 'inline': True}])
+    assert execute(spec, out)['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    root = ET.parse(out/project['pages'][0]['file']).getroot()
+    label, value = _caption_line(root, project, 'a')
+    assert label.get('p').split()[1] == value.get('p').split()[1]
+    assert {s.get('face') for s in label.iter('s')} == {'1'} and {s.get('face') for s in value.iter('s')} == {'0'}
+    between = [t for t in root.iter('t') if ''.join(t.itertext()) == ', ']
+    assert len(between) == 1 and float(label.get('p').split()[0]) < float(between[0].get('p').split()[0]) \
+        < float(value.get('p').split()[0])
+    from cdxml_toolkit.publication.layout import style_settings, text_width
+    style = style_settings({})
+    left = float(label.get('p').split()[0])
+    right = float(value.get('p').split()[0]) + text_width('64%', style)
+    xs = [float(n.get('p').split()[0]) for n in root.iter('n') if n.get('p')]
+    assert abs((left + right) / 2 - (min(xs) + max(xs)) / 2) < 3  # the line is centred under the structure
+    checks = json.loads((out/'checks.json').read_text(encoding='utf-8'))
+    assert checks['data_binding']['status'] == 'passed' and not checks['layout']['issues']
+
+
+def test_with_several_values_each_has_its_own_centred_line(tmp_path):
+    # Nature Communications PMC13594109, fig. 4: "10, X = F" / "64% yield" / ">99% e.e.".
+    rows = [['a', '10', STEREO, '64% yield', '']]
+    out = tmp_path/'many'
+    spec = request(tmp_path, rows, fields=[{'column': 'value', 'label': ''}])
+    assert execute(spec, out)['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    root = ET.parse(out/project['pages'][0]['file']).getroot()
+    label, value = _caption_line(root, project, 'a')
+    assert float(value.get('p').split()[1]) > float(label.get('p').split()[1])
+    assert label.get('Justification') == value.get('Justification') == 'Center'
+    assert abs(float(label.get('p').split()[0]) - float(value.get('p').split()[0])) < 0.01
+
+
+def test_a_line_too_long_for_the_cell_breaks_after_the_number(tmp_path):
+    # A value that already fills the widest cell: the number cannot share its line.
+    rows = [['a', '3a', 'CC', 'obtained as an inseparable 1:1 mixture of diastereomers after two '
+                              'chromatographic purifications on silica gel, 64%', '']]
+    out = tmp_path/'long'
+    spec = request(tmp_path, rows, fields=[{'column': 'value', 'label': '', 'inline': True}])
+    assert execute(spec, out)['ok']
+    project = json.loads((out/'project.json').read_text(encoding='utf-8'))
+    root = ET.parse(out/project['pages'][0]['file']).getroot()
+    label, value = _caption_line(root, project, 'a')
+    assert float(value.get('p').split()[1]) > float(label.get('p').split()[1])
+    assert not [t for t in root.iter('t') if ''.join(t.itertext()) == ', ']
+
+
+def test_a_caret_marks_a_footnote_letter_as_a_superscript():
+    from cdxml_toolkit.publication.layout import caption_runs
+    assert caption_runs('9%^b') == ('9%b', [{'text': '9%'}, {'text': 'b', 'superscript': True, 'italic': True}])
+    assert caption_runs('12^b', bold=True) == ('12b', [{'text': '12', 'bold': True},
+                                                       {'text': 'b', 'superscript': True, 'italic': True}])
+    assert caption_runs('Alk = C7H15^a')[1][-1] == {'text': 'a', 'superscript': True, 'italic': True}
+    assert caption_runs('92%') == ('92%', None) and caption_runs('3a', bold=True) == ('3a', [{'text': '3a', 'bold': True}])
+
+
+def test_a_footnote_mark_reads_back_as_the_letter(tmp_path):
+    rows = [['a', '12^b', STEREO, '40%^c', '']]
+    project, page, root = _scope_page(tmp_path, rows)
+    assert project['compounds']['a']['display']['label'] == '12b'
+    checks = json.loads((tmp_path/'scope'/'checks.json').read_text(encoding='utf-8'))
+    assert checks['data_binding']['status'] == 'passed'
+
+
+def test_a_structure_is_centred_in_a_cell_widened_by_its_caption(tmp_path):
+    rows = [['a', '3a', 'CC', 'a long line that widens the cell well past the structure', '']]
+    project, page, root = _scope_page(tmp_path, rows)
+    box = project['compounds']['a']['bbox']
+    xs = [float(n.get('p').split()[0]) for n in root.iter('n') if n.get('p')]
+    assert abs((min(xs) + max(xs)) / 2 - (box[0] + box[2]) / 2) < 1

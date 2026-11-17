@@ -47,7 +47,7 @@ from ..constants import (
     LAYOUT_ROW_GAP,
 )
 from ..cdxml_utils import LABEL_H_WIDTH, drawn_fragment_bbox, hydrogens_lead
-from ..overlay_geometry import overlay_box
+from ..overlay_geometry import generic_ring_box, overlay_box
 from ..text_formatting import build_formatted_s_xml, normalize_condition_text
 
 from .route_graph import convergent_sections
@@ -2859,6 +2859,17 @@ def _overlay_box(atoms: List[Dict], overlays: Any) -> Optional[Tuple[float, floa
     by_index = {a.get("index"): a for a in atoms}
     box: Optional[Tuple[float, float, float, float]] = None
     for item in overlays or ():
+        if item.get("shape") == "ring":
+            # A generic ring: an arc through two bonded atoms, away from the rest of the molecule.
+            ends = [(float(by_index[i + 1]["x"]), float(by_index[i + 1]["y"]))
+                    for i in item.get("atoms") or () if i + 1 in by_index]
+            rest = [(float(by_index[i + 1]["x"]), float(by_index[i + 1]["y"]))
+                    for i in item.get("away") or () if i + 1 in by_index]
+            if len(ends) == 2:
+                away = (sum(p[0] for p in rest) / len(rest), sum(p[1] for p in rest) / len(rest)) if rest else None
+                part = generic_ring_box(ends[0], ends[1], away, item.get("members", 6))
+                box = part if box is None else _union_box(box, part)
+            continue
         points = [(float(by_index[i + 1]["x"]), float(by_index[i + 1]["y"]))
                   for i in item.get("atoms") or () if i + 1 in by_index]
         if not points:

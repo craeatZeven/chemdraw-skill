@@ -114,8 +114,8 @@ Witness: `journal-corpus/nature-communications-pmc13594109-fig4.png` — `14b`, 
 drawn in grey next to the main product with their own yields.
 Today: one structure per cell.
 
-Produce: an optional secondary structure in a scope cell, drawn smaller and in grey, sharing the
-cell's caption block.
+Produce: an optional secondary structure in a scope cell after a "+", the structure grey at full
+size and its own number and yield black (as `14b`, `52% yield` reads in the witness).
 Done when: a cell with a secondary product renders both without overlap and the secondary is
 visually subordinate.
 
@@ -125,20 +125,23 @@ Witness: same Nature figure — `para substituents`, `ortho substituents`, `N-he
 `C-nucleophiles` as labelled bands.
 Today: a flat grid.
 
-Produce: an optional grouping where each group gets a rule and an italic label above its rows.
-Done when: a scope brief with two groups renders two bands and the label sits inside the band,
-not over a structure.
+Produce: an optional grouping where each group's name stands on its rule (a short piece of rule
+before it, the rest after it), only the locant in italic (*para* substituents, *N*-heterocycles).
+Done when: a scope brief with two groups renders two bands, each name on its rule and clear of the
+structures below.
 
-### P9 — Dashed mapping overlays across a cycle
+### P9 — Generic (unspecified) rings
 
-Witness: `journal-corpus/bjoc-articles-22-125-scheme4.png` — the ring that stays unchanged is
-circled with a dashed overlay in every intermediate.
-Today: nothing.
+Witness: `journal-corpus/bjoc-articles-22-125-scheme4.png` — in every species, X and the carbon
+beside it carry a dashed ring with nothing drawn inside it: a ring of any size fused at that bond,
+drawn as a dashed arc from one atom round to the other, the solid bond closing it.
+Today: nothing. (This item was first read as a dashed overlay around a drawn fragment; that
+annotation exists too, as `overlays`, but it is not what the witness shows.)
 
-Produce: an annotation that draws a dashed shape around a set of atoms in several structures at
-once.
-Done when: a cycle brief marks one fragment and every intermediate carries the overlay in the
-same relative position.
+Produce: a species-level generic ring on a bonded pair of atoms, drawn as a dashed open arc on the
+far side of the bond from the rest of the molecule, sized as a ring of `members` atoms.
+Done when: a brief with a generic ring on its substrate and product draws one arc on each, clear
+of the arrows, and the check reports nothing on it.
 
 ### P10 — Fit the page to the content
 
@@ -165,13 +168,16 @@ neighbours.
 
 ### P12 — Say the yield, not "Yield:"
 
-Witness: corpus scope entries read `3a, 64%`, `3b, 64%` — number only, compound label above.
+Witness: corpus scope entries read **3a**, 64% and **3b**, 64% — the number in bold and the
+yield after it on one line, centred under the structure (BJOC 22-127 scheme 2). Where an entry
+carries several values the number keeps the first line and each value takes a centred line of its
+own (Nature Communications PMC13594109, fig. 4: **10**, X = F / 64% yield / >99% e.e.).
 Today: `coverage/substrate_scope.png` reads `3a` / `Yield: 92%` on two lines per cell, which
 doubles the vertical space a cell needs and repeats a word eighteen times.
 
 Produce: the compact caption form; keep the long form available for the case where the value
 needs a qualifier (`85% (2 steps)`).
-Done when: the example scope shows `3a` with `92%` beneath it.
+Done when: the example scope shows **3a**, 92% on one centred line.
 
 ### P13 — Pack a scope grid densely enough to keep one page
 
@@ -356,8 +362,12 @@ collided glyph. The anti conformation is clean.
 
 A four-species catalytic cycle with the methoxyphenyl fragment circled in every intermediate.
 The circles come out identical (74.3 x 74.3 pt, radius 37.16, spread 0.0) and use the spelling
-`native-dashed-overlay.cdxml` established: a `<curve>` with `CurveType="2"` and
-`LineType="Dashed"`, no `FillType`, no `Closed`, never an oval.
+`native-dashed-overlay.cdxml` suggested: a `<curve>` with `CurveType="2"` and
+`LineType="Dashed"`, no `FillType`, no `Closed`, never an oval. That spelling is drawn open:
+the render (and the sample's own PNG) leaves a gap between the last anchor and the first,
+because `CurveType` 2 is the dashed flag alone and ChemDraw draws no segment back to the start.
+Overlays are now written with `CurveType="3"` (closed and dashed), `Closed="yes"`, and the first
+anchor repeated at the end.
 
 **Two known defects:**
 
@@ -386,7 +396,7 @@ P7, P8 and P9.
 | P6 variable-group rows | **implemented, to render** | a species' `definition` (`"Alk = C7H15"`) is an unnamed line straight under the number, drawn only where given; a field may set `show_label: false` (unnamed beside other fields) and `optional: true` (no dash where empty); formula digits in every caption line but the label, and in the conditions, are subscripts by the scheme rule (`text_formatting.subscript_matches`). `p6-family-scope.json` has 3p/3q with definitions among plain cells. Not done: one structure standing for two compounds (the witness draws "Alk" once with 3p and 3q under it) |
 | P7 secondary product | verified | `3d′` sits 0-6 pt right of `3d`, grey, with its own `9%b`; the all-grey assertion needed the colour-table dedupe fixed first |
 | P8 section bands | verified | two bands, italic titles, full-width rules |
-| P9 dashed overlay | **fixed, to re-render** | the cycle layout now treats each marked structure's outline as part of it: chord arrows are clipped at the outline's box, entering/leaving arrows start outside it, step labels are placed clear of it and a number that would sit inside goes under it. Anything left is a warning (`overlay_collides`: arrows within 3 pt, as in `arrows_collide`, and captions the dashed line runs through); other layouts only warn. The routing test fails with routing switched off |
+| P9 generic rings | **rebuilt, to render** | the witness's dashed circles are unspecified rings, not overlays: a species' `generic_rings` [{atoms: [i, j], members?}] draws a dashed open arc (CurveType 2) from atom i the long way round to j on the circle of a `members`-ring through that bond, on the far side from the atoms beside them, stopping 5 pt short of a labelled atom; the bond must exist. Cycle layouts keep arrows and labels off its box; other layouts warn. `overlays` (a dashed outline around a fragment) stays as a separate annotation, now written closed (CurveType 3 and the first anchor repeated): ChemDraw drew the earlier CurveType 2 outlines open, as the sample's own PNG shows |
 | P10 page fits content | verified | the scope page crops to its content; `check` passes |
 | P11 10 pt type | verified | `LabelSize`/`CaptionSize` are 10, not 8 |
 | P12 yield, not "Yield:" | verified | cells read `3a` over `92%` |

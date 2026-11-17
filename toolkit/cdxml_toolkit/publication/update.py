@@ -10,7 +10,7 @@ from rdkit.Chem import rdDepictor, rdFMCS
 from ..chemistry_semantics import semantic_key
 from ..mcp_runtime.figure_tools import compose_chemical_figure
 from .data import field_text, local_path, write_json
-from .layout import fragment_mol, node_text, bounds, wrap, style_settings, create_pages
+from .layout import caption_runs, fragment_mol, node_text, bounds, wrap, style_settings, create_pages
 
 
 def matching_group(root, record):
@@ -184,7 +184,9 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
             conflicts.append({'compound_id':cid,'reason':'group_change_requires_explicit_relayout'});continue
         record['objects']=ids;record['locked']=True
         # Each side is compared to its own baseline (input vs displayed text).
-        desired={'label':new['label'],**{f['column']:field_text(new,f) for f in spec.get('fields',[])}}
+        # Compared as the page reads them: a footnote mark "^b" reads as "b".
+        desired={k:caption_runs(v,bold=k=='label')[0] for k,v in
+                 {'label':new['label'],**{f['column']:field_text(new,f) for f in spec.get('fields',[])}}.items()}
         for field,oid in {'label':ids['label'],**ids['fields']}.items():
             upstream_changed=(new['label']!=old_input['label']) if field=='label' else new['values'][field]!=old_input['values'][field]
             node=group.find(f"t[@id='{oid}']")

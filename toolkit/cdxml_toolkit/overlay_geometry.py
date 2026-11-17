@@ -12,16 +12,24 @@ from .constants import ACS_BOND_LENGTH
 OVERLAY_PAD = 0.5 * ACS_BOND_LENGTH
 # Handle length of a cubic Bezier quarter of a 45-degree arc, as ChemDraw writes a circle.
 _ARC_KAPPA = 4.0 / 3.0 * math.tan(math.pi / 16.0)
+# ChemDraw's CurveType flags: 1 closed, 2 dashed (128 filled). A dashed outline is both.
+CLOSED_DASHED_CURVE = {"CurveType": "3", "Closed": "yes", "LineType": "Dashed"}
 # Half the dashed line and a little air: what a box around an outline adds beyond it.
 OVERLAY_LINE = 1.0
 
 
 def _closed_curve(anchors: list[tuple[float, float]], tangents: list[tuple[float, float]]) -> str:
-    """(in-handle, anchor, out-handle) triples of a closed curve, the way ChemDraw writes one:
-    no Closed attribute, the last out-handle leading back into the first anchor."""
+    """(in-handle, anchor, out-handle) triples of a closed curve, the first one repeated last.
+
+    ChemDraw draws one cubic segment between each pair of consecutive anchors and nothing from
+    the last back to the first: its own dashed circle (CurveType 2, no closed bit) renders with
+    a gap. So the first triple is written again at the end, and the curve is also marked closed
+    (``CLOSED_DASHED_CURVE``) for readers that honour the flag.
+    """
     pts = []
     for (x, y), (tx, ty) in zip(anchors, tangents):
         pts += [(x - tx, y - ty), (x, y), (x + tx, y + ty)]
+    pts += pts[:3]
     return " ".join(f"{x:.2f} {y:.2f}" for x, y in pts)
 
 
@@ -103,5 +111,57 @@ def overlay_box(points: list[tuple[float, float]], shape: str = "circle") -> tup
     The control points of a Bezier chain enclose the curve, so their box encloses it too.
     """
     v = [float(x) for x in overlay_curve_points(points, shape=shape).split()]
+    xs, ys = v[0::2], v[1::2]
+    return (min(xs) - OVERLAY_LINE, min(ys) - OVERLAY_LINE, max(xs) + OVERLAY_LINE, max(ys) + OVERLAY_LINE)
+
+
+def _ring_frame(a, b, away, members):
+    """Centre and radius of the ring of ``members`` atoms through the bond a-b, on the side of
+    the bond away from ``away`` (the rest of the molecule)."""
+    chord = math.dist(a, b)
+    if chord < 1e-6:
+        raise ValueError("a generic ring needs two atoms at different places")
+    r = chord / (2.0 * math.sin(math.pi / members))
+    h = math.sqrt(max(r * r - chord * chord / 4.0, 0.0))
+    mx, my = (a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0
+    nx, ny = -(b[1] - a[1]) / chord, (b[0] - a[0]) / chord
+    if away is not None and nx * (mx - away[0]) + ny * (my - away[1]) < 0:
+        nx, ny = -nx, -ny
+    return (mx + nx * h, my + ny * h), r
+
+
+def generic_ring_points(a, b, away=None, members: int = 6, clear_a: float = 0.0, clear_b: float = 0.0) -> str:
+    """CurvePoints of the dashed arc that stands for an unspecified ring fused at the bond a-b.
+
+    The arc lies on the circle of a regular ring of ``members`` atoms through a and b, centred
+    on the side away from ``away``, and runs the long way round from a to b: the short arc,
+    where the solid bond is, is left out (BJOC 22-125 scheme 4). ``clear_a`` and ``clear_b``
+    stop it that many points short of a labelled atom. It is an open curve.
+    """
+    (cx, cy), r = _ring_frame(a, b, away, members)
+    ta = math.atan2(a[1] - cy, a[0] - cx)
+    tb = math.atan2(b[1] - cy, b[0] - cx)
+    delta = (tb - ta) % (2.0 * math.pi)
+    if delta < math.pi:          # that is the short way: go round the other side
+        delta -= 2.0 * math.pi
+    sign = 1.0 if delta > 0 else -1.0
+    start = ta + sign * clear_a / r
+    sweep = delta - sign * (clear_a + clear_b) / r
+    steps = max(1, math.ceil(abs(sweep) / (math.pi / 4.0) - 1e-9))
+    k = 4.0 / 3.0 * math.tan(sweep / steps / 4.0) * r
+    pts = []
+    for i in range(steps + 1):
+        t = start + sweep * i / steps
+        x, y = cx + r * math.cos(t), cy + r * math.sin(t)
+        tx, ty = -math.sin(t) * k, math.cos(t) * k
+        into = (x, y) if i == 0 else (x - tx, y - ty)        # an open curve: no handle past its ends
+        out = (x, y) if i == steps else (x + tx, y + ty)
+        pts += [into, (x, y), out]
+    return " ".join(f"{x:.2f} {y:.2f}" for x, y in pts)
+
+
+def generic_ring_box(a, b, away=None, members: int = 6) -> tuple[float, float, float, float]:
+    """Box that holds a generic ring's arc, its line included."""
+    v = [float(x) for x in generic_ring_points(a, b, away, members).split()]
     xs, ys = v[0::2], v[1::2]
     return (min(xs) - OVERLAY_LINE, min(ys) - OVERLAY_LINE, max(xs) + OVERLAY_LINE, max(ys) + OVERLAY_LINE)

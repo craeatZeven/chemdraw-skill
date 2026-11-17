@@ -109,6 +109,7 @@ def _validate(brief: dict) -> list[str]:
         if entry.get("orientation") not in (None, *renderer.ORIENTATIONS):
             errors.append(f"Species {ident}: orientation must be one of {list(renderer.ORIENTATIONS)}.")
         errors += figure_house.species_style_errors(entry)
+        errors += figure_house.generic_ring_errors(entry)
 
     errors += figure_house.overlay_errors(brief, ids)
 
@@ -213,10 +214,16 @@ def _scheme(brief: dict, grounded: list[dict], max_width: float | None, gap_scal
                    if isinstance(sp, dict) and sp.get("orientation")}
     # The atoms each overlay will mark, so the layout keeps arrows and captions off them.
     marks = figure_house.overlay_matches(brief, grounded)[0] if brief.get("overlays") else {}
+    # A generic ring's arc is kept clear the same way.
+    for entry in brief.get("species") or []:
+        if isinstance(entry, dict) and entry.get("generic_rings"):
+            smiles = next((g["smiles"] for g in grounded if g["id"] == str(entry["id"])), None)
+            marks.setdefault(str(entry["id"]), []).extend(figure_house.generic_ring_marks(entry, smiles))
     structures = {
         g["id"]: StructureRef(id=g["id"], smiles=g["smiles"], label=(str(g["label"]) if g["label"] else None),
                               orientation=orientation.get(g["id"]),
-                              overlays=tuple({"atoms": m["atoms"], "shape": m["shape"]} for m in marks.get(g["id"], ())))
+                              overlays=tuple({k: m[k] for k in ("atoms", "shape", "away", "members") if k in m}
+                                             for m in marks.get(g["id"], ())))
         for g in grounded
     }
     steps = _step_descriptors(brief, line_chars, house)
@@ -677,7 +684,9 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
     cdxml, applied, warnings = figure_house.apply_fragment_overlays(cdxml, brief, grounded)
     record["applied"] += applied
     record["warnings"] += warnings
-    if applied:
+    cdxml, rings, _ = figure_house.apply_generic_rings(cdxml, brief, grounded)
+    record["applied"] += rings
+    if applied or rings:
         record["warnings"] += [f"Overlay: {issue}." for issue in overlays_collide(str(cdxml))]
     cdxml = styled(cdxml, slug)
     if house is not None:
@@ -793,6 +802,8 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     title and a species' caption (a line under its compound number) take the same forms. A
     species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
     and its number, with an optional fill drawn behind it.
+    A species' generic_rings [{atoms [i, j], members?}] draws an unspecified ring fused at the
+    bond i-j: a dashed arc the long way round on the far side of the bond.
     overlays [{fragment, species?, shape circle|outline}] draw a dashed outline around one
     fragment (SMILES or SMARTS) in every structure that has it, or in the species listed, at
     the same place on the fragment in each (the unchanged ring through the intermediates of a
@@ -815,13 +826,15 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     bond_colors?, abbreviate?}], optional fields [{key, label?, unit?, show_label?, optional?}] (default: the keys
     used in values), conditions, footnotes, title, width_mm, height_mm and
     highlight_varying (true or a hex colour: what differs from the core every compound
-    shares is drawn in that colour, #FF6600 by default). One field is
-    shown as its value alone under the label (3a over 92%); show_label true, or several
-    fields, names it on each line (show_label false keeps one unnamed; optional leaves it out
-    where empty instead of drawing a dash). definition is an unnamed line straight under the
-    number ("Alk = C7H15") and note an extra line under one compound ("not formed"); formula
-    digits in every line but the label are subscripts. secondary_of names the main product a minor one is drawn beside,
-    in grey with its own label and values. Text stays at 10 pt and each page is cropped to its
+    shares is drawn in that colour, #FF6600 by default). Captions are centred, the number in
+    bold; one field joins the number's line ("3a, 92%"); show_label true, or several fields,
+    gives each field its own line, named (show_label false keeps one unnamed; optional leaves
+    it out where empty instead of drawing a dash). definition joins the number's line
+    ("3p, Alk = C7H15, 63%") and note is an extra line under one compound ("not formed");
+    formula digits in every line but the label are subscripts, and "^b" marks a footnote
+    letter. secondary_of names the main product a minor one is drawn beside, after a "+",
+    the structure grey and its own number and values black. A group is a band, its name on
+    the rule with only its locants in italic. Text stays at 10 pt and each page is cropped to its
     content. The
     structures are packed onto as many editable pages as needed, grouped in first-seen
     order, each label and value bound to its structure; a missing value is drawn as a
@@ -829,7 +842,7 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     PNGs in png/ with render=True) and the report lists the pages.
 
     kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
-    lists: species [{id, smiles or name, label?}] (or {id, newman {front, rear,
+    lists: species [{id, smiles or name, label?, generic_rings?}] (or {id, newman {front, rear,
     conformation?, dihedral_offset?}, label?} for a Newman projection placed among them,
     which arrows cannot point at and whose steps need no moves; the order of rear picks the
     conformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered)

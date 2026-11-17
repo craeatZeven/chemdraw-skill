@@ -53,10 +53,11 @@ invalid structures and missing or ambiguous SDF matches are errors with row cont
 
 Use `mode: "scope"`. Select yields, ee/dr, conditions and footnotes from the actual
 data. Rows are grouped in first-occurrence order; order within a group follows the
-table. Each group is a band: a rule across the panel, the group's name in italic
-beneath it, then its rows (a band continued on the next page says so). A
-`secondary_column` names, for a minor product, the compound ID of the main product it
-stands beside: in the same cell, in grey, with its own label and values. It must be in
+table. Each group is a band: its name on a rule across the panel, only the locants in
+italic (*para* substituents, *N*-heterocycles), then its rows (a band continued on the
+next page says so). A `secondary_column` names, for a minor product, the compound ID of
+the main product it stands beside: in the same cell, after a "+", the structure in grey
+and its own label and values in black. It must be in
 the same group, and a secondary product has none of its own. Labels and
 measurements remain tied to IDs during pagination.
 
@@ -84,10 +85,14 @@ A field with `"optional": true` is a line that is left out where its value is em
 when the page was laid out cannot be filled by an update: that is reported as a
 conflict, and needs a new layout.
 
-Formula digits in the conditions and in every caption line except the compound label are
-written as subscripts (`C7H15`, `Pd2(dba)3`), by the rule scheme conditions use; give a
-group definition such as `Alk = C7H15` as an optional field with an empty `label`, listed
-first, so it reads as its own unnamed line under the number.
+Captions are centred under their structure, the compound label in bold. A field with
+`"inline": true` joins the label's line after a comma (`3a, 64%`), as journal scope tables
+print it; the others each take a centred line of their own, and a shared line that would
+not fit the cell breaks after the label. Formula digits in the conditions and in every
+caption line except the compound label are written as subscripts (`C7H15`, `Pd2(dba)3`),
+by the rule scheme conditions use; give a group definition such as `Alk = C7H15` as an
+optional, inline field with an empty `label`, listed first. `^` marks a footnote letter
+(`12^b`, `40%^c`): it is drawn as an italic superscript and reads back as the letter.
 
 ## ChemDraw editing and incremental updates
 

@@ -215,21 +215,22 @@ def _highlight_brief(brief: dict, grounded: list[dict]) -> tuple[dict, dict[str,
 def _cell_fields(fields: list[dict], notes: bool, definitions: bool = False) -> list[dict]:
     """The lines under each structure, as the publication layout reads them.
 
-    One field reads as the corpus scope tables do, its value alone under the label
-    (``3a`` over ``92%``); say what the number is in a footnote or the conditions, or set
-    ``show_label``. With several fields each line names its field. A note, when any
-    compound has one, is an extra unlabelled line that is left out where it is empty, and
-    so is a definition ("Alk = C7H15"), which comes first, straight under the number.
+    One field reads as the corpus scope tables do, on the number's line ("3a, 92%", the
+    number bold); say what the number is in a footnote or the conditions, or set
+    ``show_label``. With several fields each has its own centred line, naming its field. A note, when any
+    compound has one, is an extra unlabelled line that is left out where it is empty. A
+    definition ("Alk = C7H15") joins the number's line: "3p, Alk = C7H15, 63%".
     A field with ``show_label`` false is unnamed even beside others; an ``optional`` one is
     left out where its value is empty rather than drawn as a dash.
     """
     columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
     compact = len(fields) == 1 and not fields[0].get("show_label")
     cells = [{"column": columns[f["key"]], "label": "" if compact or f.get("hide_label") else f["label"],
-              **({"unit": f["unit"]} if f["unit"] else {}), **({"optional": True} if f.get("optional") else {})}
+              **({"unit": f["unit"]} if f["unit"] else {}), **({"optional": True} if f.get("optional") else {}),
+              **({"inline": True} if compact else {})}
              for f in fields]
     if definitions:
-        cells.insert(0, {"column": DEFINITION_COLUMN, "label": "", "optional": True})
+        cells.insert(0, {"column": DEFINITION_COLUMN, "label": "", "optional": True, "inline": True})
     if notes:
         cells.append({"column": NOTE_COLUMN, "label": "", "optional": True})
     return cells

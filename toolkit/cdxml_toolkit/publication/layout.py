@@ -3,6 +3,7 @@ from collections import Counter
 from copy import deepcopy
 from pathlib import Path
 import math
+import re
 from xml.etree import ElementTree as ET
 from PIL import ImageFont
 from rdkit import Chem
@@ -25,10 +26,12 @@ def style_settings(spec):
     return style
 
 
-def font_for(style, size=None):
+def font_for(style, size=None, bold=False):
     size = size or style['font_size']
     name = style.get('font','Arial')
-    for candidate in (name+'.ttf', name.lower()+'.ttf', 'DejaVuSans.ttf'):
+    plain = (name+'.ttf', name.lower()+'.ttf', 'DejaVuSans.ttf')
+    heavy = (name+' Bold.ttf', name.lower()+'bd.ttf', name+'-Bold.ttf', 'DejaVuSans-Bold.ttf')
+    for candidate in (heavy + plain if bold else plain):
         try:
             return ImageFont.truetype(candidate, round(float(size)*8))
         except OSError:
@@ -36,8 +39,8 @@ def font_for(style, size=None):
     return ImageFont.load_default()
 
 
-def text_width(value, style, size=None):
-    font = font_for(style,size)
+def text_width(value, style, size=None, bold=False):
+    font = font_for(style,size,bold)
     return max((font.getlength(line)/8 for line in str(value).splitlines()), default=0)
 
 
@@ -100,8 +103,65 @@ CELL = {
 }
 
 
-SECONDARY_GAP = 4.0          # between a main product and a secondary one in the same cell
-SECONDARY_COLOR = '#808080'  # a secondary product is drawn in grey, subordinate to the main one
+# A secondary product shares its main product's cell, "+" between them, its structure grey and
+# its number and yield black (Nature Communications PMC13594109, fig. 4: 14a + 14b).
+SECONDARY_GAP = 18.0
+SECONDARY_COLOR = '#808080'
+# A group's name sits on its rule, a short piece before it and the rest after it (fig. 4).
+BAND_LEAD = 12.0
+BAND_GAP = 4.0
+LINE_JOIN = ', '   # "3a, 64%": the number and the values that share its line
+
+
+_FOOTNOTE = re.compile(r'\^([A-Za-z0-9*\u2020\u2021\u00a7]+)')
+_LOCANT = re.compile(r'(?:(?<=^)|(?<=[\s(]))(?:(ortho|meta|para|ipso|cis|trans|syn|anti|endo|exo|tert|sec)(?=[-\s])'
+                     r'|([NOSCPRZE])(?=-))')
+
+
+def caption_runs(text, bold=False):
+    """(the text as it reads, runs or None) for a caption line.
+
+    ``^b`` marks a footnote letter: it is drawn as an italic superscript and reads back as the
+    letter alone ("40%^b" reads "40%b"). The compound number (``bold``) is drawn bold and is
+    never a formula; other lines get formula subscripts (``chemical_runs``).
+    """
+    pieces, offset = [], 0
+    for m in _FOOTNOTE.finditer(text):
+        pieces += [(text[offset:m.start()], False), (m.group(1), True)]
+        offset = m.end()
+    pieces.append((text[offset:], False))
+    runs = []
+    for piece, mark in pieces:
+        if not piece:
+            continue
+        if mark:
+            runs.append({'text': piece, 'superscript': True, 'italic': True})
+        elif bold:
+            runs.append({'text': piece, 'bold': True})
+        else:
+            runs += chemical_runs(piece) or [{'text': piece}]
+    plain = ''.join(piece for piece, _ in pieces)
+    if not bold and all(set(r) == {'text'} for r in runs):
+        return plain, None
+    return plain, runs
+
+
+def heading_runs(text):
+    """A group's name with only its locants in italic: *para* substituents, *N*-heterocycles."""
+    runs, offset = [], 0
+    for m in _LOCANT.finditer(text):
+        if m.start() > offset:
+            runs.append({'text': text[offset:m.start()]})
+        runs.append({'text': m.group(0), 'italic': True})
+        offset = m.end()
+    if offset < len(text):
+        runs.append({'text': text[offset:]})
+    return runs
+
+
+def _line_width(keys, texts, style):
+    return (sum(text_width(texts[k], style, bold=k == 'label') for k in keys)
+            + text_width(LINE_JOIN, style) * (len(keys) - 1))
 
 
 def chemical_runs(text):
@@ -146,17 +206,34 @@ def prepare(records,spec):
         xs,ys=zip(*xy); pad=size*CELL['pad']; molecule_width=max(xs)-min(xs)+2*pad
         if molecule_width>usable:
             raise ValueError(f"Structure {record['compound_id']} exceeds figure width at requested bond length")
-        texts={'label':record['label'],**{f['column']:field_text(record,f) for f in spec.get('fields',[])}}
-        texts={k:v for k,v in texts.items() if k=='label' or v!=''}  # an empty optional line is not drawn
-        width=max(100,molecule_width,min(usable,max(text_width(v,style)+16 for v in texts.values())))
-        width=min(width,usable)
-        texts={k:wrap(v,width-12,style) for k,v in texts.items()}
-        lines=sum(_caption_advance(v,size) for v in texts.values())-size*CELL['line_advance']-CELL['line_gap']
+        raw={'label':record['label'],**{f['column']:field_text(record,f) for f in spec.get('fields',[])}}
+        raw={k:v for k,v in raw.items() if k=='label' or v!=''}  # an empty optional line is not drawn
+        plain={k:caption_runs(v,bold=k=='label')[0] for k,v in raw.items()}
+        # The number and the values marked inline share one line ("3a, 64%"); the rest, one each.
+        inline=['label']+[f['column'] for f in spec.get('fields',[]) if f.get('inline') and f['column'] in raw]
+        # The cell is as wide as the structure, or as the widest single value. A shared line may
+        # widen it by half again; longer, it breaks after the number instead.
+        pieces=[text_width(v,style,bold=k=='label') for k,v in plain.items()]
+        width=min(max(100,molecule_width,min(usable,max(pieces)+16)),usable)
+        shared=_line_width(inline,plain,style)+16
+        if len(inline)>1 and shared<=min(usable,1.5*width):
+            width=max(width,shared)
+        elif len(inline)>1:
+            inline=['label']  # too long for one line: each value on its own line
+        joined=inline if len(inline)>1 else []
+        raw={k:(v if k in joined else wrap(v,width-12,style)) for k,v in raw.items()}
+        texts={k:caption_runs(v,bold=k=='label')[0] for k,v in raw.items()}
+        runs={k:caption_runs(v,bold=k=='label')[1] for k,v in raw.items()}
+        lines=((_caption_advance('',size) if joined else 0)
+               +sum(_caption_advance(v,size) for k,v in texts.items() if k not in joined)
+               -size*CELL['line_advance']-CELL['line_gap'])
         height=(pad+max(ys)-min(ys)+size*CELL['caption_baseline']+lines
                 +size*CELL['foot']+CELL['foot_gap'])
-        coords=[[x-min(xs)+pad,y-min(ys)+pad] for x,y in xy]
-        prepared.append({'input':record,'coords':coords,'texts':texts,'width':width,'height':height,
-                         'molecule_bottom':max(y for x,y in coords)})
+        # The structure stands in the middle of its cell, over its centred caption.
+        shift=pad+(width-molecule_width)/2
+        coords=[[x-min(xs)+shift,y-min(ys)+pad] for x,y in xy]
+        prepared.append({'input':record,'coords':coords,'texts':texts,'runs':runs,'inline':joined,
+                         'width':width,'height':height,'molecule_bottom':max(y for x,y in coords)})
     return prepared,warnings
 
 
@@ -185,7 +262,7 @@ def create_pages(records,spec,stage,start_index=0):
         objects=[{'type':'text','id':'title','text':title,'position':[margin,margin+size],'size':size}]
         top=margin+(title.count('\n')+1)*size*1.5+8
         if conditions:
-            runs=chemical_runs(conditions)
+            runs=caption_runs(conditions)[1]
             objects.append({'type':'text','id':'conditions','text':conditions,'position':[margin,top+size],'size':size,
                             **({'runs':runs} if runs else {})})
             top+=(conditions.count('\n')+1)*size*1.5+8
@@ -194,27 +271,46 @@ def create_pages(records,spec,stage,start_index=0):
         manifests.append(current)
         return current,margin,top,0
     def band(current,y,name):
-        """Open a group: a rule across the panel, then the group's name in italic beneath it.
+        """Open a group: its name on a rule across the panel, only the locants in italic.
 
-        The rule is drawn when the page's width is known (it ends at the content's right edge),
-        and the name sits inside the band, clear of the rule and of the structures below.
+        A short piece of rule leads into the name and the rest runs from just after it to the
+        content's right edge, which is known only when the page is cropped.
         """
-        rule={'type':'line','start':[margin,y],'end':[width-margin,y],'style':'line'}
-        current['objects'].append(rule); current['rules'].append(rule)
-        heading=wrap(name,width-2*margin,style)
-        current['objects'].append({'type':'text','text':heading,'runs':[{'text':heading,'italic':True}],
-                                   'position':[margin,y+4+size],'size':size})
-        current['right']=max(current['right'],margin+text_width(heading,style))
-        return y+4+size+(heading.count('\n'))*size*1.5+size*0.3+8
+        label_x=margin+BAND_LEAD+BAND_GAP
+        heading=wrap(name,width-label_x-margin-BAND_GAP,style)
+        baseline=y+size; rule_y=baseline-size*0.35   # through the middle of the lower-case letters
+        after=label_x+text_width(heading.split('\n')[0],style)+BAND_GAP
+        tail={'type':'line','start':[after,rule_y],'end':[width-margin,rule_y],'style':'line'}
+        current['objects'] += [{'type':'line','start':[margin,rule_y],'end':[margin+BAND_LEAD,rule_y],'style':'line'},
+                               tail,
+                               {'type':'text','text':heading,'runs':heading_runs(heading),
+                                'position':[label_x,baseline],'size':size}]
+        current['rules'].append(tail)
+        current['right']=max(current['right'],after)
+        return baseline+heading.count('\n')*size*1.5+size*0.3+8
     def place(current,p,x,y,color=None):
         key=f'c{len(compounds)}'; cid=p['input']['compound_id']
         objects=[{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
                   'coordinates':[[a+x,b+y] for a,b in p['coords']],**({'color':color} if color else {})}]
         ty=y+p['molecule_bottom']+size*CELL['caption_baseline']
+        cx=x+p['width']/2
+        def line(field,at,align):
+            runs=p['runs'].get(field)
+            return {'type':'text','id':key+'_'+field,'text':p['texts'][field],'position':[at,ty],'size':size,
+                    'align':align,**({'runs':runs} if runs else {})}
+        if p['inline']:
+            # One centred line from separate objects, so each value stays bound to its column.
+            lx=cx-_line_width(p['inline'],p['texts'],style)/2
+            for i,field in enumerate(p['inline']):
+                if i:
+                    objects.append({'type':'text','id':f'{key}_join{i}','text':LINE_JOIN,'position':[lx,ty],'size':size})
+                    lx+=text_width(LINE_JOIN,style)
+                objects.append(line(field,lx,'Left'))
+                lx+=text_width(p['texts'][field],style,bold=field=='label')
+            ty+=_caption_advance('',size)
         for field,value in p['texts'].items():
-            runs=None if field=='label' else chemical_runs(value)  # a compound number is never a formula
-            objects.append({'type':'text','id':key+'_'+field,'text':value,'position':[x+6,ty],'size':size,
-                            **({'color':color} if color else {}),**({'runs':runs} if runs else {})})
+            if field in p['inline']: continue
+            objects.append(line(field,cx,'Center'))
             ty+=_caption_advance(value,size)
         current['objects'].extend(objects)
         entry={'key':key,'cid':cid,'bbox':[x,y,x+p['width'],y+p['height']]}
@@ -243,6 +339,10 @@ def create_pages(records,spec,stage,start_index=0):
         if y+p['height']>bottom: raise ValueError(f"Compound {p['input']['compound_id']} exceeds page height")
         qx=x
         for index,q in enumerate(cell):
+            if index:
+                ys=[c[1] for c in cell[0]['coords']]
+                current['objects'].append({'type':'text','text':'+','align':'Center','size':size,
+                                           'position':[qx-SECONDARY_GAP/2,y+(min(ys)+max(ys))/2+size*0.35]})
             place(current,q,qx,y,None if index==0 else SECONDARY_COLOR)
             qx+=q['width']+SECONDARY_GAP
         x+=p['width']+gap; row_height=max(row_height,p['height'])
@@ -276,7 +376,8 @@ def create_pages(records,spec,stage,start_index=0):
             object_ids={'group':group.get('id'),'fragment':ids[key+'_mol'],'label':ids[key+'_label'],
                         'fields':{f['column']:ids[key+'_'+f['column']] for f in spec.get('fields',[])
                                   if key+'_'+f['column'] in ids}}
-            for oid in [object_ids['fragment'],object_ids['label'],*object_ids['fields'].values()]:
+            joins=[ids[k] for k in ids if k.startswith(key+'_join')]  # the ", " of a shared line
+            for oid in [object_ids['fragment'],object_ids['label'],*object_ids['fields'].values(),*joins]:
                 node=next(n for n in native_page if n.get('id')==oid)
                 native_page.remove(node);group.append(node)
             record['objects']=object_ids

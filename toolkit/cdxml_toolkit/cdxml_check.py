@@ -303,14 +303,17 @@ def arrows_collide(source) -> list[str]:
 
 
 def _overlay_outlines(root) -> list[tuple[str, list[tuple[float, float]]]]:
-    """Dashed closed outlines that mark a fragment, sampled all the way round.
+    """Dashed outlines with no arrowhead and no fill, sampled as ChemDraw draws them.
 
-    A dashed curve with no arrowhead and no fill; ChemDraw writes it as (in, anchor, out)
-    triples with the last out-handle leading back into the first anchor.
+    ChemDraw draws a cubic segment between consecutive (in, anchor, out) triples; the way back
+    from the last anchor to the first is drawn only when the curve is closed (CurveType bit 1
+    or Closed="yes"), so an open curve keeps its gap here too.
     """
     found = []
     for curve in root.iter('curve'):
-        if curve.get('LineType') != 'Dashed' or curve.get('FillType') \
+        flags = int(curve.get('CurveType', '0') or 0) if (curve.get('CurveType') or '0').isdigit() else 0
+        dashed = curve.get('LineType') == 'Dashed' or flags & 2
+        if not dashed or curve.get('FillType') \
                 or any(curve.get(end, 'None') != 'None' for end in ('ArrowheadHead', 'ArrowheadTail')):
             continue
         v = [float(x) for x in curve.get('CurvePoints', '').split()]
@@ -318,11 +321,12 @@ def _overlay_outlines(root) -> list[tuple[str, list[tuple[float, float]]]]:
         triples = [pts[i:i + 3] for i in range(0, len(pts) - 2, 3)]
         if len(triples) < 2:
             continue
+        closed = flags & 1 or curve.get('Closed') == 'yes'
         ring = []
-        for (_, a, out), (into, b, _) in zip(triples, triples[1:] + triples[:1]):
+        for (_, a, out), (into, b, _) in zip(triples, triples[1:] + (triples[:1] if closed else [])):
             ring += [tuple((1 - u) ** 3 * a[i] + 3 * (1 - u) ** 2 * u * out[i] + 3 * (1 - u) * u * u * into[i]
                            + u ** 3 * b[i] for i in (0, 1)) for u in (n / 8 for n in range(8))]
-        found.append((f'<curve id="{curve.get("id")}">', ring + ring[:1]))
+        found.append((f'<curve id="{curve.get("id")}">', ring + [triples[0][1] if closed else triples[-1][1]]))
     return found
 
 

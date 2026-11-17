@@ -23,19 +23,29 @@ def _pairs(text: str) -> list[tuple[float, float]]:
     return list(zip(v[0::2], v[1::2]))
 
 
-def test_a_circle_overlay_is_written_the_way_chemdraw_writes_one():
+def test_a_circle_overlay_is_written_the_way_chemdraw_writes_one_and_closes():
+    # ChemDraw's own circle (native-dashed-overlay.cdxml) has the same control points but is
+    # drawn open: it is CurveType="2" (dashed, no closed bit) and nothing leads from the last
+    # anchor back to the first, so its render has a gap at the upper right.
     sample = (DATA / "native-dashed-overlay.cdxml").read_text(encoding="utf-8")
-    native = re.search(r'<curve\s+id="9001".*?CurvePoints="([^"]+)"', sample, re.S).group(1)
-    ours = figure_house.overlay_curve_points([(70.0, 95.0)], shape="circle", radius=36.0)
-    assert len(_floats(ours)) == len(_floats(native)) == 48
-    for a, b in zip(_floats(ours), _floats(native)):
+    native = _floats(re.search(r'<curve\s+id="9001".*?CurvePoints="([^"]+)"', sample, re.S).group(1))
+    ours = _floats(figure_house.overlay_curve_points([(70.0, 95.0)], shape="circle", radius=36.0))
+    assert len(native) == 48 and len(ours) == 54
+    for a, b in zip(ours, native):
         assert a == pytest.approx(b, abs=0.02)
+    assert ours[48:] == ours[:6]  # the first (in, anchor, out) again: the last segment returns to the start
+
+
+def test_an_outline_ends_where_it_starts():
+    chain = [(100.0, 100.0), (112.47, 92.8), (124.94, 100.0), (137.41, 92.8)]
+    pts = _pairs(figure_house.overlay_curve_points(chain, shape="outline"))
+    assert pts[-3:] == pts[:3]
 
 
 def test_a_circle_overlay_clears_every_marked_atom():
     hexagon = [(100 + 14.4 * math.cos(math.pi / 3 * k), 100 + 14.4 * math.sin(math.pi / 3 * k)) for k in range(6)]
     pts = _pairs(figure_house.overlay_curve_points(hexagon, shape="circle"))
-    anchors = pts[1::3]
+    anchors = pts[1::3][:-1]
     radii = {round(math.hypot(x - 100, y - 100), 2) for x, y in anchors}
     assert len(radii) == 1 and radii.pop() >= 14.4 + figure_house.OVERLAY_PAD - 0.01
 
@@ -44,7 +54,7 @@ def test_an_outline_overlay_follows_the_atoms_at_a_distance():
     chain = [(100.0, 100.0), (112.47, 92.8), (124.94, 100.0), (137.41, 92.8)]
     pts = _pairs(figure_house.overlay_curve_points(chain, shape="outline"))
     assert len(pts) % 3 == 0 and len(pts) >= 9
-    anchors = pts[1::3]
+    anchors = pts[1::3][:-1]
     for ax, ay in anchors:
         nearest = min(math.hypot(ax - x, ay - y) for x, y in chain)
         assert nearest == pytest.approx(figure_house.OVERLAY_PAD, abs=0.5)
@@ -59,7 +69,7 @@ def test_an_outline_overlay_follows_the_atoms_at_a_distance():
 
 def test_an_outline_of_one_or_two_atoms_falls_back_to_a_circle():
     one = figure_house.overlay_curve_points([(50.0, 50.0)], shape="outline")
-    assert len(_floats(one)) == 48
+    assert len(_floats(one)) == 54
 
 
 @pytest.mark.parametrize("overlays, message", [
@@ -111,9 +121,9 @@ def test_every_named_structure_gets_the_overlay_in_the_same_place():
     assert len(curves) == 2
     offsets = []
     for curve, (cx, cy) in zip(curves, [(100, 100), (260, 140)]):
-        assert curve.get("LineType") == "Dashed" and curve.get("CurveType") == "2"
+        assert curve.get("LineType") == "Dashed" and curve.get("CurveType") == "3" and curve.get("Closed") == "yes"
         assert curve.get("FillType") is None
-        anchors = _pairs(curve.get("CurvePoints"))[1::3]
+        anchors = _pairs(curve.get("CurvePoints"))[1::3][:-1]
         mx = sum(x for x, _ in anchors) / len(anchors)
         my = sum(y for _, y in anchors) / len(anchors)
         offsets.append((round(mx - cx, 2), round(my - cy, 2)))
@@ -155,7 +165,7 @@ def test_a_cycle_marks_the_ring_in_every_intermediate(tmp_path):
     assert len(dashed) == 3
     radii = set()
     for curve in dashed:
-        anchors = _pairs(curve.get("CurvePoints"))[1::3]
+        anchors = _pairs(curve.get("CurvePoints"))[1::3][:-1]
         mx = sum(x for x, _ in anchors) / len(anchors)
         my = sum(y for _, y in anchors) / len(anchors)
         radii.add(round(math.hypot(anchors[0][0] - mx, anchors[0][1] - my), 1))
@@ -165,7 +175,7 @@ def test_a_cycle_marks_the_ring_in_every_intermediate(tmp_path):
 def _overlay_page(*extra: str) -> str:
     ring = figure_house.overlay_curve_points([(100.0, 100.0)], shape="circle", radius=20.0)
     return ('<?xml version="1.0" encoding="UTF-8" ?><CDXML><page id="1">'
-            f'<curve id="7" LineType="Dashed" CurveType="2" CurvePoints="{ring}"/>' + "".join(extra) + "</page></CDXML>")
+            f'<curve id="7" LineType="Dashed" CurveType="3" Closed="yes" CurvePoints="{ring}"/>' + "".join(extra) + "</page></CDXML>")
 
 
 def test_an_arrow_or_caption_on_an_overlay_is_reported():
@@ -225,9 +235,21 @@ def test_cycle_arrows_and_labels_keep_off_an_intermediates_overlay():
         if len(nodes) < 8:  # the bare Pd(0) has one atom; I and II carry the anisyl ring
             continue
         pts = [tuple(float(v) for v in n.get("p").split()) for n in nodes[:8]]
-        curves.append(f'<curve id="9{len(curves)}" LineType="Dashed" CurveType="2" '
+        curves.append(f'<curve id="9{len(curves)}" LineType="Dashed" CurveType="3" Closed="yes" '
                       f'CurvePoints="{figure_house.overlay_curve_points(pts)}"/>')
     assert len(curves) == 2
     for curve in curves:
         page.append(ET.fromstring(curve))
     assert overlays_collide(ET.fromstring(f"<CDXML>{ET.tostring(page, encoding='unicode')}</CDXML>")) == []
+
+
+def test_the_check_reads_an_open_dashed_curve_as_drawn():
+    # A curve without the closed bit is drawn open, so nothing meets its missing last segment.
+    from cdxml_toolkit.cdxml_check import overlays_collide
+    native = re.search(r'CurvePoints="([^"]+)"', _overlay_page()).group(1).rsplit(" ", 6)[0]  # drop the repeat
+    through_gap = '<arrow id="22" Head3D="135 85.5 0" Tail3D="108 96.7 0" ArrowheadHead="Full"/>'
+    open_page = ('<CDXML><page id="1"><curve id="7" LineType="Dashed" CurveType="2" '
+                 f'CurvePoints="{native}"/>{through_gap}</page></CDXML>')
+    closed_page = open_page.replace('CurveType="2"', 'CurveType="3"')
+    assert overlays_collide(open_page) == []
+    assert len(overlays_collide(closed_page)) == 1
