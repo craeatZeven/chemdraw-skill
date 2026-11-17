@@ -302,7 +302,7 @@ def test_a_definition_is_written_to_its_own_unnamed_line(tmp_path):
     brief["species"][0]["definition"] = "Alk = C7H15"
     report = draw_figure(brief, output_path=str(tmp_path / "family"))
     assert report["ok"], report
-    root = ET.parse(report["output_path"]).getroot()
+    root = ET.parse(report["pages"][0]["path"]).getroot()   # a scope brief writes a directory, not a file
     lines = ["".join(s.text or "" for s in t.iter("s")) for t in root.iter("t")]
     assert "Alk = C7H15" in lines
     assert not any(line.startswith("definition") or line == "—" for line in lines)
