@@ -390,33 +390,33 @@ P7, P8 and P9.
 | P1 arc arrows | verified | three native `<arrow AngularSize>`, per-move colours land in the colortable, `crossings: []`, clockwise arcs put the head on the tail end |
 | P1 half arrow | verified | head size back to ChemDraw's own 600/525/150 (a half arrow is the full set at 0.6, not a different ratio); renders as a single thin barb |
 | P2 equilibrium arrows | verified | the Newman figure draws its reversible pair as a double half-headed arrow |
-| P3 Newman in a scheme | **fixed, to re-render** | the render was right for the brief, the brief was wrong: `dihedral_offset` is the rear set's angle from the front one (60 = staggered), so 120 put every rear spoke and label on a front one. Such offsets (within 10 degrees of a multiple of 120) are now refused with that explanation, the docs say the conformer is chosen by the order of `rear`, and `p3-newman-mechanism.json` draws anti (rear `H, CH3, H`) and gauche (rear `CH3, H, H`), both staggered; six distinct label places are asserted for every accepted offset |
+| P3 Newman in a scheme | verified | after the brief fix: no two labels share a coordinate; anti has the rear CH3 straight down, gauche at the upper right. The witness also attaches its projections to the rest of the molecule (the front carbon bonded to an acyl ring system); standalone projections are what P3 covers |
 | P4 highlight the varying group | verified | `#FF6600` on the differing atoms and bonds of every cell in `p4-p7-p8-scope` |
 | P5 keep 0 % visible | verified | the publication-figure test renders `Result: 0%` rather than dropping the cell |
-| P6 variable-group rows | **implemented, to render** | a species' `definition` (`"Alk = C7H15"`) is an unnamed line straight under the number, drawn only where given; a field may set `show_label: false` (unnamed beside other fields) and `optional: true` (no dash where empty); formula digits in every caption line but the label, and in the conditions, are subscripts by the scheme rule (`text_formatting.subscript_matches`). `p6-family-scope.json` has 3p/3q with definitions among plain cells. Not done: one structure standing for two compounds (the witness draws "Alk" once with 3p and 3q under it) |
-| P7 secondary product | verified | `3d′` sits 0-6 pt right of `3d`, grey, with its own `9%b`; the all-grey assertion needed the colour-table dedupe fixed first |
-| P8 section bands | verified | two bands, italic titles, full-width rules |
+| P6 variable-group rows | **changed, to re-render** | verified once as its own line; now, as in the witness, a `definition` joins the number's line: **3p**, Alk = C₇H₁₅, 63%. Still not done: one structure standing for two compounds (the witness draws "Alk" once with 3p and 3q under it) |
+| P7 secondary product | **changed, to re-render** | as fig. 4 draws it: a "+" between the products (18 pt gap), the secondary structure grey and its number and yield black. The verified version had the caption grey too and no "+" |
+| P8 section bands | **changed, to re-render** | as fig. 4 draws it: the name stands on the rule (a 12 pt piece before it, the rest after it) and only the locant is italic (*para* substituents, *N*-heterocycles); the verified version had the whole name italic under a full rule |
 | P9 generic rings | **rebuilt, to render** | the witness's dashed circles are unspecified rings, not overlays: a species' `generic_rings` [{atoms: [i, j], members?}] draws a dashed open arc (CurveType 2) from atom i the long way round to j on the circle of a `members`-ring through that bond, on the far side from the atoms beside them, stopping 5 pt short of a labelled atom; the bond must exist. Cycle layouts keep arrows and labels off its box; other layouts warn. `overlays` (a dashed outline around a fragment) stays as a separate annotation, now written closed (CurveType 3 and the first anchor repeated): ChemDraw drew the earlier CurveType 2 outlines open, as the sample's own PNG shows |
 | P10 page fits content | verified | the scope page crops to its content; `check` passes |
 | P11 10 pt type | verified | `LabelSize`/`CaptionSize` are 10, not 8 |
-| P12 yield, not "Yield:" | verified | cells read `3a` over `92%` |
+| P12 yield, not "Yield:" | **changed, to re-render** | **3a**, 92% on one centred line, the number bold (BJOC 22-127 scheme 2); the verified version put `92%` under `3a`, which is fig. 4's form only when a cell has several values |
 | P13 dense grid | verified | twelve compounds on one page, and an eighteen-compound benzamide panel on one page |
 
-P3, P6 and P9 are closed too, verified on this machine after the fixes: the P6 definition line
-renders without a field name and with subscripts, the P3 labels no longer share a coordinate, and
-every arrow in P9 clears every circle by at least 9.0 pt (`Overlay:` warnings 0,
-`overlay_collides` 0).
+Compared against the witness figures themselves rather than their written summaries, P6, P7, P8,
+P9 and P12 changed form and need one more render; P9 in particular was rebuilt, because the
+witness's dashed circles are unspecified rings, not outlines around a drawn fragment. The
+earlier P9 outlines were also drawn open (see the P9 row). P3 stays verified.
 
 | Item | State | Evidence |
 | --- | --- | --- |
-| P14 one-line cell captions | not implemented | a cell is a label line plus one line per field |
+| P14 one-line cell captions | **implemented, to render** | the number and a single value, or a definition and the value, share one centred line; with several values each takes a centred line under the number (fig. 4); a shared line that would not fit the cell breaks after the number |
 | P15 header scheme above a scope | not implemented | the scope carries a text line reading `Standard conditions` |
 | P16 curved cycle arrows | not implemented | `assets/parity/p9-cycle-overlay.png` joins species with straight chords |
-| P17 formatting everywhere | partly | `H2O` and `K3PO4` subscript in conditions and definitions; a species label does not, and `PhB(OH)2` renders flat because the digit follows a closing parenthesis |
+| P17 formatting everywhere | partly | `H2O` and `K3PO4` subscript in conditions and definitions, and scope captions now too; a scheme's species label does not, which is why `PhB(OH)2` renders flat (the rule itself subscripts a digit after ")"). Labels need a stricter rule than conditions: plain, it would print TS2, INT3 and IM1 as formulas |
 | P18 wrap the route, draw an intermediate once | not implemented | five steps become five rows, 107 x 116 mm, with compounds 2-5 each drawn twice |
 | P19 branch from one structure | not implemented | a step is always substrates-left, products-right |
 | P20 panels, boxed titles, colour legend | not implemented | bands exist (P8); panels and legends do not |
 
-P1-P13 are closed as far as this machine can check them. P14-P20 are not polish: the layout draws
+P1-P13 are closed as far as this machine can check them, apart from the re-renders above. P14-P20 are not polish: the layout draws
 rows of well-formed cells, while every corpus figure that reads like a paper wraps a route,
 branches from one centre, or lays panels side by side.
