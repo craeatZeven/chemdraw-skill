@@ -792,6 +792,13 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
         if len(v) != 6:
             raise ValueError('Colors must be six-digit RGB hex values')
         rgb = [int(v[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+        # Reuse an existing entry: the colour table is an index, and appending a second
+        # identical grey gave every label its own index (4,5,6,7,8) for one colour.
+        wanted = tuple(round(channel * 255) for channel in rgb)
+        for index, entry in enumerate(colors, start=2):
+            existing = tuple(round(float(entry.get(channel, 0)) * 255) for channel in ('r', 'g', 'b'))
+            if existing == wanted:
+                return str(index)
         ET.SubElement(colors, 'color', dict(zip(('r', 'g', 'b'), map(str, rgb))))
         return str(len(colors) + 1)
 
