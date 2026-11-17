@@ -74,3 +74,28 @@ def test_the_reversible_arrow_keeps_its_condition_text_clear_of_the_shafts(tmp_p
     condition = next(t for t in page.findall("t") if "H" in "".join(t.itertext()))
 
     assert float(condition.get("BoundingBox").split()[3]) <= top
+
+
+CYCLE = """
+layout: linear
+structures:
+  A: {smiles: "CC(C)=O", label: "1"}
+  B: {smiles: "C=C(C)O", label: "2"}
+  C: {smiles: "CC(C)O", label: "3"}
+steps:
+  - {substrates: [A], products: [B], arrow_style: reversible}
+  - {substrates: [B], products: [C]}
+  - {substrates: [C], products: [A], arrow_style: reversible}
+"""
+
+
+def test_a_catalytic_cycle_draws_equilibria_between_intermediates(tmp_path):
+    # Journal cycles join some intermediates with an equilibrium (BJOC 22-125, scheme 4).
+    source = tmp_path / "cycle.yaml"
+    source.write_text(CYCLE, encoding="utf-8")
+    scheme = parse_yaml(str(source))
+    scheme.layout = "cycle"  # as the draw tool sets it for a catalytic-cycle brief
+    arrows = _arrows(renderer.render(scheme))
+    kinds = [(a.get("ArrowheadHead"), a.get("ArrowheadTail"), a.get("ArrowShaftSpacing")) for a in arrows]
+    assert kinds.count(("HalfLeft", "HalfLeft", "300")) == 2
+    assert kinds.count(("Full", None, None)) == 1
