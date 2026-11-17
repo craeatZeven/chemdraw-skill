@@ -213,3 +213,56 @@ def test_the_scope_checks_are_the_publication_checks(tmp_path):
 
 def test_the_brief_validator_names_the_scope_keys():
     assert {"fields", "conditions", "footnotes", "width_mm", "height_mm"} <= figure_scope.SCOPE_KEYS
+
+
+# --- the varying group ----------------------------------------------------------------------
+
+def _coloured_atoms(root, colour):
+    """Element symbols (or 'C' for a bare carbon) of the atoms and bond ends drawn in ``colour``."""
+    table = [tuple(round(float(c.get(k)) * 255) for k in "rgb") for c in root.find("colortable").findall("color")]
+    want = tuple(int(colour[i:i + 2], 16) for i in (1, 3, 5))
+    index = str(table.index(want) + 2) if want in table else None
+    nodes = {n.get("id"): n for n in root.iter("n")}
+    atoms = [n for n in nodes.values() if n.get("color") == index]
+    bonds = [b for b in root.iter("b") if b.get("color") == index]
+    return atoms, bonds, nodes
+
+
+def test_highlight_varying_colours_what_differs_from_the_common_core(tmp_path):
+    # BJOC 22-127, scheme 2: the substituent that changes is drawn in a second colour in every
+    # product, so the reader need not compare structures to find it.
+    report = draw_figure(_brief(highlight_varying=True), output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True
+    assert report["highlighted"] == {"3a": 1, "3b": 2, "3c": 1, "3d": 1}  # CH3, OCH3, Cl, F
+    (root,) = _pages(report)
+    atoms, bonds, nodes = _coloured_atoms(root, "#FF6600")
+    assert len(atoms) == 5
+    # Each substituent's bond to the ring is coloured too, so a methyl drawn as a line shows.
+    assert len(bonds) == 5
+    ring = [n for n in nodes.values() if n.get("Element") in (None, "6") and n.get("color") is None]
+    assert len(ring) >= 24  # the four benzene rings stay black
+
+
+def test_a_species_own_colours_win_over_the_highlight(tmp_path):
+    brief = _brief(highlight_varying="#C62828")
+    brief["species"][2]["atom_colors"] = [{"atoms": [0], "color": "#336699"}]
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True and "3c" not in report["highlighted"]
+    (root,) = _pages(report)
+    assert len(_coloured_atoms(root, "#C62828")[0]) == 4
+    assert len(_coloured_atoms(root, "#336699")[0]) == 1
+
+
+def test_highlight_varying_is_checked():
+    for value in ("yes", "#FF66", 3):
+        report = draw_figure(_brief(highlight_varying=value))
+        assert report["ok"] is False and any("highlight_varying" in e for e in report["errors"])
+
+
+def test_highlight_varying_needs_something_in_common(tmp_path):
+    brief = _brief(highlight_varying=True)
+    brief["species"] = [{"id": "x", "smiles": "CCO", "label": "1", "values": {"yield": "1%"}},
+                        {"id": "y", "smiles": "c1ccncc1", "label": "2", "values": {"yield": "2%"}}]
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True and report["highlighted"] == {}
+    assert any("highlight_varying" in w for w in report["warnings"])

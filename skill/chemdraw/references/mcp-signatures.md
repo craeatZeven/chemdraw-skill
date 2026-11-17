@@ -260,7 +260,9 @@ in the temp directory, and an existing output_path is refused.
 kind "scope" draws a substrate-scope panel instead: species [{id, smiles or name,
 label?, group?, values {field: text}, note?, color?, atom_colors?, bond_colors?,
 abbreviate?}], optional fields [{key, label?, unit?, show_label?}] (default: the keys
-used in values), conditions, footnotes, title, width_mm and height_mm. One field is
+used in values), conditions, footnotes, title, width_mm, height_mm and
+highlight_varying (true or a hex colour: what differs from the core every compound
+shares is drawn in that colour, #FF6600 by default). One field is
 shown as its value alone under the label (3a over 92%); show_label true, or several
 fields, names it on each line. note is an extra line under one compound ("not
 formed", "Alk = C7H15"). Text stays at 10 pt and each page is cropped to its content. The

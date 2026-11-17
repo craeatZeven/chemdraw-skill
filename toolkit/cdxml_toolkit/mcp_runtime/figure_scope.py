@@ -7,8 +7,10 @@ not contain is drawn as a dash and named in the notes; nothing is filled in.
 """
 from __future__ import annotations
 
+import copy
 import csv
 import json
+import re
 import tempfile
 from collections import Counter
 from pathlib import Path
@@ -24,7 +26,9 @@ from .figure_draw import (
 )
 from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manifest_style
 
-SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm"}
+SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
+              "highlight_varying"}
+HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
 SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", *SPECIES_STYLE}
 NOTE_COLUMN = "note"
@@ -79,6 +83,10 @@ def _validate(brief: dict) -> list[str]:
     for key in ("title", "conditions"):
         if brief.get(key) is not None and not isinstance(brief[key], str):
             errors.append(f"{key} must be text.")
+    highlight = brief.get("highlight_varying")
+    if highlight is not None and not (highlight is True or highlight is False or (
+            isinstance(highlight, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", highlight))):
+        errors.append("highlight_varying must be true, false or a hex colour like #FF6600.")
 
     species = brief.get("species")
     if not isinstance(species, list) or not species:
@@ -128,6 +136,61 @@ def _free_directory() -> Path:
 
 def _text(value: Any) -> str:
     return "" if value is None else str(value)
+
+
+def _varying_atoms(grounded: list[dict]) -> tuple[dict[str, list[int]], str | None]:
+    """For each compound, the atoms outside the core all of them share (their SMILES indices).
+
+    The core is the maximum common substructure of every compound, matched by element and
+    bond order, whole rings only, so a ring is never split into a highlighted half.
+    """
+    from rdkit.Chem import rdFMCS
+    mols = {g["id"]: Chem.MolFromSmiles(g["smiles"]) for g in grounded}
+    if len(mols) < 2:
+        return {}, "highlight_varying needs at least two compounds to compare."
+    found = rdFMCS.FindMCS(list(mols.values()), timeout=10, ringMatchesRingOnly=True, completeRingsOnly=True,
+                           atomCompare=rdFMCS.AtomCompare.CompareElements,
+                           bondCompare=rdFMCS.BondCompare.CompareOrder)
+    if found.canceled or found.numAtoms < 3:
+        return {}, ("highlight_varying found no core of three or more atoms that every compound shares, "
+                    "so nothing was highlighted.")
+    core = Chem.MolFromSmarts(found.smartsString)
+    varying = {}
+    for ident, mol in mols.items():
+        match = set(mol.GetSubstructMatch(core))
+        varying[ident] = [atom.GetIdx() for atom in mol.GetAtoms() if atom.GetIdx() not in match]
+    return varying, None
+
+
+def _highlight_brief(brief: dict, grounded: list[dict]) -> tuple[dict, dict[str, int], list[str]]:
+    """The brief with the varying group of each compound coloured, as atom and bond colours.
+
+    A compound that sets its own color, atom_colors or bond_colors keeps them. The bond that
+    joins a group to the core is coloured with it, so a methyl drawn as a bare line shows.
+    """
+    wanted = brief.get("highlight_varying")
+    if not wanted:
+        return brief, {}, []
+    colour = wanted if isinstance(wanted, str) else HIGHLIGHT
+    varying, problem = _varying_atoms(grounded)
+    if problem:
+        return brief, {}, [problem]
+    smiles = {g["id"]: g["smiles"] for g in grounded}
+    styled = copy.deepcopy(brief)
+    counts: dict[str, int] = {}
+    for entry in styled["species"]:
+        ident = str(entry["id"])
+        atoms = varying.get(ident) or []
+        if not atoms or any(k in entry for k in ("color", "atom_colors", "bond_colors")):
+            continue
+        mol = Chem.MolFromSmiles(smiles[ident])
+        chosen = set(atoms)
+        entry["atom_colors"] = [{"atoms": atoms, "color": colour}]
+        entry["bond_colors"] = [{"bonds": [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds()
+                                           if {b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & chosen],
+                                 "color": colour}]
+        counts[ident] = len(atoms)
+    return styled, counts, []
 
 
 def _cell_fields(fields: list[dict], notes: bool) -> list[dict]:
@@ -215,8 +278,12 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
         return _failure([f"Refusing to overwrite an existing folder: {target}"], kind="scope")
 
     house = brief_house(brief)
+    try:
+        styled, highlighted, highlight_warnings = _highlight_brief(brief, grounded)
+    except Exception as exc:  # a failed comparison leaves the panel uncoloured, and says so
+        styled, highlighted, highlight_warnings = brief, {}, [f"highlight_varying could not compare the compounds: {exc}"]
     restyle = house is not None or any(isinstance(e, dict) and any(k in e for k in SPECIES_STYLE)
-                                       for e in brief["species"])
+                                       for e in styled["species"])
     try:
         with tempfile.TemporaryDirectory(prefix="scope-inputs-") as scratch:
             # A page that is edited afterwards is rendered after the edit, not by the builder.
@@ -241,7 +308,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
         for page in pages:
             path = Path(page["path"])
             text, page_applied, skipped, warned = figure_house.apply_scope_conventions(
-                path.read_text(encoding="utf-8"), brief, grounded, house, slug)
+                path.read_text(encoding="utf-8"), styled, grounded, house, slug)
             path.write_text(str(text), encoding="utf-8")
             applied += [a for a in page_applied if a not in applied]
             style_warnings += [w for w in warned if w not in style_warnings]
@@ -266,7 +333,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
         blank = [f["key"] for f in fields if values.get(f["key"]) in (None, "")]
         if blank:
             notes.append(f"species {entry['id']} has no {', '.join(blank)}; shown as a dash, not as zero.")
-    warnings += style_warnings
+    warnings += style_warnings + highlight_warnings
     for item in checks["layout"]["issues"]:
         warnings.append(f"Layout check: {item}")
     for item in checks["data_binding"]["errors"]:
@@ -297,6 +364,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
         "pages": pages,
         "species": [{k: g[k] for k in ("id", "label", "name", "smiles", "source")} for g in grounded],
         "fields": fields,
+        "highlighted": highlighted,
         "style": style_report(brief_style(brief)[0], house, applied, skipped),
         "checks": {"data_binding": checks["data_binding"], "chemistry": checks["chemistry"]},
         "lint": {"issues": checks["layout"]["issues"], "relayout": None},
