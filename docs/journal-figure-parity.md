@@ -485,6 +485,46 @@ Produce: validate the keys of every element (`species`, `steps`, `fields`, `pane
 allowed set and report `Unknown species keys: [...]`.
 Done when: each of the three probes above fails with a named key.
 
+### P42 — A charge symbol keeps 3 pt from the labels it is drawn beside
+
+`templates/conformers.py:_place_charges` targets exactly that (`CHARGE_LABEL_GAP = 3.0`) and its
+own comment records that "natively 1.58 pt from [Rh] was too close". Measured on the current code,
+`assets/parity/p3-charged-newman.json` still produces:
+
+```
+CircleMinus beside [Rh]  0.00 pt      <- touching
+CircleMinus beside [Rh]  1.82 pt
+CirclePlus  beside O     2.09 pt
+```
+
+The cause of the 0.00 pt case is that the metal is written as a **generic nickname**, not as an
+atom label: `_place_charges` only knows the boxes in `label_text`, so it cannot see `[Rh]` at all.
+The `O` cases show the placer's own estimate is also optimistic by about a point.
+
+Produce: a post-pass over the finished page that measures every `Symbol` graphic against every
+`<t>` box and every bond, and moves a symbol that sits under 3 pt until it clears — bounded to a
+few points so a crowded projection still gets one.
+Done when: a test reads the produced CDXML, measures symbol-to-text boxes and asserts ≥ 3 pt on
+this brief, and the same figure renders with the circled charge beside `[Rh]` rather than on it.
+
+### P43 — An entering or leaving species keeps its connector arrow attached
+
+`assets/parity/p9-cycle-overlay.json` draws three connector arrows; measured against the atoms of
+the page:
+
+```
+length 34.4 pt | tail 52.6 pt from the nearest atom | head 55.7 pt
+length 78.6 pt | tail  6.5 pt                       | head 73.3 pt
+length 34.4 pt | tail 49.8 pt                       | head 48.0 pt
+```
+
+A connector that starts 50 pt away from any atom is a floating stroke, not a bond to the species it
+enters or leaves: product 3 has no visible attachment at all.
+
+Produce: place each entering/leaving species so its connector's near end lands on the species (a
+few points, like the 6.5 pt case), or grow the arrow to reach it.
+Done when: every connector's near end is within 8 pt of an atom of the species it names.
+
 ## What the layout cannot do yet
 
 The seven items above share one root: the renderer lays a figure out as rows of well-formed
