@@ -549,9 +549,12 @@ bug being fixed. It has been replaced with a closed pair (`CurveType="3"`, `Clos
 first anchor repeated), verified in the render. After the fix: four circles closed, every arrow
 at least 9.0 pt outside every circle, `Overlay:` warnings 0 and `overlay_collides` 0.
 
-A separate finding stands: a generic-ring arc of `p9-generic-ring.json` runs **through** the
-molecule — the closest sample point sits 0.00 pt from a bond, 13 points within 10 pt of one —
-and the compound label sits inside the arc, which the checker does report (`Overlay:`).
+**Retracted:** an earlier note here said a generic-ring arc of `p9-generic-ring.json` runs
+through its own molecule. It does not. That measurement counted the arc's end points, which sit
+on the two ring atoms and therefore on their bonds; with the ends excluded the arc keeps 19.58 pt
+from the nearest bond and 19.59 pt on the second structure, well over the 4 pt the test asks for.
+The compound label inside the arc is real and the checker reports it (`Overlay: '1' sits on the
+overlay`), which is a placement choice for the layout, not an overlap with the chemistry.
 
 ## Where each gap stands
 
