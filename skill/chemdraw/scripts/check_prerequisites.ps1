@@ -151,7 +151,9 @@ function Get-ExecutableFromCommandLine {
     return $null
 }
 
-$isWindowsHost = $env:OS -eq 'Windows_NT'
+# $env:OS is the usual marker but not a guaranteed one: a sandbox may not pass it through,
+# and then a Windows host was reported as a non-Windows one. Ask the runtime as well.
+$isWindowsHost = ($env:OS -eq 'Windows_NT') -or ([System.Environment]::OSVersion.Platform -eq 'Win32NT')
 $isSupportedWindows = $isWindowsHost -and `
     [Environment]::Is64BitOperatingSystem -and `
     [Environment]::OSVersion.Version.Major -ge 10

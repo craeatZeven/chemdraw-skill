@@ -372,6 +372,119 @@ Produce: place each step label against the middle of its own arc, outside the ci
 the arrowheads off the centre label.
 Done when: every step label is within 40 pt of its arc's middle, no label or structure touches
 another, and the arrows read in one direction around the circle.
+## Figure types, tested one by one
+
+Every type the corpus holds was attempted, not assumed. `render` means a brief was written and
+rendered on this machine; `probe` means the element the type needs was offered to the brief and
+the validator accepted or rejected it, which settles expressiveness without a render.
+
+| Type | In corpus | State | What stands in the way |
+| --- | --- | --- | --- |
+| reaction_scheme | 10 | renders | nothing; five-step route, conditions above and below, yields |
+| substrate_scope | 7 | renders | four to a row needs 259 mm; at 180 mm it draws three or refuses, by design |
+| mechanism | 10 | renders | a metal written as a nickname (`[Rh]`) cannot be read back, so `checks_passed` is false |
+| optimization_table | 4 | renders | nothing |
+| energy_profile | 2 | renders | nothing |
+| catalytic_cycle | 2 | renders | arcs, labels beside their arcs, an equilibrium step as a pair of half arcs; 1.58 pt clearances at small size |
+| structure_panel | 6 | renders | a gallery of structures with names, no arrows |
+| concept_panel | 10 | partial | panels exist (`gallery`, `sections`, `fan`), but a `texts` block is rejected and an annotation arrow has no field |
+| graphical_abstract | 6 | partial | the same, plus a footer `legend` is rejected |
+| assignment_panel | 3 | partial | numbering draws; the labels and the legend that carry the assignment do not |
+| markush | 2 | partial | R1/R2 marks and generic rings exist; a labelled `brackets` group is rejected |
+| biosynthesis | 2 | partial | the wrap exists (P18) but a wrapped route's shared intermediates were never rendered here |
+| biomolecule | 2 | partial | the structures draw; the module labels and the annotation arrows do not |
+| retrosynthesis | 1 | blocked | `arrow: retro` is rejected — a step takes solid, dashed, failed, reversible or resonance |
+| polymer | 2 | blocked | needs dashed interaction lines, a dashed highlight box, and a ball-and-stick C60, none of which a brief can express |
+| coordination_complex | 2 | blocked | multi-attachment exists in the toolkit but no brief field reaches it, and the red annotation labels are rejected |
+
+The probes behind "blocked" and "partial", each run against `figure_draw`:
+
+```
+texts            -> Unknown brief keys: ['texts']
+annotations      -> Unknown brief keys: ['annotations']
+interactions     -> Unknown brief keys: ['interactions']
+brackets         -> Unknown brief keys: ['brackets']
+boxes            -> Unknown brief keys: ['boxes']
+rules            -> Unknown brief keys: ['rules']
+legend           -> Unknown brief keys: ['legend']
+charge_style     -> Unknown brief keys: ['charge_style']        (P24, agreed to build)
+steps[].arrow=retro -> arrow must be one of solid, dashed, failed, reversible, resonance
+```
+
+And one bug the same probe found: an unknown key **inside a species** is accepted in silence.
+`{"id": "a", "smiles": "CCO", "annotation": "chiral"}`, `{"...", "stereo": "wedge"}` and
+`{"...", "zzz": 1}` all return `ok: true` with no error and no effect, so a mistyped key drops
+data without a word. Top-level keys are checked; element-level keys are not.
+
+### P36 — A free text block
+
+Witness: `journal-corpus/bjoc-articles-22-128-scheme1.png` panel B — the reaction carries a list
+to its right, `[L1] = 95%, 53% ee` through `[L5] = no reaction`, and panel A carries red labels
+pointing at parts of each complex.
+Today: `{"texts": [...]}` is rejected (`Unknown brief keys`). `BRIEF_KEYS` for a scheme is
+`kind, species, steps, max_width, title, panel_label, style, layout, overlays, wrap`, so a figure
+cannot carry a line of prose or a list anywhere.
+
+Produce: `texts: [{text, at: [x, y], align, size, color, runs?}]`, drawn as text objects that the
+layout treats as obstacles when it places anything else.
+Done when: the results list of that witness renders beside its reaction and nothing overlaps it.
+
+### P37 — An annotation on part of a structure
+
+Witness: same figure — `chiral amino-alcohol`, `sterically hindered aniline`, `naphthadryl group`,
+each in red with an arrow to the atom or group it names; `journal-corpus/bjoc-articles-22-125-*`
+does the same for its conformers.
+Today: `annotations` is rejected, and `annotation` on a species is accepted and ignored (see P41).
+
+Produce: `annotations: [{text, on: {species, atoms?}, color, arrow}]` — a label placed clear of the
+structure with an arrow to the atoms it names, treated as an obstacle like any other text.
+Done when: the three red labels of that witness render against their own groups with no overlap.
+
+### P38 — Interactions, brackets and highlight boxes
+
+Witness: `journal-corpus/bjoc-articles-21-87-figure1.png` draws red dashed lines between donor and
+acceptor atoms, square brackets grouping a `donor` from an `acceptor` half, and the dashed
+rectangles of `journal-corpus/bjoc-articles-22-124-scheme1.png` marking a substructure.
+Today: `interactions`, `brackets` and `boxes` are all rejected. The toolkit can draw each of them
+(`interaction`, `bracket`, `rectangle` with `dashed` in `compose_chemical_figure`); no brief reaches
+them.
+
+Produce: `interactions: [{from, to, style, color}]`, `brackets: [{species, label}]`,
+`boxes: [{around: [species], style: "dashed"}]`.
+Done when: the polymer witness's dashed contact lines and its donor/acceptor brackets render.
+
+### P39 — Panel rules and a footer legend
+
+Witness: `journal-corpus/bjoc-articles-21-87-figure1.png` separates its three panels with a rule
+and a blue title; `...-22-103-figure1.png` ends with `R1 = H, MeO, Cl` in the colour of the groups
+it names.
+Today: a panels figure boxes its titles (P20) but has no rule between panels and no legend;
+`rules` and `legend` are rejected.
+
+Produce: `rules: [{y, style}]` and `legend: [[{text, color}]]`, the legend runs colouring the marks
+that share that colour.
+Done when: a three-panel figure shows both, matching the witness.
+
+### P40 — A retrosynthetic arrow
+
+Witness: `journal-corpus/bjoc-articles-22-124-scheme1.png` — every arrow is retro (the open double
+head) because the figure reads product → precursor.
+Today: `steps[].arrow` accepts `solid, dashed, failed, reversible, resonance`; `retro` is rejected
+even though the drawing code implements it (`ArrowheadType: Angle`, `ArrowShaftSpacing`).
+
+Produce: accept `retro` in a step and pass it through.
+Done when: a retro route renders with open double-headed arrows.
+
+### P41 — Refuse a key the figure cannot use
+
+`{"species": [{"id": "a", "smiles": "CCO", "zzz": 1}]}`, `annotation`, and `stereo` all return
+`ok: true`; the value is dropped in silence. Top-level keys are checked, element-level ones are not,
+so a typo loses data without a word — the worst failure mode for a JSON-driven tool.
+
+Produce: validate the keys of every element (`species`, `steps`, `fields`, `panels`, ...) against its
+allowed set and report `Unknown species keys: [...]`.
+Done when: each of the three probes above fails with a named key.
+
 ## What the layout cannot do yet
 
 The seven items above share one root: the renderer lays a figure out as rows of well-formed
