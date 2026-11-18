@@ -42,7 +42,7 @@ RELAYOUT_WIDTH_FACTOR = 0.75
 RELAYOUT_MIN_LINE_CHARS = 16
 ARROWS = ("solid", "dashed", "failed", "reversible", "resonance")
 BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout", "overlays",
-              "wrap"}
+              "wrap", "charges"}
 WRAPS = ("continue", "repeat", "serpentine")
 
 JACS_PALETTE = {
@@ -77,12 +77,22 @@ def _read_brief(brief: Any) -> tuple[dict | None, list[str]]:
     return copy.deepcopy(brief), []
 
 
+def charge_errors(brief: dict) -> list[str]:
+    """charges: how charges are drawn, superscript (the default) or circled."""
+    value = brief.get("charges")
+    if value is not None and value not in renderer.CHARGE_STYLES:
+        return [f"charges must be {' or '.join(repr(v) for v in renderer.CHARGE_STYLES)}: a sign in the label "
+                "or ChemDraw's circled sign beside the atom."]
+    return []
+
+
 def _validate(brief: dict) -> list[str]:
     errors: list[str] = []
     unknown = sorted(set(brief) - BRIEF_KEYS - figure_house.RECORD_KEYS)
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
     errors += figure_house.record_errors(brief)
+    errors += charge_errors(brief)
     kind = brief.get("kind", "scheme")
     if kind != "scheme":
         errors.append(f"kind {kind!r} is not available yet; only 'scheme', 'scope' and 'mechanism' can be drawn.")
@@ -825,7 +835,9 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     runs that make one line, so a catalyst can be coloured or a reagent set in italics; the
     title and a species' caption (a line under its compound number) take the same forms. A
     species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
-    and its number, with an optional fill drawn behind it.
+    and its number, with an optional fill drawn behind it. charges "circled" (scheme, mechanism
+    and panels briefs) draws each charge of one as ChemDraw's circled sign beside the atom, a
+    charged carbon unlabelled; the default "superscript" writes the sign in the label.
     kind "panels" sets several scheme or mechanism briefs one above the other on one page:
     {kind: "panels", panels [{title, brief | gallery | sections}], legend? [lines], style?,
     max_width?}; each panel is drawn and checked as its own brief, under a boxed one-line title
@@ -905,6 +917,15 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     row, with its substrates drawn again. show_atom_numbers=true prints the atom numbers on a
     draft so the moves can be checked.
     """
+    parsed, _ = _read_brief(brief)
+    style = parsed.get("charges") if isinstance(parsed, dict) else None
+    # Everything is laid out and drawn in the brief's charge style (an unknown one is reported
+    # by the validation and drawn as the default meanwhile).
+    with renderer.charge_style(style if style in renderer.CHARGE_STYLES else "superscript"):
+        return _draw_figure(brief, output_path, render)
+
+
+def _draw_figure(brief: dict | str, output_path: str | None, render: bool) -> dict:
     brief, errors = _read_brief(brief)
     if brief is not None and brief.get("kind") == "panels":
         from .figure_panels import draw_panels

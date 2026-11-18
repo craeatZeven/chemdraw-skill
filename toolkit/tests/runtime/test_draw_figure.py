@@ -445,3 +445,23 @@ def test_every_kind_of_brief_may_record_its_provenance(module, brief):
     assert not any("provenance" in e or "Unknown brief keys" in e for e in errors), errors
     errors = validate({**brief, "provenance": ["not", "text"]})
     assert any("provenance" in e for e in errors), errors
+
+
+@pytest.mark.parametrize("kind", ["scheme", "mechanism", "panels"])
+def test_charges_is_superscript_or_circled(kind):
+    import importlib
+    module = {"scheme": "figure_draw", "mechanism": "figure_mechanism", "panels": "figure_panels"}[kind]
+    validate = importlib.import_module(f"cdxml_toolkit.mcp_runtime.{module}")._validate
+    brief = {"kind": kind, "species": [], "steps": []} if kind != "panels" else {"kind": "panels", "panels": []}
+    assert not any("charges" in e or "Unknown" in e for e in validate({**brief, "charges": "circled"}))
+    assert any("charges" in e for e in validate({**brief, "charges": "boxed"}))
+
+
+def test_a_scheme_draws_in_its_charge_style(monkeypatch):
+    # The whole drawing, layout included, runs in the brief's style.
+    from cdxml_toolkit.render import renderer
+    seen = []
+    monkeypatch.setattr(figure_draw, "_draw_figure", lambda *a: seen.append(renderer._CHARGE_STYLE.get()) or {})
+    figure_draw.draw_figure({"kind": "scheme", "charges": "circled", "species": [], "steps": []})
+    figure_draw.draw_figure({"kind": "scheme", "species": [], "steps": []})
+    assert seen == ["circled", "superscript"]

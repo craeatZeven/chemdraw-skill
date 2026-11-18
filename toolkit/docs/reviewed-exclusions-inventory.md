@@ -358,13 +358,14 @@
 
 ## `mcp_runtime.figure_draw`
 
-- **function**, line 658: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
-- **function**, line 624: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
-- **function**, line 632: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
-- **function**, line 789: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
-- **function**, line 613: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
-- **function**, line 648: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
-- **function**, line 639: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
+- **function**, line 668: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
+- **function**, line 634: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
+- **function**, line 642: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
+- **function**, line 80: `charge_errors(brief: dict) -> list[str]` - charges: how charges are drawn, superscript (the default) or circled.
+- **function**, line 799: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
+- **function**, line 623: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
+- **function**, line 658: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
+- **function**, line 649: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
 
 ## `mcp_runtime.figure_editing`
 
@@ -405,11 +406,11 @@
 
 ## `mcp_runtime.figure_mechanism`
 
-- **function**, line 1103: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+- **function**, line 1104: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
 
 ## `mcp_runtime.figure_panels`
 
-- **function**, line 272: `draw_panels(brief: dict, output_path: str | None, render: bool) -> dict` - Draw each panel with draw_figure, then stack them under boxed titles on one page.
+- **function**, line 274: `draw_panels(brief: dict, output_path: str | None, render: bool) -> dict` - Draw each panel with draw_figure, then stack them under boxed titles on one page.
 
 ## `mcp_runtime.figure_scope`
 
@@ -762,12 +763,12 @@
 
 ## `templates.conformers`
 
-- **function**, line 953: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, str] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage (norbornane, bicyclo_222, adamantane) with CrossingBonds.
-- **function**, line 1123: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
+- **function**, line 958: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, str] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage (norbornane, bicyclo_222, adamantane) with CrossingBonds.
+- **function**, line 1128: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
 - **function**, line 268: `chair_cyclohexane(*, flip: bool = False, substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 14.4) -> dict[str, Any]` - Generate a 6-membered chair cyclohexane (chair1 or ring-flipped chair2).
-- **function**, line 836: `fischer_projection(*, centers: Sequence[Mapping[str, str]] = ({'left': 'H', 'right': 'OH'},), top: str = 'CHO', bottom: str = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate an orthogonal Fischer projection cross backbone.
-- **function**, line 709: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a 6-membered Haworth perspective pyranose ring.
-- **function**, line 497: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[str] = ('Me', 'H', 'H'), rear: Sequence[str] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None, charges: Mapping[str, Sequence[int]] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
+- **function**, line 841: `fischer_projection(*, centers: Sequence[Mapping[str, str]] = ({'left': 'H', 'right': 'OH'},), top: str = 'CHO', bottom: str = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate an orthogonal Fischer projection cross backbone.
+- **function**, line 714: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a 6-membered Haworth perspective pyranose ring.
+- **function**, line 502: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[str] = ('Me', 'H', 'H'), rear: Sequence[str] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None, charges: Mapping[str, Sequence[int]] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
 
 ## `vision.stereo_audit`
 

@@ -494,17 +494,21 @@ the appendix table at the end of this section.
 
 ### What is missing, by how often it appears
 
+The first version of this table counted as missing several things schemes already draw
+(`ts_bracket`, `atom_halos`, `serpentine`, products to the left, ring fills); the rows below
+say so and send those figures to be checked instead.
+
 | Proposed | Missing drawing | Figures | Count | Notes |
 | --- | --- | --- | --- | --- |
-| P24 | Charges as circled signs on ordinary structures (the renderer writes a superscript + or − in the label; projections already use ChemDraw's circled symbols) | #8, #22, #24, #28, #39, #41, #44, #45 | 8 | #38 and #46 use plain signs, so this is a style choice, not a fix; a bare sign beside an unlabelled carbon (#38, #8) belongs here too |
+| P24 | Charges as circled signs on ordinary structures | #8, #22, #24, #28, #39, #41, #44, #45 | 8 | **implemented, to render**: a scheme, mechanism or panels brief's `charges: "circled"` writes each charge of one as ChemDraw does (`Charge` on the atom, a CirclePlus/CircleMinus symbol representing it, placed 3 pt clear of bonds and labels); a charged carbon keeps no "C" label; larger charges keep the superscript. The default stays the superscript, as #38 and #46 write it. Scope pages (the publication layer) do not take it yet. `p24-circled-charges.json` draws #38's dehydration with circled charges |
 | P25 | Header and divider styles for panels: centred text on a coloured rule (#9), a letter and a coloured italic title on a rule (#58, #59), a letter only with dotted or dashed dividers (#19, #22, #61, #65), a frame with its title in the top border and a drop shadow (#16), shaded panel backgrounds (#58, #63) | #9, #16, #19, #22, #58, #59, #61, #63, #65 | 9 | panels today have boxed titles, and sections a box on a dashed rule |
-| P26 | Brackets round a species: an intermediate, a transition state with a double dagger, a charge outside the bracket with a counter-ion | #5, #6, #13, #23, #40, #61 | 6 | |
-| P27 | Routes that turn: a second row running right to left after a downward arrow (serpentine), side arrows down out of a row | #8, #13, #40, #44, #46 | 5 | `wrap: continue` starts each row at the left |
+| P26 | Brackets round a species with a charge outside and a counter-ion (#61), or round part of a structure with a label (#13) | #13, #61 | 2 | schemes already have `ts_bracket` ([...] with a configurable superscript, the double dagger by default, so a plain bracket for an intermediate too): #5, #6, #23 and #40 should be checked against it |
+| P27 | A side arrow down out of a row (k_tunnel in #40) | #40 | 1 | routes already turn: `wrap: "serpentine"` sends the next row back with a vertical arrow, so #8, #13, #44 and #46 should be checked against it |
 | P28 | Electron dots: radicals, lone pairs, carbenes | #6, #8, #39, #40, #44 | 5 | |
 | P29 | Text attached to atoms: locant numbers, pro-S / pro-R, atom-number notes | #5, #6, #27, #54 | 4 | |
 | P30 | Several compounds listed under or beside one structure in aligned columns ("3  R = CH3  X = H"), or a list set between two arrows | #33, #42, #54, #59, #61 | 5 | `drawn_with` stacks whole caption lines under the structure |
 | P31 | Reagent badges: the reagent in a filled rounded box on the arrow | #11, #29, #31, #65 | 4 | |
-| P32 | Translucent highlights behind bonds or atoms (halos, discs) | #5, #6, #18, #29 | 4 | `atom_colors` colours the drawing itself |
+| P32 | Highlights along bonds (a soft band behind a bond path) | #5, #6 | 2 | atoms already take `atom_halos` (a filled disc behind each atom): #18 and #29 should be checked against them |
 | P33 | Chosen bonds drawn bold (synthesis bonds) | #1, #2, #3, #33 | 4 | |
 | P34 | Wavy attachment bonds, and structure fragments inside a definition line ("X = ~CH2~ or ~C(=O)~") | #19, #29, #31, #61 | 4 | |
 | P35 | A short last row centred in a grid or gallery | #12, #15, #21 | 3 | **implemented, to render** for scope grids (`columns`): a row with fewer cells than columns stands in the middle, on the grid's pitch when the difference is even |
@@ -513,7 +517,7 @@ the appendix table at the end of this section.
 | P38 | Counter-ions set beside a structure ("2 PF6−", "X−") | #16, #41, #61 | 3 | |
 | P39 | Partial (dashed) bonds of transition states and dashed non-covalent contacts between atoms | #8, #9, #22, #39 | 4 | SMILES cannot carry them; they would be drawn between named atoms like clash marks |
 | P40 | Labels on coloured segments of one molecule ("PEG linker", "warhead") | #50, #51, #52 | 3 | the colours exist (`atom_colors`); the labels do not |
-| P41 | Smaller items seen once or twice: hollow block arrows (#3, #18); a rectangular dashed box round a fragment (#13, #19); a repeat bracket ( )n or [ ]n on a bond (#28, #42); one arrow to a whole row of products, or stacked reactants (#25, #42); curved arrows joining a cycle tangentially (#24) or leaving a step arrow (#9, #46); a rounded box round an atom label (#24, #63); a small table under a scheme (#58, #65); a grouping bracket under several structures (#17); an equivalence sign between two drawings (#40); equation numbers (1)–(12) (#65); double-headed correlation arcs between atoms (#14) | | | one figure each, mostly |
+| P41 | Smaller items seen once or twice: hollow block arrows (#3, #18); a rectangular dashed box round a fragment (#13, #19); a repeat bracket ( )n or [ ]n on a bond (#28, #42); one arrow to a whole row of products, or stacked reactants (#25, #42); curved arrows joining a cycle tangentially (#24) or leaving a step arrow (#9, #46); a rounded box round an atom label (#24, #63; `box` frames a whole structure); a small table under a scheme (#58, #65); a grouping bracket under several structures (#17); an equivalence sign between two drawings (#40); equation numbers (1)-(12) (#65); double-headed correlation arcs between atoms (#14) | | | one figure each, mostly. Already there: products to the left (`fan`, #11, #65), ring fills (`ring_fills`, #16), coloured or italic condition runs (#5, #15, #30) |
 
 ### Figures that should already match: please check these
 

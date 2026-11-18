@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import math
 import os
+from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial
 from dataclasses import dataclass, field, replace as dataclass_replace
@@ -504,6 +505,28 @@ from contextvars import ContextVar
 
 _fragment_receipts = ContextVar('fragment_receipts', default=None)
 
+# How a charge is drawn on an ordinary structure: a superscript sign in the atom's label, or
+# ChemDraw's circled sign beside the atom (a CirclePlus/CircleMinus symbol representing the
+# atom's Charge), as most corpus figures show charges (P24).
+CHARGE_STYLES = ("superscript", "circled")
+_CHARGE_STYLE = ContextVar('charge_style', default="superscript")
+_CHARGE_REACH = 16.0   # room kept round a circled charge in layouts (its centre up to ~12 pt out, plus its radius)
+
+
+@contextmanager
+def charge_style(style: str):
+    if style not in CHARGE_STYLES:
+        raise ValueError(f"charges are drawn {' or '.join(CHARGE_STYLES)}, not {style!r}")
+    token = _CHARGE_STYLE.set(style)
+    try:
+        yield
+    finally:
+        _CHARGE_STYLE.reset(token)
+
+
+def _circled(atom: Dict) -> bool:
+    return _CHARGE_STYLE.get() == "circled" and abs(int(atom.get("charge") or 0)) == 1
+
 
 def _build_fragment(
     atoms: List[Dict],
@@ -516,6 +539,7 @@ def _build_fragment(
     Returns (xml_string, atom_id_map, fragment_xml_id).
     """
     atom_id_map: Dict[int, int] = {}
+    label_text: Dict[int, str] = {}   # what each labelled atom shows, for placing circled charges
     frag_id = ids.next()
 
     xs = [a["x"] for a in atoms]
@@ -558,7 +582,9 @@ def _build_fragment(
             f'Z="{z}"',
         ]
 
-        is_carbon = (sym == "C" and not charge and not isotope)
+        circled = _circled(a)
+        # A charged carbon keeps no "C" label when its charge is circled beside it.
+        is_carbon = (sym == "C" and (not charge or circled) and not isotope)
         is_variable = elem_num == 0
         if is_variable:
             # Element=0 is accepted by some parsers but cannot be opened by
@@ -579,6 +605,8 @@ def _build_fragment(
                 attrs.append(f'Charge="{charge}"')
         elif rad_attr_val and nh is not None:
             attrs.append(f'NumHydrogens="{nh}"')
+        if is_carbon and charge:
+            attrs.append(f'Charge="{charge}"')
 
         if rad_attr_val:
             attrs.append(f'Radical="{rad_attr_val}"')
@@ -631,7 +659,8 @@ def _build_fragment(
                     f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                     f'color="0" face="64">{int(a["generic_number"])}</s>'
                 )
-            if charge:
+            label_text[a["index"]] = display_text
+            if charge and not circled:
                 charge_text = (str(abs(charge)) if abs(charge) > 1 else '') + ('+' if charge > 0 else '-')
                 lines.append(
                     f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
@@ -674,6 +703,24 @@ def _build_fragment(
 
         lines.append(f'<b {" ".join(attrs)}/>')
 
+    circled_atoms = [a for a in atoms if a.get("charge") and _circled(a)]
+    if circled_atoms:
+        # Placed as on a projection: beside the atom, upper right where that keeps the P1 3 pt
+        # from every bond and label, otherwise in the freest direction.
+        from ..templates.conformers import _place_charges
+        placing = [{"index": a["index"], "x": a["x"], "y": a["y"],
+                    "symbol": label_text.get(a["index"], "C"), "show_label": a["index"] in label_text,
+                    "charge": a.get("charge") if _circled(a) else 0} for a in atoms]
+        _place_charges(placing, [{"atom1": b["atom1"], "atom2": b["atom2"]} for b in bonds])
+        for atom in placing:
+            if not atom.get("charge_box"):
+                continue
+            x1, y1, x2, y2 = atom["charge_box"]
+            kind = "CirclePlus" if int(atom["charge"]) > 0 else "CircleMinus"
+            lines.append(
+                f'<graphic id="{ids.next()}" BoundingBox="{x1:.2f} {y1:.2f} {x2:.2f} {y2:.2f}" '
+                f'Z="{ids.next()}" GraphicType="Symbol" SymbolType="{kind}">'
+                f'<represent attribute="Charge" object="{atom_id_map[atom["index"]]}"/></graphic>')
     lines.append('</fragment>')
     fragment_xml = "\n".join(lines)
     source_cx = atoms[0].get('_source_cxsmiles') if atoms else None
@@ -1083,6 +1130,10 @@ def _fragment_bbox(atoms: List[Dict]) -> Tuple[float, float, float, float]:
     labels such as "Br" or "OH".  A lone atom's label is drawn on one side,
     as ChemDraw writes it (OH-, Br- rightwards; H2O, HCl leftwards).
     """
+    if any(a.get("charge") and _circled(a) and not a.get("_charge_reach") for a in atoms):
+        r = _CHARGE_REACH
+        atoms = [{**a, "_charge_reach": True, "reach": tuple(a.get("reach", ())) + ((-r, -r), (r, r))}
+                 if a.get("charge") and _circled(a) else a for a in atoms]
     reach = [(a["x"] + dx, a["y"] + dy) for a in atoms for dx, dy in a.get("reach", ())]
     if reach:
         # A dashed arc or outline drawn over the structure later is part of what it occupies.

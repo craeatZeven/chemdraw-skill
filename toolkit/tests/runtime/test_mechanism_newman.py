@@ -222,7 +222,7 @@ def test_a_charge_in_the_attached_group_is_a_circled_symbol_on_its_atom():
     assert x2 - x1 == pytest.approx(8.0) and y2 - y1 == pytest.approx(8.0)
     cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
     ox, oy = map(float, charged.get("p").split())
-    assert 8.0 <= math.hypot(cx - ox, cy - oy) <= 14.0   # beside its atom and label, not across the drawing
+    assert 8.0 <= math.hypot(cx - ox, cy - oy) <= 16.0   # beside its atom and label, 3 pt clear of its bonds
     assert _clearance(fragment, symbol) >= 3.0           # the P1 spacing from every bond
 
 

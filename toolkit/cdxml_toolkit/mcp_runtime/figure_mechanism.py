@@ -36,7 +36,7 @@ from ..render.schema import StructureRef
 from ..text_formatting import normalize_condition_text
 from . import artifact_safety, figure_draw, figure_house, figure_lint
 
-MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers"}
+MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers", "charges"}
 SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "generic_rings", "clashes"}
 CLASH_KEYS = {"between", "color"}
 NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset", "attach", "charges"}
@@ -104,6 +104,7 @@ def _validate(brief: dict) -> list[str]:
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
     errors += figure_house.record_errors(brief)
+    errors += figure_draw.charge_errors(brief)
     style_error = figure_draw.style_preset_error(brief.get("style"))
     if style_error:
         errors.append(style_error)

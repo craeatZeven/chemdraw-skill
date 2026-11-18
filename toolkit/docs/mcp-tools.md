@@ -244,7 +244,9 @@ correct. A condition line may be text, a run {text, color?, bold?, italic?} or a
 runs that make one line, so a catalyst can be coloured or a reagent set in italics; the
 title and a species' caption (a line under its compound number) take the same forms. A
 species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
-and its number, with an optional fill drawn behind it.
+and its number, with an optional fill drawn behind it. charges "circled" (scheme, mechanism
+and panels briefs) draws each charge of one as ChemDraw's circled sign beside the atom, a
+charged carbon unlabelled; the default "superscript" writes the sign in the label.
 kind "panels" sets several scheme or mechanism briefs one above the other on one page:
 {kind: "panels", panels [{title, brief | gallery | sections}], legend? [lines], style?,
 max_width?}; each panel is drawn and checked as its own brief, under a boxed one-line title

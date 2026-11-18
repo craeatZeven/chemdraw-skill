@@ -1,0 +1,73 @@
+{
+ "kind": "scheme",
+ "charges": "circled",
+ "provenance": "Drawn after BJOC 6-118 scheme 1 (dehydration of benzene-1,2-dihydrodiol) to compare charge styles; structures transcribed from the figure.",
+ "species": [
+  {
+   "id": "diol",
+   "smiles": "OC1C=CC=CC1O",
+   "label": "1"
+  },
+  {
+   "id": "proton",
+   "smiles": "[H+]"
+  },
+  {
+   "id": "oxonium",
+   "smiles": "[OH2+]C1C=CC=CC1O"
+  },
+  {
+   "id": "cation",
+   "smiles": "OC1C=CC=C[CH+]1",
+   "label": "2"
+  },
+  {
+   "id": "water",
+   "smiles": "O"
+  },
+  {
+   "id": "phenol",
+   "smiles": "Oc1ccccc1"
+  },
+  {
+   "id": "proton2",
+   "smiles": "[H+]"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "diol",
+    "proton"
+   ],
+   "products": [
+    "oxonium"
+   ],
+   "arrow": "reversible"
+  },
+  {
+   "substrates": [
+    "oxonium"
+   ],
+   "products": [
+    "cation",
+    "water"
+   ],
+   "above": [
+    "slow"
+   ]
+  },
+  {
+   "substrates": [
+    "cation"
+   ],
+   "products": [
+    "phenol",
+    "proton2"
+   ],
+   "above": [
+    "fast"
+   ]
+  }
+ ]
+}

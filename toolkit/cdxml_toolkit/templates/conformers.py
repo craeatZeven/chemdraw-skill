@@ -459,7 +459,12 @@ def _place_charges(atoms: list[dict[str, Any]], bonds: list[dict[str, Any]],
             reach = half + 2.0
             while own and _box_distance(ax + ux * reach, ay + uy * reach, own) < half + CHARGE_OWN_GAP:
                 reach += 0.5
-            px, py = ax + ux * reach, ay + uy * reach
+            # Further out along the same direction until the bonds leave room (between two bonds
+            # 120 degrees apart that is about 8 pt), but never more than a few points beyond.
+            for step in range(0, 13):
+                px, py = ax + ux * (reach + 0.5 * step), ay + uy * (reach + 0.5 * step)
+                if min([_segment_distance(px, py, a, b) for a, b in segments] or [99.0]) >= half + CHARGE_BOND_GAP:
+                    break
             room = min([_segment_distance(px, py, a, b) - half - CHARGE_BOND_GAP for a, b in segments]
                        + [_box_distance(px, py, box) - half - CHARGE_LABEL_GAP
                           for i, box in labels.items() if box and i != int(atom["index"])]

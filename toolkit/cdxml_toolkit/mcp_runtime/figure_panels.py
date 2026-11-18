@@ -24,7 +24,7 @@ from typing import Any
 
 from . import artifact_safety, figure_house
 
-PANEL_BRIEF_KEYS = {"kind", "panels", "legend", "style", "max_width"}
+PANEL_BRIEF_KEYS = {"kind", "panels", "legend", "style", "max_width", "charges"}
 PANEL_KEYS = {"title", "brief", "gallery", "sections"}
 PANEL_CONTENT = ("brief", "gallery", "sections")
 SECTION_KEYS = {"title", "brief"}
@@ -50,6 +50,8 @@ def _validate(brief: dict) -> list[str]:
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
     errors += figure_house.record_errors(brief)
+    from .figure_draw import charge_errors
+    errors += charge_errors(brief)
     panels = brief.get("panels")
     if not isinstance(panels, list) or not 1 <= len(panels) <= MAX_PANELS:
         errors.append(f"panels: give 1 to {MAX_PANELS} panels, each {{title, brief}}.")
@@ -288,7 +290,7 @@ def draw_panels(brief: dict, output_path: str | None, render: bool) -> dict:
 
         def drawn(inner_brief: dict, name: str, where: str) -> tuple[dict | None, list[str]]:
             inner = dict(inner_brief)
-            for key in ("style", "max_width"):
+            for key in ("style", "max_width", "charges"):
                 if brief.get(key) is not None:
                     inner.setdefault(key, brief[key])
             report = draw_figure(inner, output_path=str(work / name), render=False)
