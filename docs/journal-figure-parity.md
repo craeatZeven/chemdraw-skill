@@ -309,6 +309,31 @@ block that pairs colours with the groups they stand for.
 Done when: a three-panel figure reproduces the witness's structure — headers, coloured classes,
 footer legend.
 
+## Readback differences that are not changes
+
+The guard reads every drawn molecule back and compares it with the figure's input. Two
+differences are unavoidable, because a drawing necessarily fixes what a SMILES leaves open, and
+both are tolerated as a deliberate verdict rather than a mismatch:
+
+- **Drawn double-bond geometry.** `CC(=NO)c1ccccc1` comes back as `C/C(=N\O)c1ccccc1`: a C=N or
+  C=C bond drawn on paper has an E/Z geometry, and the reader derives it from the coordinates.
+  `chemistry_semantics.same_compound` returns `drawn_geometry` when the source left that bond's
+  geometry open and the two agree once it is ignored, and the report says
+  `double_bond_geometry: drawn`. A geometry the source *did* fix still has to come back the same,
+  or the guard refuses the figure. Fixed in `492ae65`.
+- **Kekulé form.** Aromatic rings come back with whichever alternating double bonds the drawing
+  uses; the semantic key compares aromatised forms.
+
+This needs writing down because it was mis-reported once: a session that had tested an oxime
+before `492ae65` recorded the C=N case as a live blocker, and later sessions repeated it from
+the log instead of re-running the brief. At `a9d4462` both `p19-fan.json` and
+`p20-panels.json` render with `ok: true`, and the three panels read back `matched`. Before
+reporting a guard refusal, re-run the brief against the commit under test.
+
+One related formatting rule, decided here: a mechanism designator keeps its number on the
+baseline. `Sn2` is written S<sub>N</sub>2, not a subscripted sulfur count, so `Sn1` and `Sn2`
+are exempt from the formula-subscript rule; `S2` (disulfide) still subscripts.
+
 ## What the layout cannot do yet
 
 The seven items above share one root: the renderer lays a figure out as rows of well-formed
@@ -411,7 +436,7 @@ earlier P9 outlines were also drawn open (see the P9 row). P3 stays verified.
 | P14 one-line cell captions | **implemented, to render** | the number and a single value, or a definition and the value, share one centred line; with several values each takes a centred line under the number (fig. 4); a shared line that would not fit the cell breaks after the number |
 | P15 header scheme above a scope | **implemented, to render** | a scope brief's `header` {substrates, products, above?, below?} draws the general reaction at the top of the first page (substrates joined by "+", the arrow with its conditions, the products with their labels) and a rule under it. Numbered R groups `[*:1]` are drawn R¹ (a `GenericNickname` "R1" with a raised number, for schemes too); the header's structures join the page's expected inventory and the readback. With `highlight_varying` the header's R marks (the R and its number) take the highlight colour, as the witness draws R¹/R² in the red of the varying groups; `p15-header-scope.json` mirrors BJOC 22-127 scheme 2 |
 | P16 curved cycle arrows | **implemented, to render** | each step of a catalytic cycle is a native arc arrow (`AngularSize`, centred on the cycle) on the circle the intermediates sit on, clipped where the circle leaves each structure's box, the head on the next intermediate; entering and leaving species and the conditions are placed from the arc. Equilibrium and failed steps keep their straight chord arrows (an arc has no double half-headed form here) |
-| P17 formatting everywhere | **implemented, to render** | conditions, definitions and scope captions were already formatted; species labels now are too, by a stricter rule than conditions (`text_formatting.is_formula_label`): only a label made entirely of element symbols, common groups, brackets and counts is a formula, so `PhB(OH)2`, `K2CO3`, `Et3N` get subscripts and `TS2`, `INT3`, `IM1`, `3a`, `L1` stay as written. A house style's bold or plain label keeps the subscripts (only the bold bit of each run changes) |
+| P17 formatting everywhere | **verified** | conditions, definitions and scope captions were already formatted; species labels now are too, by a stricter rule than conditions (`text_formatting.is_formula_label`): only a label made entirely of element symbols, common groups, brackets and counts is a formula, so `PhB(OH)2`, `K2CO3`, `Et3N` get subscripts and `TS2`, `INT3`, `IM1`, `3a`, `L1` stay as written. Measured in the render: `PhB(OH)` face 96 with the `2` at face 32, `NaBH4`, `Ph3P=CH2` the same; `Sn1`/`Sn2` were the one false positive and are now exempt. A house style's bold or plain label keeps the subscripts (only the bold bit of each run changes) |
 | P18 wrap the route, draw an intermediate once | **implemented, to render** | a brief's route now wraps with `wrap: "continue"` by default: rows hold as many steps as fit the width, and a row after the first starts with the arrow that leaves the structure the row above ended with, so nothing is drawn twice (six structures, two rows, at 504 pt in the test route that took seven structures before). `repeat` and `serpentine` stay available. The five-row case came from one step per row fitting the old repeat rule; re-render the five-step route to confirm it now takes two |
 | P19 branch from one structure | **implemented, to render** | `layout: "fan"` puts the starting material in the middle and sends an arrow to each of two to four products, left, right, then down and up; each branch keeps its conditions (beside a vertical arrow) and its co-substrates over its arrow as reactants of the step. The stacked divergent layout stays the default; `p19-fan.json` takes acetophenone four ways. Two products from one compound are now a fan by default (`layout: "divergent"` keeps them stacked; a fan wider than `max_width` is drawn stacked and reported as `divergent`) |
 | P20 panels, boxed titles, colour legend | **implemented, to render** | `kind: "panels"` stacks scheme or mechanism briefs, each drawn and checked by `draw_figure`, under boxed one-line titles of one width, with a legend of plain or coloured lines under the last; the parts are joined by `cdxml_compose.merge_cdxml`, which keeps each part's colours, fonts and ids. Classes are coloured with the species' own `color`/`atom_colors`. A panel can also be a `gallery` (structures with caption lines and no arrows, rows spread to the widest, as panel (a)) or `sections` (briefs each opened by a boxed title on a dashed rule across the figure, as panel (b)); `p20-panels.json` has all three kinds, to render |
