@@ -14,6 +14,7 @@ document text. It cannot prove that an element or attribute is absent from the f
 
 from __future__ import annotations
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import json
 import os
 import re
@@ -205,7 +206,7 @@ def _chemdraw_outputs(install_dir: Path, workdir: Path) -> tuple[list[Path], lis
     with native_resource_lock("chemdraw_com", 300):
         pythoncom.CoInitialize()
         try:
-            application = win32.DispatchEx("ChemDraw.Application")
+            application = win32.DispatchEx(chemdraw_progid())
             try:
                 for source in sorted(install_dir.rglob("*.cdx")):
                     target = workdir / f"roundtrip_{source.stem}.cdxml"

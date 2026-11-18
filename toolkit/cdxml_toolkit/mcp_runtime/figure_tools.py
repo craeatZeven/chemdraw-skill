@@ -12,7 +12,7 @@ from xml.etree import ElementTree as ET
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdCIPLabeler, rdDepictor
 
-from ..chemistry_semantics import semantic_key, validate_fragment, document_inventory, read_molecules
+from ..chemistry_semantics import semantic_key, validate_fragment, document_inventory, read_molecules, inventory_keys
 from ..vision import stereo_audit
 from . import artifact_safety
 
@@ -605,6 +605,30 @@ def _strip_multi_attachments_for_inventory(root_el: ET.Element) -> ET.Element:
     return cleaned
 
 
+def _strip_text_indent(root) -> None:
+    """Undo the padding ET.indent adds inside <t>.
+
+    ET.indent sets .text on every element that has children, and <t> is one of them, so a
+    label ends up as '\n      <s>text</s>\n    '. The <t> element's text is the label, not
+    layout: strip whitespace-only padding so the run reads exactly what was written.
+    """
+    for node in root.iter('t'):
+        if node.text is not None and not node.text.strip():
+            node.text = None
+        for child in node:
+            if child.tail is not None and not child.tail.strip():
+                child.tail = None
+
+
+def _measurement(value: float) -> str:
+    """Format a style measurement the way ChemDraw writes it: 10, not 10.0.
+
+    The attributes below are compared as text by callers (and by the ACS checker), so an
+    integral size must not carry a trailing '.0' while 14.4 and 0.6 keep their digits.
+    """
+    return f'{value:g}'
+
+
 def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
     """Compose editable CDXML using explicit point coordinates and grounded molecules.
 
@@ -738,9 +762,9 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             value = float(style[name])
             if not math.isfinite(value) or value <= 0:
                 raise ValueError('Style measurements must be positive finite numbers')
-            root.set(attribute, str(value))
+            root.set(attribute, _measurement(value))
     if 'font_size' in style:
-        root.set('LabelSize', str(font_size))
+        root.set('LabelSize', _measurement(font_size))
     fonts = root.find('fonttable')
     if fonts is None:
         fonts = ET.SubElement(root, 'fonttable')
@@ -768,6 +792,13 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
         if len(v) != 6:
             raise ValueError('Colors must be six-digit RGB hex values')
         rgb = [int(v[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+        # Reuse an existing entry: the colour table is an index, and appending a second
+        # identical grey gave every label its own index (4,5,6,7,8) for one colour.
+        wanted = tuple(round(channel * 255) for channel in rgb)
+        for index, entry in enumerate(colors, start=2):
+            existing = tuple(round(float(entry.get(channel, 0)) * 255) for channel in ('r', 'g', 'b'))
+            if existing == wanted:
+                return str(index)
         ET.SubElement(colors, 'color', dict(zip(('r', 'g', 'b'), map(str, rgb))))
         return str(len(colors) + 1)
 
@@ -810,7 +841,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 raise ValueError('A text run cannot be both subscript and superscript')
             ET.SubElement(node, 's', {
                 'font': font_id,
-                'size': str(size),
+                'size': _measurement(size),
                 'face': str(face),
                 'color': color(run.get('color', item.get('color'))),
             }).text = str(run.get('text', ''))
@@ -923,6 +954,11 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             if record.get('file'):
                 record['file'] = str(local_path(record['file']))
             mol = _mol(record)
+            # A numbered R group ([*:1]) is drawn R1; the number is a label, not chemistry.
+            r_numbers = {a.GetIdx(): a.GetAtomMapNum() for a in mol.GetAtoms()
+                         if a.GetAtomicNum() == 0 and a.GetAtomMapNum()}
+            for index in r_numbers:
+                mol.GetAtomWithIdx(index).SetAtomMapNum(0)
             if item.get('multi_attachments'):
                 expected_inventory.update([semantic_key(mol)])
             else:
@@ -967,6 +1003,8 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                     rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
             Chem.Kekulize(mol, clearAromaticFlags=True)
             atoms, bonds = _rdkit_mol_to_atom_bond_dicts(mol)
+            for index, number in r_numbers.items():
+                atoms[index]['generic_number'] = number
             angle = math.radians(float(item.get('rotation', 0)))
             cx = sum(a['x'] for a in atoms) / len(atoms)
             cy = sum(a['y'] for a in atoms) / len(atoms)
@@ -1190,8 +1228,11 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 return node
 
             node = arrow(start, end, style_name == 'equilibrium')
-            if style_name == 'line':
+            # A "line" object is never an arrow, whatever its style: a dashed rule used to keep
+            # ArrowheadHead="Full" and drew a real arrowhead on a section title.
+            if kind == 'line':
                 node.set('ArrowheadHead', 'None')
+                node.set('ArrowheadWidth', '0')
             if style_name == 'dashed':
                 node.set('LineType', 'Dashed')
             if style_name == 'failed':
@@ -1428,6 +1469,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
     target = artifact_safety.resolve_destination(source=template, output_path=output_path, tag='figure', suffix='.cdxml')
     with artifact_safety.staging_file(target) as stage:
         ET.indent(root)
+        _strip_text_indent(root)
         ET.ElementTree(root).write(stage, encoding='utf-8', xml_declaration=True)
         artifact_safety.validate_artifact(stage)
         serialized = ET.parse(stage)
@@ -1435,9 +1477,9 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             if serialized.find('.//*[@NodeType="MultiAttachment"]') is not None:
                 cleaned_root = _strip_multi_attachments_for_inventory(serialized.getroot())
                 cleaned_xml = ET.tostring(cleaned_root, encoding='unicode')
-                after = Counter(semantic_key(m) for m in read_molecules(cleaned_xml))
+                after = inventory_keys(read_molecules(cleaned_xml), expected_inventory)
             else:
-                after = document_inventory(stage)
+                after = document_inventory(stage, like=expected_inventory)
         else:
             after = Counter()
         if after != expected_inventory:

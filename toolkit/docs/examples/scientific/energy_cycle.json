@@ -1,0 +1,68 @@
+{
+ "unit": "kJ/mol",
+ "levels": [
+  {
+   "id": "a",
+   "label": "Na(s) + \u00bdCl{sub:2}(g)"
+  },
+  {
+   "id": "b",
+   "label": "Na(g) + \u00bdCl{sub:2}(g)"
+  },
+  {
+   "id": "c",
+   "label": "Na(g) + Cl(g)"
+  },
+  {
+   "id": "d",
+   "label": "Na{sup:+}(g) + e{sup:\u2212} + Cl(g)"
+  },
+  {
+   "id": "e",
+   "label": "Na{sup:+}(g) + Cl{sup:\u2212}(g)"
+  },
+  {
+   "id": "f",
+   "label": "NaCl(s)"
+  }
+ ],
+ "steps": [
+  {
+   "from": "a",
+   "to": "b",
+   "label": "\u0394H{sub:at}(Na)",
+   "value": 107
+  },
+  {
+   "from": "b",
+   "to": "c",
+   "label": "\u0394H{sub:at}(Cl)",
+   "value": 122
+  },
+  {
+   "from": "c",
+   "to": "d",
+   "label": "IE{sub:1}",
+   "value": 496
+  },
+  {
+   "from": "d",
+   "to": "e",
+   "label": "EA",
+   "value": -349
+  },
+  {
+   "from": "e",
+   "to": "f",
+   "label": "\u0394H{sub:latt}",
+   "value": -787
+  },
+  {
+   "from": "a",
+   "to": "f",
+   "label": "\u0394H{sub:f}",
+   "value": -411,
+   "color": "blue"
+  }
+ ]
+}

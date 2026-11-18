@@ -7,7 +7,7 @@
   "tools": [
     {
       "name": "analyze_lcms_series",
-      "signature": "(files: list[str], output_path: Optional[str] = None, rt_tolerance: float = 0.02, mz_tolerance: float = 0.5, trend_threshold: float = 0.2, ignore_instrument: bool = False, internal_standard_mw: Optional[float] = None, internal_standard_rt: Optional[float] = None, internal_standard_name: str = 'IS') -> dict[str, typing.Any]",
+      "signature": "(files: list[str], output_path: str | None = None, rt_tolerance: float = 0.02, mz_tolerance: float = 0.5, trend_threshold: float = 0.2, ignore_instrument: bool = False, internal_standard_mw: float | None = None, internal_standard_rt: float | None = None, internal_standard_name: str = 'IS') -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -15,7 +15,7 @@
     },
     {
       "name": "assemble_lab_book",
-      "signature": "(input_dir: str, experiment: Optional[str] = None, tracking_json: Optional[str] = None, output_path: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(input_dir: str, experiment: str | None = None, tracking_json: str | None = None, output_path: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -95,7 +95,7 @@
     },
     {
       "name": "clean_scheme_layout",
-      "signature": "(input_path: str, output_path: Optional[str] = None, approach: str = 'chemdraw_mimic', render_preview: bool = True) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, output_path: str | None = None, approach: str = 'chemdraw_mimic', render_preview: bool = True) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -119,7 +119,7 @@
     },
     {
       "name": "compare_nmr_shifts",
-      "signature": "(smiles: str, experimental_1h: Optional[list[float]] = None, experimental_13c: Optional[list[float]] = None, predicted_result: Optional[dict[str, Any]] = None, solvent: str = 'CDCl3', engines: str = '', outlier_threshold_1h: float = 0.5, outlier_threshold_13c: float = 5.0) -> dict[str, typing.Any]",
+      "signature": "(smiles: str, experimental_1h: list[float] | None = None, experimental_13c: list[float] | None = None, predicted_result: dict[str, typing.Any] | None = None, solvent: str = 'CDCl3', engines: str = '', outlier_threshold_1h: float = 0.5, outlier_threshold_13c: float = 5.0) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -135,7 +135,7 @@
     },
     {
       "name": "convert_cdx_cdxml",
-      "signature": "(input_path: str, output_path: Optional[str] = None) -> dict",
+      "signature": "(input_path: str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -151,7 +151,7 @@
     },
     {
       "name": "discover_experiment_files",
-      "signature": "(input_dir: str, experiment: Optional[str] = None, output_path: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(input_dir: str, experiment: str | None = None, output_path: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -163,11 +163,11 @@
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": 300,
-      "description": "Draw a reaction scheme from a brief and check it, in one call.\n\nbrief is an object (or its JSON text) the caller writes from the user's request:\nspecies [{id, smiles or name, label?, ring_fills?, atom_halos?, ts_bracket?, color?,\natom_colors?, bond_colors?, abbreviate?, orientation?, caption?, box?}],\nsteps [{substrates [ids], products [ids], above [lines], below [lines], yield,\narrow solid|dashed|failed|reversible|resonance, ts_bracket? (a species id)}], optional layout\n(e.g. \"catalytic-cycle\"), max_width (points, default 504, the width of a double-column\nACS page), title and panel_label (a bold letter before the title, e.g. \"a\"), both drawn\nabove the figure at its left edge; kind defaults to \"scheme\". style names a built-in journal preset\nfrom ChemDraw's stock style sheets (default \"acs1996\"; others include \"wiley\", \"rsc\",\n\"nature\"; chemdraw://style-guide/{preset} lists its settings): the scheme is laid out at\nACS geometry and then rescaled to the preset's bond length, and max_width is the width\nof the styled figure. style may instead name a house style (`cdx.py styles` lists them):\nits drawing conventions (bold compound numbers, yield placement, stacked substrates,\nabbreviated groups, substrate and new-bond colours, bold arrows) are applied to the\nscheme and then its base preset; the report's style lists what was applied and skipped.\nScope panels take the base preset, the compound-number face and colour, the card's\nabbreviations and its measured geometry; mechanisms and catalytic cycles also\ntake the card's figure_types colours and arrow weights. The steps may\nform a linear route, a convergent route (arms that merge), one starting material with\nseveral products (divergent), or a closed catalytic-cycle (a loop of >= 3 steps or\nlayout=\"catalytic-cycle\"), in any order; the report names the layout used, and steps\nthat fit none of these are refused. Species entries may also specify optional visual\ndecorations: ring_fills ([{ring_index, color, style, inset}]), atom_halos ([{atoms,\ncolor, radius}]), or ts_bracket (true or {superscript, bracket_type, lip_size}) to\nwrap the species fragment in a [...] transition-state bracket with a top-right double\ndagger; a step's ts_bracket names the bracketed species id (true is refused). Atom and\nring indices are RDKit indices of the species SMILES. A species may also be painted:\ncolor (hex) for the whole structure, atom_colors [{atoms [i...], color}] (a bond between\ntwo listed atoms takes the colour too) and bond_colors [{bonds [[i, j]...], color}];\nabbreviate lists groups to contract (e.g. [\"OTf\", \"Bpin\"]; it replaces the house style's\nlist for that species, and [] keeps it unabbreviated); orientation flip_horizontal,\nflip_vertical or rotate_180 mirrors or turns the structure about its centre, wedges kept\ncorrect. A condition line may be text, a run {text, color?, bold?, italic?} or a list of\nruns that make one line, so a catalyst can be coloured or a reagent set in italics; the\ntitle and a species' caption (a line under its compound number) take the same forms. A\nspecies' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure\nand its number, with an optional fill drawn behind it.\nOnly the conditions in the brief are drawn; a\nstep without any is reported, never filled in. Structures given as SMILES are used\nas they are; names go through the curated reagent table and, when the network is\nallowed, PubChem; a name that cannot be resolved stops the run. Each step is checked\nfor atom balance (a missing by-product is named, not drawn), the layout is measured\nfor overlaps, tiny text and width, and one automatic re-layout is tried if that\nfails; the report says what changed and what still fails. The saved file is read back\nand its structures compared with the brief. render=True also renders a PNG with\nChemDraw and returns its path; without ChemDraw the report says native: not_run. The\nfile is never written over an existing one: without output_path a fresh name is made\nin the temp directory, and an existing output_path is refused.\n\nkind \"scope\" draws a substrate-scope panel instead: species [{id, smiles or name,\nlabel?, group?, values {field: text}, color?, atom_colors?, bond_colors?, abbreviate?}],\noptional fields [{key, label?, unit?}] (default:\nthe keys used in values), conditions, footnotes, title, width_mm and height_mm. The\nstructures are packed onto as many editable pages as needed, grouped in first-seen\norder, each label and value bound to its structure; a missing value is drawn as a\ndash and listed in the notes. output_path is then a new folder (page-001.cdxml, ...;\nPNGs in png/ with render=True) and the report lists the pages.\n\nkind \"mechanism\" draws the structures of a mechanism with the curved arrows the brief\nlists: species [{id, smiles or name, label?}] and steps [{substrates, products, above?,\nbelow?, arrow?, moves [{from, to, electrons?}]}] drawn in the order given. A move runs\nfrom {species, atom} or {species, bond [i, j]} to the same kind of end, in species that\nare substrates of the step; atoms are numbered from 0 in SMILES order (the report lists\nthem) and electrons is 2 (full head, default) or 1 (half head). Nothing is inferred: a\nstep without moves is refused, a two-electron arrow that starts on an atom without a lone\npair or charge is drawn and flagged, and the arrows are checked for passing through\nanother atom (one automatic re-layout). A step with one substrate and one product\ncontinues the same row with the intermediate drawn once; any other step starts a new\nrow, with its substrates drawn again. show_atom_numbers=true prints the atom numbers on a\ndraft so the moves can be checked."
+      "description": "Draw a reaction scheme from a brief and check it, in one call.\n\nbrief is an object (or its JSON text) the caller writes from the user's request:\nspecies [{id, smiles or name, label?, ring_fills?, atom_halos?, ts_bracket?, color?,\natom_colors?, bond_colors?, abbreviate?, orientation?, caption?, box?}],\nsteps [{substrates [ids], products [ids], above [lines], below [lines], yield,\narrow solid|dashed|failed|reversible|resonance, ts_bracket? (a species id)}], optional layout\n(e.g. \"catalytic-cycle\"), max_width (points, default 504, the width of a double-column\nACS page), title and panel_label (a bold letter before the title, e.g. \"a\"), both drawn\nabove the figure at its left edge; kind defaults to \"scheme\". style names a built-in journal preset\nfrom ChemDraw's stock style sheets (default \"acs1996\"; others include \"wiley\", \"rsc\",\n\"nature\"; chemdraw://style-guide/{preset} lists its settings): the scheme is laid out at\nACS geometry and then rescaled to the preset's bond length, and max_width is the width\nof the styled figure. style may instead name a house style (`cdx.py styles` lists them):\nits drawing conventions (bold compound numbers, yield placement, stacked substrates,\nabbreviated groups, substrate and new-bond colours, bold arrows) are applied to the\nscheme and then its base preset; the report's style lists what was applied and skipped.\nScope panels take the base preset, the compound-number face and colour, the card's\nabbreviations and its measured geometry; mechanisms and catalytic cycles also\ntake the card's figure_types colours and arrow weights. The steps may\nform a linear route, a convergent route (arms that merge), one starting material with\nseveral products (divergent), or a closed catalytic-cycle (a loop of >= 3 steps or\nlayout=\"catalytic-cycle\"), in any order; the report names the layout used, and steps\nthat fit none of these are refused. Species entries may also specify optional visual\ndecorations: ring_fills ([{ring_index, color, style, inset}]), atom_halos ([{atoms,\ncolor, radius}]), or ts_bracket (true or {superscript, bracket_type, lip_size}) to\nwrap the species fragment in a [...] transition-state bracket with a top-right double\ndagger; a step's ts_bracket names the bracketed species id (true is refused). Atom and\nring indices are RDKit indices of the species SMILES. A species may also be painted:\ncolor (hex) for the whole structure, atom_colors [{atoms [i...], color}] (a bond between\ntwo listed atoms takes the colour too) and bond_colors [{bonds [[i, j]...], color}];\nabbreviate lists groups to contract (e.g. [\"OTf\", \"Bpin\"]; it replaces the house style's\nlist for that species, and [] keeps it unabbreviated); orientation flip_horizontal,\nflip_vertical or rotate_180 mirrors or turns the structure about its centre, wedges kept\ncorrect. A condition line may be text, a run {text, color?, bold?, italic?} or a list of\nruns that make one line, so a catalyst can be coloured or a reagent set in italics; the\ntitle and a species' caption (a line under its compound number) take the same forms. A\nspecies' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure\nand its number, with an optional fill drawn behind it.\nkind \"panels\" sets several scheme or mechanism briefs one above the other on one page:\n{kind: \"panels\", panels [{title, brief | gallery | sections}], legend? [lines], style?,\nmax_width?}; each panel is drawn and checked as its own brief, under a boxed one-line title\nas wide as the widest panel, and the legend lines (text or coloured runs) go under the last\none. gallery [{id, smiles or name, caption? (lines), color?, atom_colors?, bond_colors?,\nabbreviate?}] draws structures with their names and no arrows, in rows spread to the widest;\nsections [{title, brief}] draws several briefs in one panel, each opened by its title in a\nbox on a dashed rule across the figure (\"L. Grimaud 2009 [35]\").\nlayout \"fan\" draws one starting material in the middle with an arrow leaving it for each of\ntwo to four products (left, right, down, up); two products from one compound are a fan by\ndefault (layout \"divergent\" keeps them stacked, as does a fan wider than max_width).\nA route longer than max_width wraps: by default (wrap \"continue\") the next row starts with\nthe arrow that leaves the structure the row above ended with, so each structure is drawn\nonce; \"repeat\" draws that structure again at the start of the row, \"serpentine\" zigzags.\nA species' generic_rings [{atoms [i, j], members?}] draws an unspecified ring fused at the\nbond i-j: a dashed arc the long way round on the far side of the bond.\noverlays [{fragment, species?, shape circle|outline}] draw a dashed outline around one\nfragment (SMILES or SMARTS) in every structure that has it, or in the species listed, at\nthe same place on the fragment in each (the unchanged ring through the intermediates of a\ncycle); a listed species without the fragment is refused, and a fragment found more than\nonce is marked at its first match, with a warning.\nOnly the conditions in the brief are drawn; a\nstep without any is reported, never filled in. Structures given as SMILES are used\nas they are; names go through the curated reagent table and, when the network is\nallowed, PubChem; a name that cannot be resolved stops the run. Each step is checked\nfor atom balance (a missing by-product is named, not drawn), the layout is measured\nfor overlaps, tiny text and width, and one automatic re-layout is tried if that\nfails; the report says what changed and what still fails. The saved file is read back\nand its structures compared with the brief. render=True also renders a PNG with\nChemDraw and returns its path; without ChemDraw the report says native: not_run. The\nfile is never written over an existing one: without output_path a fresh name is made\nin the temp directory, and an existing output_path is refused.\n\nkind \"scope\" draws a substrate-scope panel instead: species [{id, smiles or name,\nlabel?, group?, values {field: text}, definition?, note?, secondary_of?, drawn_with?, color?, atom_colors?,\nbond_colors?, abbreviate?}], optional fields [{key, label?, unit?, show_label?, optional?}] (default: the keys\nused in values), conditions, footnotes, title, width_mm, height_mm, header {substrates,\nproducts, above?, below?} (the general reaction over the grid, R groups as [*:1]) and\nhighlight_varying (true or a hex colour: what differs from the core every compound\nshares is drawn in that colour, #FF6600 by default, and so are the header's R marks). Captions are centred, the number in\nbold; one field joins the number's line (\"3a, 92%\"); show_label true, or several fields,\ngives each field its own line, named (show_label false keeps one unnamed; optional leaves\nit out where empty instead of drawing a dash). definition joins the number's line\n(\"3p, Alk = C7H15, 63%\") and note is an extra line under one compound (\"not formed\");\nformula digits in every line but the label are subscripts, and \"^b\" marks a footnote\nletter. secondary_of names the main product a minor one is drawn beside, after a \"+\",\nthe structure grey and its own number and values black. drawn_with names a species whose\nstructure also stands for this one: none is drawn for it, and its caption line (\"3q, Alk =\nC18H37, 60%\") follows that species' under the same structure. A group is a band, its name on\nthe rule with only its locants in italic. Text stays at 10 pt and each page is cropped to its\ncontent. The\nstructures are packed onto as many editable pages as needed, grouped in first-seen\norder, each label and value bound to its structure; a missing value is drawn as a\ndash and listed in the notes. output_path is then a new folder (page-001.cdxml, ...;\nPNGs in png/ with render=True) and the report lists the pages.\n\nkind \"mechanism\" draws the structures of a mechanism with the curved arrows the brief\nlists: species [{id, smiles or name, label?, generic_rings?}] (or {id, newman {front, rear,\nconformation?, dihedral_offset?, attach?}, label?} for a Newman projection placed among them,\nwhich arrows cannot point at and whose steps need no moves; the order of rear picks the\nconformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered;\nattach {smiles with one [*]} bonds the front carbon to the rest of the molecule, in place of\nthe front substituent written \"*\")\nand steps [{substrates, products, above?,\nbelow?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs\nfrom {species, atom} or {species, bond [i, j]} to the same kind of end, in species that\nare substrates of the step; atoms are numbered from 0 in SMILES order (the report lists\nthem), electrons is 2 (full head, default) or 1 (half head) and color a hex colour for\nthat arrow. The arrows are ChemDraw arc arrows. Nothing is inferred: a step without\nmoves is refused, a two-electron arrow that starts on an atom without a lone pair or\ncharge is drawn and flagged, and each arrow is routed clear of the atoms and bonds it\ndoes not start or end at (one automatic re-layout if one still crosses). A step with one substrate and one product\ncontinues the same row with the intermediate drawn once; any other step starts a new\nrow, with its substrates drawn again. show_atom_numbers=true prints the atom numbers on a\ndraft so the moves can be checked."
     },
     {
       "name": "draw_molecule",
-      "signature": "(mol_json: dict, output_path: Optional[str] = None) -> dict",
+      "signature": "(mol_json: dict, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -199,7 +199,7 @@
     },
     {
       "name": "extract_cdxml_from_office",
-      "signature": "(file_path: str, output_dir: Optional[str] = None) -> dict",
+      "signature": "(file_path: str, output_dir: str | None = None) -> dict",
       "group": "official",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -207,7 +207,7 @@
     },
     {
       "name": "extract_structures_from_document",
-      "signature": "(path: str, out_dir: str, pages: Optional[list[int]] = None, engines: str = 'molscribe,molvec', segmenter: str = 'auto', dpi: int = 200, confirm_upload: bool = False, hand_drawn: bool = False) -> dict[str, typing.Any]",
+      "signature": "(path: str, out_dir: str, pages: list[int] | None = None, engines: str = 'molscribe,molvec', segmenter: str = 'auto', dpi: int = 200, confirm_upload: bool = False, hand_drawn: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 3600,
@@ -223,7 +223,7 @@
     },
     {
       "name": "extract_structures_via_decimer_api",
-      "signature": "(image_path: str, hand_drawn: bool = False, output_path: Optional[str] = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: Optional[str] = None, approved_origin: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(image_path: str, hand_drawn: bool = False, output_path: str | None = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: str | None = None, approved_origin: str | None = None) -> dict[str, typing.Any]",
       "group": "remote",
       "resource_class": null,
       "timeout_seconds": null,
@@ -231,7 +231,7 @@
     },
     {
       "name": "fill_office_template",
-      "signature": "(template_path: str, manifest_path: str, output_path: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(template_path: str, manifest_path: str, output_path: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -239,7 +239,7 @@
     },
     {
       "name": "format_lab_entry",
-      "signature": "(entries_json: Union[list[dict], dict, str], output_path: Optional[str] = None) -> dict",
+      "signature": "(entries_json: list[dict] | dict | str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -263,7 +263,7 @@
     },
     {
       "name": "inspect_chemdraw_objects_in_office",
-      "signature": "(input_path: str, output_dir: Optional[str] = None, render_previews: bool = True) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, output_dir: str | None = None, render_previews: bool = True) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -271,7 +271,7 @@
     },
     {
       "name": "inspect_chemscript_sdk",
-      "signature": "(query: Optional[str] = None, type_name: Optional[str] = None, include_infrastructure: bool = False, offset: int = 0, limit: int = 100, output_path: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(query: str | None = None, type_name: str | None = None, include_infrastructure: bool = False, offset: int = 0, limit: int = 100, output_path: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 240,
@@ -335,7 +335,7 @@
     },
     {
       "name": "merge_reaction_schemes",
-      "signature": "(input_paths: list[str], output_path: Optional[str] = None, mode: str = 'auto', equiv_mode: str = 'default', reference_cdxml: Optional[str] = None, allow_adjacent: bool = True, render_preview: bool = True, force_sequential: bool = False) -> dict[str, typing.Any]",
+      "signature": "(input_paths: list[str], output_path: str | None = None, mode: str = 'auto', equiv_mode: str = 'default', reference_cdxml: str | None = None, allow_adjacent: bool = True, render_preview: bool = True, force_sequential: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -343,7 +343,7 @@
     },
     {
       "name": "modify_molecule",
-      "signature": "(mol_json: dict, operation: str, add: Optional[List[dict]] = None, remove: Optional[List[str]] = None, new_smiles: Optional[str] = None, new_name: Optional[str] = None, reaction_name: Optional[str] = None, reagent: Optional[dict] = None, smarts: Optional[str] = None, description: Optional[str] = None) -> dict",
+      "signature": "(mol_json: dict, operation: str, add: List[dict] | None = None, remove: List[str] | None = None, new_smiles: str | None = None, new_name: str | None = None, reaction_name: str | None = None, reagent: dict | None = None, smarts: str | None = None, description: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": 90,
@@ -359,7 +359,7 @@
     },
     {
       "name": "parse_analysis_file",
-      "signature": "(pdf_path: str, output_path: Optional[str] = None) -> dict",
+      "signature": "(pdf_path: str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -367,7 +367,7 @@
     },
     {
       "name": "parse_reaction",
-      "signature": "(cdxml: Optional[str] = None, cdx: Optional[str] = None, csv: Optional[str] = None, rxn: Optional[str] = None, input_dir: Optional[str] = None, output_path: Optional[str] = None) -> dict",
+      "signature": "(cdxml: str | None = None, cdx: str | None = None, csv: str | None = None, rxn: str | None = None, input_dir: str | None = None, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -375,7 +375,7 @@
     },
     {
       "name": "parse_scheme",
-      "signature": "(cdxml_path: str, output_path: Optional[str] = None) -> dict",
+      "signature": "(cdxml_path: str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -383,7 +383,7 @@
     },
     {
       "name": "parse_scifinder_rdf",
-      "signature": "(input_path: str, resolve_cas: bool = False, output_path: Optional[str] = None, confirm_pubchem: bool = False) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, resolve_cas: bool = False, output_path: str | None = None, confirm_pubchem: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -391,7 +391,7 @@
     },
     {
       "name": "polish_reaction_scheme",
-      "signature": "(input_path: str, output_path: Optional[str] = None, merge_conditions: bool = True, approach: str = 'chemdraw_mimic', align_mode: str = 'rdkit', eln_csv: Optional[str] = None, reference_cdxml: Optional[str] = None, render_preview: bool = True) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, output_path: str | None = None, merge_conditions: bool = True, approach: str = 'chemdraw_mimic', align_mode: str = 'rdkit', eln_csv: str | None = None, reference_cdxml: str | None = None, render_preview: bool = True) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -399,7 +399,7 @@
     },
     {
       "name": "predict_conditions",
-      "signature": "(reactants: str, products: str, engine: Optional[str] = None, count: int = 5, timeout_seconds: int = 900) -> dict[str, typing.Any]",
+      "signature": "(reactants: str, products: str, engine: str | None = None, count: int = 5, timeout_seconds: int = 900) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 1200,
@@ -407,7 +407,7 @@
     },
     {
       "name": "predict_nmr",
-      "signature": "(smiles: str, nucleus: str = '1H', solvent: str = 'chloroform', frequency_mhz: float = 400.0, engine: Optional[str] = None, output_path: Optional[str] = None, timeout_seconds: int = 900, experimental_1h: Optional[list[float]] = None, experimental_13c: Optional[list[float]] = None) -> dict[str, typing.Any]",
+      "signature": "(smiles: str, nucleus: str = '1H', solvent: str = 'chloroform', frequency_mhz: float = 400.0, engine: str | None = None, output_path: str | None = None, timeout_seconds: int = 900, experimental_1h: list[float] | None = None, experimental_13c: list[float] | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 1200,
@@ -415,7 +415,7 @@
     },
     {
       "name": "predict_products",
-      "signature": "(reactants: str, reagents: Optional[str] = None, engine: Optional[str] = None, count: int = 5, timeout_seconds: int = 600) -> dict[str, typing.Any]",
+      "signature": "(reactants: str, reagents: str | None = None, engine: str | None = None, count: int = 5, timeout_seconds: int = 600) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 900,
@@ -423,7 +423,7 @@
     },
     {
       "name": "predict_retrosynthesis",
-      "signature": "(product: str, engine: Optional[str] = None, steps: str = 'single', count: int = 5, time_limit: int = 60, timeout_seconds: int = 900, output_cdxml: str = '') -> dict[str, typing.Any]",
+      "signature": "(product: str, engine: str | None = None, steps: str = 'single', count: int = 5, time_limit: int = 60, timeout_seconds: int = 900, output_cdxml: str = '') -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 1200,
@@ -439,7 +439,7 @@
     },
     {
       "name": "rdkit_workbench",
-      "signature": "(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict",
+      "signature": "(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs: None) -> dict",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -447,7 +447,7 @@
     },
     {
       "name": "recognize_structure",
-      "signature": "(image_path: str, engines: str = 'decimer-api', hand_drawn: bool = False, output_path: Optional[str] = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: Optional[str] = None, approved_origin: Optional[str] = None) -> dict[str, typing.Any]",
+      "signature": "(image_path: str, engines: str = 'decimer-api', hand_drawn: bool = False, output_path: str | None = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: str | None = None, approved_origin: str | None = None) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": 1800,
@@ -455,7 +455,7 @@
     },
     {
       "name": "render_cdxml_files",
-      "signature": "(input_paths: list[str], output_dir: Optional[str] = None, format: str = 'png', dpi: int = 300) -> dict[str, typing.Any]",
+      "signature": "(input_paths: list[str], output_dir: str | None = None, format: str = 'png', dpi: int = 300) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -463,7 +463,7 @@
     },
     {
       "name": "render_scheme",
-      "signature": "(yaml_text: Optional[str] = None, compact_text: Optional[str] = None, json_path: Optional[str] = None, layout: str = 'auto', output_path: Optional[str] = None) -> str",
+      "signature": "(yaml_text: str | None = None, compact_text: str | None = None, json_path: str | None = None, layout: str = 'auto', output_path: str | None = None) -> str",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,
@@ -471,7 +471,7 @@
     },
     {
       "name": "render_to_png",
-      "signature": "(cdxml_path: str, output_path: Optional[str] = None) -> dict",
+      "signature": "(cdxml_path: str, output_path: str | None = None) -> dict",
       "group": "official",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -479,7 +479,7 @@
     },
     {
       "name": "replace_chemdraw_objects_in_office",
-      "signature": "(input_path: str, replacements_manifest: str, output_path: Optional[str] = None, render_pdf_preview: bool = True, resize_frames: bool = False) -> dict[str, typing.Any]",
+      "signature": "(input_path: str, replacements_manifest: str, output_path: str | None = None, render_pdf_preview: bool = True, resize_frames: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": "chemdraw_com",
       "timeout_seconds": null,
@@ -507,7 +507,7 @@
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
-      "description": "Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr or plot.\n\ntlc, apparatus and mechanism write one editable .cdxml at output_path; nmr and plot write\na new directory (figures, the full data as CSV and a JSON analysis with the source file's\nSHA-256). Relative file names inside the spec resolve against the spec's folder. The spec\nformats are in the scientific workflows reference (examples for each operation ship with\nthe toolkit). Nothing is recognised or invented: peaks and integrals come from the supplied\nprocessed spectrum, plots from the supplied columns. Output is written to a staging\nlocation and published only when the workflow succeeds; an existing output_path is never\nreplaced."
+      "description": "Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr, plot or a diagram.\n\ntlc, apparatus and mechanism write one editable .cdxml at output_path; nmr and plot write\na new directory (figures, the full data as CSV and a JSON analysis with the source file's\nSHA-256). Relative file names inside the spec resolve against the spec's folder. The spec\nformats are in the scientific workflows reference (examples for each operation ship with\nthe toolkit). Nothing is recognised or invented: peaks and integrals come from the supplied\nprocessed spectrum, plots from the supplied columns. Output is written to a staging\nlocation and published only when the workflow succeeds; an existing output_path is never\nreplaced.\n\nDiagram operations also write one .cdxml and return a report of what the drawing implies:\nenergy_profile (barriers, overall change), energy_cycle (step sums, checked against Hess's\nlaw), jablonski, mo_diagram (bond order, unpaired electrons), electron_configuration,\ncrystal_field (configuration, spin-only moment, stabilisation energy), lewis (electron\ncount per atom), unit_cell (cubic and hexagonal: atoms per cell, formula, coordination\nnumbers, packing fraction), flowchart,\nelectrochemical_cell (polarity and electron flow), periodic_table, huckel_mo (pi orbitals,\nHOMO/LUMO, aromaticity), phase_diagram, binary_phase_diagram (fields and the\nlever rule at marked points), pourbaix (stable species from Gibbs energies), latimer and\nfrost (derived couples, disproportionation), ellingham (reduction temperatures),\ncorrelation_diagram (Woodward-Hoffmann allowed or forbidden), walsh_diagram,\npotential_surface (contours, minima and saddle points), tanabe_sugano (d2-d8 levels from\nthe full ligand-field Hamiltonian, spin crossover, Delta and B from two bands) and compose (several\nCDXML files merged on one page). Electrons, charges and energies that contradict each\nother are rejected rather than drawn. The spec formats are in the diagrams reference."
     },
     {
       "name": "search_compound",
@@ -519,7 +519,7 @@
     },
     {
       "name": "segment_large_scheme",
-      "signature": "(cdxml_path: str, output_path: Optional[str] = None, verbose: bool = False) -> dict[str, typing.Any]",
+      "signature": "(cdxml_path: str, output_path: str | None = None, verbose: bool = False) -> dict[str, typing.Any]",
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
@@ -551,7 +551,7 @@
     },
     {
       "name": "summarize_reaction",
-      "signature": "(json_path: str, species_fields: Optional[List[str]] = None, top_fields: Optional[List[str]] = None, eln_fields: Optional[List[str]] = None) -> dict",
+      "signature": "(json_path: str, species_fields: List[str] | None = None, top_fields: List[str] | None = None, eln_fields: List[str] | None = None) -> dict",
       "group": "official",
       "resource_class": null,
       "timeout_seconds": null,

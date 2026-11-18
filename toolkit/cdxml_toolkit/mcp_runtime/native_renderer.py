@@ -6,6 +6,7 @@ AppleScript (see ``cdxml_toolkit.chemdraw.mac_automation``).
 
 from __future__ import annotations
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 from contextlib import contextmanager
 import logging
 import os
@@ -72,8 +73,8 @@ def _acquire_application():
 
     dispatch_ex = getattr(win32, "DispatchEx", None)
     if dispatch_ex is not None:
-        return dispatch_ex("ChemDraw.Application"), True
-    return win32.Dispatch("ChemDraw.Application"), True
+        return dispatch_ex(chemdraw_progid()), True
+    return win32.Dispatch(chemdraw_progid()), True
 
 
 @contextmanager

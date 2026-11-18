@@ -39,6 +39,8 @@ Run portable validation for every change:
 python .\scripts\validate_distribution.py
 ```
 
+It also checks that the generated references match the bundled toolkit: the interface inventory everywhere, and, where a toolkit runtime exists, the tool signatures and the reference generator's own tests (`toolkit/tests/runtime/test_generate_reference.py`), which hold the signatures to one spelling on every supported Python. Run it before pushing any change to `toolkit/`.
+
 Run the full Skill suite in the toolkit runtime (`cdx.py py` selects it; `scripts/install.py --runtime-only --apply` builds it and, when `cdx.py` would otherwise pick another runtime, records it for this checkout in the ignored `skill/chemdraw/runtime.local.json`; a set `CHEMDRAW_MCP_PYTHON` overrides both):
 
 ```powershell

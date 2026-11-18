@@ -1,0 +1,44 @@
+{
+ "species": [
+  {
+   "id": "S",
+   "smiles": "OC(=O)CCC#C",
+   "label": "1",
+   "generic_rings": [
+    {
+     "atoms": [
+      3,
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "id": "P",
+   "smiles": "C=C1CCC(=O)O1",
+   "label": "2",
+   "generic_rings": [
+    {
+     "atoms": [
+      2,
+      3
+     ]
+    }
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "S"
+   ],
+   "products": [
+    "P"
+   ],
+   "above": [
+    "[Au]"
+   ],
+   "arrow": "reversible"
+  }
+ ]
+}

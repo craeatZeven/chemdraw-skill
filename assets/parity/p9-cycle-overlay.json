@@ -1,0 +1,84 @@
+{
+ "layout": "catalytic-cycle",
+ "species": [
+  {
+   "id": "Pd0",
+   "smiles": "[Pd]",
+   "label": "Pd(0)"
+  },
+  {
+   "id": "ArX",
+   "smiles": "COc1ccc(I)cc1",
+   "label": "ArI"
+  },
+  {
+   "id": "Ox",
+   "smiles": "COc1ccc([Pd]I)cc1",
+   "label": "I"
+  },
+  {
+   "id": "ArB",
+   "smiles": "OB(O)c1ccccc1",
+   "label": "PhB(OH)2"
+  },
+  {
+   "id": "ArM",
+   "smiles": "COc1ccc([Pd]c2ccccc2)cc1",
+   "label": "II"
+  },
+  {
+   "id": "Prod",
+   "smiles": "COc1ccc(-c2ccccc2)cc1",
+   "label": "3"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "Pd0",
+    "ArX"
+   ],
+   "products": [
+    "Ox"
+   ],
+   "above": [
+    "oxidative addition"
+   ]
+  },
+  {
+   "substrates": [
+    "Ox",
+    "ArB"
+   ],
+   "products": [
+    "ArM"
+   ],
+   "above": [
+    "transmetalation"
+   ]
+  },
+  {
+   "substrates": [
+    "ArM"
+   ],
+   "products": [
+    "Prod",
+    "Pd0"
+   ],
+   "above": [
+    "reductive elimination"
+   ]
+  }
+ ],
+ "overlays": [
+  {
+   "fragment": "COc1ccccc1",
+   "species": [
+    "ArX",
+    "Ox",
+    "ArM",
+    "Prod"
+   ]
+  }
+ ]
+}

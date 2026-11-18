@@ -47,7 +47,8 @@ from ..constants import (
     LAYOUT_ROW_GAP,
 )
 from ..cdxml_utils import LABEL_H_WIDTH, drawn_fragment_bbox, hydrogens_lead
-from ..text_formatting import build_formatted_s_xml, normalize_condition_text
+from ..overlay_geometry import OVERLAY_LINE, choose_generic_ring, overlay_box
+from ..text_formatting import build_formatted_s_xml, is_formula_label, normalize_condition_text
 
 from .route_graph import convergent_sections
 from .schema import (
@@ -202,13 +203,14 @@ def _smiles_to_fragment_data(
     smiles: str,
     center_x: float = 200.0,
     center_y: float = 300.0,
+    ring_hints: Tuple[Tuple[int, int, int], ...] = (),
 ) -> Optional[Tuple[List[Dict], List[Dict]]]:
     """
     Convert SMILES to atom/bond dicts in CDXML point coordinates.
 
     Returns (atoms, bonds) or None on failure.
     """
-    cache_key = ("smiles", smiles, round(center_x, 4), round(center_y, 4))
+    cache_key = ("smiles", smiles, round(center_x, 4), round(center_y, 4), tuple(ring_hints))
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
@@ -223,7 +225,8 @@ def _smiles_to_fragment_data(
     if mol is None:
         return None
 
-    AllChem.Compute2DCoords(mol)
+    if not ring_hints or not _depict_with_rings(mol, ring_hints):
+        AllChem.Compute2DCoords(mol)
 
     source_mol = Chem.Mol(mol)
 
@@ -248,6 +251,36 @@ def _smiles_to_fragment_data(
 
     _cache_put(cache_key, atoms, bonds)
     return atoms, bonds
+
+
+def _depict_with_rings(mol: Any, ring_hints) -> bool:
+    """2D coordinates for a structure drawn with generic rings, laid out as if each ring were
+    there: a ring of ``members`` carbons is added through each bonded pair (i, j), the whole
+    is depicted, and the added atoms are dropped. The arc then takes the ring's place instead
+    of crossing a chain that RDKit drew zigzag across it. False when that cannot be done."""
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+
+    try:
+        work = Chem.RWMol(mol)
+        for i, j, members in ring_hints:
+            previous = i
+            for _ in range(int(members) - 2):
+                added = work.AddAtom(Chem.Atom(6))
+                work.AddBond(previous, added, Chem.BondType.SINGLE)
+                previous = added
+            work.AddBond(previous, j, Chem.BondType.SINGLE)
+        Chem.SanitizeMol(work)
+        rdDepictor.Compute2DCoords(work)
+        placed = work.GetConformer()
+        conf = Chem.Conformer(mol.GetNumAtoms())
+        for k in range(mol.GetNumAtoms()):
+            conf.SetAtomPosition(k, placed.GetAtomPosition(k))
+        mol.RemoveAllConformers()
+        mol.AddConformer(conf, assignId=True)
+        return True
+    except Exception:
+        return False
 
 
 def _extract_mol_atom_bond_dicts(mol: Any, source_mol: Optional[Any] = None) -> Tuple[List[Dict], List[Dict]]:
@@ -532,7 +565,9 @@ def _build_fragment(
             # ChemDraw. Use its native generic substituent node instead.
             if charge or isotope:
                 raise ValueError('Charged or isotopically labelled variable atoms are unsupported')
-            attrs.extend(['NodeType="GenericNickname"', 'GenericNickname="R"'])
+            # A numbered R group ([*:2] in the SMILES) is R2, drawn R with a raised 2.
+            number = a.get('generic_number')
+            attrs.extend(['NodeType="GenericNickname"', f'GenericNickname="R{number or ""}"'])
         elif not is_carbon:
             attrs.append(f'Element="{elem_num}"')
             if nh is not None:
@@ -591,6 +626,11 @@ def _build_fragment(
                 f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                 f'color="0" face="{ACS_LABEL_FACE}">{xml_escape(display_text)}</s>'
             )
+            if is_variable and a.get('generic_number'):
+                lines.append(
+                    f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
+                    f'color="0" face="64">{int(a["generic_number"])}</s>'
+                )
             if charge:
                 charge_text = (str(abs(charge)) if abs(charge) > 1 else '') + ('+' if charge > 0 else '-')
                 lines.append(
@@ -738,9 +778,10 @@ def _build_label_element(
     y: float,
     ids: _IDGen,
 ) -> Tuple[str, int]:
-    """Build a compound number label (e.g. "1", "2") centered below a structure."""
+    """Build a compound label centered below a structure: a number ("1", "TS2") as written, a
+    formula ("PhB(OH)2") with its subscripts."""
     return _build_text_element(
-        [label], x, y, ids, justification="Center", use_formatting=False,
+        [label], x, y, ids, justification="Center", use_formatting=is_formula_label(label),
     )
 
 
@@ -1042,6 +1083,12 @@ def _fragment_bbox(atoms: List[Dict]) -> Tuple[float, float, float, float]:
     labels such as "Br" or "OH".  A lone atom's label is drawn on one side,
     as ChemDraw writes it (OH-, Br- rightwards; H2O, HCl leftwards).
     """
+    reach = [(a["x"] + dx, a["y"] + dy) for a in atoms for dx, dy in a.get("reach", ())]
+    if reach:
+        # A dashed arc or outline drawn over the structure later is part of what it occupies.
+        x1, y1, x2, y2 = _fragment_bbox([{k: v for k, v in a.items() if k != "reach"} for a in atoms])
+        return (min([x1] + [p[0] for p in reach]), min([y1] + [p[1] for p in reach]),
+                max([x2] + [p[0] for p in reach]), max([y2] + [p[1] for p in reach]))
     if len(atoms) == 1:
         atom = atoms[0]
         overhang = _label_overhang(atom)
@@ -1138,12 +1185,21 @@ def _resolve_structure(
     source_data: Optional[Dict[str, Dict]] = None,
     reference_mol: Optional[Any] = None,
 ) -> ResolvedFragment:
-    """Resolve a StructureRef, then mirror or turn it as ``ref.orientation`` asks."""
+    """Resolve a StructureRef, then mirror or turn it as ``ref.orientation`` asks; a structure
+    with generic rings or overlays then claims the room they will be drawn in."""
     frag = _resolve_structure_unoriented(ref, center_x, center_y, source_data, reference_mol)
-    if not ref.orientation:
-        return frag
-    frag = _orient_fragment(frag, ref.orientation)
-    frag.ref = dataclass_replace(frag.ref, orientation=ref.orientation)
+    if ref.orientation:
+        frag = _orient_fragment(frag, ref.orientation)
+        frag.ref = dataclass_replace(frag.ref, orientation=ref.orientation)
+    marks = getattr(ref, "overlays", ()) or ()
+    if marks and frag.atoms:
+        box = _overlay_box(frag.atoms, marks, frag.bonds)
+        if box is not None:
+            # Kept as offsets from one atom, so they move with the structure wherever it is placed.
+            anchor = frag.atoms[0]
+            anchor["reach"] = [(box[0] - anchor["x"], box[1] - anchor["y"]), (box[2] - anchor["x"], box[3] - anchor["y"])]
+            frag.bbox = _fragment_bbox(frag.atoms)
+            frag.cx, frag.cy = _bbox_center(frag.bbox)
     return frag
 
 
@@ -1183,8 +1239,11 @@ def _resolve_structure_unoriented(
 
     # Tier 2: Declared SMILES
     if smiles:
+        # A structure with generic rings is depicted with room for them (see _depict_with_rings).
+        ring_hints = tuple((o["atoms"][0], o["atoms"][1], int(o.get("members", 6)))
+                           for o in getattr(ref, "overlays", ()) or () if o.get("shape") == "ring")
         # Try MCS alignment to reference if available
-        if reference_mol is not None:
+        if reference_mol is not None and not ring_hints:
             try:
                 from rdkit import Chem
                 target_mol = Chem.MolFromSmiles(smiles)
@@ -1207,7 +1266,7 @@ def _resolve_structure_unoriented(
             except Exception:
                 pass  # Fall through to standard coords
 
-        result = _smiles_to_fragment_data(smiles, center_x, center_y)
+        result = _smiles_to_fragment_data(smiles, center_x, center_y, ring_hints)
         if result is None:
             raise ValueError(f"Failed to generate 2D coords for '{ref.id}' (SMILES: {smiles})")
         atoms, bonds = result
@@ -1373,16 +1432,25 @@ def _auto_steps_per_row(
                     if scheme.wrap == "serpentine"
                     else _split_into_rows(steps, per_row))
             widest = 0.0
-            for row in rows:
+            for index, row in enumerate(rows):
+                carried = scheme.wrap == "continue" and index > 0 and _continues(rows[index - 1], row)
                 _, _, edge_x, _ = _layout_steps_row(
                     scheme, row, _IDGen(1), start_x=_ROW_START_X, arrow_y=300.0,
-                    source_data=source_data, reference_mol=reference_mol)
+                    source_data=source_data, reference_mol=reference_mol,
+                    skip_first_substrate_id=-1 if carried else None,
+                    skip_first_substrate_cursor_x=_ROW_START_X if carried else None)
                 widest = max(widest, edge_x - _ROW_START_X)
             if widest <= budget:
                 return per_row
         return 1
     finally:
         _fragment_receipts.reset(token)
+
+
+def _continues(previous: List[StepDescriptor], row: List[StepDescriptor]) -> bool:
+    """Whether a row's first step starts from the structure the previous row ended with."""
+    return bool(previous and row and previous[-1].products and row[0].substrates
+                and row[0].substrates[0] == previous[-1].products[-1])
 
 
 def _layout_sequential(
@@ -1394,21 +1462,23 @@ def _layout_sequential(
     """
     Layout a multi-step sequential scheme.
 
-    Supports wrap:repeat (multi-row L->R with repeated structures),
-    wrap:serpentine (zigzag with vertical arrows between rows), and
-    single-row (no wrapping).
+    Supports wrap:continue (multi-row L->R; a row after the first starts with
+    the arrow that leaves the structure the row above ended with, so every
+    structure is drawn once), wrap:repeat (the same, but each row starts by
+    drawing that structure again), wrap:serpentine (zigzag with vertical
+    arrows between rows), and single-row (no wrapping).
 
     Returns (inner_xml, lowest_y).
     """
     wrap = scheme.wrap
     steps_per_row = scheme.steps_per_row
     if (steps_per_row is None and scheme.max_row_width
-            and wrap in ("repeat", "serpentine") and len(scheme.steps) > 1):
+            and wrap in ("repeat", "continue", "serpentine") and len(scheme.steps) > 1):
         steps_per_row = _auto_steps_per_row(
             scheme, scheme.max_row_width, source_data, reference_mol)
 
     # Single row: no wrapping needed
-    if (wrap not in ("repeat", "serpentine")
+    if (wrap not in ("repeat", "continue", "serpentine")
             or steps_per_row is None
             or steps_per_row >= len(scheme.steps)):
         xml, lowest_y, _, _ = _layout_steps_row(
@@ -1438,20 +1508,29 @@ def _layout_sequential(
     lowest_y = arrow_y
     previous_bottom: Optional[float] = None
 
+    last_product_id: Optional[int] = None
     for row_idx, row_steps in enumerate(rows):
         row_ra = row_run_arrows.get(row_idx, [])
+        # wrap:continue: the structure that ended the row above is not drawn again; this row
+        # starts at the margin with the arrow that leaves it.
+        carried = (wrap == "continue" and row_idx > 0 and last_product_id is not None
+                   and _continues(rows[row_idx - 1], row_steps))
 
-        def layout(at_y: float, row_ids: _IDGen, row_steps=row_steps, row_ra=row_ra):
+        def layout(at_y: float, row_ids: _IDGen, row_steps=row_steps, row_ra=row_ra, carried=carried,
+                   carried_id=last_product_id):
             return _layout_steps_row(
                 scheme, row_steps, row_ids,
                 start_x=80.0, arrow_y=at_y,
                 source_data=source_data,
                 run_arrows=row_ra,
                 reference_mol=reference_mol,
+                skip_first_substrate_id=carried_id if carried else None,
+                skip_first_substrate_cursor_x=80.0 if carried else None,
             )
 
         arrow_y = _next_arrow_y(layout, arrow_y, previous_bottom, LAYOUT_ROW_GAP)
-        row_xml, row_lowest, _, _ = layout(arrow_y, ids)
+        row_xml, row_lowest, _, row_info = layout(arrow_y, ids)
+        last_product_id = row_info.get("last_product_id")
         xml_parts.append(row_xml)
         previous_bottom = _drawn_extent(row_xml)[1]
         lowest_y = max(row_lowest, previous_bottom)
@@ -1660,6 +1739,7 @@ def _layout_serpentine(
 # Gap between the bottom of one branch row and the top of the next (halved
 # between rows: branch rows have no run arrows, so they can sit closer).
 _DIVERGENT_BRANCH_GAP = 2.5 * ACS_BOND_LENGTH
+_LABEL_ROOM_ABOVE = 20.0  # a compound number under a structure above an arrow
 
 
 def _layout_divergent(
@@ -1751,6 +1831,9 @@ def _layout_divergent(
     # tail column right of the starting material, joined by a vertical connector,
     # so each product reads as made from the starting material (a column of
     # stacked vertical arrows reads as a chain, 1 -> 3 -> 4).
+    # A branch's other substrates (the co-substrate of a Michael addition, say) and
+    # any reagent structures stand above its arrow, in one row over the text.  The
+    # co-substrates are recorded as reactants of the step, the reagents above it.
     branches = []
     for step in shared_steps:
         above_text = [normalize_condition_text(t) for t in step.above_arrow.text] if step.above_arrow else []
@@ -1760,10 +1843,26 @@ def _layout_divergent(
         products = [_resolve_structure(_get_ref(sid), source_data=source_data,
                                        reference_mol=reference_mol)
                     for sid in step.products]
-        branches.append((step, above_text, below_text, products))
+        over = [(_resolve_structure(_get_ref(sid), source_data=source_data,
+                                    reference_mol=reference_mol), "reactant")
+                for sid in step.substrates if sid != shared_id]
+        if step.above_arrow:
+            over += [(_resolve_structure(_get_ref(sid), source_data=source_data,
+                                         reference_mol=reference_mol), "above")
+                     for sid in step.above_arrow.structures]
+        branches.append((step, above_text, below_text, products, over))
 
-    content_w = max((max(_estimate_text_width(above), _estimate_text_width(below), 0)
-                     for _, above, below, _ in branches), default=0)
+    def _over_width(over) -> float:
+        if not over:
+            return 0.0
+        return sum(_bbox_width(f.bbox) for f, _ in over) + inter_gap * (len(over) - 1)
+
+    def _over_height(over) -> float:
+        return max((_bbox_height(f.bbox) + (_LABEL_ROOM_ABOVE if f.ref.label else 0.0)
+                    for f, _ in over), default=0.0)
+
+    content_w = max((max(_estimate_text_width(above), _estimate_text_width(below), _over_width(over), 0)
+                     for _, above, below, _, over in branches), default=0)
     arrow_len = max(content_w + 10.0, min_arrow_len)
     tail_x = sm_right_x + frag_gap * 0.3
     head_x = tail_x + arrow_len
@@ -1771,12 +1870,18 @@ def _layout_divergent(
     tail_ys: List[float] = []
     previous_bottom: Optional[float] = None
 
-    for step, above_text, below_text, products in branches:
+    for step, above_text, below_text, products, over in branches:
         # Extent of the row above and below its arrow line.
         above_h = 0.0
+        text_h = 0.0
         if above_text:
-            above_h = (LAYOUT_BELOW_GAP + max(0, len(above_text) - 1) * _LINE_ADVANCE
-                       + _DESCENT + _CAP_HEIGHT)
+            text_h = (max(0, len(above_text) - 1) * _LINE_ADVANCE + _DESCENT + _CAP_HEIGHT)
+            above_h = LAYOUT_BELOW_GAP + text_h
+        # The structures above the arrow sit over the text (4 pt apart), or
+        # LAYOUT_ABOVE_GAP over the arrow when there is no text.
+        over_base = (LAYOUT_BELOW_GAP + text_h + 4.0) if above_text else LAYOUT_ABOVE_GAP
+        if over:
+            above_h = over_base + _over_height(over)
         below_h = 0.0
         if below_text:
             below_h = (LAYOUT_BELOW_GAP + _CAP_HEIGHT
@@ -1821,6 +1926,23 @@ def _layout_divergent(
             xml_parts.append(txt_xml)
             step_meta["below_ids"].append(txt_id)
 
+        over_x = arrow_mid_x - _over_width(over) / 2.0
+        for frag, role in over:
+            fw, fh = _bbox_width(frag.bbox), _bbox_height(frag.bbox)
+            label_h = _LABEL_ROOM_ABOVE if frag.ref.label else 0.0
+            _shift_atoms(frag.atoms, over_x + fw / 2.0 - frag.cx,
+                         branch_y - over_base - label_h - fh / 2.0 - frag.cy)
+            frag.bbox = _fragment_bbox(frag.atoms)
+            frag.cx, frag.cy = _bbox_center(frag.bbox)
+            ofrag_xml, _, ofrag_id = _build_fragment(frag.atoms, frag.bonds, ids)
+            xml_parts.append(ofrag_xml)
+            all_frag_ids.append(ofrag_id)
+            step_meta["reactant_ids" if role == "reactant" else "above_ids"].append(ofrag_id)
+            if frag.ref.label:
+                lbl_xml, _ = _build_label_element(frag.ref.label, frag.cx, frag.bbox[3] + 14.0, ids)
+                xml_parts.append(lbl_xml)
+            over_x += fw + inter_gap
+
         cursor_x = head_x + frag_gap * 1.0
         for prod_frag in products:
             pw = _bbox_width(prod_frag.bbox)
@@ -1847,6 +1969,23 @@ def _layout_divergent(
             f'<graphic id="{line_id}" Z="{line_z}" GraphicType="Line" '
             f'BoundingBox="{tail_x:.2f} {tail_ys[0]:.2f} {tail_x:.2f} {tail_ys[-1]:.2f}"/>')
 
+    # Steps that do not start from the shared substrate are drawn as their own
+    # rows underneath, rather than dropped.
+    previous_bottom = _drawn_extent("\n".join(xml_parts))[1]
+    for step in other_steps:
+        row_scheme = SchemeDescriptor(structures=scheme.structures, steps=[step],
+                                      layout="linear", gap_scale=scheme.gap_scale)
+
+        def row_layout(at_y, row_ids, row_scheme=row_scheme):
+            return _layout_linear(row_scheme, row_ids, source_data=source_data,
+                                  reference_mol=reference_mol, arrow_y=at_y)
+
+        row_y = _next_arrow_y(row_layout, arrow_y, previous_bottom, _DIVERGENT_BRANCH_GAP)
+        row_xml, row_lowest = row_layout(row_y, ids)
+        xml_parts.append(row_xml)
+        previous_bottom = _drawn_extent(row_xml)[1]
+        lowest_y = max(lowest_y, row_lowest, previous_bottom)
+
     # --- Build <scheme> ---
     scheme_id = ids.next()
     scheme_parts = [f'<scheme id="{scheme_id}">']
@@ -1866,6 +2005,205 @@ def _layout_divergent(
     scheme_parts.append('</scheme>')
     xml_parts.append("\n".join(scheme_parts))
 
+    return "\n".join(xml_parts), lowest_y
+
+
+_FAN_DIRECTIONS = ("left", "right", "down", "up")
+
+
+def _layout_fan(
+    scheme: SchemeDescriptor,
+    ids: _IDGen,
+    source_data: Optional[Dict[str, Dict]] = None,
+    reference_mol: Optional[Any] = None,
+) -> Tuple[str, float]:
+    """One starting material in the middle, an arrow leaving it for each product: left, right,
+    then down and up (BJOC 22-103 figure 1 panel c). Each branch keeps its conditions, and its
+    co-substrates stand over its arrow (beside a vertical one) and count as reactants.
+
+    Routes that are not one starting material with two to four products, that have steps not
+    starting from it, or that would be wider than ``max_row_width``, are drawn by the divergent
+    layout instead.
+    """
+    from collections import Counter
+
+    steps = scheme.steps
+    counts = Counter(sid for step in steps for sid in step.substrates)
+    shared_id = counts.most_common(1)[0][0] if counts else None
+    shared = [s for s in steps if shared_id in s.substrates]
+    if shared_id is None or not 2 <= len(shared) <= len(_FAN_DIRECTIONS) or len(shared) != len(steps):
+        scheme.drawn_layout = "divergent"
+        return _layout_divergent(scheme, ids, source_data=source_data, reference_mol=reference_mol)
+
+    def get_ref(sid: str) -> StructureRef:
+        return scheme.structures.get(sid) or StructureRef(id=sid)
+
+    def resolve(sid: str) -> _ResolvedFragment:
+        return _resolve_structure(get_ref(sid), source_data=source_data, reference_mol=reference_mol)
+
+    bond_len = ACS_BOND_LENGTH
+    frag_gap = bond_len * LAYOUT_FRAG_GAP_BONDS * scheme.gap_scale
+    inter_gap = max(bond_len * LAYOUT_INTER_GAP_BONDS, LAYOUT_PLUS_GAP) * scheme.gap_scale
+    min_arrow_len = MIN_ARROW_BONDS * bond_len
+    label_room = 14.0 + _DESCENT
+
+    branches = []
+    for step, direction in zip(shared, _FAN_DIRECTIONS):
+        above = [normalize_condition_text(t) for t in step.above_arrow.text] if step.above_arrow else []
+        below = [normalize_condition_text(t) for t in step.below_arrow.text] if step.below_arrow else []
+        if step.yield_:
+            below.append(step.yield_)
+        over = [(resolve(sid), "reactant") for sid in step.substrates if sid != shared_id]
+        if step.above_arrow:
+            over += [(resolve(sid), "above") for sid in step.above_arrow.structures]
+        products = [resolve(sid) for sid in step.products]
+        over_w = sum(_bbox_width(f.bbox) for f, _ in over) + inter_gap * max(0, len(over) - 1)
+        if direction in ("left", "right"):
+            length = max(_estimate_text_width(above) + 10.0, _estimate_text_width(below) + 10.0,
+                         over_w + 10.0, min_arrow_len)
+        else:
+            lines = len(above) + len(below)
+            length = max(min_arrow_len, lines * _LINE_ADVANCE + 10.0)
+        branches.append({"step": step, "dir": direction, "above": above, "below": below, "over": over,
+                         "products": products, "len": length, "over_w": over_w})
+
+    sm = resolve(shared_id)
+    sm_w, sm_h = _bbox_width(sm.bbox), _bbox_height(sm.bbox)
+
+    def reach(branch) -> float:
+        """How far a branch reaches from the starting material's edge along its direction."""
+        prods = branch["products"]
+        if branch["dir"] in ("left", "right"):
+            size = sum(_bbox_width(f.bbox) for f in prods) + inter_gap * max(0, len(prods) - 1)
+        else:
+            size = max((_bbox_height(f.bbox) + (label_room if f.ref.label else 0.0) for f in prods), default=0.0)
+        return frag_gap * 1.3 + branch["len"] + size
+
+    left = max((reach(b) for b in branches if b["dir"] == "left"), default=0.0)
+    right = max((reach(b) for b in branches if b["dir"] == "right"), default=0.0)
+    if scheme.max_row_width and left + sm_w + right > scheme.max_row_width:
+        # Wider than the row budget: the stacked divergent layout fits where the fan does not.
+        scheme.drawn_layout = "divergent"
+        return _layout_divergent(scheme, ids, source_data=source_data, reference_mol=reference_mol)
+    up = max((reach(b) for b in branches if b["dir"] == "up"), default=0.0)
+    over_tall = max((_bbox_height(f.bbox) + 40.0 for b in branches if b["dir"] in ("left", "right")
+                     for f, _ in b["over"]), default=0.0)
+    cx = 80.0 + left + sm_w / 2.0
+    cy = 120.0 + max(up, over_tall) + sm_h / 2.0
+    _shift_atoms(sm.atoms, cx - sm.cx, cy - sm.cy)
+    sm.bbox = _fragment_bbox(sm.atoms)
+    sm.cx, sm.cy = _bbox_center(sm.bbox)
+
+    xml_parts: List[str] = []
+    sm_xml, _, sm_id = _build_fragment(sm.atoms, sm.bonds, ids)
+    xml_parts.append(sm_xml)
+    sm_bottom = sm.bbox[3]
+    if sm.ref.label:
+        lbl_xml, _ = _build_label_element(sm.ref.label, sm.cx, sm.bbox[3] + 14.0, ids)
+        xml_parts.append(lbl_xml)
+        sm_bottom = sm.bbox[3] + label_room
+    lowest_y = sm_bottom
+
+    def place(frag, x, y, meta_key, meta):
+        _shift_atoms(frag.atoms, x - frag.cx, y - frag.cy)
+        frag.bbox = _fragment_bbox(frag.atoms)
+        frag.cx, frag.cy = _bbox_center(frag.bbox)
+        fxml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
+        xml_parts.append(fxml)
+        meta[meta_key].append(fid)
+        bottom = frag.bbox[3]
+        if frag.ref.label:
+            lxml, _ = _build_label_element(frag.ref.label, frag.cx, frag.bbox[3] + 14.0, ids)
+            xml_parts.append(lxml)
+            bottom += label_room
+        return bottom
+
+    metadata: List[Dict[str, Any]] = []
+    for b in branches:
+        meta: Dict[str, Any] = {"reactant_ids": [sm_id], "product_ids": [], "arrow_id": 0,
+                                "above_ids": [], "below_ids": []}
+        step = b["step"]
+        if b["dir"] in ("left", "right"):
+            sign = -1.0 if b["dir"] == "left" else 1.0
+            y = sm.cy
+            tail = (sm.bbox[0] - frag_gap * 0.3) if sign < 0 else (sm.bbox[2] + frag_gap * 0.3)
+            head = tail + sign * b["len"]
+            tail_xy, head_xy = (tail, y), (head, y)
+            mid = (tail + head) / 2.0
+            text_h = 0.0
+            if b["above"]:
+                text_h = max(0, len(b["above"]) - 1) * _LINE_ADVANCE + _DESCENT + _CAP_HEIGHT
+                txt, tid = _build_text_element(b["above"], mid, y - LAYOUT_BELOW_GAP - (text_h - _CAP_HEIGHT), ids,
+                                               use_formatting=True)
+                xml_parts.append(txt)
+                meta["above_ids"].append(tid)
+            if b["below"]:
+                txt, tid = _build_text_element(b["below"], mid, y + LAYOUT_BELOW_GAP + _CAP_HEIGHT, ids)
+                xml_parts.append(txt)
+                meta["below_ids"].append(tid)
+                lowest_y = max(lowest_y, y + LAYOUT_BELOW_GAP + _CAP_HEIGHT
+                               + (len(b["below"]) - 1) * _LINE_ADVANCE + _DESCENT)
+            base = (LAYOUT_BELOW_GAP + text_h + 4.0) if b["above"] else LAYOUT_ABOVE_GAP
+            ox = mid - b["over_w"] / 2.0
+            for frag, role in b["over"]:
+                fw, fh = _bbox_width(frag.bbox), _bbox_height(frag.bbox)
+                lift = _LABEL_ROOM_ABOVE if frag.ref.label else 0.0
+                place(frag, ox + fw / 2.0, y - base - lift - fh / 2.0,
+                      "reactant_ids" if role == "reactant" else "above_ids", meta)
+                ox += fw + inter_gap
+            cursor = head + sign * frag_gap
+            for frag in b["products"]:
+                fw = _bbox_width(frag.bbox)
+                lowest_y = max(lowest_y, place(frag, cursor + sign * fw / 2.0, y, "product_ids", meta))
+                cursor += sign * (fw + inter_gap)
+        else:
+            sign = 1.0 if b["dir"] == "down" else -1.0
+            x = sm.cx
+            tail = (sm_bottom + frag_gap * 0.3) if sign > 0 else (sm.bbox[1] - frag_gap * 0.3)
+            head = tail + sign * b["len"]
+            tail_xy, head_xy = (x, tail), (x, head)
+            mid = (tail + head) / 2.0
+            lines = b["above"] + b["below"]
+            if lines:
+                block = (len(lines) - 1) * _LINE_ADVANCE + _CAP_HEIGHT + _DESCENT
+                txt, tid = _build_text_element(lines, x + 6.0, mid - block / 2.0 + _CAP_HEIGHT, ids,
+                                               justification="Left", use_formatting=True)
+                xml_parts.append(txt)
+                meta["above_ids"].append(tid)
+            ox = x - 8.0
+            for frag, role in b["over"]:
+                fw = _bbox_width(frag.bbox)
+                place(frag, ox - fw / 2.0, mid, "reactant_ids" if role == "reactant" else "above_ids", meta)
+                ox -= fw + inter_gap
+            for frag in b["products"]:
+                fh = _bbox_height(frag.bbox)
+                if sign > 0:
+                    y = head + frag_gap + fh / 2.0
+                else:
+                    y = head - frag_gap - (label_room if frag.ref.label else 0.0) - fh / 2.0
+                lowest_y = max(lowest_y, place(frag, x, y, "product_ids", meta))
+        arrow_xml, arrow_id = _build_arrow(tail_xy[0], tail_xy[1], head_xy[0], head_xy[1], ids,
+                                           dashed=(step.arrow_style == "dashed"),
+                                           nogo=(step.arrow_style == "failed"),
+                                           kind=_arrow_kind(step.arrow_style))
+        xml_parts.append(arrow_xml)
+        meta["arrow_id"] = arrow_id
+        lowest_y = max(lowest_y, head_xy[1])
+        metadata.append(meta)
+
+    scheme_parts = [f'<scheme id="{ids.next()}">']
+    for meta in metadata:
+        attrs = [f'id="{ids.next()}"',
+                 f'ReactionStepReactants="{" ".join(str(x) for x in meta["reactant_ids"])}"',
+                 f'ReactionStepProducts="{" ".join(str(x) for x in meta["product_ids"])}"',
+                 f'ReactionStepArrows="{meta["arrow_id"]}"']
+        if meta["above_ids"]:
+            attrs.append(f'ReactionStepObjectsAboveArrow="{" ".join(str(x) for x in meta["above_ids"])}"')
+        if meta["below_ids"]:
+            attrs.append(f'ReactionStepObjectsBelowArrow="{" ".join(str(x) for x in meta["below_ids"])}"')
+        scheme_parts.append(f'<step {" ".join(attrs)}/>')
+    scheme_parts.append('</scheme>')
+    xml_parts.append("\n".join(scheme_parts))
     return "\n".join(xml_parts), lowest_y
 
 
@@ -2192,6 +2530,7 @@ def _layout_steps_row(
     _last_product_bottom: float = arrow_y
     _first_substrate_cx: float = start_x
     _stack_bottom: float = arrow_y
+    _last_product_id: Optional[int] = None
 
     for step_idx, rs in enumerate(resolved_steps):
         step_meta: Dict[str, Any] = {
@@ -2476,6 +2815,7 @@ def _layout_steps_row(
             # Track last product info for serpentine callers
             _last_product_cx = prod.cx
             _last_product_bottom = prod_bottom
+            _last_product_id = getattr(prod, "frag_id", None)
 
             if is_rtl:
                 cursor_x = prod.bbox[0] - inter_gap
@@ -2585,6 +2925,7 @@ def _layout_steps_row(
         "last_product_cx": _last_product_cx,
         "last_product_bottom": _last_product_bottom,
         "first_substrate_cx": _first_substrate_cx,
+        "last_product_id": _last_product_id,
     }
     return "\n".join(xml_parts), lowest_y, row_edge_x, row_info
 
@@ -2789,6 +3130,110 @@ def _text_box_at(lines: List[str], x: float, y: float) -> Tuple[float, float, fl
     return (x - w / 2.0, top, x + w / 2.0, bottom)
 
 
+def _overlay_box(atoms: List[Dict], overlays: Any, bonds: Optional[List[Dict]] = None
+                 ) -> Optional[Tuple[float, float, float, float]]:
+    """Box of the dashed outlines a brief will draw over this structure, or None.
+
+    ``overlays`` are [{atoms, shape}] with 0-based SMILES atom indices; atom dicts carry the
+    1-based ``index`` of the same order. The box holds the outline as it will be drawn.
+    """
+    by_index = {a.get("index"): a for a in atoms}
+    box: Optional[Tuple[float, float, float, float]] = None
+    for item in overlays or ():
+        if item.get("shape") == "ring":
+            # A generic ring: an arc through two bonded atoms, away from the rest of the molecule.
+            ends = [(float(by_index[i + 1]["x"]), float(by_index[i + 1]["y"]))
+                    for i in item.get("atoms") or () if i + 1 in by_index]
+            rest = [(float(by_index[i + 1]["x"]), float(by_index[i + 1]["y"]))
+                    for i in item.get("away") or () if i + 1 in by_index]
+            if len(ends) == 2:
+                away = (sum(p[0] for p in rest) / len(rest), sum(p[1] for p in rest) / len(rest)) if rest else None
+                # The side the drawing step will choose: clear of the structure's own bonds.
+                segments = [((float(by_index[b["atom1"]]["x"]), float(by_index[b["atom1"]]["y"])),
+                             (float(by_index[b["atom2"]]["x"]), float(by_index[b["atom2"]]["y"])))
+                            for b in bonds or () if b.get("atom1") in by_index and b.get("atom2") in by_index]
+                points = choose_generic_ring(ends[0], ends[1], away, item.get("members", 6), segments)[0]
+                v = [float(x) for x in points.split()]
+                part = (min(v[0::2]) - OVERLAY_LINE, min(v[1::2]) - OVERLAY_LINE,
+                        max(v[0::2]) + OVERLAY_LINE, max(v[1::2]) + OVERLAY_LINE)
+                box = part if box is None else _union_box(box, part)
+            continue
+        points = [(float(by_index[i + 1]["x"]), float(by_index[i + 1]["y"]))
+                  for i in item.get("atoms") or () if i + 1 in by_index]
+        if not points:
+            continue
+        part = overlay_box(list(dict.fromkeys(points)), shape=item.get("shape", "circle"))
+        box = part if box is None else _union_box(box, part)
+    return box
+
+
+def _union_box(a: Tuple[float, float, float, float], b: Optional[Tuple[float, float, float, float]]
+               ) -> Tuple[float, float, float, float]:
+    if b is None:
+        return a
+    return (min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3]))
+
+
+def _cycle_arc_span(cx: float, cy: float, radius: float, a0: float, a1: float,
+                    box0: Tuple[float, float, float, float], box1: Tuple[float, float, float, float],
+                    pad: float, min_length: float) -> Optional[Tuple[float, float]]:
+    """Angles of the arc from the species at a0 to the next at a1 (a1 > a0, both on the circle),
+    clipped where the circle leaves each species' box and ``pad`` beyond; None if too short."""
+    def inside(box, t):
+        x, y = cx + radius * math.cos(t), cy + radius * math.sin(t)
+        return box[0] - pad < x < box[2] + pad and box[1] - pad < y < box[3] + pad
+
+    step = math.radians(0.25)
+    start, end = a0, a1
+    while start < a1 and inside(box0, start):
+        start += step
+    while end > start and inside(box1, end):
+        end -= step
+    if (end - start) * radius < min_length:
+        return None
+    return start, end
+
+
+def _build_cycle_arc(cx: float, cy: float, radius: float, start: float, end: float, ids: _IDGen,
+                     dashed: bool = False) -> Tuple[str, int, List[Tuple[float, float]]]:
+    """A step of a cycle as ChemDraw's own arc arrow, running clockwise on the page from the
+    angle ``start`` to ``end``. Returns (xml, id, points from tail to head).
+
+    ChemDraw runs an arc anticlockwise from Tail3D through AngularSize degrees, so a clockwise
+    arrow is written from its far end with the head on the tail end, as figure_mechanism writes
+    curved arrows (toolkit/tests/data/native-arc-arrows.cdxml).
+    """
+    pts = [(cx + radius * math.cos(start + (end - start) * k / 32), cy + radius * math.sin(start + (end - start) * k / 32))
+           for k in range(33)]
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    aid, z = ids.next(), ids.next()
+    first, last = pts[0], pts[-1]
+    attrs = [
+        f'id="{aid}"', f'BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}"', f'Z="{z}"',
+        'FillType="None"', f'LineWidth="{ACS_LINE_WIDTH}"', 'ArrowheadHead="None"', 'ArrowheadTail="Full"',
+        'ArrowheadType="Solid"', 'HeadSize="1000"', 'ArrowheadCenterSize="875"', 'ArrowheadWidth="250"',
+        f'AngularSize="{math.degrees(end - start):.2f}"',
+        f'Head3D="{first[0]:.2f} {first[1]:.2f} 0"', f'Tail3D="{last[0]:.2f} {last[1]:.2f} 0"',
+        f'Center3D="{cx:.2f} {cy:.2f} 0"', f'MajorAxisEnd3D="{cx + radius:.2f} {cy:.2f} 0"',
+        f'MinorAxisEnd3D="{cx:.2f} {cy - radius:.2f} 0"',
+    ]
+    if dashed:
+        attrs.append('LineType="Dashed"')
+    return f'<arrow {" ".join(attrs)}/>', aid, pts
+
+
+def _along(path: List[Tuple[float, float]], frac: float) -> Tuple[float, float]:
+    """The point a fraction of the way along a polyline, by length."""
+    lengths = [math.dist(a, b) for a, b in zip(path, path[1:])]
+    goal = sum(lengths) * frac
+    for (a, b), length in zip(zip(path, path[1:]), lengths):
+        if goal <= length or length == lengths[-1] and (a, b) == (path[-2], path[-1]):
+            t = 0.0 if length == 0 else min(1.0, goal / length)
+            return a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+        goal -= length
+    return path[-1]
+
+
 def _place_radial_text(
     lines: List[str],
     mx: float,
@@ -2857,6 +3302,11 @@ def _layout_catalytic_cycle(
         if frag is None:
             raise ValueError(f"Could not prepare structure '{sub_id}' in catalytic cycle.")
         inter_frags.append(frag)
+    # A dashed overlay drawn over an intermediate later (its fragment marked in every one) is
+    # part of what the arrows and captions must clear.
+    inter_overlays = [scheme.structures[s.substrates[0]].overlays if getattr(scheme.structures[s.substrates[0]],
+                      "overlays", ()) else () for s in steps]
+    inter_rel = [_overlay_box(frag.atoms, ov, frag.bonds) for frag, ov in zip(inter_frags, inter_overlays)]
 
     pad = 8.0 * gap_scale
     min_arrow_len = 28.0
@@ -2866,11 +3316,17 @@ def _layout_catalytic_cycle(
         angles = [-math.pi / 2.0 + 2.0 * math.pi * k / n_steps for k in range(n_steps)]
         centers = [(cx + radius * math.cos(a), cy + radius * math.sin(a)) for a in angles]
         boxes: List[Tuple[float, float, float, float]] = []
-        for (ix, iy), frag in zip(centers, inter_frags):
+        for (ix, iy), frag, rel in zip(centers, inter_frags, inter_rel):
             hw = _bbox_width(frag.bbox) / 2.0
             hh = _bbox_height(frag.bbox) / 2.0
             lbl_extra = (14.0 + _DESCENT) if frag.ref.label else 0.0
-            boxes.append((ix - hw, iy - hh, ix + hw, iy + hh + lbl_extra))
+            if rel is not None:
+                dx_, dy_ = ix - frag.cx, iy - frag.cy
+                rel_box = (rel[0] + dx_, rel[1] + dy_, rel[2] + dx_, rel[3] + dy_)
+                lbl_extra += max(0.0, rel_box[3] - (iy + hh))
+                boxes.append(_union_box((ix - hw, iy - hh, ix + hw, iy + hh + lbl_extra), rel_box))
+            else:
+                boxes.append((ix - hw, iy - hh, ix + hw, iy + hh + lbl_extra))
 
         any_struct_overlap = any(
             _boxes_overlap(
@@ -2913,22 +3369,42 @@ def _layout_catalytic_cycle(
         xml_parts.append(frag_xml)
         frag_ids.append(fid)
 
+        ring = _overlay_box(frag.atoms, inter_overlays[k], frag.bonds)
         box_y2 = frag.bbox[3]
         if frag.ref.label:
-            lbl_y = frag.bbox[3] + 14.0
+            # The number goes under the overlay when the outline reaches below the structure.
+            lbl_y = max(frag.bbox[3], ring[3] if ring else frag.bbox[3]) + 14.0
             lbl_xml, _ = _build_label_element(frag.ref.label, frag.cx, lbl_y, ids)
             xml_parts.append(lbl_xml)
             box_y2 = lbl_y + _DESCENT
 
-        fbox = (frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0)
+        fbox = _union_box((frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0), ring)
         final_boxes.append(fbox)
         placed_boxes.append(fbox)
         lowest_y = max(lowest_y, box_y2)
 
-    # 2. Place chord reaction arrows between consecutive intermediates
+    # 2. Place the step arrows between consecutive intermediates: arcs of the circle the species
+    # sit on (a cycle reads as a ring, BJOC 22-125 scheme 4), or a straight chord for an
+    # equilibrium or failed step, and where the arc left between two species is too short.
     arrow_records: List[Tuple[float, float, float, float, int]] = []
+    arrow_paths: List[List[Tuple[float, float]]] = []
     for k, step in enumerate(steps):
         nk = (k + 1) % n_steps
+        span = None
+        if n_steps >= 2 and step.arrow_style in (None, "solid", "dashed"):
+            span = _cycle_arc_span(cx, cy, radius, angles[k], angles[k] + 2.0 * math.pi / n_steps,
+                                   final_boxes[k], final_boxes[nk], pad, min_arrow_len)
+        if span is not None:
+            arc_xml, arc_id, path = _build_cycle_arc(cx, cy, radius, span[0], span[1], ids,
+                                                     dashed=(step.arrow_style == "dashed"))
+            xml_parts.append(arc_xml)
+            arrow_records.append((path[0][0], path[0][1], path[-1][0], path[-1][1], arc_id))
+            arrow_paths.append(path)
+            for a, b in zip(path[::4], path[4::4] + path[-1:]):
+                placed_boxes.append((min(a[0], b[0]) - 3.0, min(a[1], b[1]) - 3.0,
+                                     max(a[0], b[0]) + 3.0, max(a[1], b[1]) + 3.0))
+            lowest_y = max(lowest_y, max(p[1] for p in path) + 3.0)
+            continue
         x0, y0 = centers[k]
         x1, y1 = centers[nk]
         dx, dy = x1 - x0, y1 - y0
@@ -2954,6 +3430,7 @@ def _layout_catalytic_cycle(
         )
         xml_parts.append(arrow_xml)
         arrow_records.append((tx, ty, hx, hy, arrow_id))
+        arrow_paths.append([(tx, ty), (hx, hy)])
         abox = (min(tx, hx) - 1.5, min(ty, hy) - 3.0, max(tx, hx) + 1.5, max(ty, hy) + 3.0)
         placed_boxes.append(abox)
         lowest_y = max(lowest_y, abox[3])
@@ -2974,7 +3451,7 @@ def _layout_catalytic_cycle(
             continue
 
         tx, ty, hx, hy, _aid = arrow_records[k]
-        mx_, my_ = (tx + hx) / 2.0, (ty + hy) / 2.0
+        mx_, my_ = _along(arrow_paths[k], 0.5)
         rx_, ry_ = mx_ - cx, my_ - cy
         r_norm = math.hypot(rx_, ry_) or 1.0
         rx_, ry_ = rx_ / r_norm, ry_ / r_norm
@@ -2987,8 +3464,7 @@ def _layout_catalytic_cycle(
                 # stagger along the chord so an entering and a leaving species
                 # belonging to the same step do not land on top of each other
                 frac = 0.16 if kind == "in" else 0.84
-                ax = tx + (hx - tx) * frac
-                ay = ty + (hy - ty) * frac
+                ax, ay = _along(arrow_paths[k], frac)
                 dist = radius * 0.48 + 34.0 + 30.0 * j
                 px_ = ax + rx_ * dist
                 py_ = ay + ry_ * dist
@@ -3008,14 +3484,15 @@ def _layout_catalytic_cycle(
                 frag_xml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
                 xml_parts.append(frag_xml)
 
+                ring = _overlay_box(frag.atoms, getattr(struct, "overlays", ()), frag.bonds)
                 box_y2 = frag.bbox[3]
                 if frag.ref.label:
-                    lbl_y = frag.bbox[3] + 14.0
+                    lbl_y = max(frag.bbox[3], ring[3] if ring else frag.bbox[3]) + 14.0
                     lbl_xml, _ = _build_label_element(frag.ref.label, frag.cx, lbl_y, ids)
                     xml_parts.append(lbl_xml)
                     box_y2 = lbl_y + _DESCENT
 
-                fbox = (frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0)
+                fbox = _union_box((frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0), ring)
                 placed_boxes.append(fbox)
                 lowest_y = max(lowest_y, box_y2)
 
@@ -3043,7 +3520,7 @@ def _layout_catalytic_cycle(
     for k, step in enumerate(steps):
         nk = (k + 1) % n_steps
         tx, ty, hx, hy, arrow_id = arrow_records[k]
-        mx, my = (tx + hx) / 2.0, (ty + hy) / 2.0
+        mx, my = _along(arrow_paths[k], 0.5)
         rx, ry = mx - cx, my - cy
         r_norm = math.hypot(rx, ry)
         if r_norm > 1e-6:
@@ -3173,6 +3650,8 @@ def _render_impl(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> st
     elif scheme.layout == "divergent":
         inner_xml, lowest_y = _layout_divergent(scheme, ids, source_data=source_data,
                                                  reference_mol=ref_mol)
+    elif scheme.layout == "fan":
+        inner_xml, lowest_y = _layout_fan(scheme, ids, source_data=source_data, reference_mol=ref_mol)
     elif scheme.layout == "stacked-rows":
         inner_xml, lowest_y = _layout_stacked_rows(scheme, ids, source_data=source_data,
                                                     reference_mol=ref_mol)

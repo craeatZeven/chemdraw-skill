@@ -249,6 +249,9 @@ def _bruker_ppm_scale(ng, dic, size):
 def _read_spectrum_with_meta(path):
     path = Path(path)
     suffix = path.suffix.lower()
+    if not path.exists():
+        # Say so plainly: the format list below reads as if the spec itself were wrong.
+        raise ValueError(f'spectrum not found: {path.resolve()}')
 
     if path.is_file() and suffix == '.csv':
         values = np.genfromtxt(path, delimiter=',', names=True, encoding='utf-8-sig')

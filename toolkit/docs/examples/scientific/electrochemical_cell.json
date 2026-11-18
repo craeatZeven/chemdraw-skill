@@ -1,0 +1,15 @@
+{
+ "type": "galvanic",
+ "anode": {
+  "electrode": "Zn",
+  "solution": "ZnSO{sub:4}(aq)"
+ },
+ "cathode": {
+  "electrode": "Cu",
+  "solution": "CuSO{sub:4}(aq)"
+ },
+ "ions": {
+  "anions": "Cl{sup:\u2212}",
+  "cations": "K{sup:+}"
+ }
+}

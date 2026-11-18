@@ -65,6 +65,58 @@ def require_supported(
         raise ValueError('unsupported_stereochemistry: atropisomer needs a native template')
 
 
+def _open_double_bonds(mol) -> bool:
+    """Whether the molecule has a double bond that could be E or Z but is given as neither."""
+    try:
+        return any(info.type == Chem.StereoType.Bond_Double and info.specified == Chem.StereoSpecified.Unspecified
+                   for info in Chem.FindPotentialStereo(Chem.Mol(mol)))
+    except Exception:
+        return False
+
+
+def loose_key(mol):
+    """The semantic key without double-bond geometry (E/Z)."""
+    copy = Chem.Mol(mol)
+    for bond in copy.GetBonds():
+        bond.SetBondDir(Chem.BondDir.NONE)
+        if bond.GetBondType() == Chem.BondType.DOUBLE:
+            bond.SetStereo(Chem.BondStereo.STEREONONE)
+    return semantic_key(copy)
+
+
+def same_compound(source, drawn):
+    """"exact", "drawn_geometry" or None: whether a drawn molecule is the source compound.
+
+    A drawn double bond has a geometry: RDKit reads E/Z off the coordinates of a C=N or C=C,
+    so an oxime given as CC(=NO)... comes back as C/C(=N\\O)... When the source leaves some
+    double bond's geometry open, a drawing that differs from it only in E/Z is the compound
+    asked for, drawn one way ("drawn_geometry"). A geometry the source fixes must come back
+    the same.
+    """
+    if semantic_key(source) == semantic_key(drawn):
+        return "exact"
+    if _open_double_bonds(source) and loose_key(source) == loose_key(drawn):
+        return "drawn_geometry"
+    return None
+
+
+def inventory_keys(mols, like=None):
+    """Semantic keys of drawn molecules; with ``like`` (the keys expected), a molecule that is one
+    of them drawn with a geometry its source left open counts as that key."""
+    found = Counter()
+    open_keys = {}
+    for key in set(like or ()):
+        mol = Chem.MolFromSmiles(key)
+        if mol is not None and _open_double_bonds(mol):
+            open_keys.setdefault(loose_key(mol), key)
+    for mol in mols:
+        key = semantic_key(mol)
+        if like is not None and key not in like and open_keys:
+            key = open_keys.get(loose_key(mol), key)
+        found[key] += 1
+    return found
+
+
 def read_fragments(value):
     """Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order."""
     root = ET.parse(str(value)).getroot() if isinstance(value, Path) else ET.fromstring(value)
@@ -125,15 +177,19 @@ def validate_fragment(smiles, xml, *, allow_radicals: bool = True):
     for mol in actual[1:]:
         combined = Chem.CombineMols(combined, mol)
     expected, observed = semantic_key(source), semantic_key(combined)
-    if expected != observed:
+    verdict = same_compound(source, combined)
+    if verdict is None:
         raise ValueError(f'chemical_semantics_changed: source={expected}; roundtrip={observed}')
     return {'status': 'preserved', 'source_cxsmiles': expected,
             'roundtrip_cxsmiles': observed, 'method': 'final_cdxml_roundtrip',
-            'stereo_groups': len(source.GetStereoGroups())}
+            'stereo_groups': len(source.GetStereoGroups()),
+            **({'double_bond_geometry': 'drawn'} if verdict == 'drawn_geometry' else {})}
 
 
-def document_inventory(path):
-    return Counter(semantic_key(m) for m in read_molecules(Path(path)))
+def document_inventory(path, like=None):
+    """Counter of the semantic keys of a document's molecules (see ``inventory_keys`` for ``like``)."""
+    source = Path(path) if not str(path).lstrip().startswith('<') else str(path)
+    return inventory_keys(read_molecules(source), like)
 
 
 def validate_document_preserved(source, output):

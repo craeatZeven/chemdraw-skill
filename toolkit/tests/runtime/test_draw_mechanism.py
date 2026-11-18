@@ -96,11 +96,26 @@ def _rows(root):
     return {round((min(p[1] for p in f) + max(p[1] for p in f)) / 2) for f in _fragments(root)}
 
 
+def _point(value):
+    x, y, *_ = map(float, value.split())
+    return x, y
+
+
+def _head(arrow):
+    """The head of a curved arrow, on whichever end ChemDraw carries it."""
+    head = arrow.get("ArrowheadHead", "None")
+    return head if head != "None" else arrow.get("ArrowheadTail")
+
+
 def _curves(root):
+    """Curved arrows (ChemDraw arcs) with their ends from source to target."""
     out = []
-    for curve in root.iter("curve"):
-        values = list(map(float, curve.get("CurvePoints").split()))
-        out.append((curve, list(zip(values[0::2], values[1::2]))))
+    for arrow in root.iter("arrow"):
+        if not arrow.get("AngularSize"):
+            continue
+        tail, head = _point(arrow.get("Tail3D")), _point(arrow.get("Head3D"))
+        ends = [tail, head] if arrow.get("ArrowheadHead", "None") != "None" else [head, tail]
+        out.append((arrow, ends))
     return out
 
 
@@ -134,7 +149,7 @@ def test_a_two_electron_arrow_has_a_full_head_and_a_one_electron_arrow_a_half_he
     brief["steps"][0]["moves"][0]["electrons"] = 1
 
     report = _draw(tmp_path, brief)
-    heads = [c.get("ArrowheadHead") for c, _ in _curves(_root(report))]
+    heads = [_head(c) for c, _ in _curves(_root(report))]
 
     assert heads == ["HalfLeft", "Full"]
 
@@ -325,3 +340,22 @@ def test_an_unresolved_name_stops_the_run(tmp_path):
 
 def test_the_validator_names_the_mechanism_keys():
     assert {"show_atom_numbers", "steps", "species"} <= figure_mechanism.MECH_KEYS
+
+
+def test_each_move_can_carry_its_own_colour_and_it_wins_over_the_house_colour(tmp_path):
+    brief = _brief(ADDITION)
+    brief["steps"][0]["moves"][0]["color"] = "#2E7D32"
+    brief["steps"][0]["moves"][1]["color"] = "#C62828"
+    root = _root(_draw(tmp_path, brief))
+    table = [tuple(round(float(c.get(k)) * 255) for k in "rgb") for c in root.find("colortable").findall("color")]
+    colours = [table[int(arrow.get("color")) - 2] for arrow, _ in _curves(root)]
+    assert colours == [(0x2E, 0x7D, 0x32), (0xC6, 0x28, 0x28)]
+
+
+def test_curved_arrows_are_native_arcs_that_cross_no_bond(tmp_path):
+    report = _draw(tmp_path, ADDITION)
+    root = _root(report)
+    assert not list(root.iter("curve"))
+    arcs = _curves(root)
+    assert len(arcs) == 2 and all(float(a.get("AngularSize")) > 0 for a, _ in arcs)
+    assert report["arrows"]["crossings"] == []

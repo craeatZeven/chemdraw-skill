@@ -14,7 +14,7 @@
     80,
     120
    ],
-   "text": "乙酰水杨酸（阿司匹林）",
+   "text": "\u4e59\u9170\u6c34\u6768\u9178\uff08\u963f\u53f8\u5339\u6797\uff09",
    "align": "Center",
    "size": 10
   },
@@ -34,7 +34,7 @@
     200,
     40
    ],
-   "text": "考点：酯键水解 → 水杨酸",
+   "text": "\u8003\u70b9\uff1a\u916f\u952e\u6c34\u89e3 → \u6c34\u6768\u9178",
    "align": "Left",
    "size": 9
   },
@@ -44,7 +44,7 @@
     200,
     60
    ],
-   "text": "FeCl₃ 显色：酚羟基",
+   "text": "FeCl₃ \u663e\u8272\uff1a\u915a\u7f9f\u57fa",
    "align": "Left",
    "size": 9
   }

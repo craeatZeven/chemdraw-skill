@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 
 from rdkit import Chem
 
+from ..cdxml_check import overlays_collide
 from ..chemistry_semantics import document_inventory, read_fragments, semantic_key
 from ..render import renderer
 from ..render.route_graph import classify_route
@@ -40,7 +41,9 @@ RELAYOUT_GAP_SCALE = 1.4
 RELAYOUT_WIDTH_FACTOR = 0.75
 RELAYOUT_MIN_LINE_CHARS = 16
 ARROWS = ("solid", "dashed", "failed", "reversible", "resonance")
-BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout"}
+BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout", "overlays",
+              "wrap"}
+WRAPS = ("continue", "repeat", "serpentine")
 
 JACS_PALETTE = {
     "pastel_blue": "#D6EAF8",
@@ -88,6 +91,8 @@ def _validate(brief: dict) -> list[str]:
     width = brief.get("max_width")
     if width is not None and not (isinstance(width, (int, float)) and width > 0):
         errors.append("max_width must be a positive number of points.")
+    if brief.get("wrap", "continue") not in WRAPS:
+        errors.append(f"wrap must be one of {list(WRAPS)}: how a long route goes on to its next row.")
     errors += figure_house.panel_errors(brief)
 
     species = brief.get("species")
@@ -108,6 +113,9 @@ def _validate(brief: dict) -> list[str]:
         if entry.get("orientation") not in (None, *renderer.ORIENTATIONS):
             errors.append(f"Species {ident}: orientation must be one of {list(renderer.ORIENTATIONS)}.")
         errors += figure_house.species_style_errors(entry)
+        errors += figure_house.generic_ring_errors(entry)
+
+    errors += figure_house.overlay_errors(brief, ids)
 
     steps = brief.get("steps")
     if not isinstance(steps, list) or not steps:
@@ -169,6 +177,12 @@ def _check_balance(brief: dict, smiles: dict[str, str]) -> tuple[list[dict], lis
     reports: list[dict] = []
     warnings: list[str] = []
     for number, step in enumerate(brief["steps"], 1):
+        members = _as_list(step["substrates"]) + _as_list(step["products"])
+        if any(i not in smiles for i in members):
+            # A Newman projection is a drawing of a conformer, with no formula to balance.
+            reports.append({"step": number, "balanced": None, "missing": None,
+                            "error": "the step shows a Newman projection, so its balance is not checked"})
+            continue
         reaction = {
             "reactants": [{"smiles": smiles[i], "label": i} for i in _as_list(step["substrates"])],
             "agents": [],
@@ -202,9 +216,18 @@ def _scheme(brief: dict, grounded: list[dict], max_width: float | None, gap_scal
             line_chars: int | None = None, house: HouseStyle | None = None) -> SchemeDescriptor:
     orientation = {str(sp.get("id")): sp.get("orientation") for sp in brief.get("species") or []
                    if isinstance(sp, dict) and sp.get("orientation")}
+    # The atoms each overlay will mark, so the layout keeps arrows and captions off them.
+    marks = figure_house.overlay_matches(brief, grounded)[0] if brief.get("overlays") else {}
+    # A generic ring's arc is kept clear the same way.
+    for entry in brief.get("species") or []:
+        if isinstance(entry, dict) and entry.get("generic_rings"):
+            smiles = next((g["smiles"] for g in grounded if g["id"] == str(entry["id"])), None)
+            marks.setdefault(str(entry["id"]), []).extend(figure_house.generic_ring_marks(entry, smiles))
     structures = {
         g["id"]: StructureRef(id=g["id"], smiles=g["smiles"], label=(str(g["label"]) if g["label"] else None),
-                              orientation=orientation.get(g["id"]))
+                              orientation=orientation.get(g["id"]),
+                              overlays=tuple({k: m[k] for k in ("atoms", "shape", "away", "members") if k in m}
+                                             for m in marks.get(g["id"], ())))
         for g in grounded
     }
     steps = _step_descriptors(brief, line_chars, house)
@@ -213,6 +236,9 @@ def _scheme(brief: dict, grounded: list[dict], max_width: float | None, gap_scal
     return SchemeDescriptor(
         structures=structures, steps=[steps[i] for i in order], layout=layout,
         max_row_width=max_width, gap_scale=gap_scale, title=brief.get("title"),
+        # A long route goes on to the next row with the arrow that leaves the structure the row
+        # above ended with, so that structure is drawn once.
+        wrap=brief.get("wrap", "continue"),
         substrate_layout="stacked_plus" if stacked else "inline",
     )
 
@@ -269,6 +295,17 @@ def _route_layout(steps: list[StepDescriptor], requested_layout: str | None = No
 
         return "catalytic-cycle", cycle_order(steps)
     kind, order = classify_route(steps)
+    if requested_layout == "fan":
+        if kind != "divergent" or not 2 <= len(steps) <= 4:
+            raise ValueError("layout fan needs one starting material with two to four products, each made from it "
+                             "in one step (arrows leave it left, right, down and up).")
+        return "fan", order
+    if requested_layout is None and kind == "divergent" and len(steps) == 2:
+        # One compound taken two ways reads best with an arrow to each side (BJOC 22-103
+        # figure 1, panel c); the renderer falls back to the stacked layout when it is too wide.
+        shared = set(steps[0].substrates) & set(steps[1].substrates)
+        if shared:
+            return "fan", order
     if kind == "linear":
         return ("sequential" if len(steps) > 1 else "linear"), order
     return kind, order
@@ -643,11 +680,13 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
     try:
         if arrow_bonds:
             renderer.MIN_ARROW_BONDS = arrow_bonds
-        cdxml = renderer.render(_scheme(brief, grounded, layout_width / scale, gap_scale, line_chars, house))
+        scheme = _scheme(brief, grounded, layout_width / scale, gap_scale, line_chars, house)
+        cdxml = renderer.render(scheme)
     finally:
         renderer.MIN_ARROW_BONDS = saved
     cdxml = _apply_decorations(cdxml, brief, grounded)
-    record: dict = {"applied": [], "skipped": [], "warnings": []}
+    # The layout drawn, which may differ from the one chosen (a fan too wide is drawn stacked).
+    record: dict = {"applied": [], "skipped": [], "warnings": [], "layout": getattr(scheme, "drawn_layout", None)}
     if house is not None:
         cdxml, record["applied"], record["skipped"], record["warnings"] = figure_house.apply_house_conventions(
             cdxml, brief, grounded, house)
@@ -661,6 +700,15 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
     # Frames go on after the overlap check: a frame is meant to surround its structure.
     cdxml, applied = figure_house.apply_species_boxes(cdxml, brief, grounded)
     record["applied"] += applied
+    # Overlays too: one rings its fragment, so it crosses that structure's bonds by design.
+    cdxml, applied, warnings = figure_house.apply_fragment_overlays(cdxml, brief, grounded)
+    record["applied"] += applied
+    record["warnings"] += warnings
+    cdxml, rings, ring_warnings = figure_house.apply_generic_rings(cdxml, brief, grounded)
+    record["applied"] += rings
+    record["warnings"] += ring_warnings
+    if applied or rings:
+        record["warnings"] += [f"Overlay: {issue}." for issue in overlays_collide(str(cdxml))]
     cdxml = styled(cdxml, slug)
     if house is not None:
         cdxml, applied, skipped = figure_house.apply_measured_geometry(cdxml, house, slug)
@@ -700,9 +748,11 @@ def _readback(target: Path, grounded: list[dict], used: set[str], fragments: dic
     wanted: dict[str, list[str]] = {}
     for item in grounded:
         if item["id"] in used:
-            key = semantic_key(Chem.MolFromSmiles(item["smiles"]))
-            wanted.setdefault(key, []).append(item["id"])
-    found = Counter(document_inventory(target))
+            # A drawing without a SMILES (a Newman projection) brings the keys its own drawing reads as.
+            keys = item["inventory"] if "inventory" in item else [semantic_key(Chem.MolFromSmiles(item["smiles"]))]
+            for key in keys:
+                wanted.setdefault(key, []).append(item["id"])
+    found = Counter(document_inventory(target, like=wanted))
     missing = [i for key, ids in wanted.items() if key not in found for i in ids]
     extra = sum(1 for key in found if key not in wanted)
     return {
@@ -773,6 +823,27 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     title and a species' caption (a line under its compound number) take the same forms. A
     species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
     and its number, with an optional fill drawn behind it.
+    kind "panels" sets several scheme or mechanism briefs one above the other on one page:
+    {kind: "panels", panels [{title, brief | gallery | sections}], legend? [lines], style?,
+    max_width?}; each panel is drawn and checked as its own brief, under a boxed one-line title
+    as wide as the widest panel, and the legend lines (text or coloured runs) go under the last
+    one. gallery [{id, smiles or name, caption? (lines), color?, atom_colors?, bond_colors?,
+    abbreviate?}] draws structures with their names and no arrows, in rows spread to the widest;
+    sections [{title, brief}] draws several briefs in one panel, each opened by its title in a
+    box on a dashed rule across the figure ("L. Grimaud 2009 [35]").
+    layout "fan" draws one starting material in the middle with an arrow leaving it for each of
+    two to four products (left, right, down, up); two products from one compound are a fan by
+    default (layout "divergent" keeps them stacked, as does a fan wider than max_width).
+    A route longer than max_width wraps: by default (wrap "continue") the next row starts with
+    the arrow that leaves the structure the row above ended with, so each structure is drawn
+    once; "repeat" draws that structure again at the start of the row, "serpentine" zigzags.
+    A species' generic_rings [{atoms [i, j], members?}] draws an unspecified ring fused at the
+    bond i-j: a dashed arc the long way round on the far side of the bond.
+    overlays [{fragment, species?, shape circle|outline}] draw a dashed outline around one
+    fragment (SMILES or SMARTS) in every structure that has it, or in the species listed, at
+    the same place on the fragment in each (the unchanged ring through the intermediates of a
+    cycle); a listed species without the fragment is refused, and a fragment found more than
+    once is marked at its first match, with a warning.
     Only the conditions in the brief are drawn; a
     step without any is reported, never filled in. Structures given as SMILES are used
     as they are; names go through the curated reagent table and, when the network is
@@ -786,28 +857,53 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     in the temp directory, and an existing output_path is refused.
 
     kind "scope" draws a substrate-scope panel instead: species [{id, smiles or name,
-    label?, group?, values {field: text}, color?, atom_colors?, bond_colors?, abbreviate?}],
-    optional fields [{key, label?, unit?}] (default:
-    the keys used in values), conditions, footnotes, title, width_mm and height_mm. The
+    label?, group?, values {field: text}, definition?, note?, secondary_of?, drawn_with?, color?, atom_colors?,
+    bond_colors?, abbreviate?}], optional fields [{key, label?, unit?, show_label?, optional?}] (default: the keys
+    used in values), conditions, footnotes, title, width_mm, height_mm, header {substrates,
+    products, above?, below?} (the general reaction over the grid, R groups as [*:1]) and
+    highlight_varying (true or a hex colour: what differs from the core every compound
+    shares is drawn in that colour, #FF6600 by default, and so are the header's R marks). Captions are centred, the number in
+    bold; one field joins the number's line ("3a, 92%"); show_label true, or several fields,
+    gives each field its own line, named (show_label false keeps one unnamed; optional leaves
+    it out where empty instead of drawing a dash). definition joins the number's line
+    ("3p, Alk = C7H15, 63%") and note is an extra line under one compound ("not formed");
+    formula digits in every line but the label are subscripts, and "^b" marks a footnote
+    letter. secondary_of names the main product a minor one is drawn beside, after a "+",
+    the structure grey and its own number and values black. drawn_with names a species whose
+    structure also stands for this one: none is drawn for it, and its caption line ("3q, Alk =
+    C18H37, 60%") follows that species' under the same structure. A group is a band, its name on
+    the rule with only its locants in italic. Text stays at 10 pt and each page is cropped to its
+    content. The
     structures are packed onto as many editable pages as needed, grouped in first-seen
     order, each label and value bound to its structure; a missing value is drawn as a
     dash and listed in the notes. output_path is then a new folder (page-001.cdxml, ...;
     PNGs in png/ with render=True) and the report lists the pages.
 
     kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
-    lists: species [{id, smiles or name, label?}] and steps [{substrates, products, above?,
-    below?, arrow?, moves [{from, to, electrons?}]}] drawn in the order given. A move runs
+    lists: species [{id, smiles or name, label?, generic_rings?}] (or {id, newman {front, rear,
+    conformation?, dihedral_offset?, attach?}, label?} for a Newman projection placed among them,
+    which arrows cannot point at and whose steps need no moves; the order of rear picks the
+    conformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered;
+    attach {smiles with one [*]} bonds the front carbon to the rest of the molecule, in place of
+    the front substituent written "*")
+    and steps [{substrates, products, above?,
+    below?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs
     from {species, atom} or {species, bond [i, j]} to the same kind of end, in species that
     are substrates of the step; atoms are numbered from 0 in SMILES order (the report lists
-    them) and electrons is 2 (full head, default) or 1 (half head). Nothing is inferred: a
-    step without moves is refused, a two-electron arrow that starts on an atom without a lone
-    pair or charge is drawn and flagged, and the arrows are checked for passing through
-    another atom (one automatic re-layout). A step with one substrate and one product
+    them), electrons is 2 (full head, default) or 1 (half head) and color a hex colour for
+    that arrow. The arrows are ChemDraw arc arrows. Nothing is inferred: a step without
+    moves is refused, a two-electron arrow that starts on an atom without a lone pair or
+    charge is drawn and flagged, and each arrow is routed clear of the atoms and bonds it
+    does not start or end at (one automatic re-layout if one still crosses). A step with one substrate and one product
     continues the same row with the intermediate drawn once; any other step starts a new
     row, with its substrates drawn again. show_atom_numbers=true prints the atom numbers on a
     draft so the moves can be checked.
     """
     brief, errors = _read_brief(brief)
+    if brief is not None and brief.get("kind") == "panels":
+        from .figure_panels import draw_panels
+
+        return draw_panels(brief, output_path, render)
     if brief is not None and brief.get("kind") == "scope":
         from .figure_scope import draw_scope
 
@@ -893,7 +989,7 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
         "ok": True,
         "operation": "draw_figure",
         "output_path": str(target),
-        "layout": _route_layout(_step_descriptors(brief), brief.get("layout"))[0],
+        "layout": house_record.get("layout") or _route_layout(_step_descriptors(brief), brief.get("layout"))[0],
         "species": [{k: g[k] for k in ("id", "label", "name", "smiles", "source")} for g in grounded],
         "steps": balance,
         "style": style_report(brief_style(brief)[0], house,

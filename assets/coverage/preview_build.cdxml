@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd">
+<CDXML BoundingBox="40.80 32.00 208.00 148.00" BondLength="14.4" LabelFont="3" LabelSize="10" LabelFace="96" CaptionFont="3" CaptionSize="10" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" ChainAngle="120" LabelJustification="Auto" CaptionJustification="Left" color="0" bgcolor="1"><colortable><color r="1" g="1" b="1"/><color r="0" g="0" b="0"/></colortable><fonttable><font id="3" charset="iso-8859-1" name="Arial"/><font id="5" charset="Unicode" name="SimSun"/></fonttable><page id="1">
+<fragment id="1014" Z="1015">
+<n id="1001" Z="1016" p="111.20 44.84" Element="8" NumHydrogens="1"><t p="111.20 48.34" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" face="0">OH</s></t></n>
+<n id="1002" Z="1017" p="98.71 52.01"/>
+<n id="1003" Z="1018" p="86.26 44.79" Element="8" NumHydrogens="0"><t p="86.26 48.29" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" face="0">O</s></t></n>
+<n id="1004" Z="1019" p="98.68 66.41"/>
+<n id="1005" Z="1020" p="111.14 73.64"/>
+<n id="1006" Z="1021" p="111.11 88.04"/>
+<n id="1007" Z="1022" p="98.63 95.21"/>
+<n id="1008" Z="1023" p="86.17 87.99"/>
+<n id="1009" Z="1024" p="86.20 73.59"/>
+<n id="1010" Z="1025" p="73.74 66.36" Element="8" NumHydrogens="0"><t p="73.74 69.86" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" face="0">O</s></t></n>
+<n id="1011" Z="1026" p="61.26 73.54"/>
+<n id="1012" Z="1027" p="48.80 66.31"/>
+<n id="1013" Z="1028" p="61.23 87.94" Element="8" NumHydrogens="0"><t p="61.23 91.44" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" face="0">O</s></t></n>
+<b id="1029" Z="1030" B="1001" E="1002"/>
+<b id="1031" Z="1032" B="1002" E="1003" Order="2" DoublePosition="Center"/>
+<b id="1033" Z="1034" B="1002" E="1004"/>
+<b id="1035" Z="1036" B="1004" E="1005" Order="2" DoublePosition="Left"/>
+<b id="1037" Z="1038" B="1005" E="1006"/>
+<b id="1039" Z="1040" B="1006" E="1007" Order="2" DoublePosition="Left"/>
+<b id="1041" Z="1042" B="1007" E="1008"/>
+<b id="1043" Z="1044" B="1008" E="1009" Order="2" DoublePosition="Left"/>
+<b id="1045" Z="1046" B="1009" E="1010"/>
+<b id="1047" Z="1048" B="1010" E="1011"/>
+<b id="1049" Z="1050" B="1011" E="1012"/>
+<b id="1051" Z="1052" B="1011" E="1013" Order="2" DoublePosition="Center"/>
+<b id="1053" Z="1054" B="1009" E="1004"/>
+</fragment>
+<t id="1055" p="80.00 120.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="5" size="10" face="0">乙酰水杨酸（阿司匹林）</s></t>
+<t id="1056" p="80.00 140.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="9" face="0">C₉H₈O₄   Mr = 180.16</s></t>
+<t id="1057" p="200.00 40.00" InterpretChemically="no"><s font="5" size="9" face="0">考点：酯键水解</s><s font="3" size="9" face="0"> → </s><s font="5" size="9" face="0">水杨酸</s></t>
+<t id="1058" p="200.00 60.00" InterpretChemically="no"><s font="3" size="9" face="0">FeCl₃ </s><s font="5" size="9" face="0">显色：酚羟基</s></t>
+</page></CDXML>

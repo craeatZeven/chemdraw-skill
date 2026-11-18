@@ -10,7 +10,7 @@ from rdkit.Chem import rdDepictor, rdFMCS
 from ..chemistry_semantics import semantic_key
 from ..mcp_runtime.figure_tools import compose_chemical_figure
 from .data import field_text, local_path, write_json
-from .layout import fragment_mol, node_text, bounds, wrap, style_settings, create_pages
+from .layout import caption_runs, fragment_mol, node_text, bounds, wrap, style_settings, create_pages
 
 
 def matching_group(root, record):
@@ -37,8 +37,12 @@ def matching_group(root, record):
 def match_objects(group, record):
     ids=record['objects']; result={'group':group.get('id'),'fields':{}}
     fragments=group.findall('fragment')
-    if len(fragments)!=1: raise ValueError('compound group must contain exactly one chemical fragment')
-    result['fragment']=fragments[0].get('id')
+    if ids.get('fragment') is None and record['input'].get('drawn_with'):
+        # Drawn with another compound's structure: its group holds its caption lines only.
+        if fragments: raise ValueError('a compound drawn with another structure has no fragment of its own')
+        result['fragment']=None
+    elif len(fragments)!=1: raise ValueError('compound group must contain exactly one chemical fragment')
+    else: result['fragment']=fragments[0].get('id')
     used=set()
     for field,oid in {'label':ids['label'],**ids['fields']}.items():
         matches=[t for t in group.findall('t') if t.get('id')==oid]
@@ -170,8 +174,9 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
         try: ids=match_objects(group,record)
         except ValueError as exc:
             conflicts.append({'compound_id':cid,'reason':str(exc)});continue
-        old_input=record['input']; fragment=group.find(f"fragment[@id='{ids['fragment']}']")
-        identity=semantic_key(fragment_mol(fragment))
+        old_input=record['input']
+        fragment=group.find(f"fragment[@id='{ids['fragment']}']") if ids['fragment'] else None
+        identity=semantic_key(fragment_mol(fragment)) if fragment is not None else None
         current={field:node_text(group.find(f"t[@id='{oid}']")) for field,oid in {'label':ids['label'],**ids['fields']}.items()}
         manual=identity!=record['displayed_identity'] or current!=record['display']
         if new is None:
@@ -184,7 +189,9 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
             conflicts.append({'compound_id':cid,'reason':'group_change_requires_explicit_relayout'});continue
         record['objects']=ids;record['locked']=True
         # Each side is compared to its own baseline (input vs displayed text).
-        desired={'label':new['label'],**{f['column']:field_text(new,f) for f in spec.get('fields',[])}}
+        # Compared as the page reads them: a footnote mark "^b" reads as "b".
+        desired={k:caption_runs(v,bold=k=='label')[0] for k,v in
+                 {'label':new['label'],**{f['column']:field_text(new,f) for f in spec.get('fields',[])}}.items()}
         for field,oid in {'label':ids['label'],**ids['fields']}.items():
             upstream_changed=(new['label']!=old_input['label']) if field=='label' else new['values'][field]!=old_input['values'][field]
             node=group.find(f"t[@id='{oid}']")
@@ -198,6 +205,19 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
             elif current[field]!=record['display'][field]:
                 changes.append({'compound_id':cid,'field':field,'change':'manual_text_preserved'})
             record['display'][field]=node_text(node)
+        # A line that was empty when the page was laid out (an optional note) has no text
+        # object to update: adding one needs room, which only a new layout can make.
+        added=[f['column'] for f in spec.get('fields',[])
+               if f['column'] not in ids['fields'] and desired[f['column']]!='']
+        if added:
+            conflicts.append({'compound_id':cid,'fields':added,'reason':'new_line_requires_explicit_relayout'});continue
+        if (new.get('drawn_with') or '')!=(old_input.get('drawn_with') or '') or (
+                fragment is None and new['identity']!=old_input['identity']):
+            # Joining or leaving a shared structure, or giving it a different one, redraws cells.
+            conflicts.append({'compound_id':cid,'reason':'drawn_with_requires_explicit_relayout'});continue
+        if (new.get('secondary_of') or '')!=(old_input.get('secondary_of') or ''):
+            # Moving a compound into or out of another's cell changes the grid.
+            conflicts.append({'compound_id':cid,'reason':'secondary_requires_explicit_relayout'});continue
         if new['identity']!=old_input['identity']:
             if identity!=record['displayed_identity'] and identity!=new['identity']:
                 conflicts.append({'compound_id':cid,'reason':'both_sides_changed_structure'});continue
@@ -222,6 +242,19 @@ def update_pages(base_project,base_dir,records,spec,spec_dir,stage):
         project['pages'].extend(pages);project['compounds'].update(compounds)
         roots.extend(ET.parse(Path(stage)/p['file']).getroot() for p in pages)
         changes.extend({'compound_id':r['compound_id'],'change':'added_on_new_page'} for r in additions)
+    # Pages are cropped to their content when laid out; text that grew in an update widens
+    # or lengthens its page (never past the figure size) instead of running off it.
+    limit_w,limit_h=style['width_mm']*72/25.4,style['height_mm']*72/25.4
+    for index,root in enumerate(roots[:len(base_project['pages'])]):
+        page=project['pages'][index]; native_page=root.find('page')
+        boxes=[b for b in (bounds(n,style) for n in native_page.iter() if n.tag in {'t','fragment'}) if b]
+        if not boxes:continue
+        width=min(limit_w,max(page['width_pt'],math.ceil(max(b[2] for b in boxes)+16)))
+        height=min(limit_h,max(page['height_pt'],math.ceil(max(b[3] for b in boxes)+16)))
+        if (width,height)!=(page['width_pt'],page['height_pt']):
+            page['width_pt'],page['height_pt']=width,height
+            for element in (root,native_page):element.set('BoundingBox',f'0 0 {width:g} {height:g}')
+            changes.append({'page':index+1,'change':'page_grown_to_content'})
     for index,root in enumerate(roots):
         ET.ElementTree(root).write(Path(stage)/project['pages'][index]['file'],encoding='utf-8',xml_declaration=True)
     return project,roots,conflicts,changes,sources

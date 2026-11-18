@@ -1,0 +1,73 @@
+{
+ "kind": "scope",
+ "title": "Substrate scope",
+ "conditions": "Standard conditions",
+ "footnotes": [
+  "a Isolated yield.",
+  "b Minor regioisomer, isolated separately."
+ ],
+ "fields": [
+  {
+   "key": "yield",
+   "label": "Yield"
+  }
+ ],
+ "highlight_varying": true,
+ "species": [
+  {
+   "id": "3a",
+   "smiles": "COc1ccc(-c2ccccc2)cc1",
+   "label": "3a",
+   "group": "para-Substituted",
+   "values": {
+    "yield": "92%"
+   }
+  },
+  {
+   "id": "3b",
+   "smiles": "Cc1ccc(-c2ccccc2)cc1",
+   "label": "3b",
+   "group": "para-Substituted",
+   "values": {
+    "yield": "88%"
+   }
+  },
+  {
+   "id": "3c",
+   "smiles": "Clc1ccc(-c2ccccc2)cc1",
+   "label": "3c",
+   "group": "para-Substituted",
+   "values": {
+    "yield": "83%"
+   }
+  },
+  {
+   "id": "3d",
+   "smiles": "COc1cccc(-c2ccccc2)c1",
+   "label": "3d",
+   "group": "meta-Substituted",
+   "values": {
+    "yield": "76%"
+   }
+  },
+  {
+   "id": "3d'",
+   "smiles": "COc1ccc(-c2ccccc2)c(C)c1",
+   "label": "3d'",
+   "group": "meta-Substituted",
+   "secondary_of": "3d",
+   "values": {
+    "yield": "9%b"
+   }
+  },
+  {
+   "id": "3e",
+   "smiles": "Cc1cccc(-c2ccccc2)c1",
+   "label": "3e",
+   "group": "meta-Substituted",
+   "values": {
+    "yield": "81%"
+   }
+  }
+ ]
+}

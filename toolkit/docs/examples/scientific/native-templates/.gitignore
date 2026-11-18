@@ -1,0 +1,6 @@
+# Clipware stationery converted from the ChemDraw installation is ChemDraw-licensed.
+# Keep it (and the thumbnail caches ChemDraw leaves beside it) out of the repository;
+# only the figures rendered from it are committed.
+*.cdxml
+*.ctr
+*.cdx

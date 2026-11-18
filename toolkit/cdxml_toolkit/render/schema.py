@@ -21,6 +21,9 @@ class StructureRef:
     cdxml_id: Optional[int] = None   # existing fragment ID
     label: Optional[str] = None      # compound number displayed below (e.g. "1")
     orientation: Optional[str] = None  # "flip_horizontal", "flip_vertical" or "rotate_180"
+    # Dashed outlines drawn over this structure later, [{atoms (0-based SMILES indices), shape}]:
+    # the layout keeps arrows and captions off them.
+    overlays: tuple = ()
 
 
 @dataclass
@@ -60,10 +63,10 @@ class StepRunArrows:
 
 VALID_LAYOUTS = frozenset({
     "linear", "sequential", "divergent", "stacked-rows",
-    "numbered-parallel", "convergent",
+    "numbered-parallel", "convergent", "fan",
 })
 
-VALID_WRAPS = frozenset({"repeat", "serpentine", "none"})
+VALID_WRAPS = frozenset({"repeat", "continue", "serpentine", "none"})
 
 VALID_ARROW_STYLES = frozenset({"solid", "dashed", "failed"})
 
@@ -83,7 +86,7 @@ class SchemeDescriptor:
     structures: dict[str, StructureRef] = field(default_factory=dict)
     steps: list[StepDescriptor] = field(default_factory=list)
     layout: str = "linear"           # layout pattern keyword
-    wrap: str = "repeat"             # "repeat", "serpentine", "none"
+    wrap: str = "repeat"             # "repeat", "continue", "serpentine", "none"
     steps_per_row: Optional[int] = None  # one row if omitted, unless max_row_width is set
     max_row_width: Optional[float] = None  # pt; picks steps_per_row so each row fits
     gap_scale: float = 1.0           # multiplies the gaps between structures and arrows

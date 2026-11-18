@@ -146,5 +146,6 @@
   "kind": "scope",
   "species": 12,
   "pages": 1
- }
+ },
+ "note": "One page at the ACS 10 pt type: the scope cell spends its height on the structure and its lines rather than on padding (P13 in docs/journal-figure-parity.md). Before that the grid packed 10 cells on page 1 and 2 on page 2."
 }

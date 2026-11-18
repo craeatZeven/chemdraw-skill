@@ -6,9 +6,65 @@ import argparse
 import inspect
 import json
 from pathlib import Path
+import types
 import typing
 
 from .tool_registry import _resource_class, build_registry
+
+
+class _Shown:
+    """An annotation already written out; inspect prints its repr verbatim."""
+
+    def __init__(self, text: str):
+        self.text = text
+
+    def __repr__(self) -> str:
+        return self.text
+
+
+def _annotation(hint) -> str:
+    """One spelling of a type on every Python: unions as ``A | B``.
+
+    Python 3.10 and 3.13 print ``Optional[str]``, ``Union[...]`` and string annotations
+    differently, so a reference generated on one read as stale on the other.
+    """
+    if hint is type(None) or hint is None:
+        return "None"
+    if hint is Ellipsis:
+        return "..."
+    if hint is typing.Any:
+        return "typing.Any"  # as str() writes it inside a generic, the spelling already in the reference
+    if isinstance(hint, str):
+        return hint
+    origin, args = typing.get_origin(hint), typing.get_args(hint)
+    if origin is typing.Union or (getattr(types, "UnionType", None) is not None and origin is types.UnionType):
+        return " | ".join(_annotation(arg) for arg in args)
+    if origin is not None and args and origin is not typing.Literal:
+        base = inspect.formatannotation(hint).split("[", 1)[0]
+        return f"{base}[{', '.join(_annotation(arg) for arg in args)}]"
+    return inspect.formatannotation(hint)
+
+
+def _hinted(function, name: str, hints: dict, raw: dict):
+    """Annotation for one parameter, without the Optional a 3.10 interpreter invents.
+
+    ``typing.get_type_hints`` on Python 3.10 wraps a parameter whose default is ``None`` in
+    ``Optional[...]``; later versions do not. The wrapper is not in the source, so it made a
+    reference generated here read as stale elsewhere. Drop it when the annotation itself
+    never mentioned None.
+    """
+    hint = hints.get(name, raw.get(name))
+    original = raw.get(name)
+    if original is None:
+        return hint
+    text = original if isinstance(original, str) else inspect.formatannotation(original)
+    if "None" in text or "Optional" in text:
+        return hint
+    if typing.get_origin(hint) is typing.Union:
+        kept = [argument for argument in typing.get_args(hint) if argument is not type(None)]
+        if len(kept) == 1:
+            return kept[0]
+    return hint
 
 
 def _signature(function) -> str:
@@ -17,14 +73,18 @@ def _signature(function) -> str:
     except Exception:
         hints = getattr(function, "__annotations__", {})
     signature = inspect.signature(function)
+
+    def shown(value):
+        return value if value is inspect.Parameter.empty else _Shown(_annotation(value))
+    raw = getattr(function, "__annotations__", {})
     parameters = [
-        parameter.replace(annotation=hints.get(parameter.name, parameter.annotation))
+        parameter.replace(annotation=shown(_hinted(function, parameter.name, hints, raw)))
         for parameter in signature.parameters.values()
     ]
     return str(
         signature.replace(
             parameters=parameters,
-            return_annotation=hints.get("return", signature.return_annotation),
+            return_annotation=shown(hints.get("return", signature.return_annotation)),
         )
     )
 

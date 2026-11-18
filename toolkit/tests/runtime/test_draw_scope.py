@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -213,3 +214,158 @@ def test_the_scope_checks_are_the_publication_checks(tmp_path):
 
 def test_the_brief_validator_names_the_scope_keys():
     assert {"fields", "conditions", "footnotes", "width_mm", "height_mm"} <= figure_scope.SCOPE_KEYS
+
+
+# --- the varying group ----------------------------------------------------------------------
+
+def _coloured_atoms(root, colour):
+    """Element symbols (or 'C' for a bare carbon) of the atoms and bond ends drawn in ``colour``."""
+    table = [tuple(round(float(c.get(k)) * 255) for k in "rgb") for c in root.find("colortable").findall("color")]
+    want = tuple(int(colour[i:i + 2], 16) for i in (1, 3, 5))
+    index = str(table.index(want) + 2) if want in table else None
+    nodes = {n.get("id"): n for n in root.iter("n")}
+    atoms = [n for n in nodes.values() if n.get("color") == index]
+    bonds = [b for b in root.iter("b") if b.get("color") == index]
+    return atoms, bonds, nodes
+
+
+def test_highlight_varying_colours_what_differs_from_the_common_core(tmp_path):
+    # BJOC 22-127, scheme 2: the substituent that changes is drawn in a second colour in every
+    # product, so the reader need not compare structures to find it.
+    report = draw_figure(_brief(highlight_varying=True), output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True
+    assert report["highlighted"] == {"3a": 1, "3b": 2, "3c": 1, "3d": 1}  # CH3, OCH3, Cl, F
+    (root,) = _pages(report)
+    atoms, bonds, nodes = _coloured_atoms(root, "#FF6600")
+    assert len(atoms) == 5
+    # Each substituent's bond to the ring is coloured too, so a methyl drawn as a line shows.
+    assert len(bonds) == 5
+    ring = [n for n in nodes.values() if n.get("Element") in (None, "6") and n.get("color") is None]
+    assert len(ring) >= 24  # the four benzene rings stay black
+
+
+def test_a_species_own_colours_win_over_the_highlight(tmp_path):
+    brief = _brief(highlight_varying="#C62828")
+    brief["species"][2]["atom_colors"] = [{"atoms": [0], "color": "#336699"}]
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True and "3c" not in report["highlighted"]
+    (root,) = _pages(report)
+    assert len(_coloured_atoms(root, "#C62828")[0]) == 4
+    assert len(_coloured_atoms(root, "#336699")[0]) == 1
+
+
+def test_highlight_varying_is_checked():
+    for value in ("yes", "#FF66", 3):
+        report = draw_figure(_brief(highlight_varying=value))
+        assert report["ok"] is False and any("highlight_varying" in e for e in report["errors"])
+
+
+def test_highlight_varying_needs_something_in_common(tmp_path):
+    brief = _brief(highlight_varying=True)
+    brief["species"] = [{"id": "x", "smiles": "CCO", "label": "1", "values": {"yield": "1%"}},
+                        {"id": "y", "smiles": "c1ccncc1", "label": "2", "values": {"yield": "2%"}}]
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True and report["highlighted"] == {}
+    assert any("highlight_varying" in w for w in report["warnings"])
+
+
+def test_a_secondary_product_is_drawn_beside_its_main_product(tmp_path):
+    brief = _brief()
+    brief["species"].insert(1, {"id": "3a-minor", "smiles": "Cc1cccc(C)c1", "label": "3a'",
+                                "values": {"yield": "9%"}, "secondary_of": "3a"})
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True and report["readback"]["status"] == "matched"
+    assert report["checks_passed"] is True
+    (root,) = _pages(report)
+    table = [tuple(round(float(c.get(k)) * 255) for k in "rgb") for c in root.find("colortable").findall("color")]
+    grey = str(table.index((0x80, 0x80, 0x80)) + 2)
+    assert sum(f.get("color") == grey for f in root.iter("fragment")) == 1
+
+
+def test_secondary_of_must_name_another_species():
+    brief = _brief()
+    brief["species"][0]["secondary_of"] = "nobody"
+    report = draw_figure(brief)
+    assert report["ok"] is False and any("secondary_of" in e for e in report["errors"])
+
+
+def test_a_secondary_product_does_not_make_later_ids_look_duplicated():
+    brief = {"kind": "scope", "fields": [{"key": "yield"}], "species": [
+        {"id": "3a", "smiles": "CCO", "values": {"yield": "90%"}},
+        {"id": "3a'", "smiles": "CCCO", "secondary_of": "3a", "values": {"yield": "5%"}},
+        {"id": "3b", "smiles": "CCN", "values": {"yield": "80%"}},
+    ]}
+    assert figure_scope._validate(brief) == []
+
+
+def test_a_definition_is_written_to_its_own_unnamed_line(tmp_path):
+    brief = _brief()
+    brief["species"][0]["definition"] = "Alk = C7H15"
+    report = draw_figure(brief, output_path=str(tmp_path / "family"))
+    assert report["ok"], report
+    root = ET.parse(report["pages"][0]["path"]).getroot()   # a scope brief writes a directory, not a file
+    lines = ["".join(s.text or "" for s in t.iter("s")) for t in root.iter("t")]
+    assert "Alk = C7H15" in lines
+    assert not any(line.startswith("definition") or line == "—" for line in lines)
+
+
+def test_a_defined_group_is_drawn_as_its_label_and_reads_back_whole(tmp_path):
+    # BJOC 22-127 scheme 2: 3p and 3q draw "NH-Alk" and say under it what Alk is, instead of a
+    # heptyl or octadecyl chain that would widen the cell.
+    brief = {"kind": "scope", "fields": ["yield"], "species": [
+        {"id": "3p", "smiles": "CCCCCCCNC(=O)c1nc2ccccc2s1", "label": "3p", "definition": "Alk = C7H15",
+         "values": {"yield": "63%"}},
+        {"id": "3q", "smiles": "CCCCCCCCCCCCCCCCCCNC(=O)c1nc2ccccc2s1", "label": "3q",
+         "definition": "Alk = C18H37", "values": {"yield": "60%"}},
+        {"id": "3a", "smiles": "Cc1ccc(NC(=O)c2nc3ccccc3s2)cc1", "label": "3a", "values": {"yield": "64%"}}]}
+    report = draw_figure(brief, output_path=str(tmp_path / "alk"))
+    assert report["ok"], report
+    assert report["readback"]["status"] == "matched"
+    root = ET.parse(report["pages"][0]["path"]).getroot()
+    labelled = [n for n in root.iter("n") if n.get("NodeType") == "Fragment"
+                and "".join(n.find("t").itertext()).strip() == "Alk"]
+    assert len(labelled) == 2
+    project = json.loads((tmp_path / "alk" / "project.json").read_text(encoding="utf-8"))
+    widths = {c: project["compounds"][c]["bbox"][2] - project["compounds"][c]["bbox"][0] for c in ("3p", "3q", "3a")}
+    # The shared structure no longer widens the cell; the caption does — "3q, Alk = C18H37, 60%"
+    # is longer than "3a, 88%". Measured 124.55 against 104.05, so 20 pt was 0.5 pt too tight.
+    assert widths["3q"] <= widths["3a"] + 24
+
+
+def test_a_species_drawn_with_another_lists_its_line_under_that_structure(tmp_path):
+    # BJOC 22-127, fig. 3: 3q (Alk = C18H37) shares 3p's NH-Alk structure and adds one line.
+    brief = _brief()
+    brief["species"][0]["definition"] = "Alk = C7H15"
+    brief["species"].insert(1, {"id": "3a-long", "smiles": "CCCCCCCCCCc1ccccc1", "label": "3e",
+                                "definition": "Alk = C18H37", "values": {"yield": "60%"}, "drawn_with": "3a"})
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True, report
+    assert report["readback"]["status"] == "matched" and report["checks_passed"] is True
+    (root,) = _pages(report)
+    assert len(list(root.iter("fragment"))) == 4   # 3a, 3b, 3c, 3d; 3e has none of its own
+    lines = ["".join(s.text or "" for s in t.iter("s")) for t in root.iter("t")]
+    assert "3e" in lines and "Alk = C18H37" in lines
+
+
+@pytest.mark.parametrize("drawn_with, message", [
+    ("nobody", "another species"), ("3a", "drawn with its own"), ])
+def test_drawn_with_must_name_a_species_drawn_on_its_own(drawn_with, message):
+    brief = _brief()
+    brief["species"][1]["drawn_with"] = "3a"
+    brief["species"][2]["drawn_with"] = drawn_with if drawn_with == "nobody" else "3b"
+    report = draw_figure(brief)
+    assert report["ok"] is False and any(message in e for e in report["errors"]), report["errors"]
+
+
+def test_header_r_marks_share_the_highlight_colour(tmp_path):
+    # BJOC 22-127 scheme 2: R1 and R2 over the grid in the colour of what varies in it.
+    brief = _brief(highlight_varying=True, header={
+        "substrates": [{"smiles": "c1ccc([*:1])cc1", "label": "1"}],
+        "products": [{"smiles": "Cc1ccc([*:1])cc1", "label": "3"}]})
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is True, report
+    (root,) = _pages(report)
+    table = [tuple(round(float(c.get(k)) * 255) for k in "rgb") for c in root.find("colortable").findall("color")]
+    orange = str(table.index((0xFF, 0x66, 0x00)) + 2)
+    marks = [n for n in root.iter("n") if n.get("NodeType") == "GenericNickname"]
+    assert marks and all(n.get("color") == orange for n in marks)

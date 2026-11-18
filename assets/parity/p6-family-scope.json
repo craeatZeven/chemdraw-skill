@@ -1,0 +1,56 @@
+{
+ "kind": "scope",
+ "title": "Substrate scope",
+ "conditions": "Pd2(dba)3 (2 mol%), K3PO4, H2O/THF",
+ "fields": [
+  {
+   "key": "yield",
+   "label": "Yield"
+  }
+ ],
+ "species": [
+  {
+   "id": "3o",
+   "smiles": "Cc1ccc(-c2ccccc2)cc1",
+   "label": "3o",
+   "values": {
+    "yield": "88%"
+   }
+  },
+  {
+   "id": "3p",
+   "smiles": "CCCCCCCc1ccc(-c2ccccc2)cc1",
+   "label": "3p",
+   "definition": "Alk = C7H15",
+   "values": {
+    "yield": "63%"
+   }
+  },
+  {
+   "id": "3q",
+   "smiles": "CCCCCCCCCCCCCCCCCCc1ccc(-c2ccccc2)cc1",
+   "label": "3q",
+   "definition": "Alk = C18H37",
+   "values": {
+    "yield": "60%"
+   },
+   "drawn_with": "3p"
+  },
+  {
+   "id": "3r",
+   "smiles": "COc1ccc(-c2ccccc2)cc1",
+   "label": "3r",
+   "values": {
+    "yield": "91%"
+   }
+  },
+  {
+   "id": "3s",
+   "smiles": "Clc1ccc(-c2ccccc2)cc1",
+   "label": "3s",
+   "values": {
+    "yield": "84%"
+   }
+  }
+ ]
+}

@@ -9,6 +9,7 @@ dialog-only entries; they are recorded as popups.
 
 from __future__ import annotations
 
+from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import gc
 import json
 import os
@@ -89,7 +90,7 @@ def extract_live(*, verified_on: Optional[str] = None) -> dict[str, Any]:
     with native_resource_lock("chemdraw_com", NATIVE_LOCK_SECONDS):
         pythoncom.CoInitialize()
         try:
-            application = win32.DispatchEx("ChemDraw.Application")
+            application = win32.DispatchEx(chemdraw_progid())
             try:
                 raw = _walk(application)
             finally:

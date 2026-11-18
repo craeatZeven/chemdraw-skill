@@ -216,13 +216,22 @@ def test_two_arms_that_merge_are_drawn_as_a_convergent_route(tmp_path):
     assert len(rows) == 3
 
 
-def test_one_starting_material_with_several_products_is_drawn_as_a_divergent_scheme(tmp_path):
+def test_one_starting_material_with_two_products_is_drawn_as_a_fan(tmp_path):
+    # BJOC 22-103 figure 1 (c): one compound taken two ways, an arrow to each side.
     report = draw_figure(DIVERGENT, output_path=str(tmp_path / "d.cdxml"))
+
+    assert report["ok"] is True
+    assert report["layout"] == "fan"
+    assert report["readback"]["status"] == "matched"
+    assert report["lint"]["issues"] == []
+
+
+def test_the_stacked_divergent_layout_can_still_be_asked_for(tmp_path):
+    report = draw_figure(_brief(DIVERGENT, layout="divergent"), output_path=str(tmp_path / "d.cdxml"))
 
     assert report["ok"] is True
     assert report["layout"] == "divergent"
     assert report["readback"]["status"] == "matched"
-    assert report["lint"]["issues"] == []
 
 
 def test_steps_given_out_of_order_are_drawn_in_route_order(tmp_path):
@@ -348,8 +357,8 @@ def test_remaining_issues_after_the_relayout_are_reported_not_hidden(tmp_path, m
 def test_the_readback_catches_a_missing_structure(tmp_path, monkeypatch):
     real = figure_draw.document_inventory
 
-    def lossy(path):
-        inventory = real(path)
+    def lossy(path, **kwargs):   # the caller passes like= now; a stub has to accept it
+        inventory = real(path, **kwargs)
         inventory.pop(next(iter(inventory)))
         return inventory
 

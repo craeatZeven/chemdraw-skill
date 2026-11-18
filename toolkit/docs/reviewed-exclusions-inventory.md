@@ -11,12 +11,12 @@
 
 ## `catalog.cdxml`
 
-- **function**, line 100: `binary_names(paths: Iterable[Path], names: Iterable[str]) -> set[str]` - Names that occur as standalone ASCII strings in the given binaries.
-- **function**, line 112: `build_catalog(observed: dict[str, Any], *, binary_names: set[str], candidates: Iterable[str] = CANDIDATES, fixtures: Optional[list[dict[str, Any]]] = None, verified_on: str = 'unverified') -> dict[str, Any]` - No public docstring in the audited version.
-- **function**, line 267: `dump(catalog: dict[str, Any]) -> str` - No public docstring in the audited version.
-- **function**, line 244: `extract_live(workdir, *, verified_on: Optional[str] = None) -> dict[str, Any]` - Scan the CDXML ChemDraw installs, plus what it writes for the bundled CDX files and fixtures.
-- **function**, line 54: `scan_documents(paths: Iterable[Path]) -> dict[str, Any]` - Collect elements, attributes, nesting and value shapes from CDXML files.
-- **function**, line 41: `summarise_values(values: set[str]) -> dict[str, Any]` - Describe the shape of an attribute's observed values without keeping free text.
+- **function**, line 101: `binary_names(paths: Iterable[Path], names: Iterable[str]) -> set[str]` - Names that occur as standalone ASCII strings in the given binaries.
+- **function**, line 113: `build_catalog(observed: dict[str, Any], *, binary_names: set[str], candidates: Iterable[str] = CANDIDATES, fixtures: Optional[list[dict[str, Any]]] = None, verified_on: str = 'unverified') -> dict[str, Any]` - No public docstring in the audited version.
+- **function**, line 268: `dump(catalog: dict[str, Any]) -> str` - No public docstring in the audited version.
+- **function**, line 245: `extract_live(workdir, *, verified_on: Optional[str] = None) -> dict[str, Any]` - Scan the CDXML ChemDraw installs, plus what it writes for the bundled CDX files and fixtures.
+- **function**, line 55: `scan_documents(paths: Iterable[Path]) -> dict[str, Any]` - Collect elements, attributes, nesting and value shapes from CDXML files.
+- **function**, line 42: `summarise_values(values: set[str]) -> dict[str, Any]` - Describe the shape of an attribute's observed values without keeping free text.
 
 ## `catalog.chemscript`
 
@@ -45,10 +45,10 @@
 
 ## `catalog.menu`
 
-- **function**, line 24: `build_catalog(raw: list[dict[str, Any]], *, verified_on: str = 'unverified') -> dict[str, Any]` - Turn the raw ``[{menu, items: [{caption, command_id}]}]`` walk into the committed shape.
-- **function**, line 108: `dump(catalog: dict[str, Any]) -> str` - No public docstring in the audited version.
-- **function**, line 82: `extract_live(*, verified_on: Optional[str] = None) -> dict[str, Any]` - Start a private ChemDraw (Windows), read its menus and quit it.
-- **function**, line 57: `find_command(catalog: dict[str, Any], caption: str) -> Optional[tuple[str, int]]` - Return ``(menu caption, command id)`` for a menu item caption, ignoring case.
+- **function**, line 25: `build_catalog(raw: list[dict[str, Any]], *, verified_on: str = 'unverified') -> dict[str, Any]` - Turn the raw ``[{menu, items: [{caption, command_id}]}]`` walk into the committed shape.
+- **function**, line 109: `dump(catalog: dict[str, Any]) -> str` - No public docstring in the audited version.
+- **function**, line 83: `extract_live(*, verified_on: Optional[str] = None) -> dict[str, Any]` - Start a private ChemDraw (Windows), read its menus and quit it.
+- **function**, line 58: `find_command(catalog: dict[str, Any], caption: str) -> Optional[tuple[str, int]]` - Return ``(menu caption, command id)`` for a menu item caption, ignoring case.
 
 ## `catalog.recipes`
 
@@ -62,6 +62,24 @@
 
 - **function**, line 345: `render_all(catalogs: dict[str, dict[str, Any]] | None = None, recipes: list[dict[str, Any]] | None = None, classification: dict[str, Any] | None = None) -> dict[str, str]` - No public docstring in the audited version.
 
+## `cdxml_check`
+
+- **function**, line 284: `arrows_collide(source) -> list[str]` - Pairs of curved arrows whose heads come within 6 pt or whose bodies within 3 pt.
+- **function**, line 358: `check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | None | str = 'profile', allow_sizes: Iterable[float] = (), bond_tolerance: float = 0.03, ignore: Iterable[str] = ()) -> dict[str, Any]` - Check one CDXML file or text. Returns ``{"ok", "errors", "warnings", "summary"}``.
+- **function**, line 59: `normalize_palette(palette: Iterable[str] | None)` - No public docstring in the audited version.
+- **function**, line 333: `overlays_collide(source) -> list[str]` - Arrows within 3 pt of a dashed overlay (the gap ``arrows_collide`` allows between two arrows) and captions that the overlay's line runs through.
+- **function**, line 39: `pages_needed(width, height)` - WidthPages and HeightPages that keep a drawing of this size from wrapping its text.
+- **function**, line 190: `text_over_ink(source, inset: float = 1.0) -> list[str]` - Captions (not atom labels) that a line, arrow, curve or another caption runs through.
+
+## `cdxml_compose`
+
+- **function**, line 283: `add_ring_circles(source, output = None, *, fragment_ids: Iterable[str] | None = None, ratio: float = 0.62) -> dict[str, Any]` - Redraw Kekule aromatic rings with a circle.
+- **function**, line 53: `content_box(elements: Iterable[ET.Element])` - Bounding box ``(x1, y1, x2, y2)`` of everything positioned inside ``elements``.
+- **function**, line 106: `merge_cdxml(parts: Sequence[Mapping[str, Any]], output = None, *, gap: float = 20.0, margin: float = 12.0) -> dict[str, Any]` - Put several CDXML drawings on one page.
+- **function**, line 34: `parse_cdxml(source) -> ET.Element` - Root element of a CDXML file path or CDXML text.
+- **function**, line 45: `serialize(root: ET.Element) -> str` - No public docstring in the audited version.
+- **function**, line 71: `translate(elements: Iterable[ET.Element], dx: float, dy: float) -> None` - Move everything inside ``elements`` by ``(dx, dy)``.
+
 ## `characterization`
 
 - **function**, line 60: `atoms_mass(mol) -> float` - Sum of the monoisotopic (or labelled-isotope) atom masses, without any electron correction.
@@ -74,13 +92,16 @@
 
 ## `chemistry_semantics`
 
-- **function**, line 135: `document_inventory(path)` - No public docstring in the audited version.
-- **function**, line 68: `read_fragments(value)` - Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order.
-- **function**, line 114: `read_molecules(value)` - No public docstring in the audited version.
+- **function**, line 189: `document_inventory(path, like = None)` - Counter of the semantic keys of a document's molecules (see ``inventory_keys`` for ``like``).
+- **function**, line 103: `inventory_keys(mols, like = None)` - Semantic keys of drawn molecules; with ``like`` (the keys expected), a molecule that is one of them drawn with a geometry its source left open counts as that key.
+- **function**, line 77: `loose_key(mol)` - The semantic key without double-bond geometry (E/Z).
+- **function**, line 120: `read_fragments(value)` - Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order.
+- **function**, line 166: `read_molecules(value)` - No public docstring in the audited version.
 - **function**, line 36: `require_supported(mol, *, allow_radicals: bool = False, allow_dative: bool = True, allow_atropisomers: bool = True)` - No public docstring in the audited version.
+- **function**, line 87: `same_compound(source, drawn)` - "exact", "drawn_geometry" or None: whether a drawn molecule is the source compound.
 - **function**, line 10: `semantic_key(mol)` - No public docstring in the audited version.
-- **function**, line 139: `validate_document_preserved(source, output)` - No public docstring in the audited version.
-- **function**, line 118: `validate_fragment(smiles, xml, *, allow_radicals: bool = True)` - No public docstring in the audited version.
+- **function**, line 195: `validate_document_preserved(source, output)` - No public docstring in the audited version.
+- **function**, line 170: `validate_fragment(smiles, xml, *, allow_radicals: bool = True)` - No public docstring in the audited version.
 
 ## `engines.accel`
 
@@ -332,13 +353,13 @@
 
 ## `mcp_runtime.figure_draw`
 
-- **function**, line 618: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
-- **function**, line 584: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
-- **function**, line 592: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
-- **function**, line 734: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
-- **function**, line 573: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
-- **function**, line 608: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
-- **function**, line 599: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
+- **function**, line 657: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
+- **function**, line 623: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
+- **function**, line 631: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
+- **function**, line 786: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
+- **function**, line 612: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
+- **function**, line 647: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
+- **function**, line 638: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
 
 ## `mcp_runtime.figure_editing`
 
@@ -347,40 +368,51 @@
 
 ## `mcp_runtime.figure_house`
 
-- **function**, line 76: `add_highlight_fills(brief: dict, grounded: list[dict], house: HouseStyle | None) -> str | None` - Ask the ring_fills decoration for the largest ring of each final product.
-- **function**, line 768: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
-- **function**, line 265: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
-- **function**, line 316: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
-- **function**, line 210: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
-- **function**, line 856: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
-- **function**, line 809: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
-- **function**, line 581: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
-- **function**, line 502: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
-- **function**, line 521: `condition_text(line: Any) -> str` - The plain text of a condition line.
-- **function**, line 66: `final_products(brief: Mapping) -> list[str]` - No public docstring in the audited version.
-- **function**, line 37: `format_yield(text: str, template: str | None) -> str` - ``template`` filled with the number of a yield such as "85%"; other text is kept.
-- **function**, line 202: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
-- **function**, line 689: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
-- **function**, line 467: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
-- **function**, line 57: `split_conditions(above: list[str], below: list[str], house: HouseStyle | None) -> tuple[list, list]` - No public docstring in the audited version.
-- **function**, line 45: `step_yield(step: Mapping, house: HouseStyle | None) -> str | None` - The yield text drawn under the arrow, or None when the house style moves it.
+- **function**, line 78: `add_highlight_fills(brief: dict, grounded: list[dict], house: HouseStyle | None) -> str | None` - Ask the ring_fills decoration for the largest ring of each final product.
+- **function**, line 779: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
+- **function**, line 275: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
+- **function**, line 937: `apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - A dashed outline around one fragment in every structure that carries it.
+- **function**, line 1051: `apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Draw each species' generic rings: a dashed open arc through two bonded atoms that stands for an unspecified ring fused there (BJOC 22-125 scheme 4), on every drawing of it.
+- **function**, line 327: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
+- **function**, line 220: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
+- **function**, line 1122: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
+- **function**, line 820: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
+- **function**, line 592: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
+- **function**, line 513: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
+- **function**, line 532: `condition_text(line: Any) -> str` - The plain text of a condition line.
+- **function**, line 68: `final_products(brief: Mapping) -> list[str]` - No public docstring in the audited version.
+- **function**, line 39: `format_yield(text: str, template: str | None) -> str` - ``template`` filled with the number of a yield such as "85%"; other text is kept.
+- **function**, line 987: `generic_ring_errors(entry: Mapping) -> list[str]` - Problems with a species' generic rings, for the brief check.
+- **function**, line 1031: `generic_ring_marks(entry: Mapping, smiles: str) -> list[dict]` - [{atoms, shape "ring", away, members}] for a species' generic rings, checked against its SMILES: both atoms exist and are bonded. ``away`` are the atoms beside them, which the ring is drawn away from.
+- **function**, line 212: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
+- **function**, line 871: `overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]` - Problems with the brief's overlays, for the brief check.
+- **function**, line 902: `overlay_matches(brief: Mapping, grounded: list[dict]) -> tuple[dict[str, list[dict]], list[str]]` - The atoms each overlay marks, by species: {id: [{atoms, shape, fragment}]}, and warnings.
+- **function**, line 1103: `paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]` - Colour the R marks of a scope's general reaction like what varies in the grid below (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents). Marks are generic nodes outside every compound group; the R and its raised number are both painted. Returns the page and how many marks were painted.
+- **function**, line 700: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
+- **function**, line 478: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
+- **function**, line 59: `split_conditions(above: list[str], below: list[str], house: HouseStyle | None) -> tuple[list, list]` - No public docstring in the audited version.
+- **function**, line 47: `step_yield(step: Mapping, house: HouseStyle | None) -> str | None` - The yield text drawn under the arrow, or None when the house style moves it.
 
 ## `mcp_runtime.figure_lint`
 
-- **function**, line 306: `lint_cdxml(cdxml_text: str, max_width: Optional[float] = None) -> List[Dict[str, Any]]` - Return a list of issues; an empty list means the geometry checks passed.
+- **function**, line 308: `lint_cdxml(cdxml_text: str, max_width: Optional[float] = None) -> List[Dict[str, Any]]` - Return a list of issues; an empty list means the geometry checks passed.
 
 ## `mcp_runtime.figure_mechanism`
 
-- **function**, line 645: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+- **function**, line 947: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+
+## `mcp_runtime.figure_panels`
+
+- **function**, line 271: `draw_panels(brief: dict, output_path: str | None, render: bool) -> dict` - Draw each panel with draw_figure, then stack them under boxed titles on one page.
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 175: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 366: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_tools`
 
-- **function**, line 1468: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
-- **function**, line 608: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
+- **function**, line 1510: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
+- **function**, line 632: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
 - **function**, line 165: `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict` - Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs, r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like, enumerate_markush.
 
 ## `mcp_runtime.figure_validation`
@@ -392,9 +424,9 @@
 
 ## `mcp_runtime.generate_reference`
 
-- **function**, line 32: `manifest(profile: str = 'full') -> dict` - No public docstring in the audited version.
-- **function**, line 57: `render_markdown(profile: str = 'full') -> str` - No public docstring in the audited version.
-- **function**, line 92: `render_reference(profile: str = 'full') -> str` - Signature reference used by the Skill's catalog checks.
+- **function**, line 92: `manifest(profile: str = 'full') -> dict` - No public docstring in the audited version.
+- **function**, line 117: `render_markdown(profile: str = 'full') -> str` - No public docstring in the audited version.
+- **function**, line 152: `render_reference(profile: str = 'full') -> str` - Signature reference used by the Skill's catalog checks.
 
 ## `mcp_runtime.install_decimer_models`
 
@@ -408,7 +440,7 @@
 
 ## `mcp_runtime.live_chemdraw`
 
-- **function**, line 389: `live_chemdraw_session(action: str = 'status', *, cdxml: str = '', smiles: str = '', output_path: str = '') -> dict[str, Any]` - Interact non-destructively with an already-open user-facing desktop ChemDraw window.
+- **function**, line 390: `live_chemdraw_session(action: str = 'status', *, cdxml: str = '', smiles: str = '', output_path: str = '') -> dict[str, Any]` - Interact non-destructively with an already-open user-facing desktop ChemDraw window.
 
 ## `mcp_runtime.markush_tools`
 
@@ -453,11 +485,11 @@
 
 ## `mcp_runtime.native_renderer`
 
-- **class**, line 36: `NativeRenderError` - ChemDraw rendering failure with a stable public error code.
-- **class**, line 109: `NativeRenderSession` - Lazily acquire and reuse one ChemDraw application for native exports.
-- **method**, line 184: `NativeRenderSession.render(source: str | Path, destination: str | Path, dpi: int = 300) -> str` - No public docstring in the audited version.
-- **function**, line 255: `render_cdxml(source: str | Path, destination: str | Path, *, dpi: int = 300, timeout_seconds: int = 30) -> str` - No public docstring in the audited version.
-- **function**, line 31: `renderer_name() -> str` - The native renderer on this platform, as written in render receipts.
+- **class**, line 37: `NativeRenderError` - ChemDraw rendering failure with a stable public error code.
+- **class**, line 110: `NativeRenderSession` - Lazily acquire and reuse one ChemDraw application for native exports.
+- **method**, line 185: `NativeRenderSession.render(source: str | Path, destination: str | Path, dpi: int = 300) -> str` - No public docstring in the audited version.
+- **function**, line 256: `render_cdxml(source: str | Path, destination: str | Path, *, dpi: int = 300, timeout_seconds: int = 30) -> str` - No public docstring in the audited version.
+- **function**, line 32: `renderer_name() -> str` - The native renderer on this platform, as written in render receipts.
 
 ## `mcp_runtime.object_tools`
 
@@ -527,19 +559,19 @@
 
 ## `mcp_runtime.runtime_diagnostics`
 
-- **function**, line 657: `diagnose_runtime(run_native_probe: bool = False, run_office_probe: bool = False, run_chemscript_probe: bool = False) -> dict[str, Any]` - Report local runtime capabilities; native probes are explicit and temporary.
+- **function**, line 658: `diagnose_runtime(run_native_probe: bool = False, run_office_probe: bool = False, run_chemscript_probe: bool = False) -> dict[str, Any]` - Report local runtime capabilities; native probes are explicit and temporary.
 
 ## `mcp_runtime.runtime_discovery`
 
-- **class**, line 28: `Discovery` - No public docstring in the audited version.
-- **method**, line 32: `Discovery.to_dict() -> dict[str, str]` - No public docstring in the audited version.
-- **function**, line 299: `find_chemdraw(explicit: str | None = None) -> Discovery` - Find ChemDraw from explicit, environment, the macOS application, COM, then common paths.
-- **function**, line 144: `find_python(explicit: str | None = None) -> Discovery` - Find and probe Python using explicit, environment, then implicit paths.
-- **function**, line 185: `find_skill_root(explicit: str | None = None) -> Discovery` - No public docstring in the audited version.
+- **class**, line 29: `Discovery` - No public docstring in the audited version.
+- **method**, line 33: `Discovery.to_dict() -> dict[str, str]` - No public docstring in the audited version.
+- **function**, line 300: `find_chemdraw(explicit: str | None = None) -> Discovery` - Find ChemDraw from explicit, environment, the macOS application, COM, then common paths.
+- **function**, line 145: `find_python(explicit: str | None = None) -> Discovery` - Find and probe Python using explicit, environment, then implicit paths.
+- **function**, line 186: `find_skill_root(explicit: str | None = None) -> Discovery` - No public docstring in the audited version.
 
 ## `mcp_runtime.scientific_tool`
 
-- **function**, line 23: `scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, Any]` - Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr or plot.
+- **function**, line 47: `scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, Any]` - Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr, plot or a diagram.
 
 ## `mcp_runtime.structure_fidelity`
 
@@ -596,14 +628,24 @@
 - **function**, line 319: `load(path: str | Path) -> Document` - No public docstring in the audited version.
 - **function**, line 301: `parse(source: str | bytes) -> Document` - Parse CDXML text or bytes; the root must be ``CDXML``.
 
+## `overlay_geometry`
+
+- **function**, line 196: `arc_clearance(points: str, bonds, ends) -> float` - How close the arc comes to any bond, leaving out the stretch next to its two end atoms.
+- **function**, line 204: `choose_generic_ring(a, b, away = None, members: int = 6, bonds = (), clear_a: float = 0.0, clear_b: float = 0.0) -> tuple[str, float, int]` - The generic-ring arc through a and b that keeps clear of the molecule's other bonds.
+- **function**, line 163: `generic_ring_box(a, b, away = None, members: int = 6) -> tuple[float, float, float, float]` - Box that holds a generic ring's arc, its line included.
+- **function**, line 133: `generic_ring_points(a, b, away = None, members: int = 6, clear_a: float = 0.0, clear_b: float = 0.0) -> str` - CurvePoints of the dashed arc that stands for an unspecified ring fused at the bond a-b.
+- **function**, line 108: `overlay_box(points: list[tuple[float, float]], shape: str = 'circle') -> tuple[float, float, float, float]` - Box that holds the outline drawn around ``points``, its line included.
+- **function**, line 64: `overlay_curve_points(points: list[tuple[float, float]], shape: str = 'circle', radius: float | None = None) -> str` - CurvePoints of a closed outline around ``points``.
+- **function**, line 170: `sample_curve(points: str, per_segment: int = 8) -> list[tuple[float, float]]` - Points along an open (in, anchor, out) curve, as ChemDraw draws it.
+
 ## `publication.data`
 
-- **function**, line 146: `field_text(record, field)` - No public docstring in the audited version.
+- **function**, line 191: `field_text(record, field)` - No public docstring in the audited version.
 - **function**, line 83: `load_records(spec, base)` - No public docstring in the audited version.
 - **function**, line 15: `local_path(base, value)` - No public docstring in the audited version.
 - **function**, line 11: `sha256(path)` - No public docstring in the audited version.
 - **function**, line 36: `table_rows(path, sheet = None)` - No public docstring in the audited version.
-- **function**, line 155: `write_json(path, value)` - No public docstring in the audited version.
+- **function**, line 202: `write_json(path, value)` - No public docstring in the audited version.
 
 ## `publication.house_styles`
 
@@ -621,26 +663,33 @@
 
 ## `publication.layout`
 
-- **function**, line 197: `bounds(node, style)` - No public docstring in the audited version.
-- **function**, line 219: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 111: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
-- **function**, line 25: `font_for(style, size = None)` - No public docstring in the audited version.
-- **function**, line 53: `fragment_mol(fragment)` - No public docstring in the audited version.
-- **function**, line 64: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
-- **function**, line 60: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 215: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 84: `prepare(records, spec)` - No public docstring in the audited version.
-- **function**, line 15: `style_settings(spec)` - No public docstring in the audited version.
-- **function**, line 36: `text_width(value, style, size = None)` - No public docstring in the audited version.
-- **function**, line 41: `wrap(value, width, style)` - No public docstring in the audited version.
+- **function**, line 605: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 121: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
+- **function**, line 635: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 182: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
+- **function**, line 397: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
+- **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
+- **function**, line 257: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
+- **function**, line 269: `header_objects(spec, style, left, top)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, the products with their labels. Returns (objects, bottom, right).
+- **function**, line 152: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
+- **function**, line 220: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
+- **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
+- **function**, line 66: `node_text(node)` - No public docstring in the audited version.
+- **function**, line 631: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 207: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
+- **function**, line 327: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
+- **function**, line 42: `text_width(value, style, size = None, bold = False)` - No public docstring in the audited version.
+- **function**, line 47: `wrap(value, width, style)` - No public docstring in the audited version.
 
 ## `publication.update`
 
 - **function**, line 37: `match_objects(group, record)` - No public docstring in the audited version.
 - **function**, line 16: `matching_group(root, record)` - No public docstring in the audited version.
-- **function**, line 56: `replace_text(node, old, new)` - Preserve unchanged rich runs; single-run labels retain all their style.
-- **function**, line 86: `replacement_fragment(old_fragment, new_smiles, atom_map, stage, root, cid)` - No public docstring in the audited version.
-- **function**, line 151: `update_pages(base_project, base_dir, records, spec, spec_dir, stage)` - No public docstring in the audited version.
+- **function**, line 60: `replace_text(node, old, new)` - Preserve unchanged rich runs; single-run labels retain all their style.
+- **function**, line 90: `replacement_fragment(old_fragment, new_smiles, atom_map, stage, root, cid)` - No public docstring in the audited version.
+- **function**, line 155: `update_pages(base_project, base_dir, records, spec, spec_dir, stage)` - No public docstring in the audited version.
 
 ## `reaction_calculator.annotate`
 
@@ -707,12 +756,12 @@
 
 ## `templates.conformers`
 
-- **function**, line 779: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, str] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage (norbornane, bicyclo_222, adamantane) with CrossingBonds.
-- **function**, line 949: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
+- **function**, line 820: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, str] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage (norbornane, bicyclo_222, adamantane) with CrossingBonds.
+- **function**, line 990: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
 - **function**, line 255: `chair_cyclohexane(*, flip: bool = False, substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 14.4) -> dict[str, Any]` - Generate a 6-membered chair cyclohexane (chair1 or ring-flipped chair2).
-- **function**, line 662: `fischer_projection(*, centers: Sequence[Mapping[str, str]] = ({'left': 'H', 'right': 'OH'},), top: str = 'CHO', bottom: str = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate an orthogonal Fischer projection cross backbone.
-- **function**, line 535: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a 6-membered Haworth perspective pyranose ring.
-- **function**, line 386: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[str] = ('Me', 'H', 'H'), rear: Sequence[str] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
+- **function**, line 703: `fischer_projection(*, centers: Sequence[Mapping[str, str]] = ({'left': 'H', 'right': 'OH'},), top: str = 'CHO', bottom: str = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate an orthogonal Fischer projection cross backbone.
+- **function**, line 576: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a 6-membered Haworth perspective pyranose ring.
+- **function**, line 386: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[str] = ('Me', 'H', 'H'), rear: Sequence[str] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
 
 ## `vision.stereo_audit`
 

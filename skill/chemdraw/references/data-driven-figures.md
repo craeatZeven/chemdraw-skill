@@ -53,7 +53,18 @@ invalid structures and missing or ambiguous SDF matches are errors with row cont
 
 Use `mode: "scope"`. Select yields, ee/dr, conditions and footnotes from the actual
 data. Rows are grouped in first-occurrence order; order within a group follows the
-table. Labels and measurements remain tied to IDs during pagination.
+table. Each group is a band: its name on a rule across the panel, only the locants in
+italic (*para* substituents, *N*-heterocycles), then its rows (a band continued on the
+next page says so). A `secondary_column` names, for a minor product, the compound ID of
+the main product it stands beside: in the same cell, after a "+", the structure in grey
+and its own label and values in black. It must be in
+the same group, and a secondary product has none of its own. A `drawn_with_column`
+names, for a compound shown by another's structure (3q under 3p's NH–Alk), that compound's
+ID: no structure is drawn for it, and its own caption line follows the other's, in the same
+cell. It names a compound of the same group drawn with a structure of its own; the page
+check reads only its text, and an update that changes its structure or `drawn_with` is a
+conflict that asks for a new layout. Labels and
+measurements remain tied to IDs during pagination.
 
 ## Full-structure SAR
 
@@ -66,11 +77,27 @@ Groups without a usable common core carry a warning and independent depictions.
 ## Layout
 
 `style` accepts `width_mm`, `height_mm`, `font_size`, `bond_length`, and `font`.
-Defaults are 180 by 240 mm, 8 pt Arial text and 14.4 pt bonds: design defaults,
-not a universal journal specification. Rows wrap or paginate at fixed text/bond
-sizes. Each page is a separate native editable CDXML. An oversized structure is
-reported rather than silently shrunk. Native exports may crop surrounding whitespace;
-assess final reproduction size when inserting them into a manuscript.
+Defaults are a page of at most 180 by 240 mm, 10 pt Arial text (the ACS 1996 label
+size) and 14.4 pt bonds: design defaults, not a universal journal specification.
+Rows wrap or paginate at fixed text/bond sizes; the type never shrinks to fit. Each
+page is a separate native editable CDXML, cropped to its content with a 16 pt margin,
+the footnotes following the last row. An update that lengthens a caption grows its
+page up to the figure size. An oversized structure is reported rather than silently
+shrunk. Assess final reproduction size when inserting pages into a manuscript.
+
+A field with `"optional": true` is a line that is left out where its value is empty
+(a per-compound note); any other empty value is drawn as a dash. A line that was empty
+when the page was laid out cannot be filled by an update: that is reported as a
+conflict, and needs a new layout.
+
+Captions are centred under their structure, the compound label in bold. A field with
+`"inline": true` joins the label's line after a comma (`3a, 64%`), as journal scope tables
+print it; the others each take a centred line of their own, and a shared line that would
+not fit the cell breaks after the label. Formula digits in the conditions and in every
+caption line except the compound label are written as subscripts (`C7H15`, `Pd2(dba)3`),
+by the rule scheme conditions use; give a group definition such as `Alk = C7H15` as an
+optional, inline field with an empty `label`, listed first; `"label_groups_from": "<column>"` also draws the group a definition names (the one substituent of that formula) as its label, a ChemDraw abbreviation that keeps the group whole. `^` marks a footnote letter
+(`12^b`, `40%^c`): it is drawn as an italic superscript and reads back as the letter.
 
 ## ChemDraw editing and incremental updates
 

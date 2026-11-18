@@ -95,6 +95,7 @@ Runtime selection and workers:
 
 - `CHEMDRAW_MCP_PYTHON` — runtime interpreter for `cdx.py` (otherwise `runtime.local.json`, a sibling `chemdraw-venv`, the shared venv, then a conda env named `cdxml`)
 - `CHEMDRAW_EXE` — explicit ChemDraw executable (on macOS the binary inside the `.app` or the bundle; otherwise `/Applications/ChemDraw*.app` is found)
+- `CHEMDRAW_PROGID` — COM ProgID that starts ChemDraw on Windows (default: the first registered of `ChemDraw.Application` and `ChemDraw_x64.Application`; some installations register only the second, and the wrong one fails with `Invalid class string`)
 - `OPSIN_JAR`, `CDXML_TOOLKIT_OPSIN_JAR` — explicit OPSIN JAR (otherwise the one `install.py --opsin` placed beside the shared venv)
 - `CHEMDRAW_ENGINE_HOME` — folder with one environment per optional prediction engine (default: `chemdraw-skill/engines` in the user data folder); `cdx.py engines` shows what is there ([engines](engines.md))
 - `CHEMDRAW_ENGINE_DEVICE` — `cpu` keeps every engine on the CPU, at install and at run time

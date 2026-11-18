@@ -25,18 +25,15 @@ def markdown_link_targets(text: str) -> list[str]:
 class DistributionTests(unittest.TestCase):
     CHINESE_DOCUMENTS = {"README.zh-cn.md", "docs/guide.zh-cn.md", "docs/zh-cn.md"}
 
-    # Demo fixtures that contain Chinese on purpose (a Chinese axis label, Chinese
-    # species names, Chinese annotation in the preview figure). They are not
-    # translations, so they are kept out of CHINESE_DOCUMENTS.
+    # Demo fixtures that contain Chinese on purpose: the Chinese annotation in the
+    # preview figure, and the coverage renders of the examples with Chinese captions
+    # (each as written and as ChemDraw saved it). They are not translations, so they
+    # are kept out of CHINESE_DOCUMENTS.
     CHINESE_FIXTURES = {
         "skill/chemdraw/assets/preview/build.json",
-        "skill/chemdraw/scripts/energy_profile/examples/catalysis_cn.json",
-        "skill/chemdraw/scripts/energy_profile/examples/two_step_cn.json",
-        "skill/chemdraw/scripts/energy_profile/examples/out/catalysis_cn.cdxml",
-        "skill/chemdraw/scripts/energy_profile/examples/out/catalysis_cn.report.json",
-        "skill/chemdraw/scripts/energy_profile/examples/out/two_step_cn.cdxml",
-        "skill/chemdraw/scripts/energy_profile/examples/out/two_step_cn.report.json",
-        "skill/chemdraw/scripts/energy_profile/examples/out/competing_levels_en.report.json",
+        *(f"assets/coverage/{name}{suffix}"
+          for name in ("energy_profile_catalysis_cn", "energy_profile_two_step_cn", "flowchart", "preview_build")
+          for suffix in (".cdxml", ".native.cdxml")),
     }
     # The landing page (docs/website.md) has a Chinese home page and error page.
     CHINESE_PAGES = {"site/index.html", "site/404.html", "site/lab/index.html", "site/words.zh.js", "site/daily.zh.js"}
@@ -115,7 +112,10 @@ class DistributionTests(unittest.TestCase):
                 ".github/SECURITY.md",
                 ".github/pull_request_template.md",
                 "docs/guide.md",
+                "docs/figure-coverage.md",
                 "docs/guide.zh-cn.md",
+                "docs/journal-corpus.md",
+                "docs/journal-figure-parity.md",
                 "docs/zh-cn.md",
                 "docs/website.md",
             },

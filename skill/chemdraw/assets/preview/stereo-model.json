@@ -1,0 +1,100 @@
+{
+ "objects": [
+  {
+   "type": "text",
+   "at": [
+    140,
+    16
+   ],
+   "text": "Stereochemical models"
+  },
+  {
+   "type": "conformer",
+   "template": "chair",
+   "at": [
+    70,
+    60
+   ],
+   "bond_length": 14.4,
+   "substituents": {
+    "1": {
+     "eq": "OH"
+    },
+    "4": {
+     "ax": "Me"
+    }
+   }
+  },
+  {
+   "type": "label_box",
+   "at": [
+    70,
+    95
+   ],
+   "text": "a  chair"
+  },
+  {
+   "type": "conformer",
+   "template": "newman",
+   "at": [
+    210,
+    58
+   ],
+   "bond_length": 14.4
+  },
+  {
+   "type": "label_box",
+   "at": [
+    210,
+    95
+   ],
+   "text": "b  Newman"
+  },
+  {
+   "type": "conformer",
+   "template": "haworth",
+   "at": [
+    70,
+    140
+   ],
+   "bond_length": 14.4
+  },
+  {
+   "type": "label_box",
+   "at": [
+    70,
+    180
+   ],
+   "text": "c  Haworth"
+  },
+  {
+   "type": "conformer",
+   "template": "fischer",
+   "at": [
+    210,
+    140
+   ],
+   "bond_length": 14.4,
+   "centers": [
+    {
+     "left": "H",
+     "right": "OH"
+    },
+    {
+     "left": "H",
+     "right": "OH"
+    }
+   ],
+   "top": "CHO",
+   "bottom": "CH2OH"
+  },
+  {
+   "type": "label_box",
+   "at": [
+    210,
+    196
+   ],
+   "text": "d  Fischer"
+  }
+ ]
+}

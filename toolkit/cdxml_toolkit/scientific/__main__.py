@@ -9,6 +9,20 @@ def run(operation, spec_path, output):
     spec_path=Path(spec_path).resolve();spec=json.loads(spec_path.read_text(encoding='utf-8-sig'))
     def source(value):
         p=Path(value);return p if p.is_absolute() else spec_path.parent/p
+    from .diagrams import DIAGRAM_OPERATIONS
+    if operation in DIAGRAM_OPERATIONS:
+        from .diagrams import build
+        # File names inside a diagram spec are relative to the spec.
+        if operation=='compose':
+            for part in spec.get('parts') or []:
+                if isinstance(part,dict) and 'file' in part:part['file']=str(source(part['file']).resolve())
+        if operation=='energy_profile':
+            groups=spec.get('pathways') or ([{'points':spec['points']}] if spec.get('points') else [])
+            for group in groups:
+                for item in group.get('points') or []:
+                    if isinstance(item,dict) and item.get('structure'):
+                        item['structure']=str(source(item['structure']).resolve())
+        return build(operation,spec,output)
     if operation=='tlc':
         from .tlc import draw_tlc
         return draw_tlc(spec,output)
@@ -145,7 +159,8 @@ def run(operation, spec_path, output):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation',choices=['tlc','apparatus','nmr','plot','mechanism','stack_nmr','lcms_plate'])
+    from .diagrams import DIAGRAM_OPERATIONS
+    parser.add_argument('operation',choices=['tlc','apparatus','nmr','plot','mechanism','stack_nmr','lcms_plate',*DIAGRAM_OPERATIONS])
     parser.add_argument('--spec',required=True)
     parser.add_argument('--output',required=True)
     args=parser.parse_args()

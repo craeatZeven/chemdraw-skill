@@ -19,6 +19,8 @@ from rdkit.Chem import rdDepictor
 
 from ..chemistry_semantics import read_fragments, semantic_key
 from ..constants import ACS_LABEL_FACE, ACS_LABEL_FONT, ACS_LABEL_SIZE
+from ..overlay_geometry import (CLOSED_DASHED_CURVE, GENERIC_RING_CLEARANCE, OVERLAY_PAD, choose_generic_ring,
+                                overlay_curve_points)  # noqa: F401  (OVERLAY_PAD re-exported)
 from ..chemdraw.style_presets import style_preset
 from ..publication.house_styles import (
     ABBREVIATIONS, APPLIED_FIGURE_CONVENTIONS, CONVENTION_KEYS, HouseStyle, group_name,
@@ -124,12 +126,20 @@ def _point(el: ET.Element) -> tuple[float, float]:
     return float(x), float(y)
 
 
+def _with_weight(face: str | None, bold: bool) -> str:
+    """A run's face made bold or plain, its other bits (italic, subscript, formula) kept."""
+    value = int(face or 0) if str(face or "0").isdigit() else 0
+    return str((value & ~1) | (1 if bold else 0))
+
+
 def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict]):
     """(species id, fragment element, fragment mol) for every drawn species, in document order."""
     page = root.find("page")
     frag_els = {f.get("id", ""): f for f in page.iter("fragment")}
     key_to_ids: dict[str, list[str]] = {}
     for g in grounded:
+        if not g.get("smiles"):
+            continue  # a drawing with no structure behind it (a Newman projection)
         mol = Chem.MolFromSmiles(g["smiles"])
         if mol is not None:
             key_to_ids.setdefault(semantic_key(mol), []).append(g["id"])
@@ -279,7 +289,8 @@ def apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: st
     colors = _Colors(root)
     width = float(root.get("LineWidth") or style_preset(slug)["attributes"]["LineWidth"])
     if figure_type == "mechanism":
-        curves = list(root.iter("curve"))
+        # Curved arrows: ChemDraw's arc arrows, and Bezier curves drawn by hand or by older files.
+        curves = list(root.iter("curve")) + [a for a in root.iter("arrow") if a.get("AngularSize")]
         color = conventions.get("curved_arrow_color")
         if color and curves:
             index = colors.index(color)
@@ -339,7 +350,7 @@ def apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict],
     if face in ("bold", "plain"):
         for _, t in label_els:
             for s in t.iter("s"):
-                s.set("face", "1" if face == "bold" else "0")
+                s.set("face", _with_weight(s.get("face"), face == "bold"))
         applied.append(f"compound_label_face={face}")
     if label_color and label_color.upper() != "#000000":
         index = colors.index(label_color)
@@ -853,6 +864,261 @@ def apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
     return _wrap(root, cdxml), [f"species boxes ({count})"] if count else []
 
 
+OVERLAY_SHAPES = ("circle", "outline")
+OVERLAY_KEYS = {"fragment", "species", "shape"}
+
+
+def overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]:
+    """Problems with the brief's overlays, for the brief check."""
+    overlays = brief.get("overlays")
+    if overlays is None:
+        return []
+    if not isinstance(overlays, list):
+        return ["overlays must be a list of {fragment, species?, shape?}."]
+    errors: list[str] = []
+    for number, item in enumerate(overlays, 1):
+        where = f"overlays[{number}]"
+        if not isinstance(item, Mapping):
+            errors.append(f"{where} must be an object.")
+            continue
+        unknown = sorted(set(item) - OVERLAY_KEYS)
+        if unknown:
+            errors.append(f"{where} has unknown keys {unknown}; use {sorted(OVERLAY_KEYS)}.")
+        if not isinstance(item.get("fragment"), str) or not item["fragment"].strip():
+            errors.append(f"{where} needs a fragment: the SMILES or SMARTS of the part to mark.")
+        if item.get("shape", "circle") not in OVERLAY_SHAPES:
+            errors.append(f"{where}: shape must be one of {list(OVERLAY_SHAPES)}.")
+        names = item.get("species")
+        if names is not None:
+            if not isinstance(names, list) or not names:
+                errors.append(f"{where}: species must be a list of species ids.")
+            else:
+                for name in names:
+                    if str(name) not in species_ids:
+                        errors.append(f"{where} names {name!r}, which is not in species.")
+    return errors
+
+
+def overlay_matches(brief: Mapping, grounded: list[dict]) -> tuple[dict[str, list[dict]], list[str]]:
+    """The atoms each overlay marks, by species: {id: [{atoms, shape, fragment}]}, and warnings.
+
+    ``atoms`` are 0-based indices into the species' SMILES, the first match of the fragment
+    (SMILES, or SMARTS when it is not a SMILES). A species the overlay names must contain it;
+    without names, every species that does is marked, and at least one must.
+    """
+    smiles = {g["id"]: g.get("smiles") for g in grounded}
+    marks: dict[str, list[dict]] = {}
+    warnings: list[str] = []
+    for item in brief.get("overlays") or []:
+        text = str(item["fragment"]).strip()
+        pattern = Chem.MolFromSmiles(text) or Chem.MolFromSmarts(text)
+        if pattern is None:
+            raise ValueError(f"overlay fragment {text!r} is neither a SMILES nor a SMARTS")
+        named = [str(s) for s in item.get("species") or []]
+        marked = 0
+        for sp_id in named or list(smiles):
+            src = Chem.MolFromSmiles(smiles.get(sp_id) or "") if smiles.get(sp_id) else None
+            matches = src.GetSubstructMatches(pattern) if src is not None else ()
+            if not matches:
+                if named:
+                    raise ValueError(f"species {sp_id!r} does not contain the overlay fragment {text!r}")
+                continue
+            if len(matches) > 1:
+                warnings.append(f"Species {sp_id}: the overlay fragment {text!r} occurs {len(matches)} "
+                                "times; the first match is marked.")
+            marks.setdefault(sp_id, []).append({"atoms": list(matches[0]), "shape": item.get("shape", "circle"),
+                                                "fragment": text})
+            marked += 1
+        if not marked:
+            raise ValueError(f"overlay fragment {text!r} is in none of the drawn structures")
+    return marks, warnings
+
+
+def apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]:
+    """A dashed outline around one fragment in every structure that carries it.
+
+    The atoms come from ``overlay_matches``; the outline is drawn from the drawn atom
+    positions, so it sits on the fragment wherever the structure was placed. A dashed closed
+    outline is a <curve CurveType="3" Closed="yes" LineType="Dashed"> with no FillType whose
+    points end on the first anchor again: ChemDraw's own CurveType="2" curve is drawn open,
+    and a dashed oval loses its dash on import.
+    """
+    if not brief.get("overlays"):
+        return cdxml, [], []
+    marks, warnings = overlay_matches(brief, grounded)
+    root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
+    page = root.find("page")
+    ids = _new_ids(root)
+    smiles = {g["id"]: g.get("smiles") for g in grounded}
+    z = max([int(v) for el in root.iter() for v in [el.get("Z")] if v and v.lstrip("-").isdigit()], default=0)
+    drawn: set[str] = set()
+    count = 0
+    for sp_id, frag_el, frag_mol in _species_fragments(root, str(cdxml), grounded):
+        if sp_id not in marks:
+            continue  # every drawing of the species is marked (a product drawn again as a substrate)
+        src = Chem.MolFromSmiles(smiles[sp_id])
+        nodes = _atom_nodes(frag_el, frag_mol, src)
+        if nodes is None:
+            raise ValueError(f"species {sp_id!r}: the drawn structure could not be matched to its "
+                             "SMILES, so the overlay cannot be placed")
+        for mark in marks[sp_id]:
+            points = list(dict.fromkeys(_point(nodes[i]) for i in mark["atoms"]))
+            curve_points = overlay_curve_points(points, shape=mark["shape"])
+            v = [float(x) for x in curve_points.split()]
+            z += 1
+            page.append(ET.Element("curve", {
+                "id": str(ids.next()), "Z": str(z), **CLOSED_DASHED_CURVE,
+                "BoundingBox": f"{min(v[0::2]):.2f} {min(v[1::2]):.2f} {max(v[0::2]):.2f} {max(v[1::2]):.2f}",
+                "CurvePoints": curve_points}))
+            count += 1
+        drawn.add(sp_id)
+    missing = sorted(set(marks) - drawn)
+    named = {str(s) for item in brief.get("overlays") or [] for s in item.get("species") or []}
+    if set(missing) & named:
+        raise ValueError(f"overlay: species {sorted(set(missing) & named)} are not drawn as structures")
+    return _wrap(root, cdxml), [f"fragment overlays ({count})"] if count else [], warnings
+
+
+GENERIC_RING_KEYS = {"atoms", "members"}
+# How far a generic ring's arc stops short of a labelled atom (X, N): clear of the letter.
+GENERIC_RING_LABEL_CLEAR = 5.0
+
+
+def generic_ring_errors(entry: Mapping) -> list[str]:
+    """Problems with a species' generic rings, for the brief check."""
+    value = entry.get("generic_rings")
+    if value is None:
+        return []
+    ident = entry.get("id")
+    if not isinstance(value, list):
+        return [f"Species {ident}: generic_rings must be a list of {{atoms: [i, j], members?}}."]
+    errors = []
+    for number, item in enumerate(value, 1):
+        where = f"Species {ident}: generic_rings[{number}]"
+        if not isinstance(item, Mapping):
+            errors.append(f"{where} must be an object.")
+            continue
+        unknown = sorted(set(item) - GENERIC_RING_KEYS)
+        if unknown:
+            errors.append(f"{where} has unknown keys {unknown}; use {sorted(GENERIC_RING_KEYS)}.")
+        atoms = item.get("atoms")
+        if not (isinstance(atoms, list) and len(atoms) == 2 and len(set(atoms)) == 2
+                and all(isinstance(a, int) and not isinstance(a, bool) and a >= 0 for a in atoms)):
+            errors.append(f"{where} needs two atoms, the bonded pair the ring is fused at: "
+                          "atoms [i, j], numbered from 0 in SMILES order.")
+        members = item.get("members", 6)
+        if not (isinstance(members, int) and not isinstance(members, bool) and 3 <= members <= 12):
+            errors.append(f"{where}: members must be a whole number from 3 to 12 (the ring size it suggests).")
+    return errors
+
+
+def _clear_label_of_arc(page: ET.Element, frag_el: ET.Element, label: str | None,
+                       box: tuple[float, float, float, float]) -> None:
+    """Move a compound number that the arc of a generic ring would enclose to just under it."""
+    t = _label_of(page, frag_el, label)
+    if t is None:
+        return
+    x, y = _point(t)
+    if not (box[0] - 4 <= x <= box[2] + 4 and box[1] - 4 <= y <= box[3] + 10):
+        return
+    dy = box[3] + 12.0 - y
+    t.set("p", f"{x:.2f} {y + dy:.2f}")
+    if t.get("BoundingBox"):
+        b = [float(v) for v in t.get("BoundingBox").split()]
+        t.set("BoundingBox", f"{b[0]:.2f} {b[1] + dy:.2f} {b[2]:.2f} {b[3] + dy:.2f}")
+
+
+def generic_ring_marks(entry: Mapping, smiles: str) -> list[dict]:
+    """[{atoms, shape "ring", away, members}] for a species' generic rings, checked against its
+    SMILES: both atoms exist and are bonded. ``away`` are the atoms beside them, which the
+    ring is drawn away from."""
+    marks = []
+    mol = Chem.MolFromSmiles(smiles or "")
+    for item in entry.get("generic_rings") or []:
+        i, j = item["atoms"]
+        if mol is None or max(i, j) >= mol.GetNumAtoms():
+            raise ValueError(f"species {entry.get('id')!r}: generic ring atoms {[i, j]} are not in its SMILES")
+        if mol.GetBondBetweenAtoms(i, j) is None:
+            raise ValueError(f"species {entry.get('id')!r}: generic ring atoms {i} and {j} are not bonded; "
+                             "give the bond the ring is fused at")
+        away = sorted({n.GetIdx() for k in (i, j) for n in mol.GetAtomWithIdx(k).GetNeighbors()} - {i, j})
+        if not away:
+            away = [k for k in range(mol.GetNumAtoms()) if k not in (i, j)]
+        marks.append({"atoms": [i, j], "shape": "ring", "away": away, "members": item.get("members", 6)})
+    return marks
+
+
+def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]:
+    """Draw each species' generic rings: a dashed open arc through two bonded atoms that stands
+    for an unspecified ring fused there (BJOC 22-125 scheme 4), on every drawing of it."""
+    entries = {str(e["id"]): e for e in brief.get("species") or []
+               if isinstance(e, Mapping) and e.get("generic_rings")}
+    if not entries:
+        return cdxml, [], []
+    smiles = {g["id"]: g.get("smiles") for g in grounded}
+    labels = {g["id"]: (str(g["label"]) if g.get("label") else None) for g in grounded}
+    root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
+    page = root.find("page")
+    ids = _new_ids(root)
+    z = max([int(v) for el in root.iter() for v in [el.get("Z")] if v and v.lstrip("-").isdigit()], default=0)
+    # Every drawn bond on the page: an arc must keep clear of them (its own structure's above all).
+    bonds = []
+    for frag in page.iter("fragment"):
+        where = {n.get("id"): _point(n) for n in frag.iter("n") if n.get("p")}
+        bonds += [(where[b.get("B")], where[b.get("E")]) for b in frag.iter("b")
+                  if b.get("B") in where and b.get("E") in where]
+    count = 0
+    warnings: list[str] = []
+    for sp_id, frag_el, frag_mol in _species_fragments(root, str(cdxml), grounded):
+        if sp_id not in entries:
+            continue
+        src = Chem.MolFromSmiles(smiles[sp_id])
+        nodes = _atom_nodes(frag_el, frag_mol, src)
+        if nodes is None:
+            raise ValueError(f"species {sp_id!r}: the drawn structure could not be matched to its SMILES, "
+                             "so its generic ring cannot be placed")
+        for mark in generic_ring_marks(entries[sp_id], smiles[sp_id]):
+            (i, j), rest = mark["atoms"], [_point(nodes[k]) for k in mark["away"]]
+            away = (sum(p[0] for p in rest) / len(rest), sum(p[1] for p in rest) / len(rest)) if rest else None
+            clear = [GENERIC_RING_LABEL_CLEAR if nodes[k].find("t") is not None else 0.0 for k in (i, j)]
+            points, room, size = choose_generic_ring(_point(nodes[i]), _point(nodes[j]), away, mark["members"],
+                                                     bonds, *clear)
+            if room < GENERIC_RING_CLEARANCE:
+                warnings.append(f"Species {sp_id}: the generic ring on atoms {i}-{j} comes {room:.1f} pt from a bond "
+                                "on either side; give the structure more room or another bond.")
+            elif size != mark["members"]:
+                warnings.append(f"Species {sp_id}: the generic ring on atoms {i}-{j} is drawn as a {size}-ring "
+                                f"to keep clear of the structure.")
+            v = [float(x) for x in points.split()]
+            _clear_label_of_arc(page, frag_el, labels.get(sp_id), (min(v[0::2]), min(v[1::2]), max(v[0::2]), max(v[1::2])))
+            z += 1
+            page.append(ET.Element("curve", {
+                "id": str(ids.next()), "Z": str(z), "LineType": "Dashed", "CurveType": "2",
+                "BoundingBox": f"{min(v[0::2]):.2f} {min(v[1::2]):.2f} {max(v[0::2]):.2f} {max(v[1::2]):.2f}",
+                "CurvePoints": points}))
+            count += 1
+    return _wrap(root, cdxml), [f"generic rings ({count})"] if count else [], warnings
+
+
+def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
+    """Colour the R marks of a scope's general reaction like what varies in the grid below
+    (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents). Marks are generic nodes
+    outside every compound group; the R and its raised number are both painted. Returns the
+    page and how many marks were painted."""
+    root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
+    page = root.find("page")
+    if page is None:
+        return cdxml, 0
+    in_cells = {id(n) for g in page.iter("group") for n in g.iter("n")}
+    marks = [n for n in page.iter("n") if n.get("NodeType") == "GenericNickname" and id(n) not in in_cells]
+    if not marks:
+        return cdxml, 0
+    index = _Colors(root).index(color)
+    for node in marks:
+        _paint(node, index)
+    return _wrap(root, cdxml), len(marks)
+
+
 def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None,
                             slug: str) -> tuple[Any, list[str], list[str], list[str]]:
     """A scope page already in its preset: compound-number face and colour, the brief's species
@@ -864,7 +1130,10 @@ def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], ho
         root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
         page = root.find("page")
         colors = _Colors(root)
-        labels = {g["id"]: (str(g["label"]) if g.get("label") else None) for g in grounded}
+        from ..publication.layout import caption_runs
+        # As the page reads them: a footnote mark "12^b" reads "12b".
+        labels = {g["id"]: (caption_runs(str(g["label"]), bold=True)[0] if g.get("label") else None)
+                  for g in grounded}
         # A scope page keeps each structure, its number and its values in one <group>.
         group_of = {id(f): g for g in page.iter("group") for f in g.findall("fragment")}
         label_els = []
@@ -878,7 +1147,8 @@ def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], ho
         if face in ("bold", "plain") and label_els:
             for t in label_els:
                 for s in t.iter("s"):
-                    s.set("face", "1" if face == "bold" else "0")
+                    if not int(s.get("face") or 0) & 64:  # a footnote mark stays a superscript
+                        s.set("face", _with_weight(s.get("face"), face == "bold"))
             applied.append(f"compound_label_face={face}")
         label_color = house.convention("compound_label_color")
         if label_color and label_color.upper() != "#000000" and label_els:

@@ -77,3 +77,20 @@ def test_reference_is_the_same_on_every_host(monkeypatch):
         references.append(generate_reference.manifest())
     assert references[1] == references[0]
     assert references[2] == references[0]
+
+
+
+from typing import Any, Optional, Union  # noqa: E402  (module level, so the hints resolve)
+
+
+def _typed_tool(a: Optional[str], b: Union[int, str] = 1, c: dict[str, Optional[int]] | None = None,
+                d: "list[dict] | None" = None, *, e: tuple[int, ...] = (), f: Any = None) -> dict[str, Any]:
+    return {}
+
+
+def test_signatures_read_the_same_on_every_python():
+    # Python 3.10 prints Optional[str] where 3.13 prints str | None, so a reference written on one
+    # was stale on the other. Unions are written one way, as A | B.
+    assert generate_reference._signature(_typed_tool) == (
+        "(a: str | None, b: int | str = 1, c: dict[str, int | None] | None = None, "
+        "d: list[dict] | None = None, *, e: tuple[int, ...] = (), f: typing.Any = None) -> dict[str, typing.Any]")

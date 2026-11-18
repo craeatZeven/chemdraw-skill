@@ -1,0 +1,138 @@
+{
+ "kind": "mechanism",
+ "species": [
+  {
+   "id": "anti",
+   "label": "anti",
+   "newman": {
+    "front": [
+     "CH3",
+     "H",
+     "H"
+    ],
+    "rear": [
+     "H",
+     "CH3",
+     "H"
+    ],
+    "conformation": "staggered"
+   }
+  },
+  {
+   "id": "gauche",
+   "label": "gauche",
+   "newman": {
+    "front": [
+     "CH3",
+     "H",
+     "H"
+    ],
+    "rear": [
+     "CH3",
+     "H",
+     "H"
+    ],
+    "conformation": "staggered"
+   }
+  },
+  {
+   "id": "ald",
+   "smiles": "CC=O",
+   "label": "1"
+  },
+  {
+   "id": "hyd",
+   "smiles": "[OH-]"
+  },
+  {
+   "id": "alk",
+   "smiles": "CC([O-])O",
+   "label": "2"
+  },
+  {
+   "id": "v4",
+   "label": "V-4",
+   "newman": {
+    "front": [
+     "*",
+     "H",
+     "Ph"
+    ],
+    "rear": [
+     "H",
+     "CO2Me",
+     "H"
+    ],
+    "conformation": "staggered",
+    "attach": {
+     "smiles": "O=C([*])C1CCCCC1"
+    }
+   }
+  },
+  {
+   "id": "v4p",
+   "label": "V-4 (flat)",
+   "smiles": "O=C(C1CCCCC1)C(c1ccccc1)CC(=O)OC"
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "anti"
+   ],
+   "products": [
+    "gauche"
+   ],
+   "arrow": "reversible",
+   "above": [
+    "rotation"
+   ]
+  },
+  {
+   "substrates": [
+    "ald",
+    "hyd"
+   ],
+   "products": [
+    "alk"
+   ],
+   "above": [
+    "H2O"
+   ],
+   "moves": [
+    {
+     "from": {
+      "species": "hyd",
+      "atom": 0
+     },
+     "to": {
+      "species": "ald",
+      "atom": 1
+     }
+    },
+    {
+     "from": {
+      "species": "ald",
+      "bond": [
+       1,
+       2
+      ]
+     },
+     "to": {
+      "species": "ald",
+      "atom": 2
+     }
+    }
+   ]
+  },
+  {
+   "substrates": [
+    "v4"
+   ],
+   "products": [
+    "v4p"
+   ],
+   "arrow": "reversible"
+  }
+ ]
+}

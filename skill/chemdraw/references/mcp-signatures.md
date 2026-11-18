@@ -9,7 +9,7 @@ Tools: `69`
 
 ## Extended Tools
 
-### `analyze_lcms_series(files: list[str], output_path: Optional[str] = None, rt_tolerance: float = 0.02, mz_tolerance: float = 0.5, trend_threshold: float = 0.2, ignore_instrument: bool = False, internal_standard_mw: Optional[float] = None, internal_standard_rt: Optional[float] = None, internal_standard_name: str = 'IS') -> dict[str, typing.Any]`
+### `analyze_lcms_series(files: list[str], output_path: str | None = None, rt_tolerance: float = 0.02, mz_tolerance: float = 0.5, trend_threshold: float = 0.2, ignore_instrument: bool = False, internal_standard_mw: float | None = None, internal_standard_rt: float | None = None, internal_standard_name: str = 'IS') -> dict[str, typing.Any]`
 
 Analyze a time series of standard LCMS data (PDF, .rpt, .daml, report.txt, mzML/mzXML or Waters .raw).
 
@@ -18,7 +18,7 @@ every sample inside an OpenLynx .rpt is one timepoint, so one multi-sample .rpt 
 ``internal_standard_mw`` (exact mass) and/or ``internal_standard_rt`` (minutes) name an internal standard
 (labeled by ``internal_standard_name``, default ``"IS"``): each species is then also reported relative to it.
 
-### `assemble_lab_book(input_dir: str, experiment: Optional[str] = None, tracking_json: Optional[str] = None, output_path: Optional[str] = None) -> dict[str, typing.Any]`
+### `assemble_lab_book(input_dir: str, experiment: str | None = None, tracking_json: str | None = None, output_path: str | None = None) -> dict[str, typing.Any]`
 
 Assemble a deterministic lab-book entry from experiment files.
 
@@ -157,7 +157,7 @@ objects outside the edit are unchanged and that no duplicate id or dangling refe
 appeared; a failed check writes nothing. The edit is structural: render the result
 with ChemDraw before treating it as a final figure.
 
-### `clean_scheme_layout(input_path: str, output_path: Optional[str] = None, approach: str = 'chemdraw_mimic', render_preview: bool = True) -> dict[str, typing.Any]`
+### `clean_scheme_layout(input_path: str, output_path: str | None = None, approach: str = 'chemdraw_mimic', render_preview: bool = True) -> dict[str, typing.Any]`
 
 Clean an existing CDXML reaction layout without changing the source file.
 
@@ -173,7 +173,7 @@ fail comparison. This evaluates appearance only, never chemical identity.
 
 Compare two molecule representations using ChemScript identity and RDKit Tanimoto fingerprints.
 
-### `compare_nmr_shifts(smiles: str, experimental_1h: Optional[list[float]] = None, experimental_13c: Optional[list[float]] = None, predicted_result: Optional[dict[str, Any]] = None, solvent: str = 'CDCl3', engines: str = '', outlier_threshold_1h: float = 0.5, outlier_threshold_13c: float = 5.0) -> dict[str, typing.Any]`
+### `compare_nmr_shifts(smiles: str, experimental_1h: list[float] | None = None, experimental_13c: list[float] | None = None, predicted_result: dict[str, typing.Any] | None = None, solvent: str = 'CDCl3', engines: str = '', outlier_threshold_1h: float = 0.5, outlier_threshold_13c: float = 5.0) -> dict[str, typing.Any]`
 
 Compare experimental 1H and/or 13C NMR shifts against predicted or topological groups for `smiles`.
 
@@ -200,7 +200,7 @@ which override the preset.
 
 Report local runtime capabilities; native probes are explicit and temporary.
 
-### `discover_experiment_files(input_dir: str, experiment: Optional[str] = None, output_path: Optional[str] = None) -> dict[str, typing.Any]`
+### `discover_experiment_files(input_dir: str, experiment: str | None = None, output_path: str | None = None) -> dict[str, typing.Any]`
 
 Discover and classify files belonging to one experiment.
 
@@ -245,6 +245,27 @@ runs that make one line, so a catalyst can be coloured or a reagent set in itali
 title and a species' caption (a line under its compound number) take the same forms. A
 species' box (true, or {color, fill, style solid|dashed, rounded}) frames the structure
 and its number, with an optional fill drawn behind it.
+kind "panels" sets several scheme or mechanism briefs one above the other on one page:
+{kind: "panels", panels [{title, brief | gallery | sections}], legend? [lines], style?,
+max_width?}; each panel is drawn and checked as its own brief, under a boxed one-line title
+as wide as the widest panel, and the legend lines (text or coloured runs) go under the last
+one. gallery [{id, smiles or name, caption? (lines), color?, atom_colors?, bond_colors?,
+abbreviate?}] draws structures with their names and no arrows, in rows spread to the widest;
+sections [{title, brief}] draws several briefs in one panel, each opened by its title in a
+box on a dashed rule across the figure ("L. Grimaud 2009 [35]").
+layout "fan" draws one starting material in the middle with an arrow leaving it for each of
+two to four products (left, right, down, up); two products from one compound are a fan by
+default (layout "divergent" keeps them stacked, as does a fan wider than max_width).
+A route longer than max_width wraps: by default (wrap "continue") the next row starts with
+the arrow that leaves the structure the row above ended with, so each structure is drawn
+once; "repeat" draws that structure again at the start of the row, "serpentine" zigzags.
+A species' generic_rings [{atoms [i, j], members?}] draws an unspecified ring fused at the
+bond i-j: a dashed arc the long way round on the far side of the bond.
+overlays [{fragment, species?, shape circle|outline}] draw a dashed outline around one
+fragment (SMILES or SMARTS) in every structure that has it, or in the species listed, at
+the same place on the fragment in each (the unchanged ring through the intermediates of a
+cycle); a listed species without the fragment is refused, and a fragment found more than
+once is marked at its first match, with a warning.
 Only the conditions in the brief are drawn; a
 step without any is reported, never filled in. Structures given as SMILES are used
 as they are; names go through the curated reagent table and, when the network is
@@ -258,23 +279,44 @@ file is never written over an existing one: without output_path a fresh name is 
 in the temp directory, and an existing output_path is refused.
 
 kind "scope" draws a substrate-scope panel instead: species [{id, smiles or name,
-label?, group?, values {field: text}, color?, atom_colors?, bond_colors?, abbreviate?}],
-optional fields [{key, label?, unit?}] (default:
-the keys used in values), conditions, footnotes, title, width_mm and height_mm. The
+label?, group?, values {field: text}, definition?, note?, secondary_of?, drawn_with?, color?, atom_colors?,
+bond_colors?, abbreviate?}], optional fields [{key, label?, unit?, show_label?, optional?}] (default: the keys
+used in values), conditions, footnotes, title, width_mm, height_mm, header {substrates,
+products, above?, below?} (the general reaction over the grid, R groups as [*:1]) and
+highlight_varying (true or a hex colour: what differs from the core every compound
+shares is drawn in that colour, #FF6600 by default, and so are the header's R marks). Captions are centred, the number in
+bold; one field joins the number's line ("3a, 92%"); show_label true, or several fields,
+gives each field its own line, named (show_label false keeps one unnamed; optional leaves
+it out where empty instead of drawing a dash). definition joins the number's line
+("3p, Alk = C7H15, 63%") and note is an extra line under one compound ("not formed");
+formula digits in every line but the label are subscripts, and "^b" marks a footnote
+letter. secondary_of names the main product a minor one is drawn beside, after a "+",
+the structure grey and its own number and values black. drawn_with names a species whose
+structure also stands for this one: none is drawn for it, and its caption line ("3q, Alk =
+C18H37, 60%") follows that species' under the same structure. A group is a band, its name on
+the rule with only its locants in italic. Text stays at 10 pt and each page is cropped to its
+content. The
 structures are packed onto as many editable pages as needed, grouped in first-seen
 order, each label and value bound to its structure; a missing value is drawn as a
 dash and listed in the notes. output_path is then a new folder (page-001.cdxml, ...;
 PNGs in png/ with render=True) and the report lists the pages.
 
 kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
-lists: species [{id, smiles or name, label?}] and steps [{substrates, products, above?,
-below?, arrow?, moves [{from, to, electrons?}]}] drawn in the order given. A move runs
+lists: species [{id, smiles or name, label?, generic_rings?}] (or {id, newman {front, rear,
+conformation?, dihedral_offset?, attach?}, label?} for a Newman projection placed among them,
+which arrows cannot point at and whose steps need no moves; the order of rear picks the
+conformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered;
+attach {smiles with one [*]} bonds the front carbon to the rest of the molecule, in place of
+the front substituent written "*")
+and steps [{substrates, products, above?,
+below?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs
 from {species, atom} or {species, bond [i, j]} to the same kind of end, in species that
 are substrates of the step; atoms are numbered from 0 in SMILES order (the report lists
-them) and electrons is 2 (full head, default) or 1 (half head). Nothing is inferred: a
-step without moves is refused, a two-electron arrow that starts on an atom without a lone
-pair or charge is drawn and flagged, and the arrows are checked for passing through
-another atom (one automatic re-layout). A step with one substrate and one product
+them), electrons is 2 (full head, default) or 1 (half head) and color a hex colour for
+that arrow. The arrows are ChemDraw arc arrows. Nothing is inferred: a step without
+moves is refused, a two-electron arrow that starts on an atom without a lone pair or
+charge is drawn and flagged, and each arrow is routed clear of the atoms and bonds it
+does not start or end at (one automatic re-layout if one still crosses). A step with one substrate and one product
 continues the same row with the intermediate drawn once; any other step starts a new
 row, with its substrates drawn again. show_atom_numbers=true prints the atom numbers on a
 draft so the moves can be checked.
@@ -296,7 +338,7 @@ SMILES but without InChI, and the result says so. option include_molblock adds a
 structure. output_path ends in .csv, .json, .smi, .sdf or .md and is never overwritten.
 At most 2000 structures. Identity comes from the structure as stored; nothing is recognised or edited.
 
-### `extract_structures_from_document(path: str, out_dir: str, pages: Optional[list[int]] = None, engines: str = 'molscribe,molvec', segmenter: str = 'auto', dpi: int = 200, confirm_upload: bool = False, hand_drawn: bool = False) -> dict[str, typing.Any]`
+### `extract_structures_from_document(path: str, out_dir: str, pages: list[int] | None = None, engines: str = 'molscribe,molvec', segmenter: str = 'auto', dpi: int = 200, confirm_upload: bool = False, hand_drawn: bool = False) -> dict[str, typing.Any]`
 
 Find every structure on a PDF (pages are 1-based, up to 50) or an image, read each with several engines.
 
@@ -306,7 +348,7 @@ each segment only with confirm_upload). Writes crops, `structures.json` and a `c
 puts each crop beside the structures the engines read, into a new `out_dir`. Segments where the engines
 disagree are listed in `needs_review`. Segmentation can miss, merge or split structures: look at the sheet.
 
-### `fill_office_template(template_path: str, manifest_path: str, output_path: Optional[str] = None) -> dict[str, typing.Any]`
+### `fill_office_template(template_path: str, manifest_path: str, output_path: str | None = None) -> dict[str, typing.Any]`
 
 Fill PPTX/DOCX text and editable ChemDraw placeholders from a manifest.
 
@@ -331,11 +373,11 @@ decimals (default 4), electron_mass. Supported adducts: [M+H]+, [M+Na]+, [M+K]+,
 [M+CH3COO]- and the EI molecular ion M+. . Output ends in .txt, .md, .csv or .json and is
 never overwritten. At most 256 structures. The values are calculated, never measured.
 
-### `inspect_chemdraw_objects_in_office(input_path: str, output_dir: Optional[str] = None, render_previews: bool = True) -> dict[str, typing.Any]`
+### `inspect_chemdraw_objects_in_office(input_path: str, output_dir: str | None = None, render_previews: bool = True) -> dict[str, typing.Any]`
 
 Inventory editable ChemDraw objects and extract numbered CDXML previews.
 
-### `inspect_chemscript_sdk(query: Optional[str] = None, type_name: Optional[str] = None, include_infrastructure: bool = False, offset: int = 0, limit: int = 100, output_path: Optional[str] = None) -> dict[str, typing.Any]`
+### `inspect_chemscript_sdk(query: str | None = None, type_name: str | None = None, include_infrastructure: bool = False, offset: int = 0, limit: int = 100, output_path: str | None = None) -> dict[str, typing.Any]`
 
 Catalog every public ChemScript type/member, with filtering or a complete JSON export.
 
@@ -433,7 +475,7 @@ Sample concrete members from the definition values of a spec (SMILES).
 
 Check a markush.json spec; every error says what to change.
 
-### `merge_reaction_schemes(input_paths: list[str], output_path: Optional[str] = None, mode: str = 'auto', equiv_mode: str = 'default', reference_cdxml: Optional[str] = None, allow_adjacent: bool = True, render_preview: bool = True, force_sequential: bool = False) -> dict[str, typing.Any]`
+### `merge_reaction_schemes(input_paths: list[str], output_path: str | None = None, mode: str = 'auto', equiv_mode: str = 'default', reference_cdxml: str | None = None, allow_adjacent: bool = True, render_preview: bool = True, force_sequential: bool = False) -> dict[str, typing.Any]`
 
 Merge parallel, sequential, or unrelated CDXML reaction schemes.
 
@@ -455,15 +497,15 @@ Descriptors are computed by RDKit from the structure as given; logP and TPSA are
 calculated estimates, not measurements, and generic atoms (R groups) are rejected.
 output_path ends in .json, .csv or .md and is never overwritten. At most 256 structures.
 
-### `parse_scifinder_rdf(input_path: str, resolve_cas: bool = False, output_path: Optional[str] = None, confirm_pubchem: bool = False) -> dict[str, typing.Any]`
+### `parse_scifinder_rdf(input_path: str, resolve_cas: bool = False, output_path: str | None = None, confirm_pubchem: bool = False) -> dict[str, typing.Any]`
 
 Parse SciFinder RDF and optionally enrich CAS data over the network.
 
-### `polish_reaction_scheme(input_path: str, output_path: Optional[str] = None, merge_conditions: bool = True, approach: str = 'chemdraw_mimic', align_mode: str = 'rdkit', eln_csv: Optional[str] = None, reference_cdxml: Optional[str] = None, render_preview: bool = True) -> dict[str, typing.Any]`
+### `polish_reaction_scheme(input_path: str, output_path: str | None = None, merge_conditions: bool = True, approach: str = 'chemdraw_mimic', align_mode: str = 'rdkit', eln_csv: str | None = None, reference_cdxml: str | None = None, render_preview: bool = True) -> dict[str, typing.Any]`
 
 Run the audited deterministic polishing pipeline on a CDXML scheme.
 
-### `predict_conditions(reactants: str, products: str, engine: Optional[str] = None, count: int = 5, timeout_seconds: int = 900) -> dict[str, typing.Any]`
+### `predict_conditions(reactants: str, products: str, engine: str | None = None, count: int = 5, timeout_seconds: int = 900) -> dict[str, typing.Any]`
 
 Rank catalyst, solvent and reagent combinations for a reaction (reactants and products as SMILES).
 
@@ -473,7 +515,7 @@ Options list a catalyst, up to two solvents and up to three reagents with a scor
 reactions. They are candidates only: no temperature, time, amounts or yield, and a new reaction type may
 be answered poorly.
 
-### `predict_nmr(smiles: str, nucleus: str = '1H', solvent: str = 'chloroform', frequency_mhz: float = 400.0, engine: Optional[str] = None, output_path: Optional[str] = None, timeout_seconds: int = 900, experimental_1h: Optional[list[float]] = None, experimental_13c: Optional[list[float]] = None) -> dict[str, typing.Any]`
+### `predict_nmr(smiles: str, nucleus: str = '1H', solvent: str = 'chloroform', frequency_mhz: float = 400.0, engine: str | None = None, output_path: str | None = None, timeout_seconds: int = 900, experimental_1h: list[float] | None = None, experimental_13c: list[float] | None = None) -> dict[str, typing.Any]`
 
 Predict 1H and/or 13C chemical shifts (`nucleus` "1H", "13C" or "both") of one molecule in a solvent.
 
@@ -491,7 +533,7 @@ whatever `nucleus` says, and `experimental_comparison` lists each predicted grou
 measured peak, the signed and absolute error, the mean and largest error per nucleus and `outliers`
 (over 0.5 ppm for 1H, 5 ppm for 13C). It is a candidate assignment: confirm it with 2D NMR.
 
-### `predict_products(reactants: str, reagents: Optional[str] = None, engine: Optional[str] = None, count: int = 5, timeout_seconds: int = 600) -> dict[str, typing.Any]`
+### `predict_products(reactants: str, reagents: str | None = None, engine: str | None = None, count: int = 5, timeout_seconds: int = 600) -> dict[str, typing.Any]`
 
 Predict likely products of a reaction from reactant SMILES (dot-separated) with a learned model.
 
@@ -499,7 +541,7 @@ Engine: reactiont5-forward (local; install with `cdx.py install-engines reaction
 to `count` ranked candidates with beam scores and ready `reactions` (A.B>>P). These are predictions,
 not literature facts; the true product may not be among them.
 
-### `predict_retrosynthesis(product: str, engine: Optional[str] = None, steps: str = 'single', count: int = 5, time_limit: int = 60, timeout_seconds: int = 900, output_cdxml: str = '') -> dict[str, typing.Any]`
+### `predict_retrosynthesis(product: str, engine: str | None = None, steps: str = 'single', count: int = 5, time_limit: int = 60, timeout_seconds: int = 900, output_cdxml: str = '') -> dict[str, typing.Any]`
 
 Suggest precursors (steps="single") or full routes to purchasable stock (steps="multi") for a target.
 
@@ -523,13 +565,13 @@ never a new accepted project. Native PNG/SVG rendering defaults on, through
 isolated locked workers; native failure is reported as pending validation.
 This checks reader consistency and data binding, not experimental chemistry.
 
-### `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict`
+### `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs: None) -> dict`
 
 Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs,
 r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like,
 enumerate_markush.
 
-### `recognize_structure(image_path: str, engines: str = 'decimer-api', hand_drawn: bool = False, output_path: Optional[str] = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: Optional[str] = None, approved_origin: Optional[str] = None) -> dict[str, typing.Any]`
+### `recognize_structure(image_path: str, engines: str = 'decimer-api', hand_drawn: bool = False, output_path: str | None = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: str | None = None, approved_origin: str | None = None) -> dict[str, typing.Any]`
 
 Read one structure image with one or several OCSR engines and compare the answers.
 
@@ -542,11 +584,11 @@ and sets `needs_review`. Nothing is picked silently; compare every structure wit
 Remote engines follow the same upload rule as extract_structures_via_decimer_api (preflight, consent,
 offline refusal); local engines never upload.
 
-### `render_cdxml_files(input_paths: list[str], output_dir: Optional[str] = None, format: str = 'png', dpi: int = 300) -> dict[str, typing.Any]`
+### `render_cdxml_files(input_paths: list[str], output_dir: str | None = None, format: str = 'png', dpi: int = 300) -> dict[str, typing.Any]`
 
 Render one or more CDXML files through native ChemDraw (COM or macOS).
 
-### `replace_chemdraw_objects_in_office(input_path: str, replacements_manifest: str, output_path: Optional[str] = None, render_pdf_preview: bool = True, resize_frames: bool = False) -> dict[str, typing.Any]`
+### `replace_chemdraw_objects_in_office(input_path: str, replacements_manifest: str, output_path: str | None = None, render_pdf_preview: bool = True, resize_frames: bool = False) -> dict[str, typing.Any]`
 
 Replace selected ChemDraw OLE contents and previews without moving them.
 
@@ -578,7 +620,7 @@ them in input_mg; a missing number is reported in warnings, never assumed. outpu
 
 ### `scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, typing.Any]`
 
-Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr or plot.
+Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr, plot or a diagram.
 
 tlc, apparatus and mechanism write one editable .cdxml at output_path; nmr and plot write
 a new directory (figures, the full data as CSV and a JSON analysis with the source file's
@@ -589,7 +631,23 @@ processed spectrum, plots from the supplied columns. Output is written to a stag
 location and published only when the workflow succeeds; an existing output_path is never
 replaced.
 
-### `segment_large_scheme(cdxml_path: str, output_path: Optional[str] = None, verbose: bool = False) -> dict[str, typing.Any]`
+Diagram operations also write one .cdxml and return a report of what the drawing implies:
+energy_profile (barriers, overall change), energy_cycle (step sums, checked against Hess's
+law), jablonski, mo_diagram (bond order, unpaired electrons), electron_configuration,
+crystal_field (configuration, spin-only moment, stabilisation energy), lewis (electron
+count per atom), unit_cell (cubic and hexagonal: atoms per cell, formula, coordination
+numbers, packing fraction), flowchart,
+electrochemical_cell (polarity and electron flow), periodic_table, huckel_mo (pi orbitals,
+HOMO/LUMO, aromaticity), phase_diagram, binary_phase_diagram (fields and the
+lever rule at marked points), pourbaix (stable species from Gibbs energies), latimer and
+frost (derived couples, disproportionation), ellingham (reduction temperatures),
+correlation_diagram (Woodward-Hoffmann allowed or forbidden), walsh_diagram,
+potential_surface (contours, minima and saddle points), tanabe_sugano (d2-d8 levels from
+the full ligand-field Hamiltonian, spin crossover, Delta and B from two bands) and compose (several
+CDXML files merged on one page). Electrons, charges and energies that contradict each
+other are rejected rather than drawn. The spec formats are in the diagrams reference.
+
+### `segment_large_scheme(cdxml_path: str, output_path: str | None = None, verbose: bool = False) -> dict[str, typing.Any]`
 
 Segment a disconnected or multi-panel CDXML scheme into logical regions.
 
@@ -662,7 +720,7 @@ At most 256 structures.
 
 ## Official Tools
 
-### `convert_cdx_cdxml(input_path: str, output_path: Optional[str] = None) -> dict`
+### `convert_cdx_cdxml(input_path: str, output_path: str | None = None) -> dict`
 
 Convert bidirectionally between CDX (binary) and CDXML (XML) formats.
 
@@ -688,7 +746,7 @@ Returns:
 
 Safety override: Convert CDX/CDXML through a validated no-overwrite staging file.
 
-### `draw_molecule(mol_json: dict, output_path: Optional[str] = None) -> dict`
+### `draw_molecule(mol_json: dict, output_path: str | None = None) -> dict`
 
 Render a single molecule to a standalone CDXML document.
 
@@ -743,7 +801,7 @@ Returns:
 
 Safety override: Create a new validated PPTX or DOCX and reject all existing targets.
 
-### `extract_cdxml_from_office(file_path: str, output_dir: Optional[str] = None) -> dict`
+### `extract_cdxml_from_office(file_path: str, output_dir: str | None = None) -> dict`
 
 Extract embedded ChemDraw objects from a PPTX, DOCX, XLS, or XLSX file.
 
@@ -793,7 +851,7 @@ Returns:
     in [0,1], bbox [x0,y0,x1,y1], label or null). Returns {ok: False,
     error: "..."} if DECIMER is not installed or extraction fails.
 
-### `format_lab_entry(entries_json: Union[list[dict], dict, str], output_path: Optional[str] = None) -> dict`
+### `format_lab_entry(entries_json: list[dict] | dict | str, output_path: str | None = None) -> dict`
 
 Format a list of entry dicts into a structured lab book text entry.
 
@@ -862,7 +920,7 @@ Returns:
 
 Safety override: Format a lab entry and atomically publish verified text.
 
-### `modify_molecule(mol_json: dict, operation: str, add: Optional[List[dict]] = None, remove: Optional[List[str]] = None, new_smiles: Optional[str] = None, new_name: Optional[str] = None, reaction_name: Optional[str] = None, reagent: Optional[dict] = None, smarts: Optional[str] = None, description: Optional[str] = None) -> dict`
+### `modify_molecule(mol_json: dict, operation: str, add: List[dict] | None = None, remove: List[str] | None = None, new_smiles: str | None = None, new_name: str | None = None, reaction_name: str | None = None, reagent: dict | None = None, smarts: str | None = None, description: str | None = None) -> dict`
 
 Analyze or transform a molecule with structural verification.
 
@@ -916,7 +974,7 @@ Returns:
     output_name, aligned_names, diff (atoms_added, atoms_removed,
     atoms_changed, mcs_smarts, delta_formula, delta_mw), formula, mw.
 
-### `parse_analysis_file(pdf_path: str, output_path: Optional[str] = None) -> dict`
+### `parse_analysis_file(pdf_path: str, output_path: str | None = None) -> dict`
 
 Parse an LCMS or NMR analysis file to extract peaks and data.
 
@@ -943,7 +1001,7 @@ Returns:
 
 Safety override: Parse an analysis file and atomically publish verified JSON.
 
-### `parse_reaction(cdxml: Optional[str] = None, cdx: Optional[str] = None, csv: Optional[str] = None, rxn: Optional[str] = None, input_dir: Optional[str] = None, output_path: Optional[str] = None) -> dict`
+### `parse_reaction(cdxml: str | None = None, cdx: str | None = None, csv: str | None = None, rxn: str | None = None, input_dir: str | None = None, output_path: str | None = None) -> dict`
 
 Parse reaction files into a semantic JSON descriptor.
 
@@ -974,7 +1032,7 @@ Returns:
 
 Safety override: Parse a reaction and atomically publish its JSON descriptor.
 
-### `parse_scheme(cdxml_path: str, output_path: Optional[str] = None) -> dict`
+### `parse_scheme(cdxml_path: str, output_path: str | None = None) -> dict`
 
 Parse a CDXML reaction scheme into a structured description.
 
@@ -1002,7 +1060,7 @@ Returns:
 
 Safety override: Parse a scheme and atomically publish its JSON descriptor.
 
-### `render_scheme(yaml_text: Optional[str] = None, compact_text: Optional[str] = None, json_path: Optional[str] = None, layout: str = 'auto', output_path: Optional[str] = None) -> str`
+### `render_scheme(yaml_text: str | None = None, compact_text: str | None = None, json_path: str | None = None, layout: str = 'auto', output_path: str | None = None) -> str`
 
 Render an editable chemical reaction scheme with per-fragment chemical validation.
 
@@ -1042,7 +1100,7 @@ Returns:
 
 Safety override: Render a scheme (yaml_text, compact_text with @layout/-->/..>/X>/run[1], or json_path) through a validated no-overwrite staging file.
 
-### `render_to_png(cdxml_path: str, output_path: Optional[str] = None) -> dict`
+### `render_to_png(cdxml_path: str, output_path: str | None = None) -> dict`
 
 Render a CDXML file to PNG using ChemDraw.
 
@@ -1115,7 +1173,7 @@ Returns:
     (list with similarity scores), total_files_searched.
     Returns {ok: False, error: "..."} if module unavailable or search fails.
 
-### `summarize_reaction(json_path: str, species_fields: Optional[List[str]] = None, top_fields: Optional[List[str]] = None, eln_fields: Optional[List[str]] = None) -> dict`
+### `summarize_reaction(json_path: str, species_fields: List[str] | None = None, top_fields: List[str] | None = None, eln_fields: List[str] | None = None) -> dict`
 
 Return a compact, context-efficient view of a reaction JSON file.
 
@@ -1153,7 +1211,7 @@ Returns:
 
 ## Remote Tools
 
-### `extract_structures_via_decimer_api(image_path: str, hand_drawn: bool = False, output_path: Optional[str] = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: Optional[str] = None, approved_origin: Optional[str] = None) -> dict[str, typing.Any]`
+### `extract_structures_via_decimer_api(image_path: str, hand_drawn: bool = False, output_path: str | None = None, timeout_seconds: int = 600, confirm_upload: bool = False, approved_sha256: str | None = None, approved_origin: str | None = None) -> dict[str, typing.Any]`
 
 Default image-recognition tool: use the remote DECIMER API.
 

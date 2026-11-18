@@ -3,20 +3,26 @@
 The brief names every species, the steps in the order they happen and, for
 each step, the electron moves as (from atom or bond, to atom or bond). This
 module places the structures, turns each move into a curved arrow from the
-drawn 2D coordinates, checks that no arrow runs through another atom (one
-automatic re-layout if one does), and reads the saved file back. It never
+drawn 2D coordinates, checks that no arrow runs through another atom or bond (one
+automatic re-layout if one does), and reads the saved file back. The arrows are
+ChemDraw's own arc arrows (an <arrow> with AngularSize), each in the colour its move
+asks for. It never
 decides which electrons move: a brief without moves is refused, and a move
 that looks wrong is drawn as given and reported.
 """
 from __future__ import annotations
 
 import math
+import re
+import xml.etree.ElementTree as ET
+from types import SimpleNamespace
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from rdkit import Chem
 
+from ..cdxml_check import overlays_collide
 from ..constants import (
     ACS_BOND_LENGTH,
     ACS_LINE_WIDTH,
@@ -31,9 +37,13 @@ from ..text_formatting import normalize_condition_text
 from . import artifact_safety, figure_draw, figure_house, figure_lint
 
 MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers"}
-SPECIES_KEYS = {"id", "smiles", "name", "label"}
+SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "generic_rings"}
+NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset", "attach"}
+NEWMAN_SPOKE = 1.4 * ACS_BOND_LENGTH   # a projection's spokes, sized beside 14.4 pt bonds
+# Closest a rear spoke may come to a front one; ChemDraw-style eclipsed drawings use 14.
+NEWMAN_MIN_APART = 10.0
 STEP_KEYS = {"substrates", "products", "above", "below", "yield", "arrow", "moves"}
-MOVE_KEYS = {"from", "to", "electrons"}
+MOVE_KEYS = {"from", "to", "electrons", "color"}
 END_KEYS = {"species", "atom", "bond"}
 MECH_ARROWS = ("solid", "reversible", "resonance")
 
@@ -48,6 +58,10 @@ CARBON_REACH, LABEL_REACH = 3.5, 6.5   # how close a curve may pass an atom
 CARBON_STANDOFF, LABEL_STANDOFF = 3.0, 7.0   # where an arrow starts or stops from an atom
 HEIGHT_STEPS = (1.0, 1.4, 1.9, 2.5)   # arc heights tried, relative to the default
 LABEL_OBSTACLE = 8.0
+BOND_CLEARANCE = 2.0       # how close an arrow may pass a bond it does not start or end at
+ARROW_CLEARANCE = 3.0      # how close two arrows may run, away from their tails
+HEAD_CLEARANCE = 6.0       # how close two arrowheads may come
+TAIL_SHARE = 0.2           # the part of an arrow, from its tail, that may meet another's tail
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +115,7 @@ def _validate(brief: dict) -> list[str]:
 
     species = brief.get("species")
     ids: set[str] = set()
+    newman_ids: set[str] = set()
     if not isinstance(species, list) or not species:
         errors.append("species: list every structure that is drawn, each with an id and a smiles or a name.")
         species = []
@@ -115,8 +130,12 @@ def _validate(brief: dict) -> list[str]:
         extra = sorted(set(entry) - SPECIES_KEYS)
         if extra:
             errors.append(f"Species {ident}: unknown keys {extra}.")
-        if not entry.get("smiles") and not entry.get("name"):
-            errors.append(f"Species {ident} needs a smiles or a name.")
+        if "newman" in entry:
+            newman_ids.add(ident)
+            errors += _newman_errors(ident, entry["newman"])
+        elif not entry.get("smiles") and not entry.get("name"):
+            errors.append(f"Species {ident} needs a smiles or a name (or a newman projection).")
+        errors += figure_house.generic_ring_errors(entry)
 
     steps = brief.get("steps")
     if not isinstance(steps, list) or not steps:
@@ -146,13 +165,176 @@ def _validate(brief: dict) -> list[str]:
         if step.get("arrow", "solid") not in MECH_ARROWS:
             errors.append(f"Step {number}: arrow must be one of {list(MECH_ARROWS)}.")
         moves = step.get("moves")
+        conformers = bool(newman_ids & set(members["substrates"] + members["products"]))
+        if conformers and moves in (None, []):
+            continue  # a change of conformation, or a step drawn on projections, has no arrows to list
         if not isinstance(moves, list) or not moves:
             errors.append(f"Step {number} needs moves: list each electron move as from and to "
                           "(an atom number or a bond). A mechanism is never inferred.")
             continue
         for index, move in enumerate(moves, 1):
             errors += _move_errors(number, index, move, members["substrates"], ids)
+            for side in ("from", "to"):
+                end = move.get(side) if isinstance(move, dict) else None
+                if isinstance(end, dict) and str(end.get("species")) in newman_ids:
+                    errors.append(f"Step {number} move {index} {side}: a Newman projection has no numbered "
+                                  "atoms for an arrow; point it at a structure given by smiles or name.")
     return errors
+
+
+def _newman_errors(ident: str, spec: Any) -> list[str]:
+    if not isinstance(spec, dict):
+        return [f"Species {ident}: newman must be an object with front and rear substituents."]
+    errors = []
+    extra = sorted(set(spec) - NEWMAN_KEYS)
+    if extra:
+        errors.append(f"Species {ident}: unknown newman keys {extra}.")
+    for side in ("front", "rear"):
+        group = spec.get(side)
+        if not (isinstance(group, list) and len(group) == 3 and all(isinstance(g, str) and g for g in group)):
+            errors.append(f"Species {ident}: newman {side} must list three substituents, e.g. [\"Me\", \"H\", \"H\"].")
+    errors += _attach_errors(ident, spec)
+    if spec.get("conformation", "staggered") not in ("staggered", "eclipsed"):
+        errors.append(f"Species {ident}: newman conformation must be staggered or eclipsed.")
+    offset = spec.get("dihedral_offset")
+    if offset is not None and (isinstance(offset, bool) or not isinstance(offset, (int, float))):
+        errors.append(f"Species {ident}: newman dihedral_offset must be a number of degrees.")
+    elif offset is not None:
+        # The three front spokes are 120 degrees apart, so a rear set turned by a multiple of
+        # 120 lies on them, and each rear label is printed over a front one.
+        apart = abs((float(offset) + 60.0) % 120.0 - 60.0)
+        if apart < NEWMAN_MIN_APART:
+            errors.append(f"Species {ident}: newman dihedral_offset {offset:g} puts the rear spokes on top of the "
+                          f"front ones ({apart:g} degrees apart); it is the rear set's angle from the front set, "
+                          "60 for staggered, 14 for a visible eclipsed one. For another conformer, reorder rear.")
+    return errors
+
+
+def _attach_errors(ident: str, spec: dict) -> list[str]:
+    """attach bonds the front carbon to the rest of the molecule, in place of the front "*"."""
+    front = spec.get("front") if isinstance(spec.get("front"), list) else []
+    rear = spec.get("rear") if isinstance(spec.get("rear"), list) else []
+    attach = spec.get("attach")
+    where = f"Species {ident}: newman attach"
+    if attach is None:
+        return [f'{where} is missing: a front substituent "*" stands for an attached group '
+                '({"smiles": "O=C([*])c1ccccc1"}).'] if "*" in front else []
+    errors = []
+    if not isinstance(attach, dict) or set(attach) != {"smiles"} or not isinstance(attach.get("smiles"), str):
+        errors.append(f'{where} must be {{"smiles": "..."}}, the group with [*] where it meets the front carbon.')
+    elif attach["smiles"].count("*") != 1:
+        errors.append(f"{where} smiles must hold exactly one [*], where the group meets the front carbon.")
+    if front.count("*") != 1:
+        errors.append(f'{where} replaces exactly one front substituent, written "*".')
+    if "*" in rear:
+        errors.append(f'{where} meets the front carbon only; write the rear substituents out.')
+    return errors
+
+
+_ATTACHED: dict[str, dict] = {}
+
+
+def _attach_group(smiles: str) -> dict:
+    """The attached group as drawn coordinates: root at the origin, the bond into it from -x,
+    bonds 14.4 pt, Kekulé bond orders; the [*] itself is left out."""
+    if smiles in _ATTACHED:
+        return _ATTACHED[smiles]
+    from rdkit.Chem import AllChem
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f"the attached group {smiles!r} is not valid SMILES")
+    stars = [a for a in mol.GetAtoms() if a.GetAtomicNum() == 0]
+    if len(stars) != 1 or stars[0].GetDegree() != 1:
+        raise ValueError(f"the attached group {smiles!r} needs one [*] bonded to one atom")
+    if any(a.GetFormalCharge() or a.GetNumRadicalElectrons() for a in mol.GetAtoms()):
+        raise ValueError(f"the attached group {smiles!r} carries a charge or radical, which a projection "
+                         "cannot draw yet; draw that species as an ordinary structure")
+    Chem.Kekulize(mol, clearAromaticFlags=True)
+    AllChem.Compute2DCoords(mol)
+    conf = mol.GetConformer()
+    xy = {a.GetIdx(): (conf.GetAtomPosition(a.GetIdx()).x, -conf.GetAtomPosition(a.GetIdx()).y)
+          for a in mol.GetAtoms()}   # y down, as on the page
+    lengths = [math.dist(xy[b.GetBeginAtomIdx()], xy[b.GetEndAtomIdx()]) for b in mol.GetBonds()]
+    scale = ACS_BOND_LENGTH / (sum(lengths) / len(lengths))
+    star = stars[0].GetIdx()
+    root = stars[0].GetNeighbors()[0].GetIdx()
+    angle = math.atan2(xy[root][1] - xy[star][1], xy[root][0] - xy[star][0])
+    cos, sin = math.cos(-angle), math.sin(-angle)
+    from ..templates.conformers import _HYDRIDE_LABELS, _SIMPLE_ELEMENTS
+    atoms = []
+    for atom in mol.GetAtoms():
+        if atom.GetIdx() == star:
+            continue
+        symbol, hydrogens = atom.GetSymbol(), atom.GetTotalNumHs()
+        label = symbol if symbol == "C" or not hydrogens else symbol + "H" + (str(hydrogens) if hydrogens > 1 else "")
+        if symbol not in _SIMPLE_ELEMENTS or (label != symbol and label not in _HYDRIDE_LABELS):
+            raise ValueError(f"the attached group {smiles!r} has an atom a projection cannot label ({label})")
+        dx, dy = (xy[atom.GetIdx()][0] - xy[root][0]) * scale, (xy[atom.GetIdx()][1] - xy[root][1]) * scale
+        atoms.append({"index": atom.GetIdx() + 1, "symbol": label,
+                      "num_hydrogens": hydrogens, "show_label": symbol != "C",
+                      "x": dx * cos - dy * sin, "y": dx * sin + dy * cos})
+    bonds = [{"atom1": b.GetBeginAtomIdx() + 1, "atom2": b.GetEndAtomIdx() + 1,
+              "order": int(b.GetBondTypeAsDouble())}
+             for b in mol.GetBonds() if star not in (b.GetBeginAtomIdx(), b.GetEndAtomIdx())]
+    _ATTACHED[smiles] = {"root": root + 1, "atoms": atoms, "bonds": bonds}
+    return _ATTACHED[smiles]
+
+
+def _projection(spec: dict, cx: float = 0.0, cy: float = 0.0) -> dict:
+    """The template drawn from a species' newman entry, its attached group included."""
+    from ..templates.conformers import newman_projection
+    attach = spec.get("attach")
+    return newman_projection(conformation=spec.get("conformation", "staggered"),
+                             dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
+                             rear=tuple(spec["rear"]), cx=cx, cy=cy, bond_length=NEWMAN_SPOKE,
+                             attach=_attach_group(attach["smiles"]) if attach else None)
+
+
+def _newman_frag(ident: str, spec: dict, label: str | None) -> Any:
+    """A Newman projection as a structure the row layout can place: atoms, bonds, box, label."""
+    drawn = _projection(spec)
+    atoms = [dict(a) for a in drawn["atoms"]]
+    frag = SimpleNamespace(atoms=atoms, bonds=[dict(b) for b in drawn["bonds"]], newman=dict(spec),
+                           ref=StructureRef(id=ident, label=label))
+    frag.bbox = R._fragment_bbox(atoms)
+    frag.cx, frag.cy = R._bbox_center(frag.bbox)
+    return frag
+
+
+def _newman_xml(frag: Any, next_id) -> list[str]:
+    """The projection drawn where the layout put it, with ids from the page's own sequence.
+
+    The template orders its parts by Z (rear spokes, then the filled disc, then the front
+    spokes); new Z values keep that order, so the disc still hides the rear spokes' roots.
+    """
+    centre = frag.atoms[0]  # the front carbon, at the centre of the projection
+    drawn = _projection(frag.newman, centre["x"], centre["y"])
+    elements = [ET.fromstring(drawn["fragment_xml"])] + [ET.fromstring(g) for g in drawn["graphics_xml"]]
+    every = [node for element in elements for node in element.iter()]
+    renumber = {node.get("id"): str(next_id()) for node in every if node.get("id")}
+    for node in every:
+        if node.get("id"):
+            node.set("id", renumber[node.get("id")])
+        for key in ("B", "E"):
+            if node.get(key) in renumber:
+                node.set(key, renumber[node.get(key)])
+    for node in sorted((n for n in every if n.get("Z")), key=lambda n: int(n.get("Z"))):
+        node.set("Z", str(next_id()))
+    return [ET.tostring(element, encoding="unicode") for element in elements]
+
+
+def _newman_inventory(spec: dict) -> list[str]:
+    """What the readback finds for this projection: the template read the way pages are read."""
+    import tempfile
+    from ..chemistry_semantics import document_inventory
+    drawn = _projection(spec)
+    with tempfile.TemporaryDirectory(prefix="newman-") as scratch:
+        path = Path(scratch) / "newman.cdxml"
+        path.write_text(drawn["cdxml"], encoding="utf-8")
+        try:
+            return list(document_inventory(path).elements())
+        except ValueError:
+            return []
 
 
 def _as_ids(value: Any) -> list[str]:
@@ -169,6 +351,8 @@ def _move_errors(number: int, index: int, move: Any, substrates: list[str], ids:
         errors.append(f"{where}: unknown keys {extra}.")
     if move.get("electrons", 2) not in (1, 2) or isinstance(move.get("electrons"), bool):
         errors.append(f"{where}: electrons must be 1 or 2.")
+    if "color" in move and not (isinstance(move["color"], str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", move["color"])):
+        errors.append(f"{where}: color must be a hex colour like #2E7D32.")
     for side in ("from", "to"):
         errors += _end_errors(f"{where} {side}", move.get(side), ids)
         end = move.get(side)
@@ -190,7 +374,7 @@ def _index_errors(brief: dict, mols: dict[str, Any]) -> list[str]:
     """Atom and bond numbers must exist in the grounded structures."""
     errors: list[str] = []
     for number, step in enumerate(brief["steps"], 1):
-        for index, move in enumerate(step["moves"], 1):
+        for index, move in enumerate(step.get("moves") or [], 1):
             for side in ("from", "to"):
                 end = move[side]
                 mol = mols[end["species"]]
@@ -258,6 +442,7 @@ class _Drawing:
     rows: list
     curves: list
     atoms: list
+    bonds: list = field(default_factory=list)
     notes: list = field(default_factory=list)
 
 
@@ -294,10 +479,16 @@ def _arrange(brief: dict, grounded: list[dict], width: float, gap_scale: float):
     insts: list[_Inst] = []
     notes: list[str] = []
 
+    def structure(species: str, label: str | None = None) -> Any:
+        item = by_id[species]
+        if item.get("newman"):
+            return _newman_frag(species, item["newman"], label)
+        return R._resolve_structure(StructureRef(id=species, smiles=item["smiles"], label=label))
+
     def new(species: str) -> _Inst:
         item = by_id[species]
         label = str(item["label"]) if item["label"] else None
-        inst = _Inst(len(insts), species, R._resolve_structure(StructureRef(id=species, smiles=item["smiles"], label=label)))
+        inst = _Inst(len(insts), species, structure(species, label))
         insts.append(inst)
         return inst
 
@@ -324,7 +515,7 @@ def _arrange(brief: dict, grounded: list[dict], width: float, gap_scale: float):
         arrow_len = max(max(R._estimate_text_width(above), R._estimate_text_width(below)) + 10.0, 5.0 * bond)
         product_widths = []
         for species in products:
-            probe = R._resolve_structure(StructureRef(id=species, smiles=by_id[species]["smiles"]))
+            probe = structure(species)
             product_widths.append(R._bbox_width(probe.bbox))
         after_arrow = 0.3 * frag_gap + arrow_len + frag_gap + sum(product_widths) + inter_gap * (len(products) - 1)
 
@@ -395,63 +586,141 @@ def _anchor(inst: _Inst, end: dict) -> tuple[tuple[float, float], float, set]:
     return ((a["x"] + b["x"]) / 2.0, (a["y"] + b["y"]) / 2.0), 0.0, {(inst.uid, i), (inst.uid, j)}
 
 
-def _bezier(p0, p3, side: float, scale: float):
-    dx, dy = p3[0] - p0[0], p3[1] - p0[1]
-    length = math.hypot(dx, dy) or 1.0
-    ux, uy = dx / length, dy / length
-    nx, ny = -uy * side, ux * side
-    height = min(max(0.45 * length, BULGE_MIN), BULGE_MAX) * scale
-    control = height / 0.75
-    p1 = (p0[0] + 0.2 * dx + nx * control, p0[1] + 0.2 * dy + ny * control)
-    p2 = (p3[0] - 0.2 * dx + nx * control, p3[1] - 0.2 * dy + ny * control)
-    return [p0, p1, p2, p3]
-
-
 def _unit(dx: float, dy: float) -> tuple[float, float]:
     length = math.hypot(dx, dy) or 1.0
     return dx / length, dy / length
 
 
-def _shape(src, src_r: float, dst, dst_r: float, side: float, scale: float):
-    """Bezier from ``src`` to ``dst`` that starts and stops ``*_r`` away from the atoms, on the arc's own side."""
+def _up_angle(point, centre) -> float:
+    """Angle of ``point`` about ``centre`` with y up: anticlockwise as seen on the page."""
+    return math.atan2(-(point[1] - centre[1]), point[0] - centre[0])
+
+
+def _arc(src, src_r: float, dst, dst_r: float, side: float, scale: float) -> dict:
+    """A circular arc from ``src`` to ``dst`` that bulges to ``side`` of the chord.
+
+    The bulge (the sagitta) is 0.45 of the chord, kept between BULGE_MIN and BULGE_MAX and
+    multiplied by ``scale``; ``side`` +1 or -1 picks the normal (-uy, ux) or its opposite. The
+    arc then stops ``src_r`` and ``dst_r`` short of the atoms, along the circle itself, so it
+    lands on an atom's edge from the side it arrives on. ``pts`` samples the arc from source
+    to target; ``sweep`` is signed, positive when the arc turns anticlockwise on the page.
+    """
+    chord = max(math.dist(src, dst), 1.0)
     ux, uy = _unit(dst[0] - src[0], dst[1] - src[1])
-    length = math.hypot(dst[0] - src[0], dst[1] - src[1])
-    r_src, r_dst = min(src_r, 0.3 * length), min(dst_r, 0.3 * length)
-    start, end = (src[0] + ux * r_src, src[1] + uy * r_src), (dst[0] - ux * r_dst, dst[1] - uy * r_dst)
-    points = _bezier(start, end, side, scale)
-    if src_r or dst_r:
-        # land on the atom's edge from the side the arc arrives on, not along the straight chord
-        if src_r:
-            vx, vy = _unit(points[1][0] - src[0], points[1][1] - src[1])
-            start = (src[0] + vx * src_r, src[1] + vy * src_r)
-        if dst_r:
-            wx, wy = _unit(dst[0] - points[2][0], dst[1] - points[2][1])
-            end = (dst[0] - wx * dst_r, dst[1] - wy * dst_r)
-        points = _bezier(start, end, side, scale)
-    return points
+    nx, ny = -uy * side, ux * side
+    height = min(max(0.45 * chord, BULGE_MIN), BULGE_MAX) * scale
+    radius = chord * chord / (8.0 * height) + height / 2.0
+    mx, my = (src[0] + dst[0]) / 2.0, (src[1] + dst[1]) / 2.0
+    centre = (mx - nx * (radius - height), my - ny * (radius - height))
+    total = 4.0 * math.atan(2.0 * height / chord)          # the angle the whole arc subtends
+    begin = _up_angle(src, centre)
+    apex = (mx + nx * height, my + ny * height)
+
+    def at(angle):
+        return centre[0] + radius * math.cos(angle), centre[1] - radius * math.sin(angle)
+    # Turn the way that passes the apex half-way: anticlockwise (+1) or clockwise (-1) on the page.
+    turn = 1.0 if math.dist(at(begin + total / 2.0), apex) <= math.dist(at(begin - total / 2.0), apex) else -1.0
+    trim_src = 2.0 * math.asin(min(1.0, src_r / (2.0 * radius)))
+    trim_dst = 2.0 * math.asin(min(1.0, dst_r / (2.0 * radius)))
+    sweep = max(total - trim_src - trim_dst, 0.15 * total)
+    first = begin + turn * trim_src
+    pts = [at(first + turn * sweep * k / SAMPLES) for k in range(SAMPLES + 1)]
+    return {"centre": centre, "radius": radius, "sweep": turn * sweep, "pts": pts}
 
 
-def _sample(points, count: int = SAMPLES):
-    out = []
-    for step in range(count + 1):
-        t = step / count
-        u = 1 - t
-        out.append((
-            u ** 3 * points[0][0] + 3 * u * u * t * points[1][0] + 3 * u * t * t * points[2][0] + t ** 3 * points[3][0],
-            u ** 3 * points[0][1] + 3 * u * u * t * points[1][1] + 3 * u * t * t * points[2][1] + t ** 3 * points[3][1],
-        ))
-    return out
+def _shift_arc(arc: dict, dy: float) -> dict:
+    return {**arc, "centre": (arc["centre"][0], arc["centre"][1] + dy),
+            "pts": [(x, y + dy) for x, y in arc["pts"]]}
 
 
 def _hits(points, atoms: list[dict], skip: set) -> list[dict]:
     found: dict[Any, dict] = {}
-    samples = _sample(points)[1:-1]
+    samples = points[1:-1]
     for atom in atoms:
         if atom["key"] in skip:
             continue
         if any(math.hypot(x - atom["x"], y - atom["y"]) < atom["reach"] for x, y in samples):
             found[atom["key"]] = atom
     return list(found.values())
+
+
+def _segment_distance(p, q, a, b) -> float:
+    """Shortest distance between the segments p-q and a-b."""
+    def point(c, s, t):
+        dx, dy = t[0] - s[0], t[1] - s[1]
+        length = dx * dx + dy * dy
+        u = 0.0 if not length else max(0.0, min(1.0, ((c[0] - s[0]) * dx + (c[1] - s[1]) * dy) / length))
+        return math.hypot(c[0] - s[0] - u * dx, c[1] - s[1] - u * dy)
+
+    def side(o, s, t):
+        return (t[0] - s[0]) * (o[1] - s[1]) - (t[1] - s[1]) * (o[0] - s[0])
+    if side(a, p, q) * side(b, p, q) < 0 and side(p, a, b) * side(q, a, b) < 0:
+        return 0.0
+    return min(point(p, a, b), point(q, a, b), point(a, p, q), point(b, p, q))
+
+
+def _bond_hits(points, bonds: list[dict], skip: set) -> list[dict]:
+    """Bonds an arrow cuts or grazes, other than those at the atoms it starts or ends on."""
+    found = []
+    for bond in bonds:
+        if bond["atoms"] & skip:
+            continue
+        if any(_segment_distance(p, q, bond["a"], bond["b"]) < BOND_CLEARANCE for p, q in zip(points, points[1:])):
+            found.append(bond)
+    return found
+
+
+def _arrows_clash(first, second) -> bool:
+    """Whether two arrows (sampled source to target) run into each other.
+
+    Their heads may not come within HEAD_CLEARANCE, nor their bodies within ARROW_CLEARANCE;
+    the first TAIL_SHARE of each is left out, as two arrows may leave the same atom.
+    """
+    if math.dist(first[-1], second[-1]) < HEAD_CLEARANCE:
+        return True
+    a, b = first[int(len(first) * TAIL_SHARE):], second[int(len(second) * TAIL_SHARE):]
+    return any(_segment_distance(p, q, r, t) < ARROW_CLEARANCE for p, q in zip(a, a[1:]) for r, t in zip(b, b[1:]))
+
+
+def _choose_arc(src, src_r: float, dst, dst_r: float, *, atoms: list[dict], bonds: list[dict], skip: set,
+                placed: list, bulge: float, centre) -> dict:
+    """The arc that meets the fewest atoms, bonds and arrows already drawn; then the lowest; then
+    the preferred side (outside the molecule for a move within one, else higher on the page)."""
+    best = None
+    for height, scale in enumerate(HEIGHT_STEPS):
+        for side in (-1.0, 1.0):
+            arc = _arc(src, src_r, dst, dst_r, side, scale * bulge)
+            points = arc["pts"]
+            hits = (len(_hits(points, atoms, skip)) + len(_bond_hits(points, bonds, skip))
+                    + sum(_arrows_clash(points, other) for other in placed))
+            mid = points[SAMPLES // 2]
+            if centre is not None:
+                preference = -math.hypot(mid[0] - centre[0], mid[1] - centre[1])
+            else:
+                preference = mid[1]
+            key = (hits, height, preference)
+            if best is None or key < best[0]:
+                best = (key, arc)
+    return best[1]
+
+
+def _row_bonds(row: list[dict]) -> list[dict]:
+    """The drawn bonds of a row, as segments between atom positions."""
+    found = []
+    for item in row:
+        if item["t"] != "frag":
+            continue
+        atoms = item["inst"].frag.atoms
+        number = {a["index"]: k for k, a in enumerate(atoms)}
+        for bond in item["inst"].frag.bonds:
+            i, j = number.get(bond.get("atom1")), number.get(bond.get("atom2"))
+            if i is None or j is None:
+                continue
+            found.append({"key": ("bond", item["inst"].uid, min(i, j), max(i, j)),
+                          "label": f"the {item['inst'].species} bond {min(i, j)}-{max(i, j)}",
+                          "a": (atoms[i]["x"], atoms[i]["y"]), "b": (atoms[j]["x"], atoms[j]["y"]),
+                          "atoms": {(item["inst"].uid, i), (item["inst"].uid, j)}})
+    return found
 
 
 def _label_obstacles(row: list[dict]) -> list[dict]:
@@ -475,10 +744,11 @@ def _row_curves(brief: dict, step_insts: list[dict], rows: list[list[dict]], bul
              "x": a["x"], "y": a["y"], "reach": _reach(a)}
             for item in row if item["t"] == "frag" for number, a in enumerate(item["inst"].frag.atoms)
         ] + _label_obstacles(row)
+    bonds_by_row = {row_index: _row_bonds(row) for row_index, row in enumerate(rows)}
     curves: dict[int, list[dict]] = {i: [] for i in range(len(rows))}
     for number, step in enumerate(brief["steps"], 1):
         subs = step_insts[number - 1]["subs"]
-        for index, move in enumerate(step["moves"], 1):
+        for index, move in enumerate(step.get("moves") or [], 1):
             src_inst, dst_inst = subs[move["from"]["species"]], subs[move["to"]["species"]]
             (sx, sy), src_r, src_keys = _anchor(src_inst, move["from"])
             (tx, ty), dst_r, dst_keys = _anchor(dst_inst, move["to"])
@@ -488,43 +758,55 @@ def _row_curves(brief: dict, step_insts: list[dict], rows: list[list[dict]], bul
             if src_inst is dst_inst:
                 pts = src_inst.frag.atoms
                 centre = (sum(a["x"] for a in pts) / len(pts), sum(a["y"] for a in pts) / len(pts))
-            best = None
-            for height, scale in enumerate(HEIGHT_STEPS):
-                for side in (-1.0, 1.0):
-                    points = _shape((sx, sy), src_r, (tx, ty), dst_r, side, scale * bulge)
-                    hits = len(_hits(points, atoms_by_row[row], skip))
-                    mid = _sample(points)[SAMPLES // 2]
-                    if centre is not None:
-                        preference = -math.hypot(mid[0] - centre[0], mid[1] - centre[1])  # outside the molecule
-                    else:
-                        preference = mid[1]  # higher on the page (smaller y) first
-                    key = (hits, height, preference)
-                    if best is None or key < best[0]:
-                        best = (key, points)
+            # Arrows are routed in the order given, each around those already drawn in its row.
+            arc = _choose_arc((sx, sy), src_r, (tx, ty), dst_r, atoms=atoms_by_row[row], bonds=bonds_by_row[row],
+                              skip=skip, placed=[c["pts"] for c in curves[row]], bulge=bulge, centre=centre)
             curves[row].append({"step": number, "move": index, "electrons": move.get("electrons", 2),
-                                "pts": best[1], "skip": skip})
+                                "color": move.get("color"), "arc": arc, "pts": arc["pts"], "skip": skip})
     return curves
 
 
-def _crossings(curves: list[dict], atoms: list[dict]) -> list[dict]:
-    """Atoms a curved arrow passes through (other than its own endpoints)."""
+def _crossings(curves: list[dict], atoms: list[dict], bonds: list[dict] = ()) -> list[dict]:
+    """Atoms, bonds and other arrows a curved arrow runs into (other than at its own endpoints)."""
     found = []
-    for curve in curves:
+    for number, curve in enumerate(curves):
         for atom in _hits(curve["pts"], atoms, curve["skip"]):
             found.append({"step": curve["step"], "move": curve["move"], "with": atom["label"]})
+        for bond in _bond_hits(curve["pts"], list(bonds), curve["skip"]):
+            found.append({"step": curve["step"], "move": curve["move"], "with": bond["label"]})
+        for other in curves[:number]:
+            if _arrows_clash(curve["pts"], other["pts"]):
+                found.append({"step": curve["step"], "move": curve["move"],
+                              "with": f"the arrow of step {other['step']} move {other['move']}"})
     return found
 
 
-def _curve_xml(curve: dict, ids) -> str:
-    p = curve["pts"]
-    flat = " ".join(f"{x:.2f} {y:.2f}" for x, y in (p[0], p[0], p[1], p[2], p[3], p[3]))
-    samples = _sample(p)
-    xs, ys = [s[0] for s in samples], [s[1] for s in samples]
+def _arc_xml(curve: dict, ids) -> str:
+    """The arc as ChemDraw writes a curved arrow (see toolkit/tests/data/native-arc-arrows.cdxml).
+
+    ChemDraw runs an arc from Tail3D anticlockwise on the page through AngularSize degrees to
+    Head3D. An arrow that turns that way has its tail at the source and the head on Head3D; one
+    that turns clockwise is the same arc from the target, with the head on the tail end.
+    """
+    arc = curve["arc"]
+    (cx, cy), r, pts = arc["centre"], arc["radius"], arc["pts"]
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     head = "HalfLeft" if curve["electrons"] == 1 else "Full"
-    return (f'<curve id="{ids.next()}" BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}" '
-            f'Z="{ids.next()}" CurvePoints="{flat}" FillType="None" LineWidth="{ACS_LINE_WIDTH}" '
-            f'ArrowheadHead="{head}" ArrowheadType="Solid" HeadSize="1000" '
-            f'ArrowheadCenterSize="875" ArrowheadWidth="250"/>')
+    # A half head is the full head's 1 : 0.875 : 0.25 shape at 0.6 of its size, as ChemDraw writes
+    # its own: the thin barb that reads as one electron.
+    shape = ('HeadSize="600" ArrowheadCenterSize="525" ArrowheadWidth="150"' if curve["electrons"] == 1
+             else 'HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250"')
+    if arc["sweep"] >= 0:
+        tail, tip, ends = pts[0], pts[-1], f'ArrowheadHead="{head}"'
+    else:
+        tail, tip, ends = pts[-1], pts[0], f'ArrowheadTail="{head}" ArrowheadHead="None"'
+    return (f'<arrow id="{ids()}" BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}" '
+            f'Z="{ids()}" FillType="None" LineWidth="{ACS_LINE_WIDTH}" {ends} ArrowheadType="Solid" '
+            f'{shape} '
+            f'AngularSize="{abs(math.degrees(arc["sweep"])):.2f}" '
+            f'Head3D="{tip[0]:.2f} {tip[1]:.2f} 0" Tail3D="{tail[0]:.2f} {tail[1]:.2f} 0" '
+            f'Center3D="{cx:.2f} {cy:.2f} 0" MajorAxisEnd3D="{cx + r:.2f} {cy:.2f} 0" '
+            f'MinorAxisEnd3D="{cx:.2f} {cy - r:.2f} 0"/>')
 
 
 # ---------------------------------------------------------------------------
@@ -543,7 +825,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
     for row_index, row in enumerate(rows):
         top, bottom = _row_extent(row)
         for curve in local_curves[row_index]:
-            ys = [y for _, y in _sample(curve["pts"])]
+            ys = [y for _, y in curve["pts"]]
             top, bottom = min(top, min(ys)), max(bottom, max(ys))
         offset = cursor - top
         offsets.append(offset)
@@ -553,7 +835,8 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
                 R._shift_atoms(item["inst"].frag.atoms, 0.0, offset)
                 item["inst"].frag.bbox = R._fragment_bbox(item["inst"].frag.atoms)
         for curve in local_curves[row_index]:
-            curve["pts"] = [(x, y + offset) for x, y in curve["pts"]]
+            curve["arc"] = _shift_arc(curve["arc"], offset)
+            curve["pts"] = curve["arc"]["pts"]
 
     curves = [c for row_index in range(len(rows)) for c in local_curves[row_index]]
     atoms = [
@@ -561,6 +844,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
          "x": a["x"], "y": a["y"], "reach": _reach(a)}
         for row in rows for item in row if item["t"] == "frag" for number, a in enumerate(item["inst"].frag.atoms)
     ] + [o for row in rows for o in _label_obstacles(row)]
+    bonds = [b for row in rows for b in _row_bonds(row)]
 
     def build(with_numbers: bool):
         def make(ids) -> str:
@@ -574,8 +858,11 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
                 for item in row:
                     if item["t"] == "frag":
                         frag = item["inst"].frag
-                        xml, _, _ = R._build_fragment(frag.atoms, frag.bonds, ids)
-                        parts.append(xml)
+                        if getattr(frag, "newman", None):
+                            parts += _newman_xml(frag, ids.next)
+                        else:
+                            xml, _, _ = R._build_fragment(frag.atoms, frag.bonds, ids)
+                            parts.append(xml)
                         if frag.ref.label:
                             label, _ = R._build_label_element(frag.ref.label, frag.cx, frag.bbox[3] + 14.0, ids)
                             parts.append(label)
@@ -593,7 +880,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
                                                                justification="Left", use_formatting=False,
                                                                font_size=7)
                                 parts.append(xml)
-            parts += [_curve_xml(c, ids) for c in curves]
+            parts += [_arc_xml(c, ids.next) for c in curves]
             return "\n".join(parts)
         return make
 
@@ -606,7 +893,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
 
     cdxml = R.render_with(build(numbers))
     clean = R.render_with(build(False)) if numbers else cdxml
-    return _Drawing(cdxml=cdxml, lint_cdxml=clean, rows=rows, curves=curves, atoms=atoms, notes=notes)
+    return _Drawing(cdxml=cdxml, lint_cdxml=clean, rows=rows, curves=curves, atoms=atoms, bonds=bonds, notes=notes)
 
 
 def _arrow_xml(item: dict, y: float, ids) -> list[str]:
@@ -625,11 +912,26 @@ def _arrow_xml(item: dict, y: float, ids) -> list[str]:
     return parts
 
 
+def _color_moves(cdxml: Any, curves: list[dict]) -> Any:
+    """Give each curved arrow the colour its move names; it wins over a house colour."""
+    if not any(c.get("color") for c in curves):
+        return cdxml
+    root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
+    colors = figure_house._Colors(root)
+    arcs = [a for a in root.iter("arrow") if a.get("AngularSize")]
+    for arrow, curve in zip(arcs, curves):  # written in the same order
+        if curve.get("color"):
+            arrow.set("color", colors.index(curve["color"]))
+    wrapped = R._ValidatedCDXML('<?xml version="1.0" encoding="UTF-8" ?>\n' + ET.tostring(root, encoding="unicode"))
+    wrapped.chemistry_validation = getattr(cdxml, "chemistry_validation", None)
+    return wrapped
+
+
 def _move_report(brief: dict, mols: dict[str, Any]) -> tuple[list[dict], list[str]]:
     report: list[dict] = []
     warnings: list[str] = []
     for number, step in enumerate(brief["steps"], 1):
-        for index, move in enumerate(step["moves"], 1):
+        for index, move in enumerate(step.get("moves") or [], 1):
             checks = _move_checks(move, mols[move["from"]["species"]])
             report.append({
                 "step": number, "move": index,
@@ -647,14 +949,26 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     errors = _validate(brief)
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
-    grounded, errors = figure_draw._ground(brief["species"])
+    # A Newman projection is drawn from its substituents, not from a structure to ground.
+    projections = [e for e in brief["species"] if "newman" in e]
+    grounded, errors = figure_draw._ground([e for e in brief["species"] if "newman" not in e])
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
-    mols = {g["id"]: Chem.MolFromSmiles(g["smiles"]) for g in grounded}
+    for e in projections:
+        if e["newman"].get("attach"):
+            try:
+                _attach_group(e["newman"]["attach"]["smiles"])
+            except ValueError as error:
+                errors.append(f"Species {e['id']}: {error}.")
+    if errors:
+        return figure_draw._failure(errors, kind="mechanism")
+    grounded += [{"id": str(e["id"]), "label": e.get("label"), "name": None, "smiles": None, "source": "newman",
+                  "newman": e["newman"], "inventory": _newman_inventory(e["newman"])} for e in projections]
+    mols = {g["id"]: Chem.MolFromSmiles(g["smiles"]) for g in grounded if g.get("smiles")}
     errors = _index_errors(brief, mols)
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
-    smiles = {g["id"]: g["smiles"] for g in grounded}
+    smiles = {g["id"]: g["smiles"] for g in grounded if g.get("smiles")}
 
     balance, warnings = figure_draw._check_balance(brief, smiles)
     moves, move_warnings = _move_report(brief, mols)
@@ -677,7 +991,7 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     try:
         drawing = _draw(brief, grounded, width, gap_scale, bulge, numbers)
         issues = figure_lint.lint_cdxml(drawing.lint_cdxml, max_width=budget)
-        crossings = _crossings(drawing.curves, drawing.atoms)
+        crossings = _crossings(drawing.curves, drawing.atoms, drawing.bonds)
         relayout = None
         if issues or crossings:
             first = {"issues": issues, "crossings": crossings}
@@ -691,14 +1005,21 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
             if changed:
                 drawing = _draw(brief, grounded, new_width, new_gap, bulge, numbers)
                 issues = figure_lint.lint_cdxml(drawing.lint_cdxml, max_width=budget)
-                crossings = _crossings(drawing.curves, drawing.atoms)
+                crossings = _crossings(drawing.curves, drawing.atoms, drawing.bonds)
                 relayout = {"changed": changed, "first_issues": first["issues"],
                             "first_crossings": first["crossings"]}
     except Exception as exc:
         return figure_draw._failure([f"The layout failed: {exc}"], kind="mechanism", warnings=warnings)
 
+    try:
+        ringed, ring_applied, ring_warnings = figure_house.apply_generic_rings(drawing.cdxml, brief, grounded)
+        warnings += ring_warnings
+    except ValueError as exc:
+        return figure_draw._failure([f"The layout failed: {exc}"], kind="mechanism", warnings=warnings)
+    if ring_applied:
+        warnings += [f"Generic ring: {issue}." for issue in overlays_collide(str(ringed))]
     house = figure_draw.brief_house(brief)
-    final = figure_draw.styled(drawing.cdxml, slug)
+    final = figure_draw.styled(ringed, slug)
     house_applied: list[str] = []
     house_skipped = ["the reaction-scheme conventions (labels, yields, abbreviations) apply to schemes only"]
     if house is not None:
@@ -706,6 +1027,8 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         final, applied, more = figure_house.apply_figure_type_conventions(final, house, "mechanism", slug)
         house_applied += applied
         house_skipped += more
+    final = _color_moves(final, drawing.curves)
+    house_applied += ring_applied
     try:
         target = artifact_safety.resolve_destination(
             source=None, output_path=output_path, tag="figure", suffix=".cdxml")
@@ -749,7 +1072,10 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     species = []
     for g in grounded:
         entry = {k: g[k] for k in ("id", "label", "name", "smiles", "source")}
-        entry["atoms"] = ", ".join(f"{a.GetIdx()} {a.GetSymbol()}" for a in mols[g["id"]].GetAtoms())
+        if g["id"] in mols:
+            entry["atoms"] = ", ".join(f"{a.GetIdx()} {a.GetSymbol()}" for a in mols[g["id"]].GetAtoms())
+        else:
+            entry["newman"] = g["newman"]  # drawn from its substituents; no atoms to number
         species.append(entry)
     report = {
         "ok": True,

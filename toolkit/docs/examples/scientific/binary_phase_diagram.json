@@ -1,0 +1,32 @@
+{
+ "type": "eutectic",
+ "components": [
+  "Pb",
+  "Sn"
+ ],
+ "melting": [
+  327,
+  232
+ ],
+ "eutectic": [
+  0.619,
+  183
+ ],
+ "solubility": [
+  0.183,
+  0.977
+ ],
+ "basis": "mass",
+ "points": [
+  {
+   "x": 0.4,
+   "T": 230,
+   "label": "P"
+  },
+  {
+   "x": 0.4,
+   "T": 160,
+   "label": "Q"
+  }
+ ]
+}

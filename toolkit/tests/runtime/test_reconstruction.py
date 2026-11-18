@@ -93,7 +93,7 @@ def test_local_report_source_survives_publication_and_directory_move(drawing, tm
     moved = tmp_path / 'moved'
     folder.rename(moved)
     report_path = moved / 'check-0/report.json'
-    report = json.loads(report_path.read_text())
+    report = json.loads(report_path.read_text(encoding="utf-8"))
     assert not Path(report['source']).is_absolute()
     source = (report_path.parent / report['source']).resolve()
     assert source == moved / 'fragment-0.cdxml'

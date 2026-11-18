@@ -45,7 +45,7 @@ def test_an_image_page_is_segmented_read_and_summarised(page, tmp_path, fake_eng
     assert any('OpenCV segmenter' in w for w in report['warnings'])
     assert [r['engines'][0]['smiles'] for r in report['segments']] == [[ASPIRIN], [CAFFEINE]]
     assert report['needs_review'] == [1, 2]  # one engine alone is never enough to stop looking
-    assert (out / 'contact-sheet.png').is_file() and json.loads((out / 'structures.json').read_text())['segments']
+    assert (out / 'contact-sheet.png').is_file() and json.loads((out / 'structures.json').read_text(encoding="utf-8"))['segments']
     assert Image.open(out / 'contact-sheet.png').size[1] >= 2 * 220
 
 
@@ -67,7 +67,7 @@ def test_existing_output_is_never_overwritten(page, tmp_path, fake_engines):
     (out / 'keep.txt').write_text('mine')
     with pytest.raises(ValueError, match='not empty'):
         document.extract(str(page), str(out))
-    assert (out / 'keep.txt').read_text() == 'mine'
+    assert (out / 'keep.txt').read_text(encoding="utf-8") == 'mine'
 
 
 def test_a_missing_deep_segmenter_is_named_when_asked_for_explicitly(page, tmp_path, fake_engines):

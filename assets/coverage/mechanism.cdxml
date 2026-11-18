@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='utf-8'?>
+<CDXML BondLength="28.0" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" LabelFont="3" CaptionFont="3" LabelSize="11.0" CaptionSize="11.0" LabelFace="96">
+  <fonttable>
+    <font id="3" charset="iso-8859-1" name="Arial" />
+  </fonttable>
+  <page id="1" BoundingBox="0 0 1000 1000">
+    <fragment id="1001" BoundingBox="65.00 130.00 65.00 130.00" Z="1002" color="3">
+      <n id="1003" p="65.00 130.00" Z="1004" Element="17" NumHydrogens="0" NeedsClean="yes" Charge="-1">
+        <t id="1005" p="61.75 133.52" BoundingBox="62.00 122.48 73.00 130.00" LabelJustification="Left">
+          <s font="3" size="11.0" color="3" face="96">Cl</s>
+          <s font="3" size="11.0" color="3" face="64">-</s>
+        </t>
+      </n>
+    </fragment>
+    <fragment id="1006" BoundingBox="135.00 130.00 169.00 130.00" Z="1007" color="3">
+      <n id="1008" p="135.00 130.00" Z="1009" />
+      <n id="1010" p="169.00 130.00" Z="1011" Element="35" NumHydrogens="0" NeedsClean="yes">
+        <t id="1012" p="165.75 133.52" BoundingBox="166.00 122.48 177.00 130.00" LabelJustification="Left">
+          <s font="3" size="11.0" color="3" face="96">Br</s>
+        </t>
+      </n>
+      <b id="1013" Z="1014" B="1008" E="1010" />
+    </fragment>
+    <fragment id="1014" BoundingBox="325.00 130.00 359.00 130.00" Z="1015" color="3">
+      <n id="1016" p="325.00 130.00" Z="1017" />
+      <n id="1018" p="359.00 130.00" Z="1019" Element="17" NumHydrogens="0" NeedsClean="yes">
+        <t id="1020" p="355.75 133.52" BoundingBox="356.00 122.48 367.00 130.00" LabelJustification="Left">
+          <s font="3" size="11.0" color="3" face="96">Cl</s>
+        </t>
+      </n>
+      <b id="1021" Z="1022" B="1016" E="1018" />
+    </fragment>
+    <fragment id="1022" BoundingBox="417.00 130.00 417.00 130.00" Z="1023" color="3">
+      <n id="1024" p="417.00 130.00" Z="1025" Element="35" NumHydrogens="0" NeedsClean="yes" Charge="-1">
+        <t id="1026" p="413.75 133.52" BoundingBox="414.00 122.48 425.00 130.00" LabelJustification="Left">
+          <s font="3" size="11.0" color="3" face="96">Br</s>
+          <s font="3" size="11.0" color="3" face="64">-</s>
+        </t>
+      </n>
+    </fragment>
+    <t id="1027" p="101.0 133.0" Justification="Left" InterpretChemically="no">
+      <s font="3" size="11.0" face="0" color="3">+</s>
+    </t>
+    <t id="1028" p="388.0 133.0" Justification="Left" InterpretChemically="no">
+      <s font="3" size="11.0" face="0" color="3">+</s>
+    </t>
+    <arrow id="1029" Tail3D="218.0 130.0 0" Head3D="275.0 130.0 0" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadWidth="250" FillType="None" LineWidth="0.6" color="3" />
+    <t id="1030" p="230.0 112.0" Justification="Left" InterpretChemically="no">
+      <s font="3" size="11.0" face="0" color="3">SN2</s>
+    </t>
+    <t id="1031" p="65.0 65.0" Justification="Left" InterpretChemically="no">
+      <s font="3" size="11.0" face="0" color="3">Atom-anchored electron flow</s>
+    </t>
+    <curve id="1032" CurvePoints="69.0 122.0 69.0 122.0 89.0 87.0 123.0 87.0 135.0 127.0 135.0 127.0" FillType="None" LineWidth="0.6" color="3" ArrowheadHead="Full" ArrowheadType="Solid" />
+    <curve id="1033" CurvePoints="152.0 134.0 152.0 134.0 144.0 167.0 189.0 167.0 177.0 134.0 177.0 134.0" FillType="None" LineWidth="0.6" color="3" ArrowheadHead="Full" ArrowheadType="Solid" />
+    <scheme id="1034">
+      <step id="1035" ReactionStepReactants="1001 1006" ReactionStepProducts="1014 1022" ReactionStepArrows="1029" />
+    </scheme>
+  </page>
+  <colortable>
+    <color r="1" g="1" b="1" />
+    <color r="0" g="0" b="0" />
+  </colortable>
+</CDXML>

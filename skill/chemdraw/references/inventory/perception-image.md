@@ -4,9 +4,9 @@
 
 ## `deterministic_pipeline.legacy.eln_cdx_cleanup`
 
-- **function**, line 313: `cleanup_eln_cdx(input_path, output_path = None, scale_factor = 0.5, style_path = None)` - Clean up a reaction scheme exported from Findmolecule ELN.
-- **function**, line 464: `cleanup_multiple(input_paths, output_dir = None, scale_factor = 0.5, style_path = None)` - Clean up multiple CDX/CDXML files.
-- **function**, line 84: `scale_cdxml_coordinates(input_path, output_path, factor = 0.5)` - Scale all coordinates in a CDXML file by the given factor, centered on the centroid of all node/text positions.
+- **function**, line 314: `cleanup_eln_cdx(input_path, output_path = None, scale_factor = 0.5, style_path = None)` - Clean up a reaction scheme exported from Findmolecule ELN.
+- **function**, line 465: `cleanup_multiple(input_paths, output_dir = None, scale_factor = 0.5, style_path = None)` - Clean up multiple CDX/CDXML files.
+- **function**, line 85: `scale_cdxml_coordinates(input_path, output_path, factor = 0.5)` - Scale all coordinates in a CDXML file by the given factor, centered on the centroid of all node/text positions.
 
 ## `deterministic_pipeline.legacy.eln_enrichment`
 
@@ -66,14 +66,14 @@
 
 ## `image.structure_from_image`
 
-- **function**, line 768: `enrich_with_mass_data(results: List[Dict]) -> None` - Add formula, mw, exact_mass, and adducts to each extracted structure.
-- **function**, line 1211: `extract_structures_from_image(image_path: str, page: int = 0, segment: bool = True, hand_drawn: bool = False, verbose: bool = False, merge_gap: Optional[int] = None, detect_labels: bool = True) -> Dict` - Extract all chemical structures from an image using DECIMER.
+- **function**, line 787: `enrich_with_mass_data(results: List[Dict]) -> None` - Add formula, mw, exact_mass, and adducts to each extracted structure.
+- **function**, line 1230: `extract_structures_from_image(image_path: str, page: int = 0, segment: bool = True, hand_drawn: bool = False, verbose: bool = False, merge_gap: Optional[int] = None, detect_labels: bool = True) -> Dict` - Extract all chemical structures from an image using DECIMER.
 - **function**, line 289: `load_image(path: str, page: int = 0) -> 'np.ndarray'` - Load an image from a PNG/JPG file or from a specific page of a PDF.
-- **function**, line 724: `normalize_for_cdxml(atoms: List[Dict], bonds: List[Dict], center_x: float = 200.0, center_y: float = 300.0) -> Tuple[List[Dict], List[Dict]]` - Scale + flip-y + centre coordinates for CDXML output (ACS 1996, 14.40 pt bonds). RDKit coords are Angstroms, y-up. CDXML is points, y-down.
-- **function**, line 1434: `results_to_cdxml(results: List[Dict]) -> str` - Convert extracted structures to a CDXML document (multiple molecules on one page).
-- **function**, line 1550: `results_to_cdxml_chemscript(results: List[Dict], verbose: bool = False) -> str` - Convert extracted structures to CDXML using ChemScript for cleanup.
-- **function**, line 423: `segment_structures(bgr: 'np.ndarray', merge_gap: Optional[int] = None) -> List[Tuple['np.ndarray', Tuple[int, int, int, int]]]` - Detect chemical structure regions in a BGR image.
-- **function**, line 651: `smiles_to_coords(smiles: str, offset_index: int = 0) -> Optional[Dict]` - Convert a SMILES string to 2D atom/bond data using RDKit.
+- **function**, line 743: `normalize_for_cdxml(atoms: List[Dict], bonds: List[Dict], center_x: float = 200.0, center_y: float = 300.0) -> Tuple[List[Dict], List[Dict]]` - Scale + flip-y + centre coordinates for CDXML output (ACS 1996, 14.40 pt bonds). RDKit coords are Angstroms, y-up. CDXML is points, y-down.
+- **function**, line 1453: `results_to_cdxml(results: List[Dict]) -> str` - Convert extracted structures to a CDXML document (multiple molecules on one page).
+- **function**, line 1569: `results_to_cdxml_chemscript(results: List[Dict], verbose: bool = False) -> str` - Convert extracted structures to CDXML using ChemScript for cleanup.
+- **function**, line 442: `segment_structures(bgr: 'np.ndarray', merge_gap: Optional[int] = None) -> List[Tuple['np.ndarray', Tuple[int, int, int, int]]]` - Detect chemical structure regions in a BGR image.
+- **function**, line 670: `smiles_to_coords(smiles: str, offset_index: int = 0) -> Optional[Dict]` - Convert a SMILES string to 2D atom/bond data using RDKit.
 
 ## `perception.compound_search`
 

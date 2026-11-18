@@ -20,6 +20,12 @@ def template_catalog(path):
 def draw_apparatus(spec, output):
     files=spec.get('template_files',{})
     if not files:raise ValueError('Provide native template_files converted from the installed ChemDraw CTP files')
+    for key,path in files.items():
+        if not Path(path).is_file():
+            # The Clipware libraries are licensed with ChemDraw and never shipped with the toolkit.
+            raise ValueError(f"template '{key}' not found: {Path(path).resolve()}. Convert a copy of the "
+                             'Clipware CTP file from your ChemDraw installation to CDXML '
+                             '(cdx.py call convert_cdx_cdxml) and point template_files at it')
     components=spec.get('components',[])
     if not 1<=len(components)<=100:raise ValueError('Provide 1..100 native template components')
     d=Drawing(number(spec.get('width',600),'width',100,3000),number(spec.get('height',600),'height',100,3000))

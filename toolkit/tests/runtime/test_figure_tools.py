@@ -140,7 +140,7 @@ def test_template_translation_keeps_unknown_native_objects(tmp_path):
 def test_workbench_operations(tmp_path,operation,mols):
     output=tmp_path/(operation+'.json')
     result=rdkit_workbench([{'smiles':s} for s in mols],operation,{'max_results':2},str(output))
-    data=json.loads(output.read_text()); assert result['ok'] and data['results']
+    data=json.loads(output.read_text(encoding="utf-8")); assert result['ok'] and data['results']
     if operation=='stereoisomers': assert len(data['results'][0]['candidates'])<=2
 
 def test_reference_compare_never_hides_dimension_changes(tmp_path):
@@ -149,7 +149,7 @@ def test_reference_compare_never_hides_dimension_changes(tmp_path):
     Image.new('RGB',(20,21),'white').save(b)
     output=tmp_path/'compare.json'
     compare_figure_images(str(a),str(b),str(output))
-    result=json.loads(output.read_text())['results'][0]
+    result=json.loads(output.read_text(encoding="utf-8"))['results'][0]
     assert not result['same_dimensions'] and 'exact_pixels' not in result
 
 def test_publish_rejects_overwrite(tmp_path):
@@ -162,7 +162,7 @@ def test_publish_rejects_overwrite(tmp_path):
 def test_explicit_cip_edit_has_achieved_configuration_and_diff(tmp_path):
     output=tmp_path/'edited.json'
     rdkit_workbench([{'smiles':STEREO}],'set_stereo',{'configurations':{'1':'R'}},str(output))
-    result=json.loads(output.read_text())['results'][0]
+    result=json.loads(output.read_text(encoding="utf-8"))['results'][0]
     assert result['atoms'][1]['cip']=='R'
     assert result['connectivity_preserved'] and result['diff'][0]['after']=='R'
 
