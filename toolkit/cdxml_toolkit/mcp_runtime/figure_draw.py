@@ -40,7 +40,19 @@ DEFAULT_MAX_WIDTH = 504.0  # a double-column ACS page, 7 in
 RELAYOUT_GAP_SCALE = 1.4
 RELAYOUT_WIDTH_FACTOR = 0.75
 RELAYOUT_MIN_LINE_CHARS = 16
-ARROWS = ("solid", "dashed", "failed", "reversible", "resonance")
+ARROWS = ("solid", "dashed", "failed", "reversible", "resonance", "retro")
+# A species is one molecule record plus the handful of fields the layout reads from it. Keys
+# outside this set used to be dropped in silence, so a typo ("annotation", "yields", "zzz") lost
+# data without a word; they are refused now.
+SPECIES_KEYS = {
+    "id", "smiles", "name", "label", "orientation", "generic_rings", "clashes",
+    "ring_fills", "atom_halos", "highlight_atoms", "highlight_bonds", "ts_bracket",
+    "multi_attachments", "bond_displays", "cip_labels", "atom_numbers",
+    "annotation_offsets", "coordinates", "rotation", "bond_length",
+    "preserve_coordinates", "align_to", "alignment_mode", "fragment_index", "file",
+    "definition", "values", "secondary_of", "drawn_with", "caption", "box",
+} | set(figure_house.SPECIES_STYLE_KEYS) | set(figure_house.RECORD_KEYS)
+
 BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout", "overlays",
               "wrap", "charges"}
 WRAPS = ("continue", "repeat", "serpentine")
@@ -123,6 +135,9 @@ def _validate(brief: dict) -> list[str]:
             errors.append(f"Species {ident} needs a smiles or a name.")
         if entry.get("orientation") not in (None, *renderer.ORIENTATIONS):
             errors.append(f"Species {ident}: orientation must be one of {list(renderer.ORIENTATIONS)}.")
+        unknown = sorted(set(entry) - SPECIES_KEYS)
+        if unknown:
+            errors.append(f"Species {ident}: unknown keys {unknown}; use {sorted(SPECIES_KEYS)}.")
         errors += figure_house.species_style_errors(entry)
         errors += figure_house.generic_ring_errors(entry)
 

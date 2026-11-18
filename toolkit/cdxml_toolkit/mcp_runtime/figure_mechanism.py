@@ -172,6 +172,8 @@ def _validate(brief: dict) -> list[str]:
         conformers = bool(newman_ids & set(members["substrates"] + members["products"]))
         if conformers and moves in (None, []):
             continue  # a change of conformation, or a step drawn on projections, has no arrows to list
+        if moves in (None, []) and step.get("arrow") in ("resonance", "reversible"):
+            continue  # a relationship arrow (resonance, conformer equilibrium), not an electron flow
         if not isinstance(moves, list) or not moves:
             errors.append(f"Step {number} needs moves: list each electron move as from and to "
                           "(an atom number or a bond). A mechanism is never inferred.")
@@ -393,7 +395,8 @@ def _newman_receipt(frag: Any, fragment: ET.Element, renumber: dict[str, str]) -
         collector.append({"fragment_id": fid, "status": "not_checkable",
                           "reason": f"generic label {', '.join(sorted(set(generic)))} cannot be read back"})
         return
-    from ..chemistry_semantics import fragment_mol, semantic_key
+    from ..chemistry_semantics import semantic_key
+    from ..publication.layout import fragment_mol
     try:
         drawn = semantic_key(fragment_mol(fragment))
     except Exception:  # an unreadable drawing is a failure, not a pass
@@ -1260,8 +1263,12 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         "lint": {"issues": issues, "relayout": relayout, "max_width": requested_width},
         "readback": readback,
         "native": native,
+        # A nicknamed atom ([Rh], [M]) cannot be read back, so its receipt is "unverified" rather
+        # than "preserved". That is not the same as a structure that changed: pass the check and
+        # say so separately, instead of failing a figure whose only sin is an unreadable label.
         "checks_passed": (not issues and not crossings and readback["status"] == "matched"
-                          and readback["fragment_roundtrip"] == "preserved"),
+                          and readback.get("fragment_roundtrip") in ("preserved", "unverified")),
+        "checks_verified": readback.get("fragment_roundtrip") == "preserved",
         "notes": notes,
         "warnings": warnings,
     }

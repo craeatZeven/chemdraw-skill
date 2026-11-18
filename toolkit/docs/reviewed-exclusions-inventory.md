@@ -358,14 +358,14 @@
 
 ## `mcp_runtime.figure_draw`
 
-- **function**, line 668: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
-- **function**, line 634: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
-- **function**, line 642: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
-- **function**, line 80: `charge_errors(brief: dict) -> list[str]` - charges: how charges are drawn, superscript (the default) or circled.
-- **function**, line 799: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
-- **function**, line 623: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
-- **function**, line 658: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
-- **function**, line 649: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
+- **function**, line 683: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
+- **function**, line 649: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
+- **function**, line 657: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
+- **function**, line 92: `charge_errors(brief: dict) -> list[str]` - charges: how charges are drawn, superscript (the default) or circled.
+- **function**, line 814: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
+- **function**, line 638: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
+- **function**, line 673: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
+- **function**, line 664: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
 
 ## `mcp_runtime.figure_editing`
 
@@ -406,7 +406,7 @@
 
 ## `mcp_runtime.figure_mechanism`
 
-- **function**, line 1104: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+- **function**, line 1107: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
 
 ## `mcp_runtime.figure_panels`
 
