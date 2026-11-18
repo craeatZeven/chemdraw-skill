@@ -37,7 +37,8 @@ from ..text_formatting import normalize_condition_text
 from . import artifact_safety, figure_draw, figure_house, figure_lint
 
 MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers"}
-SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "generic_rings"}
+SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "generic_rings", "clashes"}
+CLASH_KEYS = {"between", "color"}
 NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset", "attach", "charges"}
 NEWMAN_SPOKE = 1.4 * ACS_BOND_LENGTH   # a projection's spokes, sized beside 14.4 pt bonds
 # Closest a rear spoke may come to a front one; ChemDraw-style eclipsed drawings use 14.
@@ -136,6 +137,7 @@ def _validate(brief: dict) -> list[str]:
         elif not entry.get("smiles") and not entry.get("name"):
             errors.append(f"Species {ident} needs a smiles or a name (or a newman projection).")
         errors += figure_house.generic_ring_errors(entry)
+        errors += _clash_errors(ident, entry)
 
     steps = brief.get("steps")
     if not isinstance(steps, list) or not steps:
@@ -180,6 +182,65 @@ def _validate(brief: dict) -> list[str]:
                     errors.append(f"Step {number} move {index} {side}: a Newman projection has no numbered "
                                   "atoms for an arrow; point it at a structure given by smiles or name.")
     return errors
+
+
+_NEWMAN_PLACE = re.compile(r"^(front|rear):([0-2])$|^attach:(\d+)$")
+
+
+def _clash_errors(ident: str, entry: dict) -> list[str]:
+    """clashes: [{between: [atom, atom], color?}]; atoms are SMILES atom numbers, or for a
+    Newman projection "front:0".."rear:2" and "attach:<atom of the attach SMILES>"."""
+    clashes = entry.get("clashes")
+    if clashes is None:
+        return []
+    where = f"Species {ident}: clashes"
+    if not isinstance(clashes, list) or not clashes:
+        return [f'{where} must list marks, e.g. [{{"between": [1, 9]}}].']
+    newman = "newman" in entry
+    errors: list[str] = []
+    for number, clash in enumerate(clashes, 1):
+        at = f"{where}[{number}]"
+        if not isinstance(clash, dict) or set(clash) - CLASH_KEYS or "between" not in clash:
+            errors.append(f"{at} must be {{between: [atom, atom], color?}}.")
+            continue
+        pair = clash["between"]
+        if not isinstance(pair, list) or len(pair) != 2 or pair[0] == pair[1]:
+            errors.append(f"{at}: between names two different atoms.")
+            continue
+        for ref in pair:
+            if newman:
+                found = _NEWMAN_PLACE.match(ref) if isinstance(ref, str) else None
+                if found is None:
+                    errors.append(f'{at}: on a projection an atom is "front:0".."front:2", "rear:0".."rear:2" '
+                                  f'or "attach:<n>", not {ref!r}.')
+                elif found.group(3) is not None and not entry["newman"].get("attach"):
+                    errors.append(f"{at}: {ref} names an attached group the projection does not have.")
+            elif not _is_int(ref) or ref < 0:
+                errors.append(f"{at}: atoms are numbered from 0 in the species' SMILES, not {ref!r}.")
+        color = clash.get("color")
+        if color is not None and not (isinstance(color, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", color)):
+            errors.append(f"{at}: color must be a hex colour like #FF0000.")
+    return errors
+
+
+def _clash_atom(frag: Any, ref: Any) -> dict:
+    """The drawn atom a clash mark names: an atom number of a structure, or a place on a
+    projection (a "*" front place is the attached group's root)."""
+    if not getattr(frag, "newman", None):
+        return frag.atoms[ref]
+    found = _NEWMAN_PLACE.match(ref)
+    if found.group(3) is not None:
+        local = int(found.group(3)) + 1
+        for atom in frag.atoms:
+            if atom.get("attach_index") == local:
+                return atom
+        raise KeyError(ref)
+    side, place = found.group(1), int(found.group(2))
+    labels = frag.newman[side]
+    if labels[place] == "*":
+        return next(a for a in frag.atoms if a.get("role") == "attached_root")
+    drawn = [a for a in frag.atoms if a.get("role") == f"{side}_substituent"]
+    return drawn[place - sum(1 for label in labels[:place] if label == "*")]
 
 
 def _newman_errors(ident: str, spec: Any) -> list[str]:
@@ -389,6 +450,19 @@ def _end_key(end: dict) -> tuple:
 def _index_errors(brief: dict, mols: dict[str, Any]) -> list[str]:
     """Atom and bond numbers must exist in the grounded structures."""
     errors: list[str] = []
+    for entry in brief["species"]:
+        for number, clash in enumerate(entry.get("clashes") or [], 1):
+            for ref in clash["between"]:
+                where = f"Species {entry['id']}: clashes[{number}]"
+                if "newman" not in entry:
+                    count = mols[str(entry["id"])].GetNumAtoms()
+                    if ref >= count:
+                        errors.append(f"{where}: atom {ref} does not exist ({count} atoms, numbered from 0).")
+                elif ref.startswith("attach:"):
+                    group = _attach_group(entry["newman"]["attach"]["smiles"])
+                    if int(ref.split(":")[1]) + 1 not in {a["index"] for a in group["atoms"]}:
+                        errors.append(f"{where}: {ref} is not an atom of the attached group "
+                                      "(its [*] is the front carbon).")
     for number, step in enumerate(brief["steps"], 1):
         for index, move in enumerate(step.get("moves") or [], 1):
             for side in ("from", "to"):
@@ -460,6 +534,7 @@ class _Drawing:
     atoms: list
     bonds: list = field(default_factory=list)
     notes: list = field(default_factory=list)
+    marks: list = field(default_factory=list)
 
 
 def _reach(atom: dict) -> float:
@@ -861,6 +936,7 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
         for row in rows for item in row if item["t"] == "frag" for number, a in enumerate(item["inst"].frag.atoms)
     ] + [o for row in rows for o in _label_obstacles(row)]
     bonds = [b for row in rows for b in _row_bonds(row)]
+    marks = _clash_marks(brief, rows)
 
     def build(with_numbers: bool):
         def make(ids) -> str:
@@ -897,6 +973,10 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
                                                                font_size=7)
                                 parts.append(xml)
             parts += [_arc_xml(c, ids.next) for c in curves]
+            for mark in marks:
+                for points in mark["points"]:
+                    parts.append(f'<curve id="{ids.next()}" Z="{ids.next()}" FillType="None" '
+                                 f'LineWidth="{ACS_LINE_WIDTH}" CurvePoints="{points}"/>')
             return "\n".join(parts)
         return make
 
@@ -909,7 +989,41 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
 
     cdxml = R.render_with(build(numbers))
     clean = R.render_with(build(False)) if numbers else cdxml
-    return _Drawing(cdxml=cdxml, lint_cdxml=clean, rows=rows, curves=curves, atoms=atoms, bonds=bonds, notes=notes)
+    return _Drawing(cdxml=cdxml, lint_cdxml=clean, rows=rows, curves=curves, atoms=atoms, bonds=bonds, notes=notes,
+                    marks=marks)
+
+
+def _clash_marks(brief: dict, rows: list[list[dict]]) -> list[dict]:
+    """Every clash mark of every drawn species, where the layout put it."""
+    from ..clash_marks import COLOR, clash_mark, curve_points
+    by_id = {str(e["id"]): e for e in brief["species"]}
+    marks = []
+    for row in rows:
+        for item in row:
+            if item["t"] != "frag":
+                continue
+            species = item["inst"].species
+            for clash in by_id[species].get("clashes") or []:
+                a, b = (_clash_atom(item["inst"].frag, ref) for ref in clash["between"])
+                lines, gap = clash_mark((a["x"], a["y"]), (b["x"], b["y"]), _reach(a), _reach(b))
+                marks.append({"species": species, "between": clash["between"], "gap": gap,
+                              "color": clash.get("color") or COLOR, "points": [curve_points(l) for l in lines]})
+    return marks
+
+
+def _color_marks(cdxml: Any, marks: list[dict]) -> Any:
+    """Colour each clash mark's curves; they are found by their points, not by their order."""
+    if not marks:
+        return cdxml
+    root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
+    colors = figure_house._Colors(root)
+    wanted = {points: mark["color"] for mark in marks for points in mark["points"]}
+    for curve in root.iter("curve"):
+        if curve.get("CurvePoints") in wanted:
+            curve.set("color", colors.index(wanted[curve.get("CurvePoints")]))
+    wrapped = R._ValidatedCDXML('<?xml version="1.0" encoding="UTF-8" ?>\n' + ET.tostring(root, encoding="unicode"))
+    wrapped.chemistry_validation = getattr(cdxml, "chemistry_validation", None)
+    return wrapped
 
 
 def _arrow_xml(item: dict, y: float, ids) -> list[str]:
@@ -1044,6 +1158,7 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         house_applied += applied
         house_skipped += more
     final = _color_moves(final, drawing.curves)
+    final = _color_marks(final, drawing.marks)
     house_applied += ring_applied
     try:
         target = artifact_safety.resolve_destination(
@@ -1057,6 +1172,12 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     notes += drawing.notes
     for issue in issues:
         warnings.append(f"Layout check: {issue['message']}")
+    from ..clash_marks import MIN_GAP
+    for mark in drawing.marks:
+        if mark["gap"] < MIN_GAP:
+            warnings.append(f"Species {mark['species']}: the clash mark between {mark['between'][0]} and "
+                            f"{mark['between'][1]} has {max(mark['gap'], 0.0):.1f} pt of the {MIN_GAP:.1f} it needs "
+                            "and touches a group; name atoms further apart or drop the mark.")
     for crossing in crossings:
         warnings.append(f"Step {crossing['step']} move {crossing['move']}: the arrow passes through "
                         f"{crossing['with']}; move the species apart or reorder them.")
@@ -1102,6 +1223,7 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         "steps": balance,
         "moves": moves,
         "arrows": {"count": len(drawing.curves), "crossings": crossings, "relayout": relayout},
+        "clash_marks": len(drawing.marks),
         "style": figure_draw.style_report(slug, house, house_applied, house_skipped),
         "lint": {"issues": issues, "relayout": relayout, "max_width": requested_width},
         "readback": readback,

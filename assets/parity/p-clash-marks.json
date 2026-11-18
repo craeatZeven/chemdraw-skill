@@ -1,0 +1,81 @@
+{
+ "kind": "mechanism",
+ "species": [
+  {
+   "id": "v4",
+   "label": "V-4: favoured",
+   "newman": {
+    "front": [
+     "*",
+     "H",
+     "Ph"
+    ],
+    "rear": [
+     "H",
+     "[Rh]",
+     "CO2Me"
+    ],
+    "conformation": "staggered",
+    "charges": {
+     "rear": [
+      0,
+      -1,
+      0
+     ]
+    },
+    "attach": {
+     "smiles": "[*]C1=[O+]CCC1"
+    }
+   }
+  },
+  {
+   "id": "v3",
+   "label": "V-3: unfavoured",
+   "newman": {
+    "front": [
+     "*",
+     "H",
+     "Ph"
+    ],
+    "rear": [
+     "[Rh]",
+     "CO2Me",
+     "H"
+    ],
+    "conformation": "staggered",
+    "charges": {
+     "rear": [
+      -1,
+      0,
+      0
+     ]
+    },
+    "attach": {
+     "smiles": "[*]C1=[O+]CCC1"
+    }
+   },
+   "clashes": [
+    {
+     "between": [
+      "attach:1",
+      "rear:0"
+     ]
+    }
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "v4"
+   ],
+   "products": [
+    "v3"
+   ],
+   "arrow": "reversible",
+   "above": [
+    "rotation"
+   ]
+  }
+ ]
+}

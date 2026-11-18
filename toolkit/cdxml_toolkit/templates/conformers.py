@@ -626,7 +626,8 @@ def newman_projection(
                 atoms.append(target)
             target.update({k: v for k, v in entry.items() if k not in ("index", "x", "y")})
             target.update({"x": spoke["x"] + gx * cos - gy * sin, "y": spoke["y"] + gx * sin + gy * cos,
-                           "role": "attached_root" if local == int(attach["root"]) else "attached"})
+                           "role": "attached_root" if local == int(attach["root"]) else "attached",
+                           "attach_index": local})
             target.setdefault("show_label", target.get("symbol", "C") != "C")
         for entry in attach["bonds"]:
             bonds.append({**{k: v for k, v in entry.items() if k not in ("atom1", "atom2", "index")},

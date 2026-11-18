@@ -880,7 +880,8 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     PNGs in png/ with render=True) and the report lists the pages.
 
     kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
-    lists: species [{id, smiles or name, label?, generic_rings?}] (or {id, newman {front, rear,
+    lists: species [{id, smiles or name, label?, generic_rings?, clashes? [{between [atom, atom],
+    color?}] (a red double zigzag between two crowding groups)}] (or {id, newman {front, rear,
     conformation?, dihedral_offset?, attach?}, label?} for a Newman projection placed among them,
     which arrows cannot point at and whose steps need no moves; the order of rear picks the
     conformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered;
