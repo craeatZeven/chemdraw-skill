@@ -335,7 +335,7 @@ baseline. `Sn2` is written S<sub>N</sub>2, not a subscripted sulfur count, so `S
 are exempt from the formula-subscript rule; `S2` (disulfide) still subscripts.
 
 
-### P21 — Four compounds to a row
+### P22 — Four compounds to a row
 
 Witness: `journal-corpus/bjoc-articles-22-127-scheme2.png` fits eighteen compounds in four
 columns, with `3a, 64%` under each.
@@ -349,7 +349,7 @@ Done when: an eighteen-compound scope renders in four columns on one page, and a
 records the cell width, gap and row pitch that made it fit. If four cannot fit at 10 pt, the note
 says what the arithmetic is rather than quietly drawing three.
 
-### P22 — A cycle whose labels are next to their own arcs
+### P23 — A cycle whose labels are next to their own arcs
 
 Witness: `journal-corpus/bjoc-articles-22-125-scheme4.png` — each step of a cycle carries its
 label beside the arc it belongs to, so the reading order is unambiguous.
@@ -433,7 +433,7 @@ and the compound label sits inside the arc, which the checker does report (`Over
 
 ## Where each gap stands
 
-Code exists for all thirteen items. What follows is what has been checked on a machine with
+Code exists for every item through P21. What follows is what has been checked on a machine with
 ChemDraw and RDKit, and how; an item is only "verified" here when a render was inspected and
 the numbers quoted were measured. `assets/parity/` holds the briefs and renders for P3, P4,
 P7, P8 and P9.
@@ -470,6 +470,8 @@ earlier P9 outlines were also drawn open (see the P9 row). P3 stays verified.
 | P19 branch from one structure | **implemented, to render** | `layout: "fan"` puts the starting material in the middle and sends an arrow to each of two to four products, left, right, then down and up; each branch keeps its conditions (beside a vertical arrow) and its co-substrates over its arrow as reactants of the step. The stacked divergent layout stays the default; `p19-fan.json` takes acetophenone four ways. Two products from one compound are now a fan by default (`layout: "divergent"` keeps them stacked; a fan wider than `max_width` is drawn stacked and reported as `divergent`) |
 | P20 panels, boxed titles, colour legend | **implemented, to render** | `kind: "panels"` stacks scheme or mechanism briefs, each drawn and checked by `draw_figure`, under boxed one-line titles of one width, with a legend of plain or coloured lines under the last; the parts are joined by `cdxml_compose.merge_cdxml`, which keeps each part's colours, fonts and ids. Classes are coloured with the species' own `color`/`atom_colors`. A panel can also be a `gallery` (structures with caption lines and no arrows, rows spread to the widest, as panel (a)) or `sections` (briefs each opened by a boxed title on a dashed rule across the figure, as panel (b)); `p20-panels.json` has all three kinds, to render |
 | P21 steric clash marks | **implemented, to render** | BJOC 22-125 scheme 4 marks the crowded pairs of its unfavoured conformers (V-1: Ar and the ring; V-2, V-3: the ring and [Rh]) with a small red double zigzag. A mechanism species' `clashes: [{between: [atom, atom], color?}]` draws one in the middle of the clear gap between the two atoms, across the line joining them, as two open curves of straight segments; atoms are SMILES numbers, or `front:i`/`rear:i`/`attach:n` on a projection. A gap under 6.4 pt is reported. `p-clash-marks.json` has V-4 ⇌ V-3 with the ring–[Rh] mark, to render; marks on ordinary structures are covered by the toolkit test |
+| P22 four compounds to a row | not implemented | three to a row in `assets/parity/p4-p7-p8-scope.png`; the caption style now matches the witness, the cell width does not |
+| P23 a cycle label beside its own arc | not implemented | arcs are right (three on one circle, radius 96.0) but the labels sit 162.1 and 190.1 pt from the nearest arc |
 
 P1-P13 are closed as far as this machine can check them, apart from the re-renders above. P14-P20 are not polish: the layout draws
 rows of well-formed cells, while every corpus figure that reads like a paper wraps a route,
