@@ -398,7 +398,8 @@ def chair_cyclohexane(
 
 CHARGE_SYMBOL = 8.0      # a circled charge's box, beside 10 pt labels
 CHARGE_BOND_GAP = 3.0    # from any bond, the P1 spacing
-CHARGE_LABEL_GAP = 1.5   # from a label, its own included (ChemDraw sets it about this close)
+CHARGE_LABEL_GAP = 3.0   # from every other atom's label, the P1 spacing
+CHARGE_OWN_GAP = 1.5     # from the charged atom's own label (ChemDraw sets it about this close)
 # Directions tried for a charge, upper right first (where chemists write it), then fanning out.
 _CHARGE_ANGLES = [-45 + sign * step for step in range(0, 181, 15) for sign in ((1, -1) if step else (1,))]
 
@@ -425,8 +426,9 @@ def _segment_distance(px: float, py: float, a: tuple[float, float], b: tuple[flo
 def _place_charges(atoms: list[dict[str, Any]], bonds: list[dict[str, Any]],
                    disc: tuple[float, float, float] | None = None) -> None:
     """Give every charged atom a ``charge_box``: a circled symbol beside it, as close as its own
-    label allows, in the first direction (upper right first) that keeps the P1 gaps from every
-    bond, label, the projection's disc and the symbols already placed; failing that, the
+    label allows, in the first direction (upper right first) that keeps the P1 3 pt from every
+    bond, every other atom's label and the projection's disc, and clears the symbols already
+    placed; failing that, the
     direction with the most room."""
     at = {int(a["index"]): (float(a["x"]), float(a["y"])) for a in atoms}
     segments = [(at[int(b["atom1"])], at[int(b["atom2"])]) for b in bonds]
@@ -442,13 +444,13 @@ def _place_charges(atoms: list[dict[str, Any]], bonds: list[dict[str, Any]],
         for angle in _CHARGE_ANGLES:
             ux, uy = math.cos(math.radians(angle)), math.sin(math.radians(angle))
             reach = half + 2.0
-            while own and _box_distance(ax + ux * reach, ay + uy * reach, own) < half + CHARGE_LABEL_GAP:
+            while own and _box_distance(ax + ux * reach, ay + uy * reach, own) < half + CHARGE_OWN_GAP:
                 reach += 0.5
             px, py = ax + ux * reach, ay + uy * reach
             room = min([_segment_distance(px, py, a, b) - half - CHARGE_BOND_GAP for a, b in segments]
                        + [_box_distance(px, py, box) - half - CHARGE_LABEL_GAP
                           for i, box in labels.items() if box and i != int(atom["index"])]
-                       + [math.hypot(px - qx, py - qy) - 2 * half - CHARGE_LABEL_GAP for qx, qy in placed]
+                       + [math.hypot(px - qx, py - qy) - 2 * half - CHARGE_OWN_GAP for qx, qy in placed]
                        + ([math.hypot(px - disc[0], py - disc[1]) - disc[2] - half - CHARGE_BOND_GAP]
                           if disc else []))
             if best is None or room > best[0]:

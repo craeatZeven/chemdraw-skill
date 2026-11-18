@@ -46,9 +46,10 @@ GALLERY_WIDTH = 480.0  # the default row width of a gallery, in points
 
 def _validate(brief: dict) -> list[str]:
     errors: list[str] = []
-    unknown = sorted(set(brief) - PANEL_BRIEF_KEYS)
+    unknown = sorted(set(brief) - PANEL_BRIEF_KEYS - figure_house.RECORD_KEYS)
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
+    errors += figure_house.record_errors(brief)
     panels = brief.get("panels")
     if not isinstance(panels, list) or not 1 <= len(panels) <= MAX_PANELS:
         errors.append(f"panels: give 1 to {MAX_PANELS} panels, each {{title, brief}}.")

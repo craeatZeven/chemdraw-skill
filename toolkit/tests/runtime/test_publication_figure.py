@@ -753,3 +753,21 @@ def test_columns_that_cannot_fit_say_why(tmp_path):
     assert '4 columns do not fit' in message and 'width_mm to at least' in message
     assert 'the type would be' in message
     assert not out.exists()
+
+
+def test_a_grid_row_sets_its_captions_on_one_baseline(tmp_path, monkeypatch):
+    # BJOC 22-127 scheme 2: every caption of a row on one line, however tall each structure.
+    from cdxml_toolkit.publication import layout
+    real = layout.molecule_coordinates
+    heights = iter([40.0, 7.2] * 8)   # alternately tall and flat, in the order cells are prepared
+    def coords(mol, bond_length, reference=None):
+        _, xy, warning = real(mol, bond_length, reference)
+        top = max(abs(y) for _, y in xy) or 1.0
+        tall = next(heights)
+        return mol, [(x, y * tall / top) for x, y in xy], warning
+    monkeypatch.setattr(layout, 'molecule_coordinates', coords)
+    rows = [[f'c{i}', f'3{chr(97 + i)}', STEREO if i % 2 else OTHER, f'{60 + i}%', ''] for i in range(4)]
+    project, page, root = _scope_page(tmp_path, rows, columns=4)
+    baselines = {round(float(t.get('p').split()[1]), 2) for t in root.iter('t')
+                 if ''.join(t.itertext()).startswith('3')}
+    assert len(baselines) == 1, baselines

@@ -100,9 +100,10 @@ def _header_errors(header) -> list[str]:
 
 def _validate(brief: dict) -> list[str]:
     errors: list[str] = []
-    unknown = sorted(set(brief) - SCOPE_KEYS)
+    unknown = sorted(set(brief) - SCOPE_KEYS - figure_house.RECORD_KEYS)
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
+    errors += figure_house.record_errors(brief)
     if brief.get("header") is not None:
         errors += _header_errors(brief["header"])
     style_error = style_preset_error(brief.get("style"))

@@ -868,6 +868,18 @@ OVERLAY_SHAPES = ("circle", "outline")
 OVERLAY_KEYS = {"fragment", "species", "shape"}
 
 
+# Keys every kind of brief may carry without drawing anything: where its structures come from.
+RECORD_KEYS = {"provenance"}
+
+
+def record_errors(brief: dict) -> list[str]:
+    """provenance is free text (the article, its SI, how the structures were checked)."""
+    value = brief.get("provenance")
+    if value is not None and not (isinstance(value, str) and value.strip()):
+        return ["provenance must be text: where the structures come from and how they were checked."]
+    return []
+
+
 def overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]:
     """Problems with the brief's overlays, for the brief check."""
     overlays = brief.get("overlays")

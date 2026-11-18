@@ -140,7 +140,18 @@
    "smiles": "CCCCCCCNC(=O)c1nc2ccccc2s1",
    "values": {
     "yield": "63%"
-   }
+   },
+   "definition": "Alk = C7H15"
+  },
+  {
+   "id": "3q",
+   "label": "3q",
+   "smiles": "CCCCCCCCCCCCCCCCCCNC(=O)c1nc2ccccc2s1",
+   "definition": "Alk = C18H37",
+   "values": {
+    "yield": "60%"
+   },
+   "drawn_with": "3p"
   },
   {
    "id": "3r",
@@ -157,7 +168,15 @@
    "values": {
     "yield": "66%"
    }
+  },
+  {
+   "id": "3t",
+   "label": "3t",
+   "smiles": "Cc1ccc(NC(=O)c2nc3ccc4ccccc4c3s2)cc1",
+   "values": {
+    "yield": "33%"
+   }
   }
  ],
- "provenance": "Structures verified against Supporting Information File 1 of the source article (BJOC 22-127, https://doi.org/10.3762/bjoc.22.127): 3a-3i, 3j, 3k-3p, 3r and 3s match the characterised compounds or, for 3j (0% yield, not isolated), the figure. 3q (N-octadecyl) and 3t (naphtho[2,1-d]thiazole) are not in this brief yet."
+ "provenance": "Structures verified against Supporting Information File 1 of the source article (BJOC 22-127, https://doi.org/10.3762/bjoc.22.127): 3a-3i, 3j, 3k-3p, 3r and 3s match the characterised compounds or, for 3j (0% yield, not isolated), the figure. 3q (N-octadecyl, drawn with 3p's NH-Alk structure as in the figure) and 3t (N-(p-tolyl)naphtho[2,1-d]thiazole-2-carboxamide, 33%) were added from the figure afterwards; their structures are to be checked against the SI like the others."
 }

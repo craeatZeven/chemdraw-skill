@@ -531,11 +531,26 @@ def create_pages(records,spec,stage,start_index=0):
                 f"to {float(style['width_mm']):g} mm for print, the type would be "
                 f"{size*float(style['width_mm'])/need_mm:.1f} pt. Or ask for fewer columns.")
     pitches=[]
+    # In a grid every caption of a row stands on one line (BJOC 22-127 scheme 2): structures sit
+    # on a common bottom, the row's lowest. Rows are known beforehand: `columns` cells a row,
+    # a new row at each group.
+    row_bottom={}
+    if columns:
+        row=[]
+        def close(row):
+            lowest=max(q['molecule_bottom'] for m in row for q in [m,*minors.get(m['input']['compound_id'],[])])
+            for m in row: row_bottom[id(m)]=lowest
+        for main in arranged:
+            if row and (main['input']['group']!=row[-1]['input']['group'] or len(row)==columns):
+                close(row); row=[]
+            row.append(main)
+        if row: close(row)
     for main in arranged:
         cell=[main,*minors.get(main['input']['compound_id'],[])]
+        drops=[row_bottom[id(main)]-q['molecule_bottom'] if id(main) in row_bottom else 0.0 for q in cell]
         # The cell is the pair (or more) side by side, SECONDARY_GAP apart.
         p={'input':main['input'],'width':natural(main),
-           'height':max(q['height'] for q in cell)}
+           'height':max(q['height']+drop for q,drop in zip(cell,drops))}
         lead=0.0
         if column_width is not None:
             lead=(column_width-p['width'])/2   # centred in its column
@@ -562,8 +577,8 @@ def create_pages(records,spec,stage,start_index=0):
                 before=cell[index-1]; before_x=qx-SECONDARY_GAP-before['width']
                 gap_mid=(before_x+max(c[0] for c in before['coords'])+qx+min(c[0] for c in q['coords']))/2
                 current['objects'].append({'type':'text','text':'+','align':'Center','size':size,
-                                           'position':[gap_mid,y+(min(ys)+max(ys))/2+size*0.35]})
-            place(current,q,qx,y,None if index==0 else SECONDARY_COLOR)
+                                           'position':[gap_mid,y+drops[0]+(min(ys)+max(ys))/2+size*0.35]})
+            place(current,q,qx,y+drops[index],None if index==0 else SECONDARY_COLOR)
             qx+=q['width']+SECONDARY_GAP
         x+=p['width']+gap; row_height=max(row_height,p['height'])
     # Each page is cropped to what it holds: the footnotes follow the last row (rather than

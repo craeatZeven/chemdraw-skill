@@ -307,3 +307,25 @@ def test_the_layout_box_holds_the_charge_symbol():
     (box,) = [a["charge_box"] for a in drawn["atoms"] if a.get("charge_box")]
     x1, y1, x2, y2 = frag.bbox
     assert x1 <= box[0] and y1 <= box[1] and box[2] <= x2 and box[3] <= y2
+
+
+def test_a_charge_keeps_the_p1_gap_from_every_other_label():
+    # Measured on the native V-4: the minus beside [Rh] began 3.2 pt from the H beside it and
+    # overlapped it by 1.4 pt in height. Other atoms' labels get the full 3 pt; only the
+    # charged atom's own label may come closer, as ChemDraw sets it.
+    from cdxml_toolkit.templates.conformers import CHARGE_LABEL_GAP, _box_distance, _label_box, newman_projection
+    assert CHARGE_LABEL_GAP >= 3.0
+    for rear, charges in ((("H", "[Rh]", "Me"), [0, -1, 0]), (("[Rh]", "Me", "H"), [-1, 0, 0]),
+                          (("Me", "H", "[Rh]"), [0, 0, -1])):
+        drawn = newman_projection(front=("*", "H", "Me"), rear=rear, cx=100.0, cy=100.0,
+                                  bond_length=20.16, attach=OXONIUM, charges={"rear": charges})
+        for atom in drawn["atoms"]:
+            if not atom.get("charge_box"):
+                continue
+            x1, y1, x2, y2 = atom["charge_box"]
+            centre, half = ((x1 + x2) / 2, (y1 + y2) / 2), (x2 - x1) / 2
+            for other in drawn["atoms"]:
+                box = _label_box(other)
+                if other is atom or box is None:
+                    continue
+                assert _box_distance(*centre, box) - half >= 3.0 - 1e-6, (rear, other["symbol"])

@@ -429,3 +429,19 @@ def test_the_tool_is_registered():
     from cdxml_toolkit.mcp_runtime.tool_registry import build_registry
 
     assert "draw_figure" in build_registry()
+
+
+# A brief may say where its structures come from (the article, its SI): recorded, not drawn.
+@pytest.mark.parametrize("module, brief", [
+    ("figure_draw", {"kind": "scheme", "species": [], "steps": []}),
+    ("figure_scope", {"kind": "scope", "species": []}),
+    ("figure_mechanism", {"kind": "mechanism", "species": [], "steps": []}),
+    ("figure_panels", {"kind": "panels", "panels": []}),
+])
+def test_every_kind_of_brief_may_record_its_provenance(module, brief):
+    import importlib
+    validate = importlib.import_module(f"cdxml_toolkit.mcp_runtime.{module}")._validate
+    errors = validate({**brief, "provenance": "Structures checked against SI File 1 of the article."})
+    assert not any("provenance" in e or "Unknown brief keys" in e for e in errors), errors
+    errors = validate({**brief, "provenance": ["not", "text"]})
+    assert any("provenance" in e for e in errors), errors

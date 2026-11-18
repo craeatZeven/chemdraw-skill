@@ -378,8 +378,15 @@ def test_columns_is_a_small_whole_number(columns):
 
 
 def test_four_columns_that_do_not_fit_report_the_arithmetic(tmp_path):
-    # Needs RDKit: four 4-methoxybiphenyl-sized cells are wider than 180 mm at 10 pt.
+    # The cells are made too wide by their captions, which do not depend on how the structures
+    # are depicted: a long value is wider than the 110.6 pt a column has at 180 mm.
     brief = _brief(columns=4)
+    for entry in brief["species"]:
+        entry["values"] = {key: "not determined after aqueous workup" for key in entry["values"]}
     report = draw_figure(brief, output_path=str(tmp_path / "scope"))
     assert report["ok"] is False
-    assert any("columns do not fit" in e and "width_mm to at least" in e for e in report["errors"]), report["errors"]
+    (message,) = [e for e in report["errors"] if "columns do not fit" in e]
+    for part in ("4 columns do not fit", "pt a column", "the page has 478.2 pt",
+                 "width_mm to at least", "the type would be"):
+        assert part in message, (part, message)
+    assert not (tmp_path / "scope").exists()

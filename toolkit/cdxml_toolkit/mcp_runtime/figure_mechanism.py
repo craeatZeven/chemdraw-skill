@@ -100,9 +100,10 @@ def _end_errors(where: str, end: Any, ids: set[str]) -> list[str]:
 
 def _validate(brief: dict) -> list[str]:
     errors: list[str] = []
-    unknown = sorted(set(brief) - MECH_KEYS)
+    unknown = sorted(set(brief) - MECH_KEYS - figure_house.RECORD_KEYS)
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
+    errors += figure_house.record_errors(brief)
     style_error = figure_draw.style_preset_error(brief.get("style"))
     if style_error:
         errors.append(style_error)

@@ -79,9 +79,10 @@ def _read_brief(brief: Any) -> tuple[dict | None, list[str]]:
 
 def _validate(brief: dict) -> list[str]:
     errors: list[str] = []
-    unknown = sorted(set(brief) - BRIEF_KEYS)
+    unknown = sorted(set(brief) - BRIEF_KEYS - figure_house.RECORD_KEYS)
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
+    errors += figure_house.record_errors(brief)
     kind = brief.get("kind", "scheme")
     if kind != "scheme":
         errors.append(f"kind {kind!r} is not available yet; only 'scheme', 'scope' and 'mechanism' can be drawn.")
