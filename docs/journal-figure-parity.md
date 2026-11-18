@@ -507,6 +507,17 @@ few points so a crowded projection still gets one.
 Done when: a test reads the produced CDXML, measures symbol-to-text boxes and asserts ≥ 3 pt on
 this brief, and the same figure renders with the circled charge beside `[Rh]` rather than on it.
 
+**Implemented, to render.** Two causes. Labels on the left of a projection are right-justified,
+so `[Rh]` there runs left of its atom, while the placer assumed every label ran right; and the
+box written into the CDXML came from a second, older estimate. Both now use one model,
+`cdxml_toolkit.label_geometry`, fitted to ChemDraw's own saves (10 pt Arial widths; first or last
+character centred on the atom by justification; 4.6 pt above to 4.0 pt below, lower for
+subscripts, brackets and descenders), and matches six native label boxes to 0.15 pt. A final
+pass over the finished scheme or mechanism page (`figure_house.clear_charge_symbols`) measures
+every charge symbol against every text box, bond and other symbol and moves one under 3 pt to the
+nearest clear spot round its atom, at most 8 pt further out, warning when none is clear.
+`toolkit/tests/runtime/test_label_boxes.py` measures the produced projection CDXML.
+
 ### P43 — An entering or leaving species keeps its connector arrow attached
 
 `assets/parity/p9-cycle-overlay.json` draws three connector arrows; measured against the atoms of
@@ -647,6 +658,14 @@ branches from one centre, or lays panels side by side.
 Of the 71 corpus figures, six have served as witnesses above. The other 65 were looked at one
 by one for what they draw that the toolkit does not. The numbers below (#1–#65) are those of
 the appendix table at the end of this section.
+
+**Implemented, to render.** The connector's species end was where a ray from the species'
+centre left its box, and that box held its number and any overlay ring, so it could lie 50 pt
+from every atom. The end is now just off the atom nearest the arc point (6 pt from a labelled
+atom, 3 pt from a carbon, plus 1.5 pt), and the species' number goes on the side away from the
+arc so the arrow never crosses it. With stand-in structures the three connectors are 60–103 pt
+and each species end is within 8 pt of an atom; `test_every_connector_starts_at_its_species` and
+`test_no_connector_runs_through_its_species_number` need RDKit.
 
 ### What is missing, by how often it appears
 

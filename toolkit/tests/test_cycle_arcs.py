@@ -216,3 +216,29 @@ def test_a_name_is_set_beside_the_arc_middle_when_the_ray_is_blocked():
     _, _, box = placed
     assert not _overlap(box, blocker)
     assert _box_gap((110.0, -12.0), box) <= R.CYCLE_LABEL_REACH
+
+
+def test_every_connector_starts_at_its_species():
+    # P43: measured natively, two of the three connectors began about 50 pt from any atom, so the
+    # leaving product had no visible attachment. The species end now sits by one of its atoms.
+    page = _suzuki()
+    centre = _point(page.find("arrow").get("Center3D"))
+    atoms = [_point(n.get("p")) for f in page.findall("fragment") for n in f.findall("n")]
+    for arrow in page.findall("arrow"):
+        if arrow.get("AngularSize"):
+            continue
+        ends = [_point(arrow.get("Tail3D")), _point(arrow.get("Head3D"))]
+        near = max(ends, key=lambda p: math.dist(p, centre))   # the end away from the cycle
+        assert min(math.dist(near, a) for a in atoms) <= 8.0, near
+
+
+def test_no_connector_runs_through_its_species_number():
+    page = _suzuki()
+    numbers = [b for name, b in _text_boxes(page).items() if name in ("ArI", "B", "P")]
+    assert len(numbers) == 3
+    for arrow in page.findall("arrow"):
+        if arrow.get("AngularSize"):
+            continue
+        a, b = _point(arrow.get("Tail3D")), _point(arrow.get("Head3D"))
+        for box in numbers:
+            assert not R._segment_hits_box(a, b, box), (a, b, box)

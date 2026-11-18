@@ -3378,6 +3378,19 @@ def _place_near_arc(
     return None
 
 
+def _connector_near_end(atoms: List[Dict], target: Tuple[float, float],
+                        dx: float = 0.0, dy: float = 0.0) -> Tuple[float, float]:
+    """Where a connector leaves (or reaches) a side species: just off the atom nearest the
+    point on the arc, toward that point (P43: from the species' box edge, a connector could
+    start 50 pt from any atom). ``dx, dy`` shift the atoms, for trial placements."""
+    best = min(atoms, key=lambda a: math.dist((a["x"] + dx, a["y"] + dy), target))
+    bx, by = best["x"] + dx, best["y"] + dy
+    labelled = best.get("symbol", "C") != "C" or best.get("charge") or best.get("is_abbreviation")
+    reach = (6.0 if labelled else 3.0) + 1.5
+    length = math.dist((bx, by), target) or 1.0
+    return bx + (target[0] - bx) / length * reach, by + (target[1] - by) / length * reach
+
+
 def _segment_hits_box(a: Tuple[float, float], b: Tuple[float, float],
                       box: Tuple[float, float, float, float]) -> bool:
     """Does the segment a-b pass through the box (sampled every point)?"""
@@ -3709,10 +3722,18 @@ def _layout_catalytic_cycle(
                 frag.bbox = _fragment_bbox(frag.atoms)
                 frag.cx, frag.cy = _bbox_center(frag.bbox)
                 ring = _overlay_box(frag.atoms, getattr(struct, "overlays", ()), frag.bonds)
-                label_dy = (max(frag.bbox[3], ring[3] if ring else frag.bbox[3]) + 14.0 - frag.cy
-                            if frag.ref.label else None)
-                bottom = (frag.cy + label_dy + _DESCENT) if label_dy is not None else frag.bbox[3]
-                base_box = _union_box((frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, bottom + 2.0), ring)
+                # The number goes on the side away from the arc, so the connector (which leaves
+                # the atom nearest the arc) never runs through it.
+                label_above = ay > frag.cy
+                if not frag.ref.label:
+                    label_dy = None
+                elif label_above:
+                    label_dy = min(frag.bbox[1], ring[1] if ring else frag.bbox[1]) - 6.0 - frag.cy
+                else:
+                    label_dy = max(frag.bbox[3], ring[3] if ring else frag.bbox[3]) + 14.0 - frag.cy
+                top = (frag.cy + label_dy - _CAP_HEIGHT) if label_above and label_dy is not None else frag.bbox[1]
+                bottom = (frag.cy + label_dy + _DESCENT) if label_dy is not None and not label_above else frag.bbox[3]
+                base_box = _union_box((frag.bbox[0] - 2.0, top - 2.0, frag.bbox[2] + 2.0, bottom + 2.0), ring)
 
                 # Out along the radius until the species clears everything already placed by
                 # the P1 gap, its arrow is long enough to read, and that arrow crosses no name
@@ -3727,10 +3748,7 @@ def _layout_catalytic_cycle(
                         continue
                     if fallback is None:
                         fallback = trial   # clear of everything, its arrow not yet checked
-                    fx, fy = frag.cx + ox, frag.cy + oy
-                    ddx, ddy = ax - fx, ay - fy
-                    edge_t = _ray_box_exit_unclamped(fx, fy, ddx, ddy, fbox, 3.0)
-                    ex, ey = fx + ddx * edge_t, fy + ddy * edge_t
+                    ex, ey = _connector_near_end(frag.atoms, (ax, ay), ox, oy)
                     if math.dist((ex, ey), (ax, ay)) < CYCLE_CONNECTOR_MIN:
                         continue
                     if any(_segment_hits_box((ex, ey), (ax, ay), ob) for ob in blockers):
@@ -3751,23 +3769,23 @@ def _layout_catalytic_cycle(
                 frag_xml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
                 xml_parts.append(frag_xml)
 
-                box_y2 = frag.bbox[3]
+                box_y1, box_y2 = frag.bbox[1], frag.bbox[3]
                 if frag.ref.label:
                     lbl_y = frag.cy + label_dy
                     lbl_xml, _ = _build_label_element(frag.ref.label, frag.cx, lbl_y, ids)
                     xml_parts.append(lbl_xml)
-                    box_y2 = lbl_y + _DESCENT
+                    if label_above:
+                        box_y1 = lbl_y - _CAP_HEIGHT
+                    else:
+                        box_y2 = lbl_y + _DESCENT
 
-                fbox = _union_box((frag.bbox[0] - 2.0, frag.bbox[1] - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0), ring)
+                fbox = _union_box((frag.bbox[0] - 2.0, box_y1 - 2.0, frag.bbox[2] + 2.0, box_y2 + 2.0), ring)
                 placed_boxes.append(fbox)
                 side_boxes.append(fbox)
                 lowest_y = max(lowest_y, box_y2)
 
-                # connector arrow between the species and its arc
-                ddx, ddy = ax - frag.cx, ay - frag.cy
-                edge_t = _ray_box_exit_unclamped(frag.cx, frag.cy, ddx, ddy, fbox, 3.0)
-                ex = frag.cx + ddx * edge_t
-                ey = frag.cy + ddy * edge_t
+                # connector arrow between the species and its arc, from its nearest atom
+                ex, ey = _connector_near_end(frag.atoms, (ax, ay))
                 if kind == "in":
                     conn_xml, conn_id = _build_arrow(ex, ey, ax, ay, ids)
                 else:

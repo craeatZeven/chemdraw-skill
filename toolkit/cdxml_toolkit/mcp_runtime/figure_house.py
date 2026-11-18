@@ -868,6 +868,122 @@ OVERLAY_SHAPES = ("circle", "outline")
 OVERLAY_KEYS = {"fragment", "species", "shape"}
 
 
+CHARGE_GAP = 3.0       # P1: a charge symbol from every text, bond and other symbol (P42)
+CHARGE_MOVE = 8.0      # how far beyond its first spot a symbol may be pushed to get there
+
+
+def _charge_obstacles(root: ET.Element):
+    """Text boxes, bond segments and charge symbols of a page, by the label model ChemDraw
+    follows. Nodes inside an abbreviation's hidden fragment are not drawn and are left out."""
+    from ..label_geometry import label_box, text_box
+    hidden = {id(inner) for n in root.iter("n") for frag in n.findall("fragment") for inner in frag.iter()}
+    nodes = {n.get("id"): n for n in root.iter("n") if id(n) not in hidden and n.get("p")}
+    at = {k: tuple(map(float, n.get("p").split()[:2])) for k, n in nodes.items()}
+    boxes = []   # (owner node id or None, box)
+    def size_of(t):
+        run = t.find("s")
+        try:
+            return float(run.get("size")) if run is not None and run.get("size") else 10.0
+        except ValueError:
+            return 10.0
+    for k, n in nodes.items():
+        t = n.find("t")
+        if t is not None:
+            text = "".join(t.itertext()).strip()
+            boxes.append((k, label_box(text, *at[k], t.get("LabelJustification") or "Left", size_of(t))))
+    in_nodes = {id(t) for n in root.iter("n") for t in n.iter("t")}
+    for t in root.iter("t"):
+        if id(t) in in_nodes or not t.get("p"):
+            continue
+        px, py = map(float, t.get("p").split()[:2])
+        text = "\n".join(line for line in "".join(t.itertext()).split("\n")).strip("\n")
+        boxes.append((None, text_box(text, px, py, t.get("Justification") or t.get("CaptionJustification") or "Left",
+                                     size_of(t))))
+    segments = [(at[b.get("B")], at[b.get("E")]) for b in root.iter("b") if b.get("B") in at and b.get("E") in at]
+    symbols = [g for g in root.iter("graphic") if g.get("GraphicType") == "Symbol"
+               and g.find("represent") is not None and g.get("BoundingBox")]
+    return at, boxes, segments, symbols
+
+
+def _box_gap(px: float, py: float, box) -> float:
+    x1, y1, x2, y2 = box
+    return math.hypot(max(x1 - px, 0.0, px - x2), max(y1 - py, 0.0, py - y2))
+
+
+def _segment_gap(px: float, py: float, a, b) -> float:
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    t = max(0.0, min(1.0, ((px - a[0]) * dx + (py - a[1]) * dy) / ((dx * dx + dy * dy) or 1.0)))
+    return math.hypot(px - a[0] - t * dx, py - a[1] - t * dy)
+
+
+def _room(cx, cy, radius, boxes, segments, others):
+    return min([_box_gap(cx, cy, box) - radius for _, box in boxes]
+               + [_segment_gap(cx, cy, a, b) - radius for a, b in segments]
+               + [math.hypot(cx - ox, cy - oy) - radius - orr for ox, oy, orr in others] or [99.0])
+
+
+def charge_symbol_clearance(root: ET.Element) -> list[tuple[str, float]]:
+    """(symbol id, its clearance in pt) for every charge symbol of a page: the least distance
+    from its circle to any text box (its own atom's label included), bond or other symbol."""
+    _, boxes, segments, symbols = _charge_obstacles(root)
+    out = []
+    for g in symbols:
+        x1, y1, x2, y2 = map(float, g.get("BoundingBox").split())
+        others = [((float(o.get("BoundingBox").split()[0]) + float(o.get("BoundingBox").split()[2])) / 2,
+                   (float(o.get("BoundingBox").split()[1]) + float(o.get("BoundingBox").split()[3])) / 2,
+                   (float(o.get("BoundingBox").split()[2]) - float(o.get("BoundingBox").split()[0])) / 2)
+                  for o in symbols if o is not g]
+        out.append((g.get("id"), _room((x1 + x2) / 2, (y1 + y2) / 2, (x2 - x1) / 2, boxes, segments, others)))
+    return out
+
+
+def clear_charge_symbols(cdxml: Any) -> tuple[Any, int, list[str]]:
+    """Move every charge symbol that sits under 3 pt from a text, bond or other symbol to the
+    nearest spot round its atom that clears them all, at most CHARGE_MOVE beyond where it was.
+    Returns (page, how many moved, ids of symbols that could not be cleared)."""
+    text = str(cdxml)
+    root = ET.fromstring(text.split("?>", 1)[-1])
+    at, boxes, segments, symbols = _charge_obstacles(root)
+    moved, crowded = 0, []
+    centre = lambda g: [float(v) for v in g.get("BoundingBox").split()]
+    for g in symbols:
+        x1, y1, x2, y2 = centre(g)
+        cx, cy, radius = (x1 + x2) / 2, (y1 + y2) / 2, (x2 - x1) / 2
+        others = [((b[0] + b[2]) / 2, (b[1] + b[3]) / 2, (b[2] - b[0]) / 2) for b in map(centre, symbols) if b != [x1, y1, x2, y2]]
+        if _room(cx, cy, radius, boxes, segments, others) >= CHARGE_GAP - 1e-6:
+            continue
+        owner = at.get(g.find("represent").get("object"))
+        if owner is None:
+            crowded.append(g.get("id")); continue
+        start = math.hypot(cx - owner[0], cy - owner[1])
+        best = None
+        for step in range(0, int(CHARGE_MOVE * 2) + 1):
+            reach = start + step * 0.5
+            for k in range(24):
+                angle = math.radians(k * 15)
+                px, py = owner[0] + reach * math.cos(angle), owner[1] + reach * math.sin(angle)
+                room = _room(px, py, radius, boxes, segments, others)
+                shift = math.hypot(px - cx, py - cy)
+                if room >= CHARGE_GAP - 1e-6 and (best is None or best[0] < CHARGE_GAP or shift < best[1]):
+                    best = (room, shift, px, py)
+                elif best is None or (best[0] < CHARGE_GAP and room > best[0]):
+                    best = (room, shift, px, py)
+            if best and best[0] >= CHARGE_GAP - 1e-6:
+                break
+        room, _, px, py = best
+        if room < CHARGE_GAP - 1e-6:
+            crowded.append(g.get("id"))
+        g.set("BoundingBox", f"{px - radius:.2f} {py - radius:.2f} {px + radius:.2f} {py + radius:.2f}")
+        moved += 1
+    if not moved:
+        return cdxml, 0, crowded
+    out = text.split("?>", 1)[0] + "?>\n" + ET.tostring(root, encoding="unicode") if "?>" in text else ET.tostring(root, encoding="unicode")
+    if hasattr(cdxml, "chemistry_validation"):
+        out = type(cdxml)(out)
+        out.chemistry_validation = getattr(cdxml, "chemistry_validation", None)
+    return out, moved, crowded
+
+
 # Keys every kind of brief may carry without drawing anything: where its structures come from.
 RECORD_KEYS = {"provenance"}
 

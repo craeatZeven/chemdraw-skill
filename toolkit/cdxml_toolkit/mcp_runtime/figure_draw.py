@@ -749,6 +749,12 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
         cdxml, applied, skipped = figure_house.apply_figure_type_conventions(cdxml, house, "catalytic_cycle", slug)
         record["applied"] += applied
         record["skipped"] += skipped
+    # Last, on the finished page: no charge symbol within 3 pt of a text, bond or another (P42).
+    cdxml, moved, crowded = figure_house.clear_charge_symbols(cdxml)
+    if moved:
+        record["applied"].append(f"charge_symbols_cleared={moved}")
+    record["warnings"] += [f"Charge symbol {sid} has under {figure_house.CHARGE_GAP:g} pt to the nearest text "
+                           "or bond wherever it goes beside its atom." for sid in crowded]
     return cdxml, issues, record
 
 

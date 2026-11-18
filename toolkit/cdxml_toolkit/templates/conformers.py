@@ -184,13 +184,14 @@ def _build_fragment_and_cdxml(
 
         just = str(a.get("justification", "Left"))
         tid = next_id()
-        lx = ax - 3.25
-        ly = ay + 3.50
-        w = max(6.0, len(sym) * 5.5)
+        from ..label_geometry import label_box
+        bx1, by1, bx2, by2 = label_box(sym, ax, ay, just)
+        lx = bx1 if just != "Right" else bx2
+        ly = ay + 3.90   # ChemDraw's own baseline for 10 pt labels
         frag_lines.append(
             f'<n {" ".join(attrs)}>{inner_xml}'
             f'<t id="{tid}" p="{lx:.2f} {ly:.2f}" '
-            f'BoundingBox="{lx:.2f} {ay - 7.5:.2f} {lx + w:.2f} {ay:.2f}" '
+            f'BoundingBox="{bx1:.2f} {by1:.2f} {bx2:.2f} {by2:.2f}" '
             f'LabelJustification="{just}" LabelAlignment="{just}">'
             f'{_runs_xml(sym)}</t></n>'
         )
@@ -404,25 +405,14 @@ CHARGE_OWN_GAP = 3.0     # from the charged atom's own label too (natively 1.58 
 _CHARGE_ANGLES = [-45 + sign * step for step in range(0, 181, 15) for sign in ((1, -1) if step else (1,))]
 
 
-def _char_width(ch: str) -> float:
-    """Arial at 10 pt, by kind of character: wide enough never to understate a label."""
-    if ch in "[]()|":
-        return 2.8
-    if ch.isupper():
-        return 6.7
-    return 5.6
-
-
 def _label_box(atom: Mapping[str, Any]) -> tuple[float, float, float, float] | None:
-    """Where a label's glyphs are: the template sets the text from 3.25 pt left of its atom on a
-    baseline 3.5 pt below it (see _build_fragment_and_cdxml), so capitals reach about 3.7 pt
-    above the atom and brackets about 2 pt below the baseline."""
+    """Where ChemDraw sets a label's glyphs (label_geometry: first or last character centred on
+    the atom by justification, 4.6 pt above to 4.0 pt below it)."""
+    from ..label_geometry import label_box
     sym = str(atom.get("symbol", "C"))
     if not atom.get("show_label", sym != "C"):
         return None
-    x, y = float(atom["x"]), float(atom["y"])
-    left = x - 3.25
-    return (left, y - 4.0, left + max(6.0, sum(_char_width(c) for c in sym)), y + 3.5 + 2.0)
+    return label_box(sym, float(atom["x"]), float(atom["y"]), str(atom.get("justification", "Left")))
 
 
 def _box_distance(px: float, py: float, box: tuple[float, float, float, float]) -> float:

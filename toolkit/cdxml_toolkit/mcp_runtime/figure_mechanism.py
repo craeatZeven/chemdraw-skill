@@ -1189,6 +1189,8 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         house_skipped += more
     final = _color_moves(final, drawing.curves)
     final = _color_marks(final, drawing.marks)
+    # Last, on the finished page: no charge symbol within 3 pt of a text, bond or another (P42).
+    final, moved, crowded = figure_house.clear_charge_symbols(final)
     house_applied += ring_applied
     try:
         target = artifact_safety.resolve_destination(
@@ -1203,6 +1205,8 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     for issue in issues:
         warnings.append(f"Layout check: {issue['message']}")
     from ..clash_marks import MIN_GAP
+    warnings += [f"Charge symbol {sid} has under {figure_house.CHARGE_GAP:g} pt to the nearest text or bond "
+                 "wherever it goes beside its atom." for sid in crowded]
     for mark in drawing.marks:
         if mark["gap"] < MIN_GAP:
             warnings.append(f"Species {mark['species']}: the clash mark between {mark['between'][0]} and "
