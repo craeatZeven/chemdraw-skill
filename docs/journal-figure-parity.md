@@ -343,6 +343,15 @@ Today: `assets/parity/p4-p7-p8-scope.png` puts three to a row. The caption style
 witness (one line, bold number, band name on the rule), so what is left is density: our cells are
 wider because the type is fixed at 10 pt (P11) and our cell padding and gaps are ours, not theirs.
 
+**The structures are checked, not transcribed by eye.** All seventeen compounds in the brief
+match Supporting Information File 1 of the source article (`10.3762/bjoc.22.127`): 3a-3i, 3k-3p,
+3r and 3s against the characterised compounds, and 3j against the figure, since 3j was obtained
+in 0% yield and has no SI entry. A first pass reported 3s as a mismatch; that was this session's
+own construction error (5-bromo instead of 6-bromo, confirmed by the bromine's bond distance to
+S and N), not the brief's. Two compounds are **missing**: 3q (N-octadecyl, the second line of the
+3p/3q pair) and 3t (naphtho[2,1-d]thiazole, a different skeleton) — which are exactly the cases
+that would exercise P6's drawn-with row and a mixed-skeleton grid.
+
 Produce: a scope that fits four cells in the manuscript column at 10 pt — by tightening the cell
 padding, the gap between cells and the row pitch, not by shrinking type.
 Done when: an eighteen-compound scope renders in four columns on one page, and a measured note
