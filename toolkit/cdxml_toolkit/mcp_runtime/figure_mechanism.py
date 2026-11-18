@@ -38,7 +38,7 @@ from . import artifact_safety, figure_draw, figure_house, figure_lint
 
 MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers"}
 SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "generic_rings"}
-NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset", "attach"}
+NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset", "attach", "charges"}
 NEWMAN_SPOKE = 1.4 * ACS_BOND_LENGTH   # a projection's spokes, sized beside 14.4 pt bonds
 # Closest a rear spoke may come to a front one; ChemDraw-style eclipsed drawings use 14.
 NEWMAN_MIN_APART = 10.0
@@ -194,6 +194,13 @@ def _newman_errors(ident: str, spec: Any) -> list[str]:
         if not (isinstance(group, list) and len(group) == 3 and all(isinstance(g, str) and g for g in group)):
             errors.append(f"Species {ident}: newman {side} must list three substituents, e.g. [\"Me\", \"H\", \"H\"].")
     errors += _attach_errors(ident, spec)
+    if spec.get("charges") is not None and all(isinstance(spec.get(k), list) and len(spec[k]) == 3
+                                               for k in ("front", "rear")):
+        from ..templates.conformers import _charge_errors
+        try:
+            _charge_errors(spec["charges"], spec["front"], spec["rear"])
+        except ValueError as error:
+            errors.append(f"Species {ident}: newman charges: {error}.")
     if spec.get("conformation", "staggered") not in ("staggered", "eclipsed"):
         errors.append(f"Species {ident}: newman conformation must be staggered or eclipsed.")
     offset = spec.get("dihedral_offset")
@@ -246,9 +253,12 @@ def _attach_group(smiles: str) -> dict:
     stars = [a for a in mol.GetAtoms() if a.GetAtomicNum() == 0]
     if len(stars) != 1 or stars[0].GetDegree() != 1:
         raise ValueError(f"the attached group {smiles!r} needs one [*] bonded to one atom")
-    if any(a.GetFormalCharge() or a.GetNumRadicalElectrons() for a in mol.GetAtoms()):
-        raise ValueError(f"the attached group {smiles!r} carries a charge or radical, which a projection "
-                         "cannot draw yet; draw that species as an ordinary structure")
+    if any(a.GetNumRadicalElectrons() for a in mol.GetAtoms()):
+        raise ValueError(f"the attached group {smiles!r} carries a radical, which a projection cannot draw "
+                         "yet; draw that species as an ordinary structure")
+    if any(abs(a.GetFormalCharge()) > 1 for a in mol.GetAtoms()):
+        raise ValueError(f"the attached group {smiles!r} has a charge beyond plus or minus one; a projection "
+                         "draws each charge as one circled sign")
     Chem.Kekulize(mol, clearAromaticFlags=True)
     AllChem.Compute2DCoords(mol)
     conf = mol.GetConformer()
@@ -270,7 +280,7 @@ def _attach_group(smiles: str) -> dict:
         if symbol not in _SIMPLE_ELEMENTS or (label != symbol and label not in _HYDRIDE_LABELS):
             raise ValueError(f"the attached group {smiles!r} has an atom a projection cannot label ({label})")
         dx, dy = (xy[atom.GetIdx()][0] - xy[root][0]) * scale, (xy[atom.GetIdx()][1] - xy[root][1]) * scale
-        atoms.append({"index": atom.GetIdx() + 1, "symbol": label,
+        atoms.append({"index": atom.GetIdx() + 1, "symbol": label, "charge": atom.GetFormalCharge(),
                       "num_hydrogens": hydrogens, "show_label": symbol != "C",
                       "x": dx * cos - dy * sin, "y": dx * sin + dy * cos})
     bonds = [{"atom1": b.GetBeginAtomIdx() + 1, "atom2": b.GetEndAtomIdx() + 1,
@@ -287,13 +297,19 @@ def _projection(spec: dict, cx: float = 0.0, cy: float = 0.0) -> dict:
     return newman_projection(conformation=spec.get("conformation", "staggered"),
                              dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
                              rear=tuple(spec["rear"]), cx=cx, cy=cy, bond_length=NEWMAN_SPOKE,
-                             attach=_attach_group(attach["smiles"]) if attach else None)
+                             attach=_attach_group(attach["smiles"]) if attach else None,
+                             charges=spec.get("charges"))
 
 
 def _newman_frag(ident: str, spec: dict, label: str | None) -> Any:
     """A Newman projection as a structure the row layout can place: atoms, bonds, box, label."""
     drawn = _projection(spec)
     atoms = [dict(a) for a in drawn["atoms"]]
+    for atom in atoms:
+        # A circled charge reaches past its atom; the layout keeps that room clear too.
+        if atom.get("charge_box"):
+            x1, y1, x2, y2 = atom.pop("charge_box")
+            atom["reach"] = [(x1 - atom["x"], y1 - atom["y"]), (x2 - atom["x"], y2 - atom["y"])]
     frag = SimpleNamespace(atoms=atoms, bonds=[dict(b) for b in drawn["bonds"]], newman=dict(spec),
                            ref=StructureRef(id=ident, label=label))
     frag.bbox = R._fragment_bbox(atoms)
@@ -315,7 +331,7 @@ def _newman_xml(frag: Any, next_id) -> list[str]:
     for node in every:
         if node.get("id"):
             node.set("id", renumber[node.get("id")])
-        for key in ("B", "E"):
+        for key in ("B", "E", "object"):   # object: the atom a charge symbol represents
             if node.get(key) in renumber:
                 node.set(key, renumber[node.get(key)])
     for node in sorted((n for n in every if n.get("Z")), key=lambda n: int(n.get("Z"))):

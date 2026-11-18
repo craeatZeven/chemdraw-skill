@@ -1,0 +1,114 @@
+{
+ "kind": "mechanism",
+ "species": [
+  {
+   "id": "z",
+   "label": "Z",
+   "newman": {
+    "front": [
+     "*",
+     "H",
+     "Ph"
+    ],
+    "rear": [
+     "O",
+     "CO2Me",
+     "H"
+    ],
+    "conformation": "staggered",
+    "charges": {
+     "rear": [
+      -1,
+      0,
+      0
+     ]
+    },
+    "attach": {
+     "smiles": "[*]C1=[O+]CCC1"
+    }
+   }
+  },
+  {
+   "id": "zflat",
+   "label": "Z (flat)",
+   "smiles": "[O-]C(C(=O)OC)C(c1ccccc1)C1=[O+]CCC1"
+  },
+  {
+   "id": "v1",
+   "label": "V-1",
+   "newman": {
+    "front": [
+     "*",
+     "H",
+     "Ph"
+    ],
+    "rear": [
+     "[Rh]",
+     "CO2Me",
+     "H"
+    ],
+    "conformation": "staggered",
+    "charges": {
+     "rear": [
+      -1,
+      0,
+      0
+     ]
+    },
+    "attach": {
+     "smiles": "[*]C1=[O+]CCC1"
+    }
+   }
+  },
+  {
+   "id": "v4",
+   "label": "V-4",
+   "newman": {
+    "front": [
+     "*",
+     "H",
+     "Ph"
+    ],
+    "rear": [
+     "H",
+     "[Rh]",
+     "CO2Me"
+    ],
+    "conformation": "staggered",
+    "charges": {
+     "rear": [
+      0,
+      -1,
+      0
+     ]
+    },
+    "attach": {
+     "smiles": "[*]C1=[O+]CCC1"
+    }
+   }
+  }
+ ],
+ "steps": [
+  {
+   "substrates": [
+    "z"
+   ],
+   "products": [
+    "zflat"
+   ],
+   "arrow": "reversible"
+  },
+  {
+   "substrates": [
+    "v1"
+   ],
+   "products": [
+    "v4"
+   ],
+   "arrow": "reversible",
+   "above": [
+    "rotation"
+   ]
+  }
+ ]
+}

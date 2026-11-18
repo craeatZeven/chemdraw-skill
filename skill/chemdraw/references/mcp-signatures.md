@@ -307,7 +307,8 @@ conformation?, dihedral_offset?, attach?}, label?} for a Newman projection place
 which arrows cannot point at and whose steps need no moves; the order of rear picks the
 conformer, and dihedral_offset is the rear set's angle from the front one, 60 when staggered;
 attach {smiles with one [*]} bonds the front carbon to the rest of the molecule, in place of
-the front substituent written "*")
+the front substituent written "*"; charges {front?, rear? [three of -1, 0, 1]} and ±1 charges
+in attach are drawn as circled signs beside their atoms)
 and steps [{substrates, products, above?,
 below?, arrow?, moves [{from, to, electrons?, color?}]}] drawn in the order given. A move runs
 from {species, atom} or {species, bond [i, j]} to the same kind of end, in species that

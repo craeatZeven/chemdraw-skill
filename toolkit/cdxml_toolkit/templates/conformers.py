@@ -158,6 +158,8 @@ def _build_fragment_and_cdxml(
         show_label = bool(a.get("show_label", sym != "C"))
         z_atom = next_id()
         attrs = [f'id="{aid}"', f'p="{ax:.2f} {ay:.2f}"', f'Z="{a.get("z", z_atom)}"']
+        if a.get("charge"):
+            attrs.append(f'Charge="{int(a["charge"])}"')
 
         if not show_label and sym == "C":
             frag_lines.append(f'<n {" ".join(attrs)}/>')
@@ -219,6 +221,17 @@ def _build_fragment_and_cdxml(
                 attrs.append(f'CrossingBonds="{crossed_xml_ids}"')
 
         frag_lines.append(f'<b {" ".join(attrs)}/>')
+
+    # A charge is drawn as ChemDraw draws it: a circled symbol in the fragment that represents
+    # the node's Charge, so the label itself stays the bare element.
+    for a in atoms:
+        if a.get("charge_box"):
+            x1, y1, x2, y2 = a["charge_box"]
+            kind = "CirclePlus" if int(a["charge"]) > 0 else "CircleMinus"
+            frag_lines.append(
+                f'<graphic id="{next_id()}" BoundingBox="{x1:.2f} {y1:.2f} {x2:.2f} {y2:.2f}" '
+                f'Z="{next_id()}" GraphicType="Symbol" SymbolType="{kind}">'
+                f'<represent attribute="Charge" object="{atom_id_map[int(a["index"])]}"/></graphic>')
 
     frag_lines.append("</fragment>")
     fragment_xml = "\n".join(frag_lines)
@@ -383,6 +396,89 @@ def chair_cyclohexane(
     }
 
 
+CHARGE_SYMBOL = 8.0      # a circled charge's box, beside 10 pt labels
+CHARGE_BOND_GAP = 3.0    # from any bond, the P1 spacing
+CHARGE_LABEL_GAP = 1.5   # from a label, its own included (ChemDraw sets it about this close)
+# Directions tried for a charge, upper right first (where chemists write it), then fanning out.
+_CHARGE_ANGLES = [-45 + sign * step for step in range(0, 181, 15) for sign in ((1, -1) if step else (1,))]
+
+
+def _label_box(atom: Mapping[str, Any]) -> tuple[float, float, float, float] | None:
+    sym = str(atom.get("symbol", "C"))
+    if not atom.get("show_label", sym != "C"):
+        return None
+    x, y = float(atom["x"]), float(atom["y"])
+    return (x - 3.25, y - 7.5, x - 3.25 + max(6.0, len(sym) * 5.5), y + 1.5)
+
+
+def _box_distance(px: float, py: float, box: tuple[float, float, float, float]) -> float:
+    x1, y1, x2, y2 = box
+    return math.hypot(max(x1 - px, 0.0, px - x2), max(y1 - py, 0.0, py - y2))
+
+
+def _segment_distance(px: float, py: float, a: tuple[float, float], b: tuple[float, float]) -> float:
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    t = max(0.0, min(1.0, ((px - a[0]) * dx + (py - a[1]) * dy) / ((dx * dx + dy * dy) or 1.0)))
+    return math.hypot(px - a[0] - t * dx, py - a[1] - t * dy)
+
+
+def _place_charges(atoms: list[dict[str, Any]], bonds: list[dict[str, Any]],
+                   disc: tuple[float, float, float] | None = None) -> None:
+    """Give every charged atom a ``charge_box``: a circled symbol beside it, as close as its own
+    label allows, in the first direction (upper right first) that keeps the P1 gaps from every
+    bond, label, the projection's disc and the symbols already placed; failing that, the
+    direction with the most room."""
+    at = {int(a["index"]): (float(a["x"]), float(a["y"])) for a in atoms}
+    segments = [(at[int(b["atom1"])], at[int(b["atom2"])]) for b in bonds]
+    labels = {int(a["index"]): _label_box(a) for a in atoms}
+    half = CHARGE_SYMBOL / 2
+    placed: list[tuple[float, float]] = []
+    for atom in atoms:
+        if not atom.get("charge"):
+            continue
+        ax, ay = at[int(atom["index"])]
+        own = labels[int(atom["index"])]
+        best = None
+        for angle in _CHARGE_ANGLES:
+            ux, uy = math.cos(math.radians(angle)), math.sin(math.radians(angle))
+            reach = half + 2.0
+            while own and _box_distance(ax + ux * reach, ay + uy * reach, own) < half + CHARGE_LABEL_GAP:
+                reach += 0.5
+            px, py = ax + ux * reach, ay + uy * reach
+            room = min([_segment_distance(px, py, a, b) - half - CHARGE_BOND_GAP for a, b in segments]
+                       + [_box_distance(px, py, box) - half - CHARGE_LABEL_GAP
+                          for i, box in labels.items() if box and i != int(atom["index"])]
+                       + [math.hypot(px - qx, py - qy) - 2 * half - CHARGE_LABEL_GAP for qx, qy in placed]
+                       + ([math.hypot(px - disc[0], py - disc[1]) - disc[2] - half - CHARGE_BOND_GAP]
+                          if disc else []))
+            if best is None or room > best[0]:
+                best = (room, px, py)
+            if room >= 0:
+                best = (room, px, py)
+                break
+        _, px, py = best
+        placed.append((px, py))
+        atom["charge_box"] = (px - half, py - half, px + half, py + half)
+
+
+def _charge_errors(charges: Any, front: Sequence[str], rear: Sequence[str]) -> None:
+    if not isinstance(charges, Mapping) or set(charges) - {"front", "rear"}:
+        raise ValueError("charges are given for front or rear, e.g. {\"rear\": [-1, 0, 0]}")
+    for side, labels in (("front", front), ("rear", rear)):
+        values = charges.get(side)
+        if values is None:
+            continue
+        if not isinstance(values, (list, tuple)) or len(values) != 3:
+            raise ValueError(f"charges {side} lists three values, one per {side} substituent")
+        for value, label in zip(values, labels):
+            if value not in (-1, 0, 1) or isinstance(value, bool):
+                raise ValueError("a charge on a projection is plus or minus one, drawn as a circled sign")
+            if value and label == "*":
+                raise ValueError("an attached group carries its own charges, in its SMILES")
+            if value and label in _ABBREVIATION_SMILES:
+                raise ValueError(f"{label} is an abbreviation; it cannot carry a charge here")
+
+
 def newman_projection(
     *,
     conformation: str = "staggered",
@@ -393,13 +489,18 @@ def newman_projection(
     cy: float = 160.0,
     bond_length: float = 24.0,
     attach: Mapping[str, Any] | None = None,
+    charges: Mapping[str, Sequence[int]] | None = None,
 ) -> dict[str, Any]:
     """Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
 
     ``attach`` bonds the front carbon to the rest of a molecule (BJOC 22-125 scheme 4): the
     front substituent written ``"*"`` is replaced by a drawn group ``{"root", "atoms",
     "bonds"}`` whose coordinates put the root at the origin with the bond into it arriving
-    from -x; the group is turned so its +x runs outward along that spoke.
+    from -x; the group is turned so its +x runs outward along that spoke. An attached atom
+    with ``charge`` (plus or minus one) is drawn with a circled sign beside it.
+
+    ``charges`` puts a charge on a substituent, ``{"rear": [-1, 0, 0]}`` in the order of
+    ``rear`` (the minus beside [Rh] in the same scheme); abbreviations cannot carry one.
 
     The molecule is a connected substituted ethane: the front carbon and one rear carbon share
     the projection centre and are bonded; rear bonds belong to the rear carbon and sit beneath
@@ -433,6 +534,8 @@ def newman_projection(
     rear_spoke_starts: list[tuple[float, float]] = []
     rear_spoke_ends: list[tuple[float, float]] = []
 
+    if charges is not None:
+        _charge_errors(charges, front, rear)
     if attach is not None and list(front).count("*") != 1:
         raise ValueError('An attached group replaces exactly one front substituent written "*".')
     if attach is None and "*" in front:
@@ -529,6 +632,20 @@ def newman_projection(
             bonds.append({**{k: v for k, v in entry.items() if k not in ("atom1", "atom2", "index")},
                           "index": len(bonds) + 1, "atom1": number[int(entry["atom1"])],
                           "atom2": number[int(entry["atom2"])], "role": "attached"})
+
+    if charges:
+        for role, side in (("front_substituent", "front"), ("rear_substituent", "rear")):
+            labels = [label for label in (front if side == "front" else rear) if label != "*"]
+            values = [v for v, label in zip(charges.get(side) or [0, 0, 0], front if side == "front" else rear)
+                      if label != "*"]
+            for atom, value in zip([a for a in atoms if a.get("role") == role], values):
+                if value:
+                    atom["charge"] = value
+    for atom in atoms:
+        if atom.get("role") == "attached" or atom.get("role") == "attached_root":
+            if atom.get("charge") not in (None, 0, -1, 1):
+                raise ValueError("a charge on a projection is plus or minus one, drawn as a circled sign")
+    _place_charges(atoms, bonds, disc=(float(cx), float(cy), R))
 
     circle_graphic = (
         f'<graphic id="950" GraphicType="Oval" OvalType="Circle Filled" color="2" Z="100" '
