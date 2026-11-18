@@ -719,3 +719,37 @@ def test_a_value_under_a_shared_structure_updates_in_place(tmp_path):
     assert result['ok'], result
     project = json.loads((out/'project.json').read_text(encoding='utf-8'))
     assert project['compounds']['q']['display']['value'] == '61%'
+
+
+# P22: BJOC 22-127 scheme 2 sets its scope four to a row. columns asks for that grid; when the
+# cells cannot fit at 10 pt the request fails with the arithmetic instead of drawing three.
+
+def test_a_scope_in_four_columns_lines_its_cells_up(tmp_path):
+    rows = [[f'c{i}', f'3{chr(97 + i)}', STEREO if i % 2 else OTHER, f'{60 + i}%', ''] for i in range(8)]
+    project, page, root = _scope_page(tmp_path, rows, columns=4)
+    boxes = [record['bbox'] for record in project['compounds'].values()]
+    grid = page['grid']
+    assert grid['columns'] == 4 and grid['gap'] == 12
+    tops = sorted({round(b[1], 2) for b in boxes})
+    assert len(tops) == 2                                 # eight compounds, two rows
+    for top in tops:
+        # Four columns, each cell centred in its column: centres one column pitch apart.
+        centres = sorted((b[0] + b[2]) / 2 for b in boxes if round(b[1], 2) == top)
+        assert len(centres) == 4
+        steps = [b - a for a, b in zip(centres, centres[1:])]
+        assert all(step == pytest.approx(grid['cell_width'] + grid['gap'], abs=0.02) for step in steps)
+    # n columns and n - 1 gaps fill the 478.2 pt between the margins.
+    assert grid['cell_width'] * 4 + 12 * 3 == pytest.approx(180 / 25.4 * 72 - 32, abs=0.01)
+    assert len(grid['row_pitch']) == 1 and grid['row_pitch'][0] == pytest.approx(tops[1] - tops[0], abs=0.01)
+
+
+def test_columns_that_cannot_fit_say_why(tmp_path):
+    rows = [[f'c{i}', f'3{chr(97 + i)}', STEREO, 'yield not determined after workup', ''] for i in range(4)]
+    out = tmp_path/'scope'
+    # Like any request that cannot be drawn, it raises and publishes nothing.
+    with pytest.raises(ValueError) as failure:
+        execute(request(tmp_path, rows, columns=4), out)
+    message = str(failure.value)
+    assert '4 columns do not fit' in message and 'width_mm to at least' in message
+    assert 'the type would be' in message
+    assert not out.exists()

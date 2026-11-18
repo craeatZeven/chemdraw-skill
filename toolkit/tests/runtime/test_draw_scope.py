@@ -369,3 +369,17 @@ def test_header_r_marks_share_the_highlight_colour(tmp_path):
     orange = str(table.index((0xFF, 0x66, 0x00)) + 2)
     marks = [n for n in root.iter("n") if n.get("NodeType") == "GenericNickname"]
     assert marks and all(n.get("color") == orange for n in marks)
+
+
+@pytest.mark.parametrize("columns", [0, 9, 2.5, True, "4"])
+def test_columns_is_a_small_whole_number(columns):
+    report = draw_figure(_brief(columns=columns))
+    assert report["ok"] is False and any("columns" in e for e in report["errors"]), report["errors"]
+
+
+def test_four_columns_that_do_not_fit_report_the_arithmetic(tmp_path):
+    # Needs RDKit: four 4-methoxybiphenyl-sized cells are wider than 180 mm at 10 pt.
+    brief = _brief(columns=4)
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] is False
+    assert any("columns do not fit" in e and "width_mm to at least" in e for e in report["errors"]), report["errors"]

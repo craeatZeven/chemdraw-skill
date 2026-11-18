@@ -27,7 +27,7 @@ from .figure_draw import (
 from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manifest_style
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
-              "highlight_varying", "header"}
+              "highlight_varying", "header", "columns"}
 HEADER_KEYS = {"substrates", "products", "above", "below"}
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
@@ -115,6 +115,9 @@ def _validate(brief: dict) -> list[str]:
         value = brief.get(key)
         if value is not None and not (isinstance(value, (int, float)) and low <= value <= high):
             errors.append(f"{key} must be a number from {low} to {high} millimetres.")
+    columns = brief.get("columns")
+    if columns is not None and not (isinstance(columns, int) and not isinstance(columns, bool) and 1 <= columns <= 8):
+        errors.append("columns must be a whole number from 1 to 8: the compounds to a row.")
     footnotes = brief.get("footnotes")
     if footnotes is not None and not (isinstance(footnotes, list) and all(isinstance(f, str) for f in footnotes)):
         errors.append("footnotes must be a list of text lines.")
@@ -334,6 +337,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         "style": style,
         "native_render": render,
         **({"header": header} if header else {}),
+        **({"columns": brief["columns"]} if brief.get("columns") else {}),
     }
     path = work / "spec.json"
     path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
@@ -405,7 +409,8 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
 
     project = json.loads((target / "project.json").read_text(encoding="utf-8"))
     per_page = Counter(c["page"] for c in project["compounds"].values())
-    pages = [{"path": str(target / p["file"]), "file": p["file"], "compounds": per_page[i]}
+    pages = [{"path": str(target / p["file"]), "file": p["file"], "compounds": per_page[i],
+              **({"grid": p["grid"]} if p.get("grid") else {})}
              for i, p in enumerate(project["pages"])]
     checks = result["checks"]
     applied: list[str] = []

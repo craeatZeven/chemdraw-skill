@@ -77,6 +77,9 @@ Groups without a usable common core carry a warning and independent depictions.
 ## Layout
 
 `style` accepts `width_mm`, `height_mm`, `font_size`, `bond_length`, and `font`.
+A scope spec's `columns` sets a grid of that many equal columns (12 pt apart between 16 pt
+margins); cells that cannot fit raise an error with the arithmetic, and each page in the
+project records its `grid`.
 Defaults are a page of at most 180 by 240 mm, 10 pt Arial text (the ACS 1996 label
 size) and 14.4 pt bonds: design defaults, not a universal journal specification.
 Rows wrap or paginate at fixed text/bond sizes; the type never shrinks to fit. Each

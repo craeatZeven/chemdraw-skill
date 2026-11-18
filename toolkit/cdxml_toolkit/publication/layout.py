@@ -508,11 +508,38 @@ def create_pages(records,spec,stage,start_index=0):
         current['bottom']=max(current['bottom'],y+p['height']); current['right']=max(current['right'],x+p['width'])
         compounds[cid]={'input':p['input'],'page':current['index'],'bbox':entry['bbox'],
                         'display':p['texts'],'locked':False}
+    def natural(main):
+        cell=[main,*minors.get(main['input']['compound_id'],[])]
+        return sum(q['width'] for q in cell)+SECONDARY_GAP*(len(cell)-1)
+    columns=spec.get('columns')
+    column_width=None
+    if columns:
+        # A grid of equal columns (BJOC 22-127 scheme 2: four to a row). Cells that cannot fit
+        # are an error with the arithmetic, never a quiet fall back to fewer columns.
+        usable=width-2*margin
+        column_width=(usable-gap*(columns-1))/columns
+        widest=max(arranged,key=natural) if arranged else None
+        if widest is not None and natural(widest)>column_width+0.01:
+            need=natural(widest)*columns+gap*(columns-1)
+            need_mm=(need+2*margin)/72*25.4
+            raise ValueError(
+                f"{columns} columns do not fit: the widest cell ({widest['input']['compound_id']}) is "
+                f"{natural(widest):.1f} pt at {size:g} pt type and {style['bond_length']:g} pt bonds, so "
+                f"{columns} cells and {columns-1} gaps of {gap} pt need {need:.1f} pt; the page has "
+                f"{usable:.1f} pt ({float(style['width_mm']):g} mm less {margin} pt margins each side, "
+                f"{column_width:.1f} pt a column). Set width_mm to at least {math.ceil(need_mm)}: reduced "
+                f"to {float(style['width_mm']):g} mm for print, the type would be "
+                f"{size*float(style['width_mm'])/need_mm:.1f} pt. Or ask for fewer columns.")
+    pitches=[]
     for main in arranged:
         cell=[main,*minors.get(main['input']['compound_id'],[])]
         # The cell is the pair (or more) side by side, SECONDARY_GAP apart.
-        p={'input':main['input'],'width':sum(q['width'] for q in cell)+SECONDARY_GAP*(len(cell)-1),
+        p={'input':main['input'],'width':natural(main),
            'height':max(q['height'] for q in cell)}
+        lead=0.0
+        if column_width is not None:
+            lead=(column_width-p['width'])/2   # centred in its column
+            p['width']=column_width-0.001     # n columns and n-1 gaps fill the page exactly
         group=p['input']['group']
         if current is None: current,x,y,row_height=new_page()
         if group!=last_group:
@@ -522,12 +549,12 @@ def create_pages(records,spec,stage,start_index=0):
             if group: y=band(current,y,group)
             last_group=group
         if x+p['width']>width-margin:
-            x=margin; y+=row_height+gap; row_height=0
+            x=margin; y+=row_height+gap; pitches.append(row_height+gap); row_height=0
         if y+p['height']>bottom:
             current,x,y,row_height=new_page()
             if group: y=band(current,y,group+' (continued)')
         if y+p['height']>bottom: raise ValueError(f"Compound {p['input']['compound_id']} exceeds page height")
-        qx=x
+        qx=x+lead
         for index,q in enumerate(cell):
             if index:
                 # Midway between the two structures' atoms, not between their (wider) cells.
@@ -542,6 +569,9 @@ def create_pages(records,spec,stage,start_index=0):
     # Each page is cropped to what it holds: the footnotes follow the last row (rather than
     # sitting at the foot of the full-height page) and the page ends a margin past them.
     for page in manifests:
+        if columns:
+            page['grid']={'columns':columns,'cell_width':round(column_width,2),'gap':gap,
+                          'row_pitch':[round(v,2) for v in pitches]}
         page_bottom=page['bottom']
         if footer:
             page['objects'].append({'type':'text','id':'footnotes','text':footer,'position':[margin,page_bottom+8+size],'size':size})
@@ -579,7 +609,8 @@ def create_pages(records,spec,stage,start_index=0):
             # A compound drawn with another's structure has none of its own to read back.
             record['displayed_identity']=None if entry.get('text_only') else semantic_key(fragment_mol(group.find('fragment')))
         tree.write(stage/name,encoding='utf-8',xml_declaration=True)
-        pages.append({'file':name,'width_pt':page['width'],'height_pt':page['height']})
+        pages.append({'file':name,'width_pt':page['width'],'height_pt':page['height'],
+                      **({'grid':page['grid']} if page.get('grid') else {})})
     return pages,compounds,warnings
 
 
