@@ -361,7 +361,7 @@
 - **function**, line 657: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
 - **function**, line 623: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
 - **function**, line 631: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
-- **function**, line 786: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
+- **function**, line 788: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
 - **function**, line 612: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
 - **function**, line 647: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
 - **function**, line 638: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.

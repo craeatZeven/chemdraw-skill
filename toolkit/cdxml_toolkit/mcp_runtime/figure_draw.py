@@ -686,10 +686,12 @@ def _draw(brief: dict, grounded: list[dict], layout_width: float, gap_scale: flo
         renderer.MIN_ARROW_BONDS = saved
     cdxml = _apply_decorations(cdxml, brief, grounded)
     # The layout drawn, which may differ from the one chosen (a fan too wide is drawn stacked).
-    record: dict = {"applied": [], "skipped": [], "warnings": [], "layout": getattr(scheme, "drawn_layout", None)}
+    record: dict = {"applied": [], "skipped": [], "warnings": list(getattr(scheme, "layout_warnings", []) or []),
+                    "layout": getattr(scheme, "drawn_layout", None)}
     if house is not None:
-        cdxml, record["applied"], record["skipped"], record["warnings"] = figure_house.apply_house_conventions(
+        cdxml, record["applied"], record["skipped"], house_warnings = figure_house.apply_house_conventions(
             cdxml, brief, grounded, house)
+        record["warnings"] += house_warnings
     cdxml, applied, warnings = figure_house.apply_species_styling(cdxml, brief, grounded, house)
     record["applied"] += applied
     record["warnings"] += warnings

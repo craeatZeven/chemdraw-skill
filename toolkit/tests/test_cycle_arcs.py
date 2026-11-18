@@ -128,3 +128,91 @@ def test_the_step_labels_stand_outside_the_ring():
         text = "".join(t.itertext())
         if text.startswith("step"):
             assert math.dist(centre, _point(t.get("p"))) > radius
+
+
+# P23: BJOC 22-125 scheme 4 sets each step's name beside its own arc. With species entering and
+# leaving (ArI in, PhB(OH)2 in, the biaryl out) the names were pushed past those species, 162
+# and 190 pt from their arcs, and the leaving arrow was cut to a stub.
+
+SUZUKI = {"Pd": "[Pd]", "I": "COc1ccc([Pd]I)cc1", "II": "COc1ccc([Pd]c2ccccc2)cc1",
+          "ArI": "COc1ccc(I)cc1", "B": "OB(O)c1ccccc1", "P": "COc1ccc(-c2ccccc2)cc1"}
+NAMES = ["oxidative addition", "transmetalation", "reductive elimination"]
+
+
+def _suzuki():
+    structures = {k: StructureRef(id=k, smiles=v, label=k) for k, v in SUZUKI.items()}
+    steps = [StepDescriptor(substrates=["Pd", "ArI"], products=["I"], above_arrow=ArrowContent(text=[NAMES[0]])),
+             StepDescriptor(substrates=["I", "B"], products=["II"], above_arrow=ArrowContent(text=[NAMES[1]])),
+             StepDescriptor(substrates=["II"], products=["Pd", "P"], above_arrow=ArrowContent(text=[NAMES[2]]))]
+    xml, _ = R._layout_catalytic_cycle(SchemeDescriptor(structures=structures, steps=steps, layout="catalytic-cycle"),
+                                       R._IDGen())
+    return ET.fromstring(f"<page>{xml}</page>")
+
+
+def _text_boxes(page):
+    # The renderer's own estimate of a text's box, from its anchor and its lines; the native
+    # render is measured separately.
+    boxes = {}
+    for t in page.findall("t"):
+        text = "".join(t.itertext()).strip()
+        x, y = _point(t.get("p"))
+        boxes[text] = R._text_box_at(text.splitlines() or [text], x, y)
+    return boxes
+
+
+def _box_gap(point, box):
+    x1, y1, x2, y2 = box
+    return math.hypot(max(x1 - point[0], 0.0, point[0] - x2), max(y1 - point[1], 0.0, point[1] - y2))
+
+
+def _overlap(a, b):
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+def test_each_step_name_stands_by_the_middle_of_its_own_arc():
+    page = _suzuki()
+    root = ET.fromstring(f"<CDXML>{ET.tostring(page, encoding='unicode')}</CDXML>")
+    arcs = [pts for _, pts in _curved_arrows(root) if len(pts) > 2][:3]
+    centre = _point(page.find("arrow").get("Center3D"))
+    texts = _text_boxes(page)
+    for name, pts in zip(NAMES, arcs):
+        middle = pts[len(pts) // 2]
+        box = texts[name]
+        assert _box_gap(middle, box) <= R.CYCLE_LABEL_REACH, (name, _box_gap(middle, box))
+        # ... outside the circle, and nearer its own arc than any other arc.
+        assert math.dist(centre, ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)) > math.dist(centre, middle)
+        others = [p for other in arcs if other is not pts for p in other]
+        assert _box_gap(middle, box) < min(_box_gap(p, box) for p in others)
+
+
+def test_names_species_and_connectors_do_not_touch():
+    page = _suzuki()
+    boxes = [tuple(float(v) for v in f.get("BoundingBox").split()) for f in page.findall("fragment")]
+    boxes += [b for name, b in _text_boxes(page).items() if name in NAMES]
+    for i, a in enumerate(boxes):
+        for b in boxes[i + 1:]:
+            assert not _overlap(a, b), (a, b)
+    straight = [a for a in page.findall("arrow") if not a.get("AngularSize")]
+    assert len(straight) == 3   # ArI in, PhB(OH)2 in, the biaryl out
+    for arrow in straight:
+        assert math.dist(_point(arrow.get("Tail3D")), _point(arrow.get("Head3D"))) >= R.CYCLE_CONNECTOR_MIN
+
+
+def test_the_arcs_all_run_the_same_way_round():
+    page = _suzuki()
+    arcs = [a for a in page.findall("arrow") if a.get("AngularSize")]
+    assert len(arcs) == 3
+    # Clockwise on the page: written from the far end, head on the tail end.
+    assert {(a.get("ArrowheadHead"), a.get("ArrowheadTail")) for a in arcs} == {("None", "Full")}
+
+
+def test_a_name_is_set_beside_the_arc_middle_when_the_ray_is_blocked():
+    # Something already stands straight out from the arc's middle: the name slides sideways
+    # rather than out past it.
+    blocker = (95.0, -60.0, 125.0, -20.0)
+    placed = R._place_near_arc(["oxidative addition"], 110.0, -12.0, 0.0, -1.0, [blocker],
+                               centre=(110.0, 80.0))
+    assert placed is not None
+    _, _, box = placed
+    assert not _overlap(box, blocker)
+    assert _box_gap((110.0, -12.0), box) <= R.CYCLE_LABEL_REACH
