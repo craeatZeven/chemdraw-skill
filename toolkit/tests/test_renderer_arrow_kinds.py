@@ -96,8 +96,9 @@ def test_a_catalytic_cycle_draws_equilibria_between_intermediates(tmp_path):
     scheme = parse_yaml(str(source))
     scheme.layout = "cycle"  # as the draw tool sets it for a catalytic-cycle brief
     arrows = _arrows(renderer.render(scheme))
-    kinds = [(a.get("ArrowheadHead"), a.get("ArrowheadTail"), a.get("ArrowShaftSpacing")) for a in arrows]
-    assert kinds.count(("HalfLeft", "HalfLeft", "300")) == 2
-    # The forward step is an arc of the cycle's circle, its head on the tail end (P16).
-    arcs = [a for a in arrows if a.get("AngularSize")]
-    assert len(arcs) == 1 and (arcs[0].get("ArrowheadHead"), arcs[0].get("ArrowheadTail")) == ("None", "Full")
+    # Every step is an arc of the cycle's circle (P16); an equilibrium is a pair of half-headed
+    # arcs, one each way, as a straight equilibrium arrow is a pair of half-headed shafts.
+    assert all(a.get("AngularSize") for a in arrows) and len(arrows) == 5
+    heads = sorted((a.get("ArrowheadHead"), a.get("ArrowheadTail")) for a in arrows)
+    assert heads == sorted([("None", "Full"), ("None", "HalfLeft"), ("HalfLeft", "None"),
+                            ("None", "HalfLeft"), ("HalfLeft", "None")])

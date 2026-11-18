@@ -9,6 +9,8 @@ from __future__ import annotations
 import math
 import xml.etree.ElementTree as ET
 
+import pytest
+
 from cdxml_toolkit.cdxml_check import _curved_arrows
 from cdxml_toolkit.render import renderer as R
 from cdxml_toolkit.render.schema import ArrowContent, SchemeDescriptor, StepDescriptor, StructureRef
@@ -66,11 +68,55 @@ def test_each_arc_points_at_the_next_species_and_starts_clear_of_both():
                 assert not (b[0] < x < b[2] and b[1] < y < b[3])   # never inside a structure's box
 
 
-def test_an_equilibrium_step_keeps_its_straight_double_arrow():
+def _radius(arc):
+    return math.dist(_point(arc.get("Center3D")), _point(arc.get("Tail3D")))
+
+
+def test_an_equilibrium_step_is_a_pair_of_concentric_half_arcs():
+    # A reversible step of a cycle: two arcs on the cycle's circle, one each way, as a straight
+    # equilibrium arrow is two half-headed shafts (BJOC 22-125 scheme 4, I <=> II <=> III).
     page = _cycle(styles=("solid", "reversible", "solid", "solid"))
-    straight = [a for a in page.findall("arrow") if not a.get("AngularSize")]
-    assert len(straight) == 1 and straight[0].get("ArrowheadHead") == "HalfLeft"
-    assert len([a for a in page.findall("arrow") if a.get("AngularSize")]) == 3
+    arrows = page.findall("arrow")
+    assert all(a.get("AngularSize") for a in arrows) and len(arrows) == 5
+    single = [a for a in arrows if "Full" in (a.get("ArrowheadHead"), a.get("ArrowheadTail"))]
+    pair = [a for a in arrows if a not in single]
+    assert len(single) == 3 and len(pair) == 2
+    assert {a.get("Center3D") for a in arrows} == {single[0].get("Center3D")}
+    radius = _radius(single[0])
+    outer, inner = sorted(pair, key=_radius, reverse=True)
+    assert _radius(outer) - radius == pytest.approx(R.CYCLE_EQUILIBRIUM_GAP / 2, abs=0.02)
+    assert radius - _radius(inner) == pytest.approx(R.CYCLE_EQUILIBRIUM_GAP / 2, abs=0.02)
+    # Same span, opposite ways: the outer runs on to C, the inner back to B.
+    assert float(outer.get("AngularSize")) == pytest.approx(float(inner.get("AngularSize")), abs=0.01)
+    assert (outer.get("ArrowheadHead"), outer.get("ArrowheadTail")) == ("None", R.CYCLE_EQUILIBRIUM_BARB)
+    assert (inner.get("ArrowheadHead"), inner.get("ArrowheadTail")) == (R.CYCLE_EQUILIBRIUM_BARB, "None")
+
+
+def test_the_pair_keeps_the_p1_gap_from_every_structure():
+    page = _cycle(styles=("solid", "reversible", "solid", "solid"))
+    root = ET.fromstring(f"<CDXML>{ET.tostring(page, encoding='unicode')}</CDXML>")
+    atoms = [_point(n.get("p")) for n in page.iter("n")]
+    for _, pts in _curved_arrows(root):
+        assert min(math.dist(p, a) for p in pts for a in atoms) >= 3.0
+
+
+def test_the_pair_arcs_are_written_from_one_span():
+    ids = R._IDGen()
+    parts, outer, inner, forward_id = R._build_cycle_equilibrium(100.0, 100.0, 50.0, -1.0, -0.2, ids)
+    assert len(parts) == 2
+    a, b = (ET.fromstring(x) for x in parts)
+    # The outer arc runs clockwise on the page from -1.0 to -0.2: its head is the -0.2 end.
+    assert math.dist(outer[-1], (100 + 51.5 * math.cos(-0.2), 100 + 51.5 * math.sin(-0.2))) < 0.05
+    # The inner arc runs back: its head is the -1.0 end, on the smaller circle.
+    assert math.dist(inner[-1], (100 + 48.5 * math.cos(-1.0), 100 + 48.5 * math.sin(-1.0))) < 0.05
+    assert a.get("ArrowheadTail") == R.CYCLE_EQUILIBRIUM_BARB and a.get("ArrowheadHead") == "None"
+    assert b.get("ArrowheadHead") == R.CYCLE_EQUILIBRIUM_BARB and b.get("ArrowheadTail") == "None"
+    # ChemDraw draws an arc from Tail3D anticlockwise to Head3D; for the inner arc that path
+    # starts at -0.2 and its head is where it ends.
+    assert math.dist(_point(b.get("Head3D")), inner[-1]) < 0.05
+    assert math.dist(_point(b.get("Tail3D")), inner[0]) < 0.05
+    assert a.get("Center3D") == b.get("Center3D") == "100.00 100.00 0"
+    assert a.get("id") == str(forward_id)
 
 
 def test_the_step_labels_stand_outside_the_ring():

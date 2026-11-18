@@ -3194,14 +3194,25 @@ def _cycle_arc_span(cx: float, cy: float, radius: float, a0: float, a1: float,
     return start, end
 
 
+# An equilibrium step of a cycle is two arcs, one each way, this far apart (centre to centre),
+# each with a half head whose barb stands outside the pair: on the left of its own travel, as
+# the two shafts of ChemDraw's straight equilibrium arrow both carry HalfLeft.
+CYCLE_EQUILIBRIUM_GAP = 3.0
+CYCLE_EQUILIBRIUM_BARB = "HalfLeft"
+_BARB_REACH = 1.5   # how far a half head's barb stands off its shaft (ArrowheadWidth 250 at 0.6 pt)
+
+
 def _build_cycle_arc(cx: float, cy: float, radius: float, start: float, end: float, ids: _IDGen,
-                     dashed: bool = False) -> Tuple[str, int, List[Tuple[float, float]]]:
+                     dashed: bool = False, head: str = "Full",
+                     reverse: bool = False) -> Tuple[str, int, List[Tuple[float, float]]]:
     """A step of a cycle as ChemDraw's own arc arrow, running clockwise on the page from the
-    angle ``start`` to ``end``. Returns (xml, id, points from tail to head).
+    angle ``start`` to ``end`` (``reverse``: back from ``end`` to ``start``). Returns (xml, id,
+    points from tail to head).
 
     ChemDraw runs an arc anticlockwise from Tail3D through AngularSize degrees, so a clockwise
     arrow is written from its far end with the head on the tail end, as figure_mechanism writes
-    curved arrows (toolkit/tests/data/native-arc-arrows.cdxml).
+    curved arrows (toolkit/tests/data/native-arc-arrows.cdxml); an anticlockwise one is the same
+    arc with the head on Head3D.
     """
     pts = [(cx + radius * math.cos(start + (end - start) * k / 32), cy + radius * math.sin(start + (end - start) * k / 32))
            for k in range(33)]
@@ -3210,7 +3221,9 @@ def _build_cycle_arc(cx: float, cy: float, radius: float, start: float, end: flo
     first, last = pts[0], pts[-1]
     attrs = [
         f'id="{aid}"', f'BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}"', f'Z="{z}"',
-        'FillType="None"', f'LineWidth="{ACS_LINE_WIDTH}"', 'ArrowheadHead="None"', 'ArrowheadTail="Full"',
+        'FillType="None"', f'LineWidth="{ACS_LINE_WIDTH}"',
+        f'ArrowheadHead="{head}"' if reverse else 'ArrowheadHead="None"',
+        'ArrowheadTail="None"' if reverse else f'ArrowheadTail="{head}"',
         'ArrowheadType="Solid"', 'HeadSize="1000"', 'ArrowheadCenterSize="875"', 'ArrowheadWidth="250"',
         f'AngularSize="{math.degrees(end - start):.2f}"',
         f'Head3D="{first[0]:.2f} {first[1]:.2f} 0"', f'Tail3D="{last[0]:.2f} {last[1]:.2f} 0"',
@@ -3219,7 +3232,19 @@ def _build_cycle_arc(cx: float, cy: float, radius: float, start: float, end: flo
     ]
     if dashed:
         attrs.append('LineType="Dashed"')
-    return f'<arrow {" ".join(attrs)}/>', aid, pts
+    return f'<arrow {" ".join(attrs)}/>', aid, (pts[::-1] if reverse else pts)
+
+
+def _build_cycle_equilibrium(cx: float, cy: float, radius: float, start: float, end: float, ids: _IDGen
+                             ) -> Tuple[List[str], List[Tuple[float, float]], List[Tuple[float, float]], int]:
+    """An equilibrium step of a cycle: the forward arc just outside the cycle's circle and the
+    backward arc just inside, over one span, both half-headed. Returns (xml parts, forward
+    points, backward points, the forward arc's id), points from tail to head."""
+    half = CYCLE_EQUILIBRIUM_GAP / 2.0
+    forward, forward_id, out_pts = _build_cycle_arc(cx, cy, radius + half, start, end, ids, head=CYCLE_EQUILIBRIUM_BARB)
+    backward, _, in_pts = _build_cycle_arc(cx, cy, radius - half, start, end, ids, head=CYCLE_EQUILIBRIUM_BARB,
+                                           reverse=True)
+    return [forward, backward], out_pts, in_pts, forward_id
 
 
 def _along(path: List[Tuple[float, float]], frac: float) -> Tuple[float, float]:
@@ -3394,6 +3419,25 @@ def _layout_catalytic_cycle(
         if n_steps >= 2 and step.arrow_style in (None, "solid", "dashed"):
             span = _cycle_arc_span(cx, cy, radius, angles[k], angles[k] + 2.0 * math.pi / n_steps,
                                    final_boxes[k], final_boxes[nk], pad, min_arrow_len)
+        if n_steps >= 2 and step.arrow_style == "reversible":
+            # Both arcs of the pair cover the span either radius leaves clear.
+            half = CYCLE_EQUILIBRIUM_GAP / 2.0
+            spans = [_cycle_arc_span(cx, cy, r, angles[k], angles[k] + 2.0 * math.pi / n_steps,
+                                     final_boxes[k], final_boxes[nk], pad, min_arrow_len)
+                     for r in (radius - half, radius + half)]
+            if all(spans) and min(e for _, e in spans) - max(b for b, _ in spans) > min_arrow_len / radius:
+                start, end = max(b for b, _ in spans), min(e for _, e in spans)
+                parts, out_pts, in_pts, arc_id = _build_cycle_equilibrium(cx, cy, radius, start, end, ids)
+                xml_parts.extend(parts)
+                arrow_records.append((out_pts[0][0], out_pts[0][1], out_pts[-1][0], out_pts[-1][1], arc_id))
+                arrow_paths.append(out_pts)
+                reach = 3.0 + _BARB_REACH
+                for path in (out_pts, in_pts):
+                    for a, b in zip(path[::4], path[4::4] + path[-1:]):
+                        placed_boxes.append((min(a[0], b[0]) - reach, min(a[1], b[1]) - reach,
+                                             max(a[0], b[0]) + reach, max(a[1], b[1]) + reach))
+                    lowest_y = max(lowest_y, max(p[1] for p in path) + reach)
+                continue
         if span is not None:
             arc_xml, arc_id, path = _build_cycle_arc(cx, cy, radius, span[0], span[1], ids,
                                                      dashed=(step.arrow_style == "dashed"))
