@@ -535,11 +535,12 @@ def create_pages(records,spec,stage,start_index=0):
     # on a common bottom, the row's lowest. Rows are known beforehand: `columns` cells a row,
     # a new row at each group.
     row_bottom={}
+    row_place={}   # (index in its row, cells in its row)
     if columns:
         row=[]
         def close(row):
             lowest=max(q['molecule_bottom'] for m in row for q in [m,*minors.get(m['input']['compound_id'],[])])
-            for m in row: row_bottom[id(m)]=lowest
+            for k,m in enumerate(row): row_bottom[id(m)]=lowest; row_place[id(m)]=(k,len(row))
         for main in arranged:
             if row and (main['input']['group']!=row[-1]['input']['group'] or len(row)==columns):
                 close(row); row=[]
@@ -569,6 +570,9 @@ def create_pages(records,spec,stage,start_index=0):
             current,x,y,row_height=new_page()
             if group: y=band(current,y,group+' (continued)')
         if y+p['height']>bottom: raise ValueError(f"Compound {p['input']['compound_id']} exceeds page height")
+        if id(main) in row_place and row_place[id(main)][0]==0:
+            # A short row (the last of a group) stands in the middle of the grid (P35).
+            x=margin+(columns-row_place[id(main)][1])*(column_width+gap)/2
         qx=x+lead
         for index,q in enumerate(cell):
             if index:

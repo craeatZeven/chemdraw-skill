@@ -309,12 +309,13 @@ def test_the_layout_box_holds_the_charge_symbol():
     assert x1 <= box[0] and y1 <= box[1] and box[2] <= x2 and box[3] <= y2
 
 
-def test_a_charge_keeps_the_p1_gap_from_every_other_label():
+def test_a_charge_keeps_the_p1_gap_from_every_label():
     # Measured on the native V-4: the minus beside [Rh] began 3.2 pt from the H beside it and
     # overlapped it by 1.4 pt in height. Other atoms' labels get the full 3 pt; only the
     # charged atom's own label may come closer, as ChemDraw sets it.
-    from cdxml_toolkit.templates.conformers import CHARGE_LABEL_GAP, _box_distance, _label_box, newman_projection
-    assert CHARGE_LABEL_GAP >= 3.0
+    from cdxml_toolkit.templates.conformers import (CHARGE_LABEL_GAP, CHARGE_OWN_GAP, _box_distance,
+                                                    _label_box, newman_projection)
+    assert CHARGE_LABEL_GAP >= 3.0 and CHARGE_OWN_GAP >= 3.0
     for rear, charges in ((("H", "[Rh]", "Me"), [0, -1, 0]), (("[Rh]", "Me", "H"), [-1, 0, 0]),
                           (("Me", "H", "[Rh]"), [0, 0, -1])):
         drawn = newman_projection(front=("*", "H", "Me"), rear=rear, cx=100.0, cy=100.0,
@@ -326,6 +327,54 @@ def test_a_charge_keeps_the_p1_gap_from_every_other_label():
             centre, half = ((x1 + x2) / 2, (y1 + y2) / 2), (x2 - x1) / 2
             for other in drawn["atoms"]:
                 box = _label_box(other)
-                if other is atom or box is None:
+                if box is None:
                     continue
+                # Its own label too: measured natively, the minus sat 1.58 pt from [Rh].
                 assert _box_distance(*centre, box) - half >= 3.0 - 1e-6, (rear, other["symbol"])
+
+
+# A projection is read back like any structure; one that carries a generic label ([Rh], Ar)
+# cannot be, by design, and says so without failing the page.
+
+def test_the_page_verdict_counts_unreadable_projections_apart():
+    from cdxml_toolkit.render import renderer as R
+    def build(ids):
+        R._fragment_receipts.get().extend([
+            {"fragment_id": "10", "status": "preserved"},
+            {"fragment_id": "20", "status": "not_checkable", "reason": "generic label [Rh]"}])
+        return '<fragment id="10"/><fragment id="20"/>'
+    validation = R.render_with(build).chemistry_validation
+    assert validation["status"] == "preserved"
+    assert validation["not_checkable"] == ["20"]
+
+
+def test_a_changed_projection_fails_the_page():
+    from cdxml_toolkit.render import renderer as R
+    def build(ids):
+        R._fragment_receipts.get().append({"fragment_id": "10", "status": "changed"})
+        return '<fragment id="10"/>'
+    assert R.render_with(build).chemistry_validation["status"] == "changed"
+
+
+def test_a_projection_leaves_a_receipt_for_its_fragment():
+    # Needs RDKit for the readable case.
+    from cdxml_toolkit.render import renderer as R
+    spec = {"front": ["Me", "H", "Br"], "rear": ["H", "Me", "H"]}
+    frag = M._newman_frag("anti", spec, "1")
+    def build(ids):
+        return "\n".join(M._newman_xml(frag, ids.next))
+    validation = R.render_with(build).chemistry_validation
+    assert validation["status"] == "preserved" and not validation.get("not_checkable")
+    generic = M._newman_frag("rh", {"front": ["Me", "H", "Br"], "rear": ["[Rh]", "Me", "H"]}, "2")
+    validation = R.render_with(lambda ids: "\n".join(M._newman_xml(generic, ids.next))).chemistry_validation
+    assert validation["status"] == "preserved" and len(validation["not_checkable"]) == 1
+
+
+def test_a_label_box_is_where_the_template_sets_the_text():
+    # The template sets a label's baseline 3.5 pt below its atom (ly = ay + 3.5), so the glyphs
+    # run from about 3.7 pt above the atom to the baseline, brackets a little below it.
+    from cdxml_toolkit.templates.conformers import _label_box
+    x1, y1, x2, y2 = _label_box({"symbol": "[Rh]", "x": 100.0, "y": 100.0})
+    assert y1 <= 100.0 - 3.7 and y2 >= 103.5 + 1.5
+    assert y1 >= 100.0 - 5.0      # not the old box, which stood 7.5 pt above the atom
+    assert x2 - x1 >= 2.8 * 2 + 6.7 + 5.6 - 0.01

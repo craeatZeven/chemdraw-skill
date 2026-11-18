@@ -3890,9 +3890,16 @@ def _validated(produce) -> str:
         root = ET.fromstring(result)
         fragment_ids = {node.get('id') for node in root.iter('fragment')}
         validated_ids = {str(receipt['fragment_id']) for receipt in receipts}
+        # A drawing that carries a generic label ([Rh], Ar) cannot be read back by design; it is
+        # listed apart and does not fail the page. Any other receipt but 'preserved' does.
+        unreadable = sorted(str(r['fragment_id']) for r in receipts if r.get('status') == 'not_checkable')
+        failed = sorted({r.get('status') for r in receipts
+                         if r.get('status') not in (None, 'preserved', 'not_checkable')})
+        status = ('unverified' if not fragment_ids or fragment_ids != validated_ids
+                  else failed[0] if failed else 'preserved')
         result.chemistry_validation = {
-            'status': 'preserved' if fragment_ids and fragment_ids == validated_ids else 'unverified',
-            'method': 'final_coordinate_fragment_roundtrips', 'fragments': receipts}
+            'status': status, 'method': 'final_coordinate_fragment_roundtrips', 'fragments': receipts,
+            **({'not_checkable': unreadable} if unreadable else {})}
         return result
     finally:
         _fragment_receipts.reset(token)

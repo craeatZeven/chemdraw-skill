@@ -507,7 +507,7 @@ the appendix table at the end of this section.
 | P32 | Translucent highlights behind bonds or atoms (halos, discs) | #5, #6, #18, #29 | 4 | `atom_colors` colours the drawing itself |
 | P33 | Chosen bonds drawn bold (synthesis bonds) | #1, #2, #3, #33 | 4 | |
 | P34 | Wavy attachment bonds, and structure fragments inside a definition line ("X = ~CH2~ or ~C(=O)~") | #19, #29, #31, #61 | 4 | |
-| P35 | A short last row centred in a grid or gallery | #12, #15, #21 | 3 | small; the rest of those three figures already matches |
+| P35 | A short last row centred in a grid or gallery | #12, #15, #21 | 3 | **implemented, to render** for scope grids (`columns`): a row with fewer cells than columns stands in the middle, on the grid's pitch when the difference is even |
 | P36 | One shaft forking at right angles into two or three arrowheads, with a label on each branch | #7, #63, #65 | 3 | `fan` draws separate diagonal arrows |
 | P37 | Callouts: a coloured badge or coloured text with a curved pointer arrow to an atom or group | #17, #19, #29 | 3 | |
 | P38 | Counter-ions set beside a structure ("2 PF6−", "X−") | #16, #41, #61 | 3 | |

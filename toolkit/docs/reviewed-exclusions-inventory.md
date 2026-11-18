@@ -405,7 +405,7 @@
 
 ## `mcp_runtime.figure_mechanism`
 
-- **function**, line 1078: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+- **function**, line 1103: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
 
 ## `mcp_runtime.figure_panels`
 
@@ -669,9 +669,9 @@
 
 ## `publication.layout`
 
-- **function**, line 651: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 655: `bounds(node, style)` - No public docstring in the audited version.
 - **function**, line 121: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 681: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 685: `check_pages(project, roots, spec)` - No public docstring in the audited version.
 - **function**, line 182: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
 - **function**, line 397: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
@@ -682,7 +682,7 @@
 - **function**, line 220: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 677: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 681: `overlap(a, b)` - No public docstring in the audited version.
 - **function**, line 207: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
 - **function**, line 327: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
@@ -762,12 +762,12 @@
 
 ## `templates.conformers`
 
-- **function**, line 940: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, str] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage (norbornane, bicyclo_222, adamantane) with CrossingBonds.
-- **function**, line 1110: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
+- **function**, line 953: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, str] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage (norbornane, bicyclo_222, adamantane) with CrossingBonds.
+- **function**, line 1123: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
 - **function**, line 268: `chair_cyclohexane(*, flip: bool = False, substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 14.4) -> dict[str, Any]` - Generate a 6-membered chair cyclohexane (chair1 or ring-flipped chair2).
-- **function**, line 823: `fischer_projection(*, centers: Sequence[Mapping[str, str]] = ({'left': 'H', 'right': 'OH'},), top: str = 'CHO', bottom: str = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate an orthogonal Fischer projection cross backbone.
-- **function**, line 696: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a 6-membered Haworth perspective pyranose ring.
-- **function**, line 484: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[str] = ('Me', 'H', 'H'), rear: Sequence[str] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None, charges: Mapping[str, Sequence[int]] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
+- **function**, line 836: `fischer_projection(*, centers: Sequence[Mapping[str, str]] = ({'left': 'H', 'right': 'OH'},), top: str = 'CHO', bottom: str = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate an orthogonal Fischer projection cross backbone.
+- **function**, line 709: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a 6-membered Haworth perspective pyranose ring.
+- **function**, line 497: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[str] = ('Me', 'H', 'H'), rear: Sequence[str] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None, charges: Mapping[str, Sequence[int]] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
 
 ## `vision.stereo_audit`
 

@@ -379,6 +379,30 @@ def _newman_frag(ident: str, spec: dict, label: str | None) -> Any:
     return frag
 
 
+def _newman_receipt(frag: Any, fragment: ET.Element, renumber: dict[str, str]) -> None:
+    """Leave the page's round-trip receipt for a projection: what its fragment reads as must be
+    what the template's own drawing reads as. A projection with a generic label ([Rh], Ar)
+    cannot be read; it is recorded as not checkable rather than as preserved."""
+    collector = R._fragment_receipts.get()
+    if collector is None:
+        return
+    fid = renumber.get(fragment.get("id"), fragment.get("id"))
+    generic = [n.get("GenericNickname") for n in fragment.iter("n") if n.get("NodeType") == "GenericNickname"]
+    if generic:
+        collector.append({"fragment_id": fid, "status": "not_checkable",
+                          "reason": f"generic label {', '.join(sorted(set(generic)))} cannot be read back"})
+        return
+    from ..chemistry_semantics import fragment_mol, semantic_key
+    try:
+        drawn = semantic_key(fragment_mol(fragment))
+    except Exception:  # an unreadable drawing is a failure, not a pass
+        collector.append({"fragment_id": fid, "status": "unreadable"})
+        return
+    expected = _newman_inventory(frag.newman)
+    collector.append({"fragment_id": fid, "status": "preserved" if drawn in expected else "changed",
+                      "method": "newman_template_readback"})
+
+
 def _newman_xml(frag: Any, next_id) -> list[str]:
     """The projection drawn where the layout put it, with ids from the page's own sequence.
 
@@ -390,6 +414,7 @@ def _newman_xml(frag: Any, next_id) -> list[str]:
     elements = [ET.fromstring(drawn["fragment_xml"])] + [ET.fromstring(g) for g in drawn["graphics_xml"]]
     every = [node for element in elements for node in element.iter()]
     renumber = {node.get("id"): str(next_id()) for node in every if node.get("id")}
+    _newman_receipt(frag, elements[0], renumber)
     for node in every:
         if node.get("id"):
             node.set("id", renumber[node.get("id")])
@@ -1189,6 +1214,11 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     if readback["fragment_roundtrip"] != "preserved":
         warnings.append(f"Per-structure round-trip is {readback['fragment_roundtrip']}: "
                         "a structure may have changed while drawing.")
+    validation = getattr(drawing.cdxml, "chemistry_validation", None) or {}
+    for receipt in validation.get("fragments", []):
+        if receipt.get("status") == "not_checkable":
+            warnings.append(f"A projection's {receipt['reason']}: that structure is drawn as written "
+                            "and not checked.")
     notes.append("The curved arrows are drawn exactly as listed in moves; the tool checks lone pairs and atom "
                  "balance but does not decide whether the mechanism is chemically right.")
 

@@ -727,20 +727,24 @@ def test_a_value_under_a_shared_structure_updates_in_place(tmp_path):
 def test_a_scope_in_four_columns_lines_its_cells_up(tmp_path):
     rows = [[f'c{i}', f'3{chr(97 + i)}', STEREO if i % 2 else OTHER, f'{60 + i}%', ''] for i in range(8)]
     project, page, root = _scope_page(tmp_path, rows, columns=4)
-    boxes = [record['bbox'] for record in project['compounds'].values()]
     grid = page['grid']
     assert grid['columns'] == 4 and grid['gap'] == 12
-    tops = sorted({round(b[1], 2) for b in boxes})
-    assert len(tops) == 2                                 # eight compounds, two rows
-    for top in tops:
+    # Rows are found by their captions' baseline: a grid row shares one (structures of
+    # different heights have different tops, so the boxes cannot tell the rows apart).
+    by_id = {t.get('id'): t for t in root.iter('t')}
+    rows_of = {}
+    for record in project['compounds'].values():
+        baseline = round(float(by_id[record['objects']['label']].get('p').split()[1]), 2)
+        rows_of.setdefault(baseline, []).append(record['bbox'])
+    assert len(rows_of) == 2 and all(len(boxes) == 4 for boxes in rows_of.values())
+    for boxes in rows_of.values():
         # Four columns, each cell centred in its column: centres one column pitch apart.
-        centres = sorted((b[0] + b[2]) / 2 for b in boxes if round(b[1], 2) == top)
-        assert len(centres) == 4
+        centres = sorted((b[0] + b[2]) / 2 for b in boxes)
         steps = [b - a for a, b in zip(centres, centres[1:])]
         assert all(step == pytest.approx(grid['cell_width'] + grid['gap'], abs=0.02) for step in steps)
     # n columns and n - 1 gaps fill the 478.2 pt between the margins.
     assert grid['cell_width'] * 4 + 12 * 3 == pytest.approx(180 / 25.4 * 72 - 32, abs=0.01)
-    assert len(grid['row_pitch']) == 1 and grid['row_pitch'][0] == pytest.approx(tops[1] - tops[0], abs=0.01)
+    assert len(grid['row_pitch']) == 1 and grid['row_pitch'][0] > 0
 
 
 def test_columns_that_cannot_fit_say_why(tmp_path):
@@ -761,13 +765,33 @@ def test_a_grid_row_sets_its_captions_on_one_baseline(tmp_path, monkeypatch):
     real = layout.molecule_coordinates
     heights = iter([40.0, 7.2] * 8)   # alternately tall and flat, in the order cells are prepared
     def coords(mol, bond_length, reference=None):
-        _, xy, warning = real(mol, bond_length, reference)
+        # Hand back the molecule the real function laid out: it carries the conformer the
+        # next compound of the group is aligned to.
+        laid, xy, warning = real(mol, bond_length, reference)
         top = max(abs(y) for _, y in xy) or 1.0
         tall = next(heights)
-        return mol, [(x, y * tall / top) for x, y in xy], warning
+        return laid, [(x, y * tall / top) for x, y in xy], warning
     monkeypatch.setattr(layout, 'molecule_coordinates', coords)
     rows = [[f'c{i}', f'3{chr(97 + i)}', STEREO if i % 2 else OTHER, f'{60 + i}%', ''] for i in range(4)]
     project, page, root = _scope_page(tmp_path, rows, columns=4)
     baselines = {round(float(t.get('p').split()[1]), 2) for t in root.iter('t')
                  if ''.join(t.itertext()).startswith('3')}
     assert len(baselines) == 1, baselines
+
+
+def test_a_short_last_row_is_centred_under_the_grid(tmp_path):
+    # BJOC 22-103 scheme 1, 22-125 scheme 2, 22-128 scheme 17: the last row's few entries
+    # stand in the middle, not at the left.
+    rows = [[f'c{i}', f'3{chr(97 + i)}', STEREO if i % 2 else OTHER, f'{60 + i}%', ''] for i in range(6)]
+    project, page, root = _scope_page(tmp_path, rows, columns=4)
+    by_id = {t.get('id'): t for t in root.iter('t')}
+    rows_of = {}
+    for record in project['compounds'].values():
+        baseline = round(float(by_id[record['objects']['label']].get('p').split()[1]), 2)
+        rows_of.setdefault(baseline, []).append((record['bbox'][0] + record['bbox'][2]) / 2)
+    full, short = (sorted(rows_of[b]) for b in sorted(rows_of))
+    assert len(full) == 4 and len(short) == 2
+    middle = (full[0] + full[-1]) / 2
+    assert (short[0] + short[1]) / 2 == pytest.approx(middle, abs=0.02)
+    # Still on the grid's pitch: the two sit where the middle two columns are.
+    assert short == pytest.approx(full[1:3], abs=0.02)

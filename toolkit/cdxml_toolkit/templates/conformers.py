@@ -399,17 +399,30 @@ def chair_cyclohexane(
 CHARGE_SYMBOL = 8.0      # a circled charge's box, beside 10 pt labels
 CHARGE_BOND_GAP = 3.0    # from any bond, the P1 spacing
 CHARGE_LABEL_GAP = 3.0   # from every other atom's label, the P1 spacing
-CHARGE_OWN_GAP = 1.5     # from the charged atom's own label (ChemDraw sets it about this close)
+CHARGE_OWN_GAP = 3.0     # from the charged atom's own label too (natively 1.58 pt from [Rh] was too close)
 # Directions tried for a charge, upper right first (where chemists write it), then fanning out.
 _CHARGE_ANGLES = [-45 + sign * step for step in range(0, 181, 15) for sign in ((1, -1) if step else (1,))]
 
 
+def _char_width(ch: str) -> float:
+    """Arial at 10 pt, by kind of character: wide enough never to understate a label."""
+    if ch in "[]()|":
+        return 2.8
+    if ch.isupper():
+        return 6.7
+    return 5.6
+
+
 def _label_box(atom: Mapping[str, Any]) -> tuple[float, float, float, float] | None:
+    """Where a label's glyphs are: the template sets the text from 3.25 pt left of its atom on a
+    baseline 3.5 pt below it (see _build_fragment_and_cdxml), so capitals reach about 3.7 pt
+    above the atom and brackets about 2 pt below the baseline."""
     sym = str(atom.get("symbol", "C"))
     if not atom.get("show_label", sym != "C"):
         return None
     x, y = float(atom["x"]), float(atom["y"])
-    return (x - 3.25, y - 7.5, x - 3.25 + max(6.0, len(sym) * 5.5), y + 1.5)
+    left = x - 3.25
+    return (left, y - 4.0, left + max(6.0, sum(_char_width(c) for c in sym)), y + 3.5 + 2.0)
 
 
 def _box_distance(px: float, py: float, box: tuple[float, float, float, float]) -> float:
