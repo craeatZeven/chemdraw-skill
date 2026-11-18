@@ -334,6 +334,35 @@ One related formatting rule, decided here: a mechanism designator keeps its numb
 baseline. `Sn2` is written S<sub>N</sub>2, not a subscripted sulfur count, so `Sn1` and `Sn2`
 are exempt from the formula-subscript rule; `S2` (disulfide) still subscripts.
 
+
+### P21 — Four compounds to a row
+
+Witness: `journal-corpus/bjoc-articles-22-127-scheme2.png` fits eighteen compounds in four
+columns, with `3a, 64%` under each.
+Today: `assets/parity/p4-p7-p8-scope.png` puts three to a row. The caption style now matches the
+witness (one line, bold number, band name on the rule), so what is left is density: our cells are
+wider because the type is fixed at 10 pt (P11) and our cell padding and gaps are ours, not theirs.
+
+Produce: a scope that fits four cells in the manuscript column at 10 pt — by tightening the cell
+padding, the gap between cells and the row pitch, not by shrinking type.
+Done when: an eighteen-compound scope renders in four columns on one page, and a measured note
+records the cell width, gap and row pitch that made it fit. If four cannot fit at 10 pt, the note
+says what the arithmetic is rather than quietly drawing three.
+
+### P22 — A cycle whose labels are next to their own arcs
+
+Witness: `journal-corpus/bjoc-articles-22-125-scheme4.png` — each step of a cycle carries its
+label beside the arc it belongs to, so the reading order is unambiguous.
+Today: the arcs themselves are right (`p9-cycle-overlay` draws three arcs on one circle of radius
+96.0, and the four overlays are closed), but the labels are nowhere near them: measured distance
+from `oxidative addition` to the nearest arc is **162.1 pt** and from `reductive elimination`
+**190.1 pt**, against a circle radius of 96. The arrowheads all converge on the centre where
+`Pd / Pd(0)` is written, and the two upper circles come close to that text.
+
+Produce: place each step label against the middle of its own arc, outside the circle, and keep
+the arrowheads off the centre label.
+Done when: every step label is within 40 pt of its arc's middle, no label or structure touches
+another, and the arrows read in one direction around the circle.
 ## What the layout cannot do yet
 
 The seven items above share one root: the renderer lays a figure out as rows of well-formed
