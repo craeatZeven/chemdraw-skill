@@ -656,15 +656,19 @@ def _build_fragment(
                     f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                     f'color="0" face="64">{int(isotope)}</s>'
                 )
+            # ChemDraw lays a generic group's parts out in the reverse of the order written, so the
+            # number is written first and reads as a superscript after the R ("R1", not "1R").
+            number_run = ''
+            if is_variable and a.get('generic_number'):
+                number_run = (
+                    f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
+                    f'color="0" face="{ACS_LABEL_FACE}">{int(a["generic_number"])}</s>'
+                )
             lines.append(
+                number_run +
                 f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                 f'color="0" face="{ACS_LABEL_FACE}">{xml_escape(display_text)}</s>'
             )
-            if is_variable and a.get('generic_number'):
-                lines.append(
-                    f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
-                    f'color="0" face="64">{int(a["generic_number"])}</s>'
-                )
             label_text[a["index"]] = display_text
             shown = display_text
             if charge and not circled:
