@@ -580,6 +580,36 @@ caption pitch) makes `test_cell_geometry_leaves_the_structure_box_clear_of_its_c
 current values are the least the page checker accepts. The header therefore fits by making the page
 taller (`height_mm: 300`), not by tightening the grid — and a page that tall is 300 mm, longer than
 A4, which is worth knowing before asking for both a header and a 240 mm page.
+### P46 — A general reaction's R mark sits inside the ring it varies
+
+The source figure writes `R1` at the centre of the ring whose substitution varies, with no bond: a
+label hung off one bond reads as a single fixed position.
+
+Attempted and measured: the mark can be moved to the ring's centre, and the compositor can be told
+which bond to drop, but the drop changes connectivity — source `*c1ccccc1` reads back as
+`*.c1ccccc1`, one fragment becoming two, and the toolkit refuses the figure with
+`chemical_semantics_changed`. That refusal is correct: removing a bond really does change the
+molecule.
+
+Produce: a mark placement the page check understands — a text object at the ring centre that is not
+an atom, or a placement flag carried through the identity comparison — rather than a removed bond.
+Done when: the header's R marks are drawn at ring centres, the readback still matches, and a test
+asserts both.
+
+### P47 — A label's own width is part of the depiction
+
+3k's ortho `CF3` is written across the amide, though its atoms are not crowded: the non-bonded
+clearance there is 17.85 pt against a 14.4 pt bond, wider than its neighbours. The ink that
+collides is the abbreviation's text, and RDKit's depiction has no idea how wide a label is.
+
+A prototype that turned the branch carrying the label scored every candidate identically (1.50, the
+bond-length cap) because it measured label *centres*; the measure has to be `label_geometry`'s glyph
+boxes against bonds and other boxes. That model exists and is shared by the placer and the checks,
+so this is a wiring job, not a new geometry.
+
+Done when: no drawn label box overlaps a bond it does not belong to, asserted on this brief, and the
+CF3 of 3k clears the amide.
+
 ## What the layout cannot do yet
 
 The seven items above share one root: the renderer lays a figure out as rows of well-formed
