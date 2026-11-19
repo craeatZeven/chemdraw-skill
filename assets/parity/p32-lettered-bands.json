@@ -1,0 +1,327 @@
+{
+ "kind": "scope",
+ "fields": [
+  {
+   "key": "yield",
+   "label": "Yield",
+   "inline": true,
+   "hide_label": true
+  }
+ ],
+ "highlight_varying": "#FF0000",
+ "columns": 4,
+ "width_mm": 270,
+ "species": [
+  {
+   "id": "3a",
+   "label": "3a",
+   "smiles": "Cc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+   "values": {
+    "yield": "64%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3b",
+   "label": "3b",
+   "smiles": "Cc1cccc(NC(=O)c2nc3ccccc3s2)c1",
+   "values": {
+    "yield": "64%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3c",
+   "label": "3c",
+   "smiles": "Cc1ccccc1NC(=O)c1nc2ccccc2s1",
+   "values": {
+    "yield": "51%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3d",
+   "label": "3d",
+   "smiles": "Cc1cc(C)cc(NC(=O)c2nc3ccccc3s2)c1",
+   "values": {
+    "yield": "57%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3e",
+   "label": "3e",
+   "smiles": "COc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+   "values": {
+    "yield": "63%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3f",
+   "label": "3f",
+   "smiles": "O=C(Nc1ccccc1)c1nc2ccccc2s1",
+   "values": {
+    "yield": "66%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3g",
+   "label": "3g",
+   "smiles": "Fc1cccc(NC(=O)c2nc3ccccc3s2)c1",
+   "values": {
+    "yield": "50%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3h",
+   "label": "3h",
+   "smiles": "Clc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+   "values": {
+    "yield": "39%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3i",
+   "label": "3i",
+   "smiles": "Brc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+   "values": {
+    "yield": "59%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3j",
+   "label": "3j",
+   "smiles": "Ic1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+   "values": {
+    "yield": "0%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3k",
+   "label": "3k",
+   "smiles": "FC(F)(F)c1ccccc1NC(=O)c1nc2ccccc2s1",
+   "values": {
+    "yield": "63%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3l",
+   "label": "3l",
+   "smiles": "FC(F)(F)c1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+   "values": {
+    "yield": "58%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "A  N-aryl amides"
+  },
+  {
+   "id": "3m",
+   "label": "3m",
+   "smiles": "O=C(Nc1ccccc1-c1ccccc1)c1nc2ccccc2s1",
+   "values": {
+    "yield": "61%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3",
+    "Ph"
+   ],
+   "group": "B  N-alkyl amides"
+  },
+  {
+   "id": "3n",
+   "label": "3n",
+   "smiles": "O=C(NCc1ccccc1)c1nc2ccccc2s1",
+   "values": {
+    "yield": "74%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3",
+    "Ph"
+   ],
+   "group": "B  N-alkyl amides"
+  },
+  {
+   "id": "3o",
+   "label": "3o",
+   "smiles": "O=C(NCCc1ccccc1)c1nc2ccccc2s1",
+   "values": {
+    "yield": "57%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3",
+    "Ph"
+   ],
+   "group": "B  N-alkyl amides"
+  },
+  {
+   "id": "3p",
+   "label": "3p",
+   "smiles": "CCCCCCCNC(=O)c1nc2ccccc2s1",
+   "values": {
+    "yield": "63%"
+   },
+   "definition": "Alk = C7H15",
+   "group": "B  N-alkyl amides"
+  },
+  {
+   "id": "3q",
+   "label": "3q",
+   "smiles": "CCCCCCCCCCCCCCCCCCNC(=O)c1nc2ccccc2s1",
+   "definition": "Alk = C18H37",
+   "values": {
+    "yield": "60%"
+   },
+   "drawn_with": "3p",
+   "group": "B  N-alkyl amides"
+  },
+  {
+   "id": "3r",
+   "label": "3r",
+   "smiles": "Cc1ccc(NC(=O)c2nc3ccc(Cl)cc3s2)cc1",
+   "values": {
+    "yield": "62%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "C  Benzothiazole substituents"
+  },
+  {
+   "id": "3s",
+   "label": "3s",
+   "smiles": "Cc1ccc(NC(=O)c2nc3ccc(Br)cc3s2)cc1",
+   "values": {
+    "yield": "66%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "C  Benzothiazole substituents"
+  },
+  {
+   "id": "3t",
+   "label": "3t",
+   "smiles": "Cc1ccc(NC(=O)c2nc3ccc4ccccc4c3s2)cc1",
+   "values": {
+    "yield": "33%"
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ],
+   "group": "C  Benzothiazole substituents"
+  }
+ ],
+ "provenance": "Modelled on BJOC 22-128 scheme 6: its substrate panels are lettered (A, B, C) and the letter leads the band's heading. The same twenty compounds and yields; only the band headings gain a letter.",
+ "title": "",
+ "header": {
+  "substrates": [
+   {
+    "smiles": "Nc1ccc([*:1])cc1I",
+    "label": "1a–d"
+   },
+   {
+    "smiles": "ClCC(=O)N[*:2]",
+    "label": "2a,c–r",
+    "rotation": 180
+   },
+   {
+    "text": "S8"
+   }
+  ],
+  "products": [
+   {
+    "smiles": "O=C(N[*:2])c1nc2cc([*:1])ccc2s1",
+    "label": "3a–t"
+   }
+  ],
+  "above": [
+   "Cu(OAc)2 (20 mol %)",
+   "bipy (20 mol %)",
+   "DIPEA (3.0 equiv)"
+  ],
+  "below": [
+   "H2O, 100 °C, 24 h"
+  ]
+ },
+ "height_mm": 300,
+ "depiction_rotation": 180,
+ "rmark_in_ring": true
+}
