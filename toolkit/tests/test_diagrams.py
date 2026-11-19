@@ -1,6 +1,7 @@
 """Diagram generators: the chemistry each report states, the errors a self-contradicting spec
 raises, and the house rules every bundled example meets. None of this needs ChemDraw or RDKit."""
 import json
+import re
 import math
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -463,6 +464,22 @@ def test_grid_surface_finds_a_saddle():
     result = potential_surface({'grid': {'x': xs, 'y': xs, 'z': z}, 'levels': 8})
     kinds = sorted((p['kind'], round(p['x'], 1), round(p['y'], 1)) for p in result['stationary_points'])
     assert kinds == [('minimum', -1.0, 0.0), ('minimum', 1.0, 0.0), ('transition state', 0.0, 0.0)]
+
+
+def test_a_formal_charge_is_drawn_on_its_atom():
+    # The charge used to be bookkeeping only: a nitro group came out neutral on paper.
+    ammonium = lewis_structure({'style': 'lines', 'atoms': [{'id': 'N', 'element': 'N', 'at': [0, 0], 'formal_charge': 1}]
+                                + [{'id': h, 'element': 'H', 'at': at} for h, at in
+                                   (('a', [-1, 0]), ('b', [0, -1]), ('c', [1, 0]), ('d', [0, 1]))],
+                                'bonds': [['a', 'N'], ['N', 'b'], ['c', 'N'], ['N', 'd']]})
+    xml = ammonium['cdxml']
+    assert re.search(r'face="64"[^>]*>\+<', xml), 'no superscript plus on the ammonium nitrogen'
+    water = lewis_structure({'style': 'lines',
+                             'atoms': [{'id': 'H1', 'element': 'H', 'at': [0, 0]},
+                                       {'id': 'O', 'element': 'O', 'at': [1, 0]},
+                                       {'id': 'H2', 'element': 'H', 'at': [2, 0]}],
+                             'bonds': [['H1', 'O'], ['O', 'H2']]})
+    assert not re.search(r'face="64"', water['cdxml']), 'a neutral molecule should carry no superscript charge'
 
 
 def test_lewis_hex_grid_places_pairs_between_bonds():
