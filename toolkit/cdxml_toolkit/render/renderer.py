@@ -629,16 +629,11 @@ def _build_fragment(
             lbx2 = lbx1 + label_w
             lby2 = ay
             tid = ids.next()
-            # A numbered generic group is two label parts; without LabelDisplay ChemDraw draws them
-            # the other way round ("1R"), so the mark reads reversed beside its bond.
-            r_label_extra = ''
-            if is_variable and a.get('generic_number'):
-                r_label_extra = ' LabelDisplay="Right"'
             t_line = len(lines)   # its box is set from the text it ends up showing, below
             lines.append(
                 f'<t id="{tid}" p="{lx:.2f} {ly:.2f}" '
                 f'BoundingBox="{lbx1:.2f} {lby1:.2f} {lbx2:.2f} {lby2:.2f}" '
-                f'LabelJustification="Left"{r_label_extra}>'
+                f'LabelJustification="Left">'
             )
             # Use isotope-specific symbol for display (e.g. D for deuterium)
             if is_variable:
@@ -656,15 +651,13 @@ def _build_fragment(
                     f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                     f'color="0" face="64">{int(isotope)}</s>'
                 )
-            # ChemDraw lays a generic group's parts out in the reverse of the order written, so the
-            # number is written first and reads as a superscript after the R ("R1", not "1R").
             lines.append(
                 f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                 f'color="0" face="{ACS_LABEL_FACE}">{xml_escape(display_text)}</s>'
             )
             if is_variable and a.get('generic_number'):
-                # A face-64 run is drawn as a prefix (that is how an isotope is written), so the
-                # number is a smaller body-size run after the letter: it reads R with a small 1.
+                # After the letter, in the body face and one step smaller. A face-64 run is drawn as
+                # a raised prefix (that is how an isotope is written) and read "1R", not "R1".
                 lines.append(
                     f'<s font="{ACS_LABEL_FONT}" size="{float(ACS_LABEL_SIZE) * 0.62:.1f}" '
                     f'color="0" face="{ACS_LABEL_FACE}">{int(a["generic_number"])}</s>'

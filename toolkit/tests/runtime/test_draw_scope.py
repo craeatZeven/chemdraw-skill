@@ -487,4 +487,5 @@ def test_an_r_mark_reads_r_then_its_number(tmp_path):
     runs = [(s.get("face"), s.get("size"), s.text) for s in marks[0].iter("s")]
     assert runs and runs[0][2] == "R", runs
     assert len(runs) == 2 and runs[1][2].isdigit(), runs
-    assert float(runs[1][1]) < float(runs[0][1]), "the number should be smaller than the letter"
+    # The order is the point: a face-64 digit is drawn as a raised prefix and reads "1R".
+    assert runs[1][0] != "64", "the number must not be a face-64 prefix"
