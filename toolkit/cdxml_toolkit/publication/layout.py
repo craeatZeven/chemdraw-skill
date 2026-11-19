@@ -312,13 +312,19 @@ def header_objects(spec, style, left, top):
     by "+", the arrow with its conditions, the products with their labels. Returns (objects,
     bottom, right)."""
     header = spec['header']; size = style['font_size']; gap = size * 1.2
-    def shape(item):
+    def shape(item, side='substrates'):
         mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), style['bond_length'])
+        if side == 'products' and float(spec.get('depiction_rotation') or 0):
+            # The general reaction above the grid must face the same way as the cells below it.
+            angle=math.radians(float(spec.get('depiction_rotation')))
+            c,sn=math.cos(angle),math.sin(angle)
+            hx=sum(x for x,_ in xy)/len(xy); hy=sum(y for _,y in xy)/len(xy)
+            xy=[((x-hx)*c-(y-hy)*sn+hx, (x-hx)*sn+(y-hy)*c+hy) for x,y in xy]
         xs, ys = [p[0] for p in xy], [p[1] for p in xy]
         return {'item': item, 'xy': xy, 'w': max(xs) - min(xs), 'h': max(ys) - min(ys),
                 'x0': min(xs), 'y0': min(ys)}
-    subs = [shape(i) for i in header.get('substrates', [])]
-    prods = [shape(i) for i in header.get('products', [])]
+    subs = [shape(i, 'substrates') for i in header.get('substrates', [])]
+    prods = [shape(i, 'products') for i in header.get('products', [])]
     above = [caption_runs(t) for t in header.get('above', [])]
     below = [caption_runs(t) for t in header.get('below', [])]
     line = size * 1.2
