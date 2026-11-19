@@ -330,11 +330,11 @@ def _r_marks_inside_rings(xy, mol, bond_length):
         cx = sum(points[k][0] for k in ring) / len(ring)
         cy = sum(points[k][1] for k in ring) / len(ring)
         ax, ay = points[anchor]
-        # Into the ring, the way a general scheme has it: the mark sits just past the vertex with a
-        # short bond that crosses the ring's inner double-bond line.
-        dx, dy = cx - ax, cy - ay
+        # Out of the ring, the way a general scheme has it: the mark sits outside the vertex, and the
+        # short bond between them stays visible.
+        dx, dy = ax - cx, ay - cy
         length = math.hypot(dx, dy) or 1.0
-        stub = 0.28 * float(bond_length)
+        stub = 0.75 * float(bond_length)
         points[atom.GetIdx()] = (ax + dx / length * stub, ay + dy / length * stub)
     return points
 
@@ -348,9 +348,11 @@ def header_objects(spec, style, left, top):
         if item.get('text') and not item.get('smiles'):
             return {'item': item, 'text': True, 'w': text_width(item['text'], style),
                     'h': size * 1.6, 'x0': 0.0, 'y0': -size * 0.8, 'dropped': []}
-        mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), style['bond_length'])
+        # The general reaction is drawn larger than the grid below it, as journal figures do.
+        header_bond = float(style['bond_length']) * 1.7
+        mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), header_bond)
         if spec.get('rmark_in_ring'):
-            xy = _r_marks_inside_rings(xy, mol, style['bond_length'])
+            xy = _r_marks_inside_rings(xy, mol, header_bond)
         # A header item may ask for its own turn (a reagent drawn the other way round in the source
         # figure); otherwise the products follow the grid's orientation.
         turn = item.get('rotation')

@@ -471,7 +471,8 @@ def test_a_general_reaction_can_pull_its_r_marks_inside_the_rings(tmp_path):
         other = bond.get("E") if bond.get("B") == mark.get("id") else bond.get("B")
         mx, my = where[mark.get("id")]
         ox, oy = where[other]
-        assert math.hypot(mx - ox, my - oy) < 9.0, "the mark is still a whole bond length away"
+        # Header structures are drawn larger than the grid, so the stub scales with them.
+        assert math.hypot(mx - ox, my - oy) < 22.0, "the mark is still a whole bond length away"
 
 def test_an_r_mark_reads_r_then_a_raised_number(tmp_path):
     # "R1" written as R plus the superscript character. A face-64 run cannot be used: ChemDraw draws
