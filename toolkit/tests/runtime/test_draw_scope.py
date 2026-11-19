@@ -407,3 +407,15 @@ def test_a_minority_compound_does_not_shrink_the_core_for_the_rest(tmp_path):
     assert report["highlighted"]["b"] == 2     # O and C of the methoxy
     assert report["highlighted"]["c"] == 1     # the fluorine
     assert report["highlighted"]["d"] >= 4     # the whole butyl chain is what varies there
+
+def test_an_empty_title_asks_for_no_title_at_all(tmp_path):
+    # A journal figure carries no title; the caption does that job. "" used to fall back to the
+    # default "Substrate scope" because the default was applied with `or`.
+    brief = _brief()
+    brief["title"] = ""
+    report = draw_figure(brief, output_path=str(tmp_path / "untitled"))
+    assert report["ok"], report
+    root = ET.parse(report["pages"][0]["path"]).getroot()
+    texts = ["".join(s.text or "" for s in t.iter("s")).strip() for t in root.iter("t")]
+    assert "Substrate scope" not in texts
+    assert all("scope" not in text.lower() for text in texts)

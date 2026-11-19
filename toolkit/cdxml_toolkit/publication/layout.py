@@ -424,11 +424,13 @@ def create_pages(records,spec,stage,start_index=0):
     bottom=height-margin-((footer.count('\n')+1)*size*1.5+8 if footer else 0)
     def new_page():
         index=start_index+len(manifests)
-        title=spec.get('title', 'Substrate scope' if spec.get('mode','scope')=='scope' else 'Structure–activity relationships')
-        title=wrap(title,width-2*margin,style)
+        title=(spec['title'] if 'title' in spec
+               else ('Substrate scope' if spec.get('mode','scope')=='scope' else 'Structure–activity relationships'))
+        title=wrap(title,width-2*margin,style) if title else ''
         conditions=wrap(spec.get('conditions',''),width-2*margin,style)
-        objects=[{'type':'text','id':'title','text':title,'position':[margin,margin+size],'size':size}]
-        top=margin+(title.count('\n')+1)*size*1.5+8
+        objects=([{'type':'text','id':'title','text':title,'position':[margin,margin+size],'size':size}]
+                 if title else [])
+        top=margin+((title.count('\n')+1)*size*1.5+8 if title else 0)
         if conditions:
             runs=caption_runs(conditions)[1]
             objects.append({'type':'text','id':'conditions','text':conditions,'position':[margin,top+size],'size':size,

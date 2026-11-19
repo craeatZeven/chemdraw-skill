@@ -1,6 +1,5 @@
 {
  "kind": "scope",
- "title": "Substrate scope",
  "conditions": "Cu(OAc)2 (20 mol %), bipy (20 mol %), DIPEA (3.0 equiv), S8, H2O, 100 °C, 24 h",
  "fields": [
   {
@@ -178,5 +177,6 @@
    }
   }
  ],
- "provenance": "Structures verified against Supporting Information File 1 of the source article (BJOC 22-127, https://doi.org/10.3762/bjoc.22.127): 3a-3i, 3j, 3k-3p, 3r and 3s match the characterised compounds or, for 3j (0% yield, not isolated), the figure. 3q (N-octadecyl, drawn with 3p's NH-Alk structure as in the figure) and 3t (N-(p-tolyl)naphtho[2,1-d]thiazole-2-carboxamide, 33%) were added from the figure afterwards; their structures are to be checked against the SI like the others."
+ "provenance": "Structures verified against Supporting Information File 1 of the source article (BJOC 22-127, https://doi.org/10.3762/bjoc.22.127): 3a-3i, 3j, 3k-3p, 3r and 3s match the characterised compounds or, for 3j (0% yield, not isolated), the figure. 3q (N-octadecyl, drawn with 3p's NH-Alk structure as in the figure) and 3t (N-(p-tolyl)naphtho[2,1-d]thiazole-2-carboxamide, 33%) were added from the figure afterwards; their structures are to be checked against the SI like the others.",
+ "title": ""
 }

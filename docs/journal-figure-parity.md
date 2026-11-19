@@ -541,6 +541,39 @@ Produce: place each entering/leaving species so its connector's near end lands o
 few points, like the 6.5 pt case), or grow the arrow to reach it.
 Done when: every connector's near end is within 8 pt of an atom of the species it names.
 
+### P44 — One orientation for every structure of a table
+
+Witness: thirteen corpus figures were read for this (`assets/journal-corpus/`, subagent pass); the
+same scaffold is drawn in the same orientation in every cell in at least eight of them, and none
+flips a cell to fit. `assets/parity/p22-four-columns-wide.png` does not: 3c, 3d and 3k come out
+tilted relative to 3a, because each cell is depicted on its own.
+
+Produce: depict the first compound, then align every later cell to it (RDKit
+`GenerateDepictionMatching2DStructure`, which the toolkit already uses to align a reaction's
+reactant to its product — `layout/alignment.py`).
+Done when: every cell of a table shares the core's orientation, and no cell is rotated by an
+angle the first one does not have.
+
+### P45 — No two atoms are drawn on the same point
+
+A table cell can carry atoms at identical coordinates, which reads as two rings on top of each
+other. Measured on `assets/parity/p22-four-columns-wide.json`: **3 coincident pairs**.
+
+The layer is pinned: raw RDKit depiction has none, `publication.layout.molecule_coordinates` has
+none, a one-compound scope has none — only the twenty-compound table does. Bisected:
+
+```
+brief as it stands         3 pairs
+highlight_varying off      3 pairs   (not the highlight)
+definition removed         1 pair    (two pairs come from the definition -> group-label step, 3p)
+both off                   1 pair    (the remaining pair is 3m, from the table-fitting transform)
+```
+
+For 3p the drawn fragment carries 21 atoms against 19 in its SMILES: the group-label step adds two
+atoms and lands them on existing ones. For 3m the amide oxygen and a ring carbon share a point.
+Done when: no fragment of a rendered table has two atoms closer than 1 pt, asserted by a test over
+this brief.
+
 ## What the layout cannot do yet
 
 The seven items above share one root: the renderer lays a figure out as rows of well-formed

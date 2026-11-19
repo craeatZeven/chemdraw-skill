@@ -422,7 +422,7 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 432: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 434: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_tools`
 
@@ -678,9 +678,9 @@
 
 ## `publication.layout`
 
-- **function**, line 655: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 657: `bounds(node, style)` - No public docstring in the audited version.
 - **function**, line 121: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 685: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 687: `check_pages(project, roots, spec)` - No public docstring in the audited version.
 - **function**, line 182: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
 - **function**, line 397: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
@@ -691,7 +691,7 @@
 - **function**, line 220: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 681: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 683: `overlap(a, b)` - No public docstring in the audited version.
 - **function**, line 207: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
 - **function**, line 327: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.

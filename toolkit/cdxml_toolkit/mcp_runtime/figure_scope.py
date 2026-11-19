@@ -393,7 +393,9 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         # A definition such as "Alk = C7H15" also draws that group as its label.
         **({"label_groups_from": DEFINITION_COLUMN} if definitions else {}),
         "fields": _cell_fields(fields, notes, definitions),
-        "title": brief.get("title") or "Substrate scope",
+        # An explicit title wins, including "" which asks for no title at all (a journal figure
+        # carries none; the caption does that job).
+        "title": brief["title"] if "title" in brief else "Substrate scope",
         "conditions": brief.get("conditions") or "",
         "footnotes": brief.get("footnotes") or [],
         "style": style,
