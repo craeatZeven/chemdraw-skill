@@ -29,7 +29,7 @@ from .figure_draw import (
 from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manifest_style
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
-              "highlight_varying", "header", "columns", "depiction_rotation"}
+              "highlight_varying", "header", "columns", "depiction_rotation", "rmark_in_ring"}
 HEADER_KEYS = {"substrates", "products", "above", "below"}
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
@@ -405,6 +405,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         # Turns the reference depiction of the whole table, so a benzothiazole can sit on the left
         # where the source figure has it rather than on the right where RDKit puts it.
         **({"depiction_rotation": brief["depiction_rotation"]} if brief.get("depiction_rotation") else {}),
+        **({"rmark_in_ring": True} if brief.get("rmark_in_ring") else {}),
     }
     path = work / "spec.json"
     path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")

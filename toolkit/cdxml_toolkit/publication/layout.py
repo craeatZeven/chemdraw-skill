@@ -307,6 +307,34 @@ def header_identities(spec):
     return found
 
 
+def _r_marks_inside_rings(xy, mol, bond_length):
+    """Pull each R mark to a short stub inside its ring, the way a general scheme writes R1.
+
+    The mark keeps its bond, so the chemistry is untouched; only the distance shrinks, which puts the
+    label inside the ring with a stub instead of a full bond hanging it outside.
+    """
+    rings = mol.GetRingInfo().AtomRings()
+    points = list(xy)
+    for atom in mol.GetAtoms():
+        if atom.GetAtomicNum() != 0:
+            continue
+        neighbours = [n.GetIdx() for n in atom.GetNeighbors()]
+        if len(neighbours) != 1:
+            continue
+        anchor = neighbours[0]
+        ring = next((set(r) for r in rings if anchor in r), None)
+        if not ring:
+            continue
+        cx = sum(points[k][0] for k in ring) / len(ring)
+        cy = sum(points[k][1] for k in ring) / len(ring)
+        ax, ay = points[anchor]
+        dx, dy = cx - ax, cy - ay
+        length = math.hypot(dx, dy) or 1.0
+        stub = 0.42 * float(bond_length)
+        points[atom.GetIdx()] = (ax + dx / length * stub, ay + dy / length * stub)
+    return points
+
+
 def header_objects(spec, style, left, top):
     """The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined
     by "+", the arrow with its conditions, the products with their labels. Returns (objects,
@@ -314,6 +342,8 @@ def header_objects(spec, style, left, top):
     header = spec['header']; size = style['font_size']; gap = size * 1.2
     def shape(item, side='substrates'):
         mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), style['bond_length'])
+        if spec.get('rmark_in_ring'):
+            xy = _r_marks_inside_rings(xy, mol, style['bond_length'])
         if side == 'products' and float(spec.get('depiction_rotation') or 0):
             # The general reaction above the grid must face the same way as the cells below it.
             angle=math.radians(float(spec.get('depiction_rotation')))

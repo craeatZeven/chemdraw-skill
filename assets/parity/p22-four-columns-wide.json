@@ -302,5 +302,6 @@
   ]
  },
  "height_mm": 300,
- "depiction_rotation": 180
+ "depiction_rotation": 180,
+ "rmark_in_ring": true
 }

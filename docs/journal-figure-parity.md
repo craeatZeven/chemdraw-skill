@@ -580,7 +580,14 @@ caption pitch) makes `test_cell_geometry_leaves_the_structure_box_clear_of_its_c
 current values are the least the page checker accepts. The header therefore fits by making the page
 taller (`height_mm: 300`), not by tightening the grid — and a page that tall is 300 mm, longer than
 A4, which is worth knowing before asking for both a header and a 240 mm page.
-### P46 — A general reaction's R mark sits inside the ring it varies
+### P46 — A general reaction's R mark sits inside the ring it varies  (done: short stub)
+
+Resolved by keeping the bond and shrinking it: the mark moves to 0.42 of a bond length towards the
+ring's centre, so `R1` is written inside the ring on a short stub, which is what the source figure
+shows. Chemistry is untouched, so the readback still matches; the earlier attempt (drop the bond,
+put the mark at the centre) was refused with `chemical_semantics_changed` and was the wrong design.
+
+
 
 The source figure writes `R1` at the centre of the ring whose substitution varies, with no bond: a
 label hung off one bond reads as a single fixed position.

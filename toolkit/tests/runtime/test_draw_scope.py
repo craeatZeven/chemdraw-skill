@@ -450,3 +450,25 @@ def test_depiction_rotation_turns_the_whole_table(tmp_path):
 
     change = abs((n_to_s_angle(straight) - n_to_s_angle(turned) + 180) % 360 - 180)
     assert 150 < change < 210, change
+
+def test_a_general_reaction_can_pull_its_r_marks_inside_the_rings(tmp_path):
+    # The general scheme writes R1 inside the ring it varies, on a short stub. The bond stays, so the
+    # chemistry is untouched - only the distance shrinks from a whole bond length to a stub.
+    brief = _brief(rmark_in_ring=True, header={
+        "substrates": [{"smiles": "c1ccc([*:1])cc1", "label": "1"}],
+        "products": [{"smiles": "Cc1ccc([*:1])cc1", "label": "3"}]})
+    report = draw_figure(brief, output_path=str(tmp_path / "inside"))
+    assert report["ok"] is True, report
+    (root,) = _pages(report)
+    where = {n.get("id"): [float(v) for v in n.get("p").split()[:2]]
+             for n in root.iter("n") if n.get("p")}
+    marks = [n for n in root.iter("n") if n.get("NodeType") == "GenericNickname"]
+    assert marks, "no R mark was drawn"
+    for mark in marks:
+        bonds = [b for b in root.iter("b") if mark.get("id") in (b.get("B"), b.get("E"))]
+        assert len(bonds) == 1, "the R mark keeps exactly one bond"
+        bond = bonds[0]
+        other = bond.get("E") if bond.get("B") == mark.get("id") else bond.get("B")
+        mx, my = where[mark.get("id")]
+        ox, oy = where[other]
+        assert math.hypot(mx - ox, my - oy) < 9.0, "the mark is still a whole bond length away"
