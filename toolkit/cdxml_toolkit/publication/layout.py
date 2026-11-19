@@ -328,7 +328,9 @@ def _r_marks_inside_rings(xy, mol, bond_length):
         cx = sum(points[k][0] for k in ring) / len(ring)
         cy = sum(points[k][1] for k in ring) / len(ring)
         ax, ay = points[anchor]
-        dx, dy = cx - ax, cy - ay
+        # Out of the ring, the way a general scheme has it: the label sits just outside the vertex
+        # on a stub, never inside the hexagon.
+        dx, dy = ax - cx, ay - cy
         length = math.hypot(dx, dy) or 1.0
         stub = 0.42 * float(bond_length)
         points[atom.GetIdx()] = (ax + dx / length * stub, ay + dy / length * stub)
