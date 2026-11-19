@@ -335,6 +335,33 @@ def _shorten_ring_r_bonds(xy, mol, bond_length):
     return points
 
 
+def _upright_ring(xy, marks):
+    """Turn the drawing the little it takes to put a hexagon edge upright.
+
+    A six-ring's edges sit 60 degrees apart, so making one of them vertical is never more than a 30
+    degree turn: the angle is reduced modulo 60 and taken on the short side. Anything bigger (which is
+    what turning by an edge's own angle produced) tips the rest of the molecule, and that is why a
+    product ended up upside down.
+    """
+    if not marks:
+        return xy
+    _nickname, _start, _end, _position, _align, _label, edge = next(iter(marks.values()))
+    ax, ay, bx, by = edge[:4]
+    angle = math.degrees(math.atan2(by - ay, bx - ax))
+    turn = (90.0 - angle) % 60.0
+    if turn > 30.0:
+        turn -= 60.0
+    if abs(turn) < 1e-6:
+        return xy
+    xs = [p[0] for p in xy]
+    ys = [p[1] for p in xy]
+    cx = (min(xs) + max(xs)) / 2
+    cy = (min(ys) + max(ys)) / 2
+    radians = math.radians(turn)
+    c, s = math.cos(radians), math.sin(radians)
+    return [((x - cx) * c - (y - cy) * s + cx, (x - cx) * s + (y - cy) * c + cy) for x, y in xy]
+
+
 def _ring_edge_marks(xy, mol, bond_length, style):
     """Lay out numbered, terminal R marks across an outer aromatic ring edge."""
     from ..render.renderer import _SUPERSCRIPT
@@ -419,6 +446,9 @@ def header_objects(spec, style, left, top):
             hx=sum(x for x,_ in xy)/len(xy); hy=sum(y for _,y in xy)/len(xy)
             xy=[((x-hx)*c-(y-hy)*sn+hx, (x-hx)*sn+(y-hy)*c+hy) for x,y in xy]
         marks = _ring_edge_marks(xy, mol, header_bond, style) if spec.get('rmark_in_ring') else {}
+        if marks:
+            xy = _upright_ring(xy, marks)
+            marks = _ring_edge_marks(xy, mol, header_bond, style)
         xs, ys = [p[0] for p in xy], [p[1] for p in xy]
         for _, start, end, (tx, ty), align, label, _edge in marks.values():
             label_width = text_width(label, style)

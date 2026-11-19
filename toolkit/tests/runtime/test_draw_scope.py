@@ -521,8 +521,9 @@ def test_scope_ring_edge_marks_keep_the_bonded_r_in_chemical_readback(tmp_path):
         assert attachment.get("Visible") == "no"
         anchor = end if begin == mark.get("id") else begin
         (ax, ay) = nodes[anchor]
+        # Any ring edge can carry the stroke after the ring is put upright, not only a double bond.
         ring_neighbours = [nodes[e if b == anchor else b] for bond, b, e in bonds
-                           if anchor in (b, e) and bond.get("Order") == "2"]
+                           if anchor in (b, e)]
         # The stroke is the normal of the edge it crosses: its midpoint sits on that edge and its
         # direction is square to it, at whatever angle the ring was depicted.
         strokes = []
