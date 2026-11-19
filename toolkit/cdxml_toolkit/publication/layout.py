@@ -82,8 +82,49 @@ def molecule_coordinates(mol, bond_length, reference=None):
     else:
         rdDepictor.Compute2DCoords(mol)
     scale=float(bond_length)/1.5
-    conf=mol.GetConformer()
-    xy=[(conf.GetAtomPosition(i).x*scale,-conf.GetAtomPosition(i).y*scale) for i in range(mol.GetNumAtoms())]
+    def points():
+        conf=mol.GetConformer()
+        return [(conf.GetAtomPosition(i).x*scale,-conf.GetAtomPosition(i).y*scale) for i in range(mol.GetNumAtoms())]
+    xy=points()
+    if reference is not None:
+        # Aligning to a reference can fold two atoms onto one point when the common core is small:
+        # a biaryl matched by one ring puts the second ring on top of the first. Independent
+        # depiction is honest about the shape, so fall back to it rather than drawing a knot.
+        floor=0.35*float(bond_length)
+        bonded={(min(b.GetBeginAtomIdx(),b.GetEndAtomIdx()),max(b.GetBeginAtomIdx(),b.GetEndAtomIdx()))
+                for b in mol.GetBonds()}
+        n=len(xy)
+        closest=min([math.hypot(xy[i][0]-xy[j][0],xy[i][1]-xy[j][1])
+                     for i in range(n) for j in range(i+1,n) if (i,j) not in bonded] or [floor])
+        if closest < floor:
+            # Independent depiction, then a rigid turn onto the reference's core: a rotation plus a
+            # translation cannot fold two atoms together, so the table keeps one orientation without
+            # the knot the alignment itself produced.
+            rdDepictor.Compute2DCoords(mol)
+            xy=points()
+            query=Chem.MolFromSmarts(mcs.smartsString)
+            here=mol.GetSubstructMatch(query); there=reference.GetSubstructMatch(query)
+            if len(here)>=3 and len(here)==len(there):
+                rconf=reference.GetConformer()
+                rpts=[(rconf.GetAtomPosition(k).x*scale,-rconf.GetAtomPosition(k).y*scale) for k in there]
+                ax,ay=xy[here[1]][0]-xy[here[0]][0], xy[here[1]][1]-xy[here[0]][1]
+                bx,by=rpts[1][0]-rpts[0][0], rpts[1][1]-rpts[0][1]
+                base_ang=math.atan2(by,bx)-math.atan2(ay,ax)
+                cx=sum(x for x,_ in xy)/len(xy); cy=sum(y for _,y in xy)/len(xy)
+                rcx=sum(x for x,_ in rpts)/len(rpts); rcy=sum(y for _,y in rpts)/len(rpts)
+                # The common core can be symmetric, so the first matched pair may sit a symmetry
+                # step away from the reference's; keep the turn that lands the core atoms closest.
+                best=None
+                for extra in [0,30,60,90,120,150,180,210,240,270,300,330]:
+                    ang=base_ang+math.radians(extra)
+                    c,s=math.cos(ang),math.sin(ang)
+                    moved=[((x-cx)*c-(y-cy)*s+rcx, (x-cx)*s+(y-cy)*c+rcy) for x,y in xy]
+                    err=sum(math.hypot(moved[here[k]][0]-rpts[k][0], moved[here[k]][1]-rpts[k][1])
+                            for k in range(len(there)))
+                    if best is None or err<best[0]:
+                        best=(err,moved)
+                xy=best[1]
+            warning=f'Alignment folded two atoms {closest:.1f} pt apart; depicted independently and turned onto the core'
     return mol,xy,warning
 
 

@@ -678,22 +678,22 @@
 
 ## `publication.layout`
 
-- **function**, line 657: `bounds(node, style)` - No public docstring in the audited version.
-- **function**, line 121: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 687: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 182: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
-- **function**, line 397: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 698: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 162: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
+- **function**, line 728: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 223: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
+- **function**, line 438: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
-- **function**, line 257: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
-- **function**, line 269: `header_objects(spec, style, left, top)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, the products with their labels. Returns (objects, bottom, right).
-- **function**, line 152: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
-- **function**, line 220: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
+- **function**, line 298: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
+- **function**, line 310: `header_objects(spec, style, left, top)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, the products with their labels. Returns (objects, bottom, right).
+- **function**, line 193: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
+- **function**, line 261: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 683: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 207: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
-- **function**, line 327: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 724: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 248: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
+- **function**, line 368: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
 - **function**, line 42: `text_width(value, style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 47: `wrap(value, width, style)` - No public docstring in the audited version.
