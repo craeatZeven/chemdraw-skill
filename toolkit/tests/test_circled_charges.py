@@ -97,3 +97,32 @@ def test_a_lone_charged_atom_gets_a_symbol(tmp_path):
              "steps": [{"substrates": ["a"], "products": ["a"]}]}
     report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "one.cdxml"))
     assert report["ok"], report
+
+
+def test_a_label_is_written_with_the_box_chemdraw_draws_it_in():
+    # P42: checks measure the written box; it is now the label model's, not an older estimate.
+    from cdxml_toolkit.label_geometry import label_box
+    fragment = _fragment(ALKOXIDE)
+    (oxygen,) = [n for n in fragment.iter("n") if n.get("Charge")]
+    written = tuple(map(float, oxygen.find("t").get("BoundingBox").split()))
+    ax, ay = map(float, oxygen.get("p").split())
+    assert written == pytest.approx(label_box("O-", ax, ay, "Left"), abs=0.01)
+
+
+def test_the_page_pass_clears_the_written_box_too():
+    # Whichever box a page is measured by, the symbol keeps 3 pt from it.
+    from cdxml_toolkit.mcp_runtime import figure_house
+    page = """<?xml version="1.0" encoding="UTF-8" ?>
+<CDXML><page id="1"><fragment id="2">
+<n id="3" p="100 100" Element="8" NumHydrogens="0" Charge="-1">
+<t id="4" p="96.11 103.9" BoundingBox="90 90 125 110" LabelJustification="Left"><s>O</s></t></n>
+<n id="5" p="112.47 107.2"/><b id="6" B="3" E="5"/>
+<graphic id="7" BoundingBox="104 86 112 94" GraphicType="Symbol" SymbolType="CircleMinus">
+<represent attribute="Charge" object="3"/></graphic></fragment></page></CDXML>"""
+    after, moved, crowded = figure_house.clear_charge_symbols(page)
+    assert moved == 1 and not crowded
+    root = ET.fromstring(str(after).split("?>", 1)[-1])
+    x1, y1, x2, y2 = map(float, root.find(".//graphic").get("BoundingBox").split())
+    cx, cy, r = (x1 + x2) / 2, (y1 + y2) / 2, (x2 - x1) / 2
+    gap = math.hypot(max(90 - cx, 0, cx - 125), max(90 - cy, 0, cy - 110)) - r
+    assert gap >= 3.0

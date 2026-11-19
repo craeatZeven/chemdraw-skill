@@ -869,7 +869,19 @@ OVERLAY_KEYS = {"fragment", "species", "shape"}
 
 
 CHARGE_GAP = 3.0       # P1: a charge symbol from every text, bond and other symbol (P42)
+CHARGE_TARGET = 3.5    # what a moved symbol is set at: the P1 gap with 0.5 pt to spare
 CHARGE_MOVE = 8.0      # how far beyond its first spot a symbol may be pushed to get there
+
+
+def _written_box(t: ET.Element):
+    try:
+        return tuple(float(v) for v in t.get("BoundingBox").split()[:4]) if t.get("BoundingBox") else None
+    except ValueError:
+        return None
+
+
+def _union(a, b):
+    return a if b is None else (min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3]))
 
 
 def _charge_obstacles(root: ET.Element):
@@ -890,15 +902,18 @@ def _charge_obstacles(root: ET.Element):
         t = n.find("t")
         if t is not None:
             text = "".join(t.itertext()).strip()
-            boxes.append((k, label_box(text, *at[k], t.get("LabelJustification") or "Left", size_of(t))))
+            # The model's box and the one written in the file, whichever is larger: a symbol
+            # clears both however the page is measured.
+            boxes.append((k, _union(label_box(text, *at[k], t.get("LabelJustification") or "Left", size_of(t)),
+                                    _written_box(t))))
     in_nodes = {id(t) for n in root.iter("n") for t in n.iter("t")}
     for t in root.iter("t"):
         if id(t) in in_nodes or not t.get("p"):
             continue
         px, py = map(float, t.get("p").split()[:2])
         text = "\n".join(line for line in "".join(t.itertext()).split("\n")).strip("\n")
-        boxes.append((None, text_box(text, px, py, t.get("Justification") or t.get("CaptionJustification") or "Left",
-                                     size_of(t))))
+        boxes.append((None, _union(text_box(text, px, py, t.get("Justification") or t.get("CaptionJustification")
+                                            or "Left", size_of(t)), _written_box(t))))
     segments = [(at[b.get("B")], at[b.get("E")]) for b in root.iter("b") if b.get("B") in at and b.get("E") in at]
     symbols = [g for g in root.iter("graphic") if g.get("GraphicType") == "Symbol"
                and g.find("represent") is not None and g.get("BoundingBox")]
@@ -950,7 +965,7 @@ def clear_charge_symbols(cdxml: Any) -> tuple[Any, int, list[str]]:
         x1, y1, x2, y2 = centre(g)
         cx, cy, radius = (x1 + x2) / 2, (y1 + y2) / 2, (x2 - x1) / 2
         others = [((b[0] + b[2]) / 2, (b[1] + b[3]) / 2, (b[2] - b[0]) / 2) for b in map(centre, symbols) if b != [x1, y1, x2, y2]]
-        if _room(cx, cy, radius, boxes, segments, others) >= CHARGE_GAP - 1e-6:
+        if _room(cx, cy, radius, boxes, segments, others) >= CHARGE_TARGET - 1e-6:
             continue
         owner = at.get(g.find("represent").get("object"))
         if owner is None:
@@ -964,11 +979,11 @@ def clear_charge_symbols(cdxml: Any) -> tuple[Any, int, list[str]]:
                 px, py = owner[0] + reach * math.cos(angle), owner[1] + reach * math.sin(angle)
                 room = _room(px, py, radius, boxes, segments, others)
                 shift = math.hypot(px - cx, py - cy)
-                if room >= CHARGE_GAP - 1e-6 and (best is None or best[0] < CHARGE_GAP or shift < best[1]):
+                if room >= CHARGE_TARGET - 1e-6 and (best is None or best[0] < CHARGE_TARGET or shift < best[1]):
                     best = (room, shift, px, py)
-                elif best is None or (best[0] < CHARGE_GAP and room > best[0]):
+                elif best is None or (best[0] < CHARGE_TARGET and room > best[0]):
                     best = (room, shift, px, py)
-            if best and best[0] >= CHARGE_GAP - 1e-6:
+            if best and best[0] >= CHARGE_TARGET - 1e-6:
                 break
         room, _, px, py = best
         if room < CHARGE_GAP - 1e-6:

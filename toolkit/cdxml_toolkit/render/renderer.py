@@ -629,6 +629,7 @@ def _build_fragment(
             lbx2 = lbx1 + label_w
             lby2 = ay
             tid = ids.next()
+            t_line = len(lines)   # its box is set from the text it ends up showing, below
             lines.append(
                 f'<t id="{tid}" p="{lx:.2f} {ly:.2f}" '
                 f'BoundingBox="{lbx1:.2f} {lby1:.2f} {lbx2:.2f} {lby2:.2f}" '
@@ -660,12 +661,21 @@ def _build_fragment(
                     f'color="0" face="64">{int(a["generic_number"])}</s>'
                 )
             label_text[a["index"]] = display_text
+            shown = display_text
             if charge and not circled:
                 charge_text = (str(abs(charge)) if abs(charge) > 1 else '') + ('+' if charge > 0 else '-')
+                shown += charge_text
                 lines.append(
                     f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                     f'color="0" face="64">{charge_text}</s>'
                 )
+            # The box ChemDraw will draw the label in (label_geometry, fitted to its own saves),
+            # the one model every check measures against (P42).
+            from ..label_geometry import label_box
+            gx1, gy1, gx2, gy2 = label_box(shown, ax, ay, "Left", float(ACS_LABEL_SIZE))
+            lines[t_line] = lines[t_line].replace(
+                f'BoundingBox="{lbx1:.2f} {lby1:.2f} {lbx2:.2f} {lby2:.2f}"',
+                f'BoundingBox="{gx1:.2f} {gy1:.2f} {gx2:.2f} {gy2:.2f}"')
             lines.append('</t>')
             lines.append('</n>')
 

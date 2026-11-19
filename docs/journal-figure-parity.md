@@ -516,7 +516,12 @@ subscripts, brackets and descenders), and matches six native label boxes to 0.15
 pass over the finished scheme or mechanism page (`figure_house.clear_charge_symbols`) measures
 every charge symbol against every text box, bond and other symbol and moves one under 3 pt to the
 nearest clear spot round its atom, at most 8 pt further out, warning when none is clear.
-`toolkit/tests/runtime/test_label_boxes.py` measures the produced projection CDXML.
+`toolkit/tests/runtime/test_label_boxes.py` measures the produced projection CDXML. After the first native check (circle to text box: 3.00 pt on the projections, 2.41 pt on
+`p24-circled-charges`), two more causes were found and fixed: the renderer still wrote ordinary
+structures' label boxes by its old estimate, which the page was measured by, and placement aimed
+at exactly 3 pt. Labels are now written with the model's box, the final pass clears the larger of
+the model's and the written box, and symbols are set at 3.5 pt (the P1 3 pt with 0.5 pt to spare);
+tests measure circle to box and assert 3 pt.
 
 ### P43 — An entering or leaving species keeps its connector arrow attached
 

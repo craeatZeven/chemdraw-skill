@@ -398,9 +398,9 @@ def chair_cyclohexane(
 
 
 CHARGE_SYMBOL = 8.0      # a circled charge's box, beside 10 pt labels
-CHARGE_BOND_GAP = 3.0    # from any bond, the P1 spacing
-CHARGE_LABEL_GAP = 3.0   # from every other atom's label, the P1 spacing
-CHARGE_OWN_GAP = 3.0     # from the charged atom's own label too (natively 1.58 pt from [Rh] was too close)
+CHARGE_BOND_GAP = 3.5    # from any bond: the P1 3 pt with 0.5 pt to spare
+CHARGE_LABEL_GAP = 3.5   # from every other atom's label: the P1 3 pt with 0.5 pt to spare
+CHARGE_OWN_GAP = 3.5     # from its own atom's label too (natively 1.58 pt from [Rh] was too close)
 # Directions tried for a charge, upper right first (where chemists write it), then fanning out.
 _CHARGE_ANGLES = [-45 + sign * step for step in range(0, 181, 15) for sign in ((1, -1) if step else (1,))]
 
