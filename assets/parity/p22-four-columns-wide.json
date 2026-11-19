@@ -178,7 +178,8 @@
    "abbreviate": [
     "Me",
     "OMe",
-    "CF3"
+    "CF3",
+    "Ph"
    ]
   },
   {
@@ -191,7 +192,8 @@
    "abbreviate": [
     "Me",
     "OMe",
-    "CF3"
+    "CF3",
+    "Ph"
    ]
   },
   {
@@ -204,7 +206,8 @@
    "abbreviate": [
     "Me",
     "OMe",
-    "CF3"
+    "CF3",
+    "Ph"
    ]
   },
   {
@@ -298,5 +301,6 @@
    "H2O, 100 °C, 24 h"
   ]
  },
- "height_mm": 300
+ "height_mm": 300,
+ "depiction_rotation": 180
 }

@@ -376,6 +376,20 @@ def prepare(records,spec):
             if ref_id not in by_id: raise ValueError(f'Unknown reference compound: {ref_id}')
             ref=Chem.MolFromSmiles(by_id[ref_id]['smiles']); rdDepictor.Compute2DCoords(ref); refs[group]=ref
         mol,xy,warning=molecule_coordinates(Chem.MolFromSmiles(record['smiles']),style['bond_length'],refs.get(group))
+        if group not in refs and float(spec.get('depiction_rotation') or 0):
+            # The first compound of a table fixes the orientation every later cell is aligned to, so
+            # turning it turns the whole table: 180 puts a benzothiazole on the left where the source
+            # figure has it, instead of the right where RDKit's own depiction does. Both the points
+            # and the conformer are turned, each in its own units.
+            angle=math.radians(float(spec.get('depiction_rotation')))
+            c,sn=math.cos(angle),math.sin(angle)
+            cx=sum(x for x,_ in xy)/len(xy); cy=sum(y for _,y in xy)/len(xy)
+            xy=[((x-cx)*c-(y-cy)*sn+cx, (x-cx)*sn+(y-cy)*c+cy) for x,y in xy]
+            conf=mol.GetConformer()
+            inner=[(conf.GetAtomPosition(i).x, conf.GetAtomPosition(i).y) for i in range(mol.GetNumAtoms())]
+            icx=sum(x for x,_ in inner)/len(inner); icy=sum(y for _,y in inner)/len(inner)
+            for i,(x,y) in enumerate(inner):
+                conf.SetAtomPosition(i, ((x-icx)*c-(y-icy)*sn+icx, (x-icx)*sn+(y-icy)*c+icy, 0.0))
         refs.setdefault(group,mol)
         if warning: warnings.append({'compound_id':record['compound_id'],'message':warning})
         # A substituent the compound's definition names ("Alk = C7H15") is drawn as its label:

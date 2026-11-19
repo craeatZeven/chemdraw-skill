@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import copy
 import json
 import xml.etree.ElementTree as ET
@@ -419,3 +420,33 @@ def test_an_empty_title_asks_for_no_title_at_all(tmp_path):
     texts = ["".join(s.text or "" for s in t.iter("s")).strip() for t in root.iter("t")]
     assert "Substrate scope" not in texts
     assert all("scope" not in text.lower() for text in texts)
+
+def test_depiction_rotation_turns_the_whole_table(tmp_path):
+    # The first compound sets the orientation of every cell, so turning it turns the table: a source
+    # figure with the benzothiazole on the left needs 180 where RDKit draws it on the right. The
+    # vector from the ring's nitrogen to its sulfur says which way round the heterocycle sits.
+    def brief(rotation=None):
+        out = {"kind": "scope", "title": "", "fields": [{"key": "yield"}],
+               "species": [{"id": "a", "smiles": "O=C(Nc1ccccc1)c1nc2ccccc2s1", "values": {"yield": "64%"}},
+                           {"id": "b", "smiles": "Cc1ccccc1NC(=O)c1nc2ccccc2s1", "values": {"yield": "61%"}}]}
+        if rotation is not None:
+            out["depiction_rotation"] = rotation
+        return out
+
+    straight = draw_figure(brief(), output_path=str(tmp_path / "straight"))
+    turned = draw_figure(brief(180), output_path=str(tmp_path / "turned"))
+    assert turned["ok"], turned
+
+    def n_to_s_angle(report):
+        root = ET.parse(report["pages"][0]["path"]).getroot()
+        where = {}
+        for node in root.find(".//fragment").iter("n"):
+            if node.get("p") and node.get("Element") in ("7", "16"):
+                x, y = node.get("p").split()[:2]
+                where[node.get("Element")] = (float(x), float(y))
+        assert set(where) == {"7", "16"}, where
+        (nx, ny), (sx, sy) = where["7"], where["16"]
+        return math.degrees(math.atan2(sy - ny, sx - nx))
+
+    change = abs((n_to_s_angle(straight) - n_to_s_angle(turned) + 180) % 360 - 180)
+    assert 150 < change < 210, change
