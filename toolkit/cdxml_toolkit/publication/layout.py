@@ -362,7 +362,8 @@ def _ring_edge_marks(xy, mol, bond_length, style):
         ax, ay = xy[index]
         mx, my = xy[atom.GetIdx()]
         axis = 0 if abs(mx - ax) >= abs(my - ay) else 1
-        sign = math.copysign(1, (mx - ax, my - ay)[axis])
+        # Which way the R atom lay from its ring atom, used only to prefer the edge on that side.
+        sign = math.copysign(1.0, (mx - ax, my - ay)[axis] or 1.0)
         # Prefer a double bond if the stroke can cross both its lines at a clear angle.
         def edge_score(bond):
             other = xy[bond.GetOtherAtomIdx(index)]
@@ -374,14 +375,21 @@ def _ring_edge_marks(xy, mol, bond_length, style):
         used_edges.add(edge.GetIdx())
         bx, by = xy[edge.GetOtherAtomIdx(index)]
         x, y = (ax + bx) / 2, (ay + by) / 2
-        ux, uy = (sign, 0) if axis == 0 else (0, sign)
+        # The stroke is the normal of the edge it crosses, so it stays square to that edge whatever
+        # angle the ring was depicted at: an axis-aligned stroke would cross a slanted edge askew.
+        ex, ey = bx - ax, by - ay
+        length = math.hypot(ex, ey) or 1.0
+        ux, uy = -ey / length, ex / length
+        # Point it out of the ring, towards where the R atom was drawn.
+        if ux * (mx - x) + uy * (my - y) < 0:
+            ux, uy = -ux, -uy
         outside, inside = bond_length * 0.22, bond_length * 0.32
         start = (x + ux * outside, y + uy * outside)
         end = (x - ux * inside, y - uy * inside)
         position = (start[0] + ux * 1.5, start[1] + uy * size * 0.65 + size * 0.35)
-        align = 'Left' if ux > 0 else 'Right' if ux < 0 else 'Center'
+        align = 'Left' if ux > 0.2 else 'Right' if ux < -0.2 else 'Center'
         label = 'R' + _SUPERSCRIPT.get(number, str(number))
-        marks[atom.GetIdx()] = (f'R{number}', start, end, position, align, label)
+        marks[atom.GetIdx()] = (f'R{number}', start, end, position, align, label, (ax, ay, bx, by))
     return marks
 
 
@@ -412,7 +420,7 @@ def header_objects(spec, style, left, top):
             xy=[((x-hx)*c-(y-hy)*sn+hx, (x-hx)*sn+(y-hy)*c+hy) for x,y in xy]
         marks = _ring_edge_marks(xy, mol, header_bond, style) if spec.get('rmark_in_ring') else {}
         xs, ys = [p[0] for p in xy], [p[1] for p in xy]
-        for _, start, end, (tx, ty), align, label in marks.values():
+        for _, start, end, (tx, ty), align, label, _edge in marks.values():
             label_width = text_width(label, style)
             lx = tx - {'Right': label_width, 'Center': label_width / 2, 'Left': 0}[align]
             xs.extend([start[0], end[0], lx, lx + label_width]); ys.extend([start[1], end[1], ty - size, ty])
@@ -445,7 +453,7 @@ def header_objects(spec, style, left, top):
             return
         objects.append({'type': 'molecule', 'id': key, 'smiles': s['item']['smiles'],
                         'coordinates': [[px + dx, py + dy] for px, py in s['xy']]})
-        for index, (nickname, start, end, position, align, label) in s['marks'].items():
+        for index, (nickname, start, end, position, align, label, _edge) in s['marks'].items():
             hidden_marks.setdefault(key, {})[index] = nickname
             objects.append({'type': 'line', 'start': [start[0] + dx, start[1] + dy],
                             'end': [end[0] + dx, end[1] + dy]})

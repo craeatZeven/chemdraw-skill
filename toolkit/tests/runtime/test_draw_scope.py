@@ -520,23 +520,60 @@ def test_scope_ring_edge_marks_keep_the_bonded_r_in_chemical_readback(tmp_path):
         [(attachment, begin, end)] = [item for item in bonds if mark.get("id") in item[1:]]
         assert attachment.get("Visible") == "no"
         anchor = end if begin == mark.get("id") else begin
-        label_x, label_y = map(float, label.get("p").split()[:2])
+        (ax, ay) = nodes[anchor]
+        ring_neighbours = [nodes[e if b == anchor else b] for bond, b, e in bonds
+                           if anchor in (b, e) and bond.get("Order") == "2"]
+        # The stroke is the normal of the edge it crosses: its midpoint sits on that edge and its
+        # direction is square to it, at whatever angle the ring was depicted.
         strokes = []
         for line in page.findall('arrow[@ArrowheadHead="None"]'):
             x0, y0 = map(float, line.get("Tail3D").split()[:2])
             x1, y1 = map(float, line.get("Head3D").split()[:2])
-            if 0 < x0 - label_x < 3 and 0 < label_y - y0 < 5:
-                assert y0 == pytest.approx(y1)
-                strokes.append((x0, x1, y0))
-        [(outside, inside, y)] = strokes
-        (ax, ay) = nodes[anchor]
-        ring_neighbours = [nodes[e if b == anchor else b] for bond, b, e in bonds
-                           if anchor in (b, e) and bond.get("Order") == "2"]
-        assert any(y == pytest.approx((ay + ny) / 2, abs=0.02)
-                   and outside < (ax + nx) / 2 < inside for nx, ny in ring_neighbours)
+            strokes.append(((x0 + x1) / 2, (y0 + y1) / 2, math.degrees(math.atan2(y1 - y0, x1 - x0))))
+        assert strokes, "no ring-edge stroke was drawn"
+        crossings = []
+        for nx, ny in ring_neighbours:
+            mid = ((ax + nx) / 2, (ay + ny) / 2)
+            edge = math.degrees(math.atan2(ny - ay, nx - ax))
+            for mx, my, stroke in strokes:
+                # The stroke reaches further into the ring than out of it, so its midpoint sits
+                # a point or so inside the edge midpoint.
+                if math.dist(mid, (mx, my)) < 2.5:
+                    crossings.append(abs(90 - abs((stroke - edge + 90) % 180 - 90)))
+        assert crossings and min(crossings) < 5, (crossings, ring_neighbours)
+        assert label.get("InterpretChemically") == "no"
         assert validate_fragment(structure, ET.tostring(fragment, encoding="unicode"))["status"] == "preserved"
         fragment.remove(attachment)
         with pytest.raises(ValueError, match="chemical_semantics_changed"):
             validate_fragment(structure, ET.tostring(fragment, encoding="unicode"))
     r2_marks = page.findall('.//n[@GenericNickname="R2"]')
     assert len(r2_marks) == 2 and all(n.get("Visible") != "no" for n in r2_marks)
+
+def test_a_ring_edge_mark_crosses_its_edge_squarely():
+    # The stroke is a decoration, but it still has to look drawn across one ring edge: its direction
+    # must be that edge's normal, whatever angle the ring sits at.
+    import math as _math
+
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+
+    from cdxml_toolkit.publication.layout import _ring_edge_marks, style_settings
+
+    mol = Chem.MolFromSmiles("c1ccc([*:1])cc1")
+    AllChem.Compute2DCoords(mol)
+    conformer = mol.GetConformer()
+    angle = _math.radians(20)          # a ring at 20 degrees: an axis-aligned stroke would be askew
+    c, s = _math.cos(angle), _math.sin(angle)
+    xy = []
+    for i in range(mol.GetNumAtoms()):
+        x, y = conformer.GetAtomPosition(i).x, conformer.GetAtomPosition(i).y
+        xy.append((x * c - y * s, x * s + y * c))
+
+    style = style_settings({})
+    marks = _ring_edge_marks(xy, mol, style["bond_length"], style)
+    assert marks, "no ring mark was placed"
+    _nickname, start, end, _position, _align, _label, edge = next(iter(marks.values()))
+    stroke = _math.atan2(end[1] - start[1], end[0] - start[0])
+    edge_angle = _math.atan2(edge[3] - edge[1], edge[2] - edge[0])
+    difference = abs(((_math.degrees(stroke - edge_angle) + 90) % 180) - 90)
+    assert abs(90 - difference) < 5, (edge_angle, stroke, difference)
