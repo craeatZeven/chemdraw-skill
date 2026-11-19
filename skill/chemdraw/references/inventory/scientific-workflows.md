@@ -84,7 +84,7 @@
 
 ## `scientific.diagrams`
 
-- **function**, line 68: `build(operation: str, spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Run one diagram workflow; the returned report omits the CDXML text when a file was written.
+- **function**, line 70: `build(operation: str, spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Run one diagram workflow; the returned report omits the CDXML text when a file was written.
 
 ## `scientific.elements`
 
@@ -130,6 +130,11 @@
 - **function**, line 84: `electron_configuration_diagram(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Orbital-box diagram of an electron configuration.
 - **function**, line 33: `hund_fill(electrons, orbitals)` - Occupation of ``orbitals`` degenerate orbitals: singly with parallel spins first, then paired.
 - **function**, line 242: `mo_diagram(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Molecular-orbital energy-level diagram: atomic orbitals left and right, MOs between.
+
+## `scientific.page`
+
+- **function**, line 119: `compose_page(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Lay out ``rows`` of CDXML ``parts`` as one page.
+- **function**, line 82: `runs(text)` - [(piece, face)]: 32 on an atom count after a letter (CH3), 64 on a charge written ^- or ^2-.
 
 ## `scientific.periodic`
 

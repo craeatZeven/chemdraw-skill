@@ -31,6 +31,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
     from .orbitals import crystal_field, electron_configuration_diagram, mo_diagram
     from .periodic import periodic_table
     from .phase import phase_diagram
+    from .page import compose_page
     from .process import electrochemical_cell, flowchart
     return {
         'energy_profile': energy_profile,
@@ -56,6 +57,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
         'potential_surface': potential_surface,
         'tanabe_sugano': tanabe_sugano,
         'compose': _compose,
+        'page': compose_page,
     }
 
 
@@ -63,7 +65,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
 DIAGRAM_OPERATIONS = ('energy_profile', 'energy_cycle', 'jablonski', 'mo_diagram', 'electron_configuration',
                       'crystal_field', 'lewis', 'unit_cell', 'flowchart', 'electrochemical_cell', 'periodic_table',
                       'huckel_mo', 'phase_diagram', 'binary_phase_diagram',
-                      'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'tanabe_sugano', 'compose')
+                      'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'tanabe_sugano', 'compose', 'page')
 
 def build(operation: str, spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     """Run one diagram workflow; the returned report omits the CDXML text when a file was written."""

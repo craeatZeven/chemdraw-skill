@@ -698,6 +698,11 @@
 - **function**, line 42: `text_width(value, style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 47: `wrap(value, width, style)` - No public docstring in the audited version.
 
+## `publication.relief`
+
+- **function**, line 73: `clearance(mol, xy, size = 10.0, scale = 1.0)` - (least label-to-ink distance, the atom whose label is closest) or (TIGHT, None).
+- **function**, line 131: `relieve(mol, xy, size = 10.0, scale = 1.0, steps = (60, -60, 120, -120, 180))` - New points with the branch of the tightest label turned, when that helps.
+
 ## `publication.update`
 
 - **function**, line 37: `match_objects(group, record)` - No public docstring in the audited version.

@@ -629,11 +629,16 @@ def _build_fragment(
             lbx2 = lbx1 + label_w
             lby2 = ay
             tid = ids.next()
+            # A numbered generic group is two label parts; without LabelDisplay ChemDraw draws them
+            # the other way round ("1R"), so the mark reads reversed beside its bond.
+            r_label_extra = ''
+            if is_variable and a.get('generic_number'):
+                r_label_extra = ' LabelDisplay="Right"'
             t_line = len(lines)   # its box is set from the text it ends up showing, below
             lines.append(
                 f'<t id="{tid}" p="{lx:.2f} {ly:.2f}" '
                 f'BoundingBox="{lbx1:.2f} {lby1:.2f} {lbx2:.2f} {lby2:.2f}" '
-                f'LabelJustification="Left">'
+                f'LabelJustification="Left"{r_label_extra}>'
             )
             # Use isotope-specific symbol for display (e.g. D for deuterium)
             if is_variable:
