@@ -390,3 +390,20 @@ def test_four_columns_that_do_not_fit_report_the_arithmetic(tmp_path):
                  "width_mm to at least", "the type would be"):
         assert part in message, (part, message)
     assert not (tmp_path / "scope").exists()
+
+def test_a_minority_compound_does_not_shrink_the_core_for_the_rest(tmp_path):
+    # BJOC 22-127 scheme 2: a dozen N-aryl amides and three alkyl ones. The aryl ring is shared by
+    # 75% of the compounds, so it is scaffold and the aryl rows colour their substituent only;
+    # before the majority rule one alkyl row shrank the core and every aryl ring was coloured.
+    brief = {"kind": "scope", "highlight_varying": True, "fields": [{"key": "yield"}],
+             "species": [
+                 {"id": "a", "smiles": "Cc1ccc(NC(=O)c2nc3ccccc3s2)cc1", "values": {"yield": "90%"}},
+                 {"id": "b", "smiles": "COc1ccc(NC(=O)c2nc3ccccc3s2)cc1", "values": {"yield": "80%"}},
+                 {"id": "c", "smiles": "Fc1ccc(NC(=O)c2nc3ccccc3s2)cc1", "values": {"yield": "70%"}},
+                 {"id": "d", "smiles": "CCCCNC(=O)c2nc3ccccc3s2", "values": {"yield": "60%"}}]}
+    report = draw_figure(brief, output_path=str(tmp_path / "mixed"))
+    assert report["ok"], report
+    assert report["highlighted"]["a"] == 1     # the methyl
+    assert report["highlighted"]["b"] == 2     # O and C of the methoxy
+    assert report["highlighted"]["c"] == 1     # the fluorine
+    assert report["highlighted"]["d"] >= 4     # the whole butyl chain is what varies there

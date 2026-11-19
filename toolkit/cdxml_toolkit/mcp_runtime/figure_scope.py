@@ -7,6 +7,8 @@ not contain is drawn as a dash and named in the notes; nothing is filled in.
 """
 from __future__ import annotations
 
+import math
+
 import copy
 import csv
 import json
@@ -218,11 +220,70 @@ def _varying_atoms(grounded: list[dict]) -> tuple[dict[str, list[int]], str | No
         return {}, ("highlight_varying found no core of three or more atoms that every compound shares, "
                     "so nothing was highlighted.")
     core = Chem.MolFromSmarts(found.smartsString)
+    matched = {ident: set(mol.GetSubstructMatch(core)) for ident, mol in mols.items()}
+    # One awkard compound must not shrink the core for everyone: an aryl ring shared by a clear
+    # majority (two thirds) of the compounds belongs to the scaffold, so a table whose last rows
+    # are alkyl amides still highlights only the substituent of its aryl rows.
+    matched = _extend_core_by_shared_rings(mols, matched)
     varying = {}
     for ident, mol in mols.items():
-        match = set(mol.GetSubstructMatch(core))
-        varying[ident] = [atom.GetIdx() for atom in mol.GetAtoms() if atom.GetIdx() not in match]
+        keep = matched[ident]
+        varying[ident] = [atom.GetIdx() for atom in mol.GetAtoms() if atom.GetIdx() not in keep]
     return varying, None
+
+
+def _ring_systems(mol) -> list[set[int]]:
+    """Atom index sets of a molecule's fused rings, one set per ring system."""
+    systems: list[set[int]] = []
+    for ring in mol.GetRingInfo().AtomRings():
+        merged = set(ring)
+        for other in [s for s in systems if s & merged]:
+            merged |= other
+            systems.remove(other)
+        systems.append(merged)
+    return systems
+
+
+def _ring_query(mol, atoms: set[int]):
+    """(SMARTS, query) for one ring system, so the same ring can be counted in the others."""
+    bonds = [b.GetIdx() for b in mol.GetBonds()
+             if b.GetBeginAtomIdx() in atoms and b.GetEndAtomIdx() in atoms]
+    if not bonds:
+        return None, None
+    smart = Chem.MolToSmarts(Chem.PathToSubmol(mol, bonds))
+    query = Chem.MolFromSmarts(smart)
+    return (smart, query) if query is not None else (None, None)
+
+
+def _extend_core_by_shared_rings(mols: dict, matched: dict, share: float = 2 / 3) -> dict:
+    """Add every ring system most compounds share to each compound's core atoms."""
+    per_mol = {}
+    for ident, mol in mols.items():
+        systems = []
+        for atoms in _ring_systems(mol):
+            if len(atoms) < 6:
+                continue
+            smart, query = _ring_query(mol, atoms)
+            if query is not None:
+                systems.append((atoms, smart, query))
+        per_mol[ident] = systems
+    candidates = {}
+    for systems in per_mol.values():
+        for _, smart, query in systems:
+            candidates[smart] = query
+    wanted = max(2, math.ceil(len(mols) * share))
+    shared = {smart for smart, query in candidates.items()
+              if sum(1 for mol in mols.values() if mol.HasSubstructMatch(query)) >= wanted}
+    if not shared:
+        return matched
+    out = {}
+    for ident, mol in mols.items():
+        keep = set(matched[ident])
+        for atoms, smart, _ in per_mol[ident]:
+            if smart in shared:
+                keep |= atoms
+        out[ident] = keep
+    return out
 
 
 def _highlight_brief(brief: dict, grounded: list[dict]) -> tuple[dict, dict[str, int], list[str]]:
