@@ -187,6 +187,10 @@
    {
     "smiles": "ClCC(=O)N[*:2]",
     "label": "2a,c–r"
+   },
+   {
+    "smiles": "S1SSSSSSS1",
+    "label": "S8"
    }
   ],
   "products": [
@@ -198,7 +202,7 @@
   "above": [
    "Cu(OAc)2 (20 mol %)",
    "bipy (20 mol %)",
-   "DIPEA (3.0 equiv), S8"
+   "DIPEA (3.0 equiv)"
   ],
   "below": [
    "H2O, 100 °C, 24 h"
