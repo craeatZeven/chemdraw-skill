@@ -471,8 +471,11 @@ def header_objects(spec, style, left, top):
         nonlocal x, bottom
         dx = x + gap - s['x0']; dy = mid - s['y0'] - s['h'] / 2
         if s.get('text'):
-            objects.append({'type': 'text', 'id': key, 'text': s['item']['text'], 'align': 'Center',
-                            'size': size, 'position': [x + gap + s['w'] / 2, mid + size * 0.35]})
+            plain = s['item']['text']
+            runs = chemical_runs(plain)
+            objects.append({'type': 'text', 'id': key, 'text': plain, 'align': 'Center',
+                            'size': size, 'position': [x + gap + s['w'] / 2, mid + size * 0.35],
+                            **({'runs': runs} if runs else {})})
             bottom = max(bottom, mid + size)
             if s['item'].get('label'):
                 plain, runs = caption_runs(s['item']['label'], bold=True)
@@ -487,6 +490,14 @@ def header_objects(spec, style, left, top):
             hidden_marks.setdefault(key, {})[index] = nickname
             objects.append({'type': 'line', 'start': [start[0] + dx, start[1] + dy],
                             'end': [end[0] + dx, end[1] + dy]})
+            # The label leaves the ring line interrupted where it sits, the way a scheme drawn by hand
+            # does: a white patch under the text, not a stroke running through the R.
+            half_w = len(label) * size * 0.34 + size * 0.10
+            half_h = size * 0.62
+            box_left = position[0] + dx - (half_w if align == 'Center' else 0.0 if align == 'Left' else 2 * half_w)
+            objects.append({'type': 'rectangle', 'start': [box_left, position[1] + dy - half_h],
+                            'end': [box_left + 2 * half_w, position[1] + dy + half_h * 1.15],
+                            'color': '#FFFFFF', 'fill_type': 'solid', 'background': '#FFFFFF'})
             objects.append({'type': 'text', 'text': label, 'align': align, 'size': size,
                             'position': [position[0] + dx, position[1] + dy],
                             'color': spec.get('header_mark_color')})
