@@ -309,12 +309,8 @@ def header_identities(spec):
     return found
 
 
-def _r_marks_inside_rings(xy, mol, bond_length):
-    """Pull each R mark to a short stub inside its ring, the way a general scheme writes R1.
-
-    The mark keeps its bond, so the chemistry is untouched; only the distance shrinks, which puts the
-    label inside the ring with a stub instead of a full bond hanging it outside.
-    """
+def _shorten_ring_r_bonds(xy, mol, bond_length):
+    """Keep a short real attachment for each R group bonded to a ring vertex."""
     rings = mol.GetRingInfo().AtomRings()
     points = list(xy)
     for atom in mol.GetAtoms():
@@ -339,10 +335,60 @@ def _r_marks_inside_rings(xy, mol, bond_length):
     return points
 
 
+def _ring_edge_marks(xy, mol, bond_length, style):
+    """Lay out numbered, terminal R marks across an outer aromatic ring edge."""
+    from ..render.renderer import _SUPERSCRIPT
+
+    ring_info = mol.GetRingInfo()
+    size = style['font_size']
+    kekule = Chem.Mol(mol)
+    Chem.Kekulize(kekule)
+    marks = {}
+    used_edges = set()
+    for atom in mol.GetAtoms():
+        number = atom.GetAtomMapNum()
+        if atom.GetAtomicNum() != 0 or not number or atom.GetDegree() != 1:
+            continue
+        attachment, = atom.GetBonds()
+        anchor = attachment.GetOtherAtom(atom)
+        index = anchor.GetIdx()
+        rings = [ring for ring in ring_info.AtomRings() if index in ring]
+        if attachment.GetBondType() != Chem.BondType.SINGLE or len(rings) != 1 or not anchor.GetIsAromatic():
+            continue
+        edges = [bond for bond in anchor.GetBonds() if bond.GetIsAromatic()
+                 and ring_info.NumBondRings(bond.GetIdx()) == 1 and bond.GetIdx() not in used_edges]
+        if not edges:
+            continue
+        ax, ay = xy[index]
+        mx, my = xy[atom.GetIdx()]
+        axis = 0 if abs(mx - ax) >= abs(my - ay) else 1
+        sign = math.copysign(1, (mx - ax, my - ay)[axis])
+        # Prefer a double bond if the stroke can cross both its lines at a clear angle.
+        def edge_score(bond):
+            other = xy[bond.GetOtherAtomIdx(index)]
+            transverse = abs(other[1 - axis] - xy[index][1 - axis])
+            double = kekule.GetBondWithIdx(bond.GetIdx()).GetBondType() == Chem.BondType.DOUBLE
+            return (double and transverse >= 0.6 * math.dist(other, xy[index]), sign * other[axis])
+
+        edge = max(edges, key=edge_score)
+        used_edges.add(edge.GetIdx())
+        bx, by = xy[edge.GetOtherAtomIdx(index)]
+        x, y = (ax + bx) / 2, (ay + by) / 2
+        ux, uy = (sign, 0) if axis == 0 else (0, sign)
+        outside, inside = bond_length * 0.22, bond_length * 0.32
+        start = (x + ux * outside, y + uy * outside)
+        end = (x - ux * inside, y - uy * inside)
+        position = (start[0] + ux * 1.5, start[1] + uy * size * 0.65 + size * 0.35)
+        align = 'Left' if ux > 0 else 'Right' if ux < 0 else 'Center'
+        label = 'R' + _SUPERSCRIPT.get(number, str(number))
+        marks[atom.GetIdx()] = (f'R{number}', start, end, position, align, label)
+    return marks
+
+
 def header_objects(spec, style, left, top):
     """The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined
-    by "+", the arrow with its conditions, the products with their labels. Returns (objects,
-    bottom, right)."""
+    by "+", the arrow with its conditions, and the products with their labels. Also returns
+    the bounds and the real R attachments to hide behind decorative marks."""
     header = spec['header']; size = style['font_size']; gap = size * 1.2
     def shape(item, side='substrates'):
         if item.get('text') and not item.get('smiles'):
@@ -352,7 +398,7 @@ def header_objects(spec, style, left, top):
         header_bond = float(style['bond_length']) * 1.7
         mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), header_bond)
         if spec.get('rmark_in_ring'):
-            xy = _r_marks_inside_rings(xy, mol, header_bond)
+            xy = _shorten_ring_r_bonds(xy, mol, header_bond)
         # A header item may ask for its own turn (a reagent drawn the other way round in the source
         # figure); otherwise the products follow the grid's orientation.
         turn = item.get('rotation')
@@ -364,8 +410,13 @@ def header_objects(spec, style, left, top):
             c,sn=math.cos(angle),math.sin(angle)
             hx=sum(x for x,_ in xy)/len(xy); hy=sum(y for _,y in xy)/len(xy)
             xy=[((x-hx)*c-(y-hy)*sn+hx, (x-hx)*sn+(y-hy)*c+hy) for x,y in xy]
+        marks = _ring_edge_marks(xy, mol, header_bond, style) if spec.get('rmark_in_ring') else {}
         xs, ys = [p[0] for p in xy], [p[1] for p in xy]
-        return {'item': item, 'xy': xy, 'w': max(xs) - min(xs), 'h': max(ys) - min(ys),
+        for _, start, end, (tx, ty), align, label in marks.values():
+            label_width = text_width(label, style)
+            lx = tx - {'Right': label_width, 'Center': label_width / 2, 'Left': 0}[align]
+            xs.extend([start[0], end[0], lx, lx + label_width]); ys.extend([start[1], end[1], ty - size, ty])
+        return {'item': item, 'xy': xy, 'marks': marks, 'w': max(xs) - min(xs), 'h': max(ys) - min(ys),
                 'x0': min(xs), 'y0': min(ys)}
     subs = [shape(i, 'substrates') for i in header.get('substrates', [])]
     prods = [shape(i, 'products') for i in header.get('products', [])]
@@ -377,6 +428,7 @@ def header_objects(spec, style, left, top):
     mid = top + max(tallest / 2 + gap, above_h + 4)
     arrow_len = max([text_width(p, style) for p, _ in above + below] + [6 * style['bond_length']]) + 16
     objects = []; x = left; bottom = mid
+    hidden_marks = {}
     def molecule(s, key):
         nonlocal x, bottom
         dx = x + gap - s['x0']; dy = mid - s['y0'] - s['h'] / 2
@@ -393,6 +445,13 @@ def header_objects(spec, style, left, top):
             return
         objects.append({'type': 'molecule', 'id': key, 'smiles': s['item']['smiles'],
                         'coordinates': [[px + dx, py + dy] for px, py in s['xy']]})
+        for index, (nickname, start, end, position, align, label) in s['marks'].items():
+            hidden_marks.setdefault(key, {})[index] = nickname
+            objects.append({'type': 'line', 'start': [start[0] + dx, start[1] + dy],
+                            'end': [end[0] + dx, end[1] + dy]})
+            objects.append({'type': 'text', 'text': label, 'align': align, 'size': size,
+                            'position': [position[0] + dx, position[1] + dy],
+                            'color': spec.get('header_mark_color')})
         bottom = max(bottom, mid + s['h'] / 2 + gap)
         if s['item'].get('label'):
             plain, runs = caption_runs(s['item']['label'], bold=True)
@@ -419,7 +478,26 @@ def header_objects(spec, style, left, top):
     x = end + gap * 0.5
     for i, s in enumerate(prods):
         molecule(s, f'header_p{i}')
-    return objects, bottom, x
+    return objects, bottom, x, hidden_marks
+
+
+def _hide_header_attachments(page, object_ids, hidden_marks):
+    """Hide the real R atom and bond while retaining both in the editable fragment."""
+    for key, marks in hidden_marks.items():
+        fragment = page.find(f"fragment[@id='{object_ids[key]}']")
+        # The renderer writes these explicit-coordinate fragments in input atom order.
+        atoms = fragment.findall('n')
+        for index, nickname in marks.items():
+            atom = atoms[index]
+            if atom.get('NodeType') != 'GenericNickname' or atom.get('GenericNickname') != nickname:
+                raise ValueError('Could not bind a ring-edge mark to its R atom')
+            atom_id = atom.get('id')
+            bond, = (b for b in fragment.findall('b') if atom_id in (b.get('B'), b.get('E')))
+            label = atom.find('t')
+            # A native save interprets the hidden label as chemistry, so give it plain R1.
+            label.find('s').text = nickname
+            for element in (atom, bond, label):
+                element.set('Visible', 'no')
 
 
 def _caption_advance(value, size):
@@ -553,15 +631,16 @@ def create_pages(records,spec,stage,start_index=0):
                             **({'runs':runs} if runs else {})})
             top+=(conditions.count('\n')+1)*size*1.5+8
         right=margin+max((text_width(line,style) for line in (title+'\n'+conditions).splitlines()), default=0)
-        rules=[]
+        rules=[]; hidden_marks={}
         if index==0 and spec.get('header'):
             # The general reaction stands over the first page's grid, a rule under it.
-            drawn,header_bottom,header_right=header_objects(spec,style,margin,top)
+            drawn,header_bottom,header_right,hidden_marks=header_objects(spec,style,margin,top)
             objects+=drawn; right=max(right,header_right)
             rule={'type':'line','start':[margin,header_bottom+4],'end':[width-margin,header_bottom+4],'style':'line'}
             objects.append(rule); rules.append(rule)
             top=header_bottom+4+size+4
         current={'index':index,'objects':objects,'entries':[],'top':top,'bottom':top,'rules':rules,
+                 'hidden_marks':hidden_marks,
                  'right':right}
         manifests.append(current)
         return current,margin,top,0
@@ -729,6 +808,7 @@ def create_pages(records,spec,stage,start_index=0):
         native_page.set('BoundingBox',f"0 0 {page['width']:g} {page['height']:g}")
         native_page.set('WidthPages','1');native_page.set('HeightPages','1')
         ids=result['metadata']['object_ids']
+        _hide_header_attachments(native_page, ids, page['hidden_marks'])
         next_id=max(int(n.get('id','0')) for n in root.iter())+1
         for entry in page['entries']:
             record=compounds[entry['cid']]; key=entry['key']

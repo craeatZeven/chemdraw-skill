@@ -451,9 +451,7 @@ def test_depiction_rotation_turns_the_whole_table(tmp_path):
     change = abs((n_to_s_angle(straight) - n_to_s_angle(turned) + 180) % 360 - 180)
     assert 150 < change < 210, change
 
-def test_a_general_reaction_can_pull_its_r_marks_inside_the_rings(tmp_path):
-    # The general scheme writes R1 inside the ring it varies, on a short stub. The bond stays, so the
-    # chemistry is untouched - only the distance shrinks from a whole bond length to a stub.
+def test_a_general_reaction_keeps_a_short_real_r_bond(tmp_path):
     brief = _brief(rmark_in_ring=True, header={
         "substrates": [{"smiles": "c1ccc([*:1])cc1", "label": "1"}],
         "products": [{"smiles": "Cc1ccc([*:1])cc1", "label": "3"}]})
@@ -477,7 +475,7 @@ def test_a_general_reaction_can_pull_its_r_marks_inside_the_rings(tmp_path):
 def test_an_r_mark_reads_r_then_a_raised_number(tmp_path):
     # "R1" written as R plus the superscript character. A face-64 run cannot be used: ChemDraw draws
     # one as a raised *prefix*, so the mark read "1R".
-    brief = _brief(rmark_in_ring=True, header={
+    brief = _brief(header={
         "substrates": [{"smiles": "c1ccc([*:1])cc1", "label": "1"}],
         "products": [{"smiles": "Cc1ccc([*:1])cc1", "label": "3"}]})
     report = draw_figure(brief, output_path=str(tmp_path / "runs"))
@@ -491,3 +489,54 @@ def test_an_r_mark_reads_r_then_a_raised_number(tmp_path):
     assert written.startswith("R"), written
     assert written[1:] in ("\u00b9", "\u00b2", "\u00b3"), written
     assert all(s.get("face") != "64" for s in runs), "a face-64 run would be drawn as a prefix"
+
+
+def test_scope_ring_edge_marks_keep_the_bonded_r_in_chemical_readback(tmp_path):
+    from cdxml_toolkit.chemistry_semantics import validate_fragment
+
+    fixture = Path(__file__).resolve().parents[3] / "assets/parity/p22-four-columns-wide.json"
+    source = json.loads(fixture.read_text(encoding="utf-8"))
+    report = draw_figure(source, output_path=str(tmp_path / "ring-edge"))
+    assert report["ok"] and report["checks"]["chemistry"]["status"] == "passed", report
+    assert report["readback"]["status"] == "matched", report["readback"]
+    (root,) = _pages(report)
+    page = root.find("page")
+    labels = [t for t in page.findall("t") if t.findtext("s") == "R\u00b9"]
+    assert len(labels) == 2
+    table = root.find("colortable").findall("color")
+    fragments = [f for f in page.findall("fragment") if f.find('n[@GenericNickname="R1"]') is not None]
+    assert len(fragments) == 2
+    smiles = [source["header"]["substrates"][0]["smiles"], source["header"]["products"][0]["smiles"]]
+    for fragment, label, structure in zip(fragments, labels, smiles):
+        run = label.find("s")
+        assert label.get("InterpretChemically") == "no"
+        red = table[int(run.get("color")) - 2]
+        assert tuple(float(red.get(k)) for k in "rgb") == (1.0, 0.0, 0.0)
+        mark = fragment.find('n[@GenericNickname="R1"]')
+        assert mark.get("Visible") == "no"
+        assert mark.findtext("t/s") == "R1"
+        nodes = {n.get("id"): tuple(map(float, n.get("p").split()[:2])) for n in fragment.findall("n")}
+        bonds = [(b, b.get("B"), b.get("E")) for b in fragment.findall("b")]
+        [(attachment, begin, end)] = [item for item in bonds if mark.get("id") in item[1:]]
+        assert attachment.get("Visible") == "no"
+        anchor = end if begin == mark.get("id") else begin
+        label_x, label_y = map(float, label.get("p").split()[:2])
+        strokes = []
+        for line in page.findall('arrow[@ArrowheadHead="None"]'):
+            x0, y0 = map(float, line.get("Tail3D").split()[:2])
+            x1, y1 = map(float, line.get("Head3D").split()[:2])
+            if 0 < x0 - label_x < 3 and 0 < label_y - y0 < 5:
+                assert y0 == pytest.approx(y1)
+                strokes.append((x0, x1, y0))
+        [(outside, inside, y)] = strokes
+        (ax, ay) = nodes[anchor]
+        ring_neighbours = [nodes[e if b == anchor else b] for bond, b, e in bonds
+                           if anchor in (b, e) and bond.get("Order") == "2"]
+        assert any(y == pytest.approx((ay + ny) / 2, abs=0.02)
+                   and outside < (ax + nx) / 2 < inside for nx, ny in ring_neighbours)
+        assert validate_fragment(structure, ET.tostring(fragment, encoding="unicode"))["status"] == "preserved"
+        fragment.remove(attachment)
+        with pytest.raises(ValueError, match="chemical_semantics_changed"):
+            validate_fragment(structure, ET.tostring(fragment, encoding="unicode"))
+    r2_marks = page.findall('.//n[@GenericNickname="R2"]')
+    assert len(r2_marks) == 2 and all(n.get("Visible") != "no" for n in r2_marks)

@@ -375,7 +375,7 @@ def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
 
 
 def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[dict], render: bool,
-                  header: dict | None = None) -> Path:
+                  header: dict | None = None, header_mark_color: str | None = None) -> Path:
     columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
     notes = any(isinstance(e, dict) and e.get("note") for e in brief["species"])
     definitions = any(isinstance(e, dict) and e.get("definition") for e in brief["species"])
@@ -424,6 +424,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         # where the source figure has it rather than on the right where RDKit puts it.
         **({"depiction_rotation": brief["depiction_rotation"]} if brief.get("depiction_rotation") else {}),
         **({"rmark_in_ring": True} if brief.get("rmark_in_ring") else {}),
+        **({"header_mark_color": header_mark_color} if header_mark_color else {}),
     }
     path = work / "spec.json"
     path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
@@ -482,10 +483,12 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
         styled, highlighted, highlight_warnings = brief, {}, [f"highlight_varying could not compare the compounds: {exc}"]
     restyle = house is not None or any(isinstance(e, dict) and any(k in e for k in SPECIES_STYLE)
                                        for e in styled["species"])
+    wanted = brief.get("highlight_varying")
+    mark_color = (wanted if isinstance(wanted, str) else HIGHLIGHT) if header and highlighted else None
     try:
         with tempfile.TemporaryDirectory(prefix="scope-inputs-") as scratch:
             # A page that is edited afterwards is rendered after the edit, not by the builder.
-            spec = _write_inputs(Path(scratch), brief, grounded, fields, render and not restyle, header)
+            spec = _write_inputs(Path(scratch), brief, grounded, fields, render and not restyle, header, mark_color)
             result = publication.publication_figure("create", str(spec), str(target))
     except Exception as exc:
         return _failure([f"The scope panel could not be drawn: {exc}"], kind="scope")
@@ -511,13 +514,11 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
             path.write_text(str(text), encoding="utf-8")
             applied += [a for a in page_applied if a not in applied]
             style_warnings += [w for w in warned if w not in style_warnings]
-    if header and highlighted:
+    if mark_color:
         # The general reaction's R marks take the colour of what varies below (BJOC 22-127).
-        wanted = brief.get("highlight_varying")
-        colour = wanted if isinstance(wanted, str) else HIGHLIGHT
         for page in pages:
             path = Path(page["path"])
-            text, painted = figure_house.paint_header_marks(path.read_text(encoding="utf-8"), colour)
+            text, painted = figure_house.paint_header_marks(path.read_text(encoding="utf-8"), mark_color)
             if painted:
                 path.write_text(str(text), encoding="utf-8")
                 applied.append("header_marks_highlighted")
