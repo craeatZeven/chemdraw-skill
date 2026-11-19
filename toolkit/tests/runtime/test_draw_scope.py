@@ -473,9 +473,9 @@ def test_a_general_reaction_can_pull_its_r_marks_inside_the_rings(tmp_path):
         ox, oy = where[other]
         assert math.hypot(mx - ox, my - oy) < 9.0, "the mark is still a whole bond length away"
 
-def test_an_r_mark_reads_r_then_its_number(tmp_path):
-    # "R1", not "1R": the number is a smaller body run written after the letter. A face-64 run is
-    # drawn as a prefix by ChemDraw (that is how an isotope is written), which reads reversed.
+def test_an_r_mark_reads_r_then_a_raised_number(tmp_path):
+    # "R1" written as R plus the superscript character. A face-64 run cannot be used: ChemDraw draws
+    # one as a raised *prefix*, so the mark read "1R".
     brief = _brief(rmark_in_ring=True, header={
         "substrates": [{"smiles": "c1ccc([*:1])cc1", "label": "1"}],
         "products": [{"smiles": "Cc1ccc([*:1])cc1", "label": "3"}]})
@@ -484,8 +484,9 @@ def test_an_r_mark_reads_r_then_its_number(tmp_path):
     (root,) = _pages(report)
     marks = [n for n in root.iter("n") if n.get("NodeType") == "GenericNickname"]
     assert marks, "no R mark was drawn"
-    runs = [(s.get("face"), s.get("size"), s.text) for s in marks[0].iter("s")]
-    assert runs and runs[0][2] == "R", runs
-    assert len(runs) == 2 and runs[1][2].isdigit(), runs
-    # The order is the point: a face-64 digit is drawn as a raised prefix and reads "1R".
-    assert runs[1][0] != "64", "the number must not be a face-64 prefix"
+    runs = [s for s in marks[0].iter("s")]
+    assert runs, "no label runs"
+    written = "".join(s.text or "" for s in runs)
+    assert written.startswith("R"), written
+    assert written[1:] in ("\u00b9", "\u00b2", "\u00b3"), written
+    assert all(s.get("face") != "64" for s in runs), "a face-64 run would be drawn as a prefix"

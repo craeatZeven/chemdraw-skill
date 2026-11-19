@@ -91,7 +91,13 @@ def _header_errors(header) -> list[str]:
             continue
         for number, item in enumerate(items, 1):
             if not isinstance(item, dict) or not (item.get("smiles") or item.get("name")):
-                errors.append(f"header {side}[{number}] needs a smiles or a name; write R groups as [*:1], [*:2].")
+                if isinstance(item, dict) and item.get('text'):
+                    # A reagent written as its abbreviation ("S8") rather than drawn.
+                    unknown = sorted(set(item) - {'text', 'label'})
+                    if unknown:
+                        errors.append(f"header {side}[{number}] text item has unknown keys {unknown}.")
+                    continue
+                errors.append(f"header {side}[{number}] needs a smiles, a name or a text; write R groups as [*:1], [*:2].")
             elif set(item) - {"smiles", "name", "label"}:
                 errors.append(f"header {side}[{number}] has unknown keys {sorted(set(item) - {'smiles', 'name', 'label'})}.")
     for side in ("above", "below"):
@@ -349,10 +355,19 @@ def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
     errors: list[str] = []
     for side in ("substrates", "products"):
         items = [{"id": f"header {side} {n}", **item} for n, item in enumerate(header[side], 1)]
-        grounded, more = _ground([{k: v for k, v in i.items() if k != "label"} for i in items])
+        # A reagent written as its abbreviation ("S8") is not grounded: it has no structure to check.
+        structural = [i for i in items if not i.get("text")]
+        grounded, more = _ground([{k: v for k, v in i.items() if k != "label"} for i in structural])
         errors += more
-        out[side] = [{"smiles": g["smiles"], **({"label": str(i["label"])} if i.get("label") else {})}
-                     for g, i in zip(grounded, items)]
+        rebuilt = []
+        queue = list(grounded)
+        for item in items:
+            if item.get("text"):
+                rebuilt.append({"text": item["text"], **({"label": str(item["label"])} if item.get("label") else {})})
+            elif queue:
+                g = queue.pop(0)
+                rebuilt.append({"smiles": g["smiles"], **({"label": str(item["label"])} if item.get("label") else {})})
+        out[side] = rebuilt
     return out, errors
 
 

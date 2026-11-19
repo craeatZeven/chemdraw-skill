@@ -524,6 +524,11 @@ def charge_style(style: str):
         _CHARGE_STYLE.reset(token)
 
 
+# Superscript digits for a generic group's number, so "R1" is written as one run "R¹".
+_SUPERSCRIPT = {0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵",
+                6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹"}
+
+
 def _circled(atom: Dict) -> bool:
     return _CHARGE_STYLE.get() == "circled" and abs(int(atom.get("charge") or 0)) == 1
 
@@ -651,17 +656,15 @@ def _build_fragment(
                     f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                     f'color="0" face="64">{int(isotope)}</s>'
                 )
+            if is_variable and a.get('generic_number'):
+                # "R¹" as one run: a real superscript character is drawn as written, where a face-64
+                # run is drawn as a raised prefix (that is how an isotope is written) and read "¹R".
+                number = int(a['generic_number'])
+                display_text += _SUPERSCRIPT.get(number, str(number))
             lines.append(
                 f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                 f'color="0" face="{ACS_LABEL_FACE}">{xml_escape(display_text)}</s>'
             )
-            if is_variable and a.get('generic_number'):
-                # After the letter, in the body face and one step smaller. A face-64 run is drawn as
-                # a raised prefix (that is how an isotope is written) and read "1R", not "R1".
-                lines.append(
-                    f'<s font="{ACS_LABEL_FONT}" size="{float(ACS_LABEL_SIZE) * 0.62:.1f}" '
-                    f'color="0" face="{ACS_LABEL_FACE}">{int(a["generic_number"])}</s>'
-                )
             label_text[a["index"]] = display_text
             shown = display_text
             if charge and not circled:

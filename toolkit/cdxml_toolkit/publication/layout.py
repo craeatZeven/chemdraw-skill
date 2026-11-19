@@ -300,6 +300,8 @@ def header_identities(spec):
     header = spec.get('header') or {}
     found = []
     for item in [*header.get('substrates', []), *header.get('products', [])]:
+        if not item.get('smiles'):
+            continue  # a reagent written as its abbreviation carries no structure
         mol = Chem.MolFromSmiles(item['smiles'])
         for atom in mol.GetAtoms():
             atom.SetAtomMapNum(0)
@@ -343,6 +345,9 @@ def header_objects(spec, style, left, top):
     bottom, right)."""
     header = spec['header']; size = style['font_size']; gap = size * 1.2
     def shape(item, side='substrates'):
+        if item.get('text') and not item.get('smiles'):
+            return {'item': item, 'text': True, 'w': text_width(item['text'], style),
+                    'h': size * 1.6, 'x0': 0.0, 'y0': -size * 0.8, 'dropped': []}
         mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), style['bond_length'])
         if spec.get('rmark_in_ring'):
             xy = _r_marks_inside_rings(xy, mol, style['bond_length'])
@@ -368,6 +373,17 @@ def header_objects(spec, style, left, top):
     def molecule(s, key):
         nonlocal x, bottom
         dx = x + gap - s['x0']; dy = mid - s['y0'] - s['h'] / 2
+        if s.get('text'):
+            objects.append({'type': 'text', 'id': key, 'text': s['item']['text'], 'align': 'Center',
+                            'size': size, 'position': [x + gap + s['w'] / 2, mid + size * 0.35]})
+            bottom = max(bottom, mid + size)
+            if s['item'].get('label'):
+                plain, runs = caption_runs(s['item']['label'], bold=True)
+                objects.append({'type': 'text', 'text': plain, 'align': 'Center', 'size': size,
+                                'position': [x + gap + s['w'] / 2, mid + s['h'] / 2 + gap + size],
+                                **({'runs': runs} if runs else {})})
+            x += s['w'] + 2 * gap
+            return
         objects.append({'type': 'molecule', 'id': key, 'smiles': s['item']['smiles'],
                         'coordinates': [[px + dx, py + dy] for px, py in s['xy']]})
         bottom = max(bottom, mid + s['h'] / 2 + gap)
