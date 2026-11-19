@@ -484,6 +484,9 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     restyle = house is not None or any(isinstance(e, dict) and any(k in e for k in SPECIES_STYLE)
                                        for e in styled["species"])
     wanted = brief.get("highlight_varying")
+    # The source figures draw the general reaction's R marks in the same black as the rest of the
+    # scheme; painting them in the highlight colour adds a second visual focus. An explicit
+    # `header_mark_color` on the brief still wins, and so does an explicit highlight colour.
     mark_color = (wanted if isinstance(wanted, str) else HIGHLIGHT) if header and highlighted else None
     try:
         with tempfile.TemporaryDirectory(prefix="scope-inputs-") as scratch:
@@ -522,6 +525,13 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
             if painted:
                 path.write_text(str(text), encoding="utf-8")
                 applied.append("header_marks_highlighted")
+    # One font declaration per face: two drawing paths each declare Arial, which leaves the page
+    # with a duplicate entry.
+    for page in pages:
+        path = Path(page["path"])
+        merged, dropped = figure_house.merge_duplicate_fonts(path.read_text(encoding="utf-8"))
+        if dropped:
+            path.write_text(str(merged), encoding="utf-8")
     if render:
         # Rendering is not a styling step: a plain panel needs its PNG too. This used
         # to sit inside ``if restyle`` so an unstyled scope panel with render=true

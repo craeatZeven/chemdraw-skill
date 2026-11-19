@@ -1243,6 +1243,37 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
     return _wrap(root, cdxml), [f"generic rings ({count})"] if count else [], warnings
 
 
+def merge_duplicate_fonts(page_text: str) -> tuple[str, int]:
+    """Point every run at one declaration per face, so the page does not declare Arial twice.
+
+    Two drawing paths in the toolkit each declare the font they use, which leaves a page with two
+    identical Arial entries. ChemDraw keeps both; the file is cleaner with one.
+    """
+    import xml.etree.ElementTree as ET
+
+    root = ET.fromstring(page_text)
+    font_table = root.find("fonttable")
+    if font_table is None:
+        return page_text, 0
+    canonical: dict[tuple, str] = {}
+    dropped: dict[str, str] = {}
+    for font in list(font_table.findall("font")):
+        key = (font.get("name"), font.get("charset"))
+        first = canonical.get(key)
+        if first is None:
+            canonical[key] = font.get("id")
+            continue
+        dropped[font.get("id")] = first
+        font_table.remove(font)
+    if not dropped:
+        return page_text, 0
+    for run in root.iter("s"):
+        replacement = dropped.get(run.get("font"))
+        if replacement:
+            run.set("font", replacement)
+    return ET.tostring(root, encoding="unicode"), len(dropped)
+
+
 def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
     """Colour the R marks of a scope's general reaction like what varies in the grid below
     (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents). Marks are generic nodes
