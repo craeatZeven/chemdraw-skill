@@ -574,6 +574,12 @@ atoms and lands them on existing ones. For 3m the amide oxygen and a ring carbon
 Done when: no fragment of a rendered table has two atoms closer than 1 pt, asserted by a test over
 this brief.
 
+
+Measured while closing P22: the cell metrics are not slack. Squeezing `CELL` (pad 1.2 to 1.0, or the
+caption pitch) makes `test_cell_geometry_leaves_the_structure_box_clear_of_its_caption` fail, so the
+current values are the least the page checker accepts. The header therefore fits by making the page
+taller (`height_mm: 300`), not by tightening the grid — and a page that tall is 300 mm, longer than
+A4, which is worth knowing before asking for both a header and a 240 mm page.
 ## What the layout cannot do yet
 
 The seven items above share one root: the renderer lays a figure out as rows of well-formed
