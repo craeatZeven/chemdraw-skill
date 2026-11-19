@@ -235,8 +235,15 @@ def lewis_structure(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                 c.label((a['x'] - a['half'], a['y']), text, valign='middle')
                 grow(a['x'] - a['half'], a['y'] - 5.0); grow(a['x'] + a['half'] + 9.0, a['y'] + 5.0)
             else:
+                # A formal charge belongs on the atom, as a superscript: N+, O-, S+. It used to be
+                # bookkeeping only, so a nitro group came out neutral on paper.
+                fc = int(a['fc'] or 0)
+                if fc:
+                    magnitude = '' if abs(fc) == 1 else str(abs(fc))
+                    text += '{sup:%s%s}' % (magnitude, '+' if fc > 0 else MINUS)
                 c.label((a['x'], a['y']), text, align='Center', valign='middle')
-                grow(a['x'] - a['half'], a['y'] - 5.0); grow(a['x'] + a['half'], a['y'] + 5.0)
+                grow(a['x'] - a['half'], a['y'] - 5.0)
+                grow(a['x'] + a['half'] + (text_width('+', size * 0.7) if fc else 0.0), a['y'] + 5.0)
             cross = style == 'dot_cross' and a['order'] % 2 == 1
             for side, count in _groups(a, grid).items():
                 ux, uy = _unit(side)
