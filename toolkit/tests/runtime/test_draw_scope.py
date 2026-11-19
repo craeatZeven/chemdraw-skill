@@ -472,3 +472,19 @@ def test_a_general_reaction_can_pull_its_r_marks_inside_the_rings(tmp_path):
         mx, my = where[mark.get("id")]
         ox, oy = where[other]
         assert math.hypot(mx - ox, my - oy) < 9.0, "the mark is still a whole bond length away"
+
+def test_an_r_mark_reads_r_then_its_number(tmp_path):
+    # "R1", not "1R": the number is a smaller body run written after the letter. A face-64 run is
+    # drawn as a prefix by ChemDraw (that is how an isotope is written), which reads reversed.
+    brief = _brief(rmark_in_ring=True, header={
+        "substrates": [{"smiles": "c1ccc([*:1])cc1", "label": "1"}],
+        "products": [{"smiles": "Cc1ccc([*:1])cc1", "label": "3"}]})
+    report = draw_figure(brief, output_path=str(tmp_path / "runs"))
+    assert report["ok"] is True, report
+    (root,) = _pages(report)
+    marks = [n for n in root.iter("n") if n.get("NodeType") == "GenericNickname"]
+    assert marks, "no R mark was drawn"
+    runs = [(s.get("face"), s.get("size"), s.text) for s in marks[0].iter("s")]
+    assert runs and runs[0][2] == "R", runs
+    assert len(runs) == 2 and runs[1][2].isdigit(), runs
+    assert float(runs[1][1]) < float(runs[0][1]), "the number should be smaller than the letter"
