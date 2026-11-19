@@ -88,3 +88,12 @@ def test_the_style_is_a_known_word():
     with pytest.raises(ValueError):
         with R.charge_style("boxed"):
             pass
+
+def test_a_lone_charged_atom_gets_a_symbol(tmp_path):
+    # No bonds, no neighbours: every clearance term is empty, which used to be min() of nothing.
+    from cdxml_toolkit.mcp_runtime import figure_draw
+    brief = {"kind": "scheme",
+             "species": [{"id": "a", "smiles": "[CH3+]", "label": "1"}],
+             "steps": [{"substrates": ["a"], "products": ["a"]}]}
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "one.cdxml"))
+    assert report["ok"], report

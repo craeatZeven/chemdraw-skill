@@ -460,7 +460,10 @@ def _place_charges(atoms: list[dict[str, Any]], bonds: list[dict[str, Any]],
                           for i, box in labels.items() if box and i != int(atom["index"])]
                        + [math.hypot(px - qx, py - qy) - 2 * half - CHARGE_OWN_GAP for qx, qy in placed]
                        + ([math.hypot(px - disc[0], py - disc[1]) - disc[2] - half - CHARGE_BOND_GAP]
-                          if disc else []))
+                          if disc else [])
+                       # A lone charged atom has no bonds and no neighbours: every term above is
+                       # empty, and min() of nothing is a crash rather than a wide-open position.
+                       or [99.0])
             if best is None or room > best[0]:
                 best = (room, px, py)
             if room >= 0:
