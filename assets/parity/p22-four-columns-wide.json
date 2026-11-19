@@ -18,7 +18,12 @@
    "smiles": "Cc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
    "values": {
     "yield": "64%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3b",
@@ -26,7 +31,12 @@
    "smiles": "Cc1cccc(NC(=O)c2nc3ccccc3s2)c1",
    "values": {
     "yield": "64%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3c",
@@ -34,7 +44,12 @@
    "smiles": "Cc1ccccc1NC(=O)c1nc2ccccc2s1",
    "values": {
     "yield": "51%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3d",
@@ -42,7 +57,12 @@
    "smiles": "Cc1cc(C)cc(NC(=O)c2nc3ccccc3s2)c1",
    "values": {
     "yield": "57%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3e",
@@ -50,7 +70,12 @@
    "smiles": "COc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
    "values": {
     "yield": "63%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3f",
@@ -58,7 +83,12 @@
    "smiles": "O=C(Nc1ccccc1)c1nc2ccccc2s1",
    "values": {
     "yield": "66%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3g",
@@ -66,7 +96,12 @@
    "smiles": "Fc1cccc(NC(=O)c2nc3ccccc3s2)c1",
    "values": {
     "yield": "50%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3h",
@@ -74,7 +109,12 @@
    "smiles": "Clc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
    "values": {
     "yield": "39%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3i",
@@ -82,7 +122,12 @@
    "smiles": "Brc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
    "values": {
     "yield": "59%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3j",
@@ -90,7 +135,12 @@
    "smiles": "Ic1ccc(NC(=O)c2nc3ccccc3s2)cc1",
    "values": {
     "yield": "0%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3k",
@@ -98,7 +148,12 @@
    "smiles": "FC(F)(F)c1ccccc1NC(=O)c1nc2ccccc2s1",
    "values": {
     "yield": "63%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3l",
@@ -106,7 +161,12 @@
    "smiles": "FC(F)(F)c1ccc(NC(=O)c2nc3ccccc3s2)cc1",
    "values": {
     "yield": "58%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3m",
@@ -114,7 +174,12 @@
    "smiles": "O=C(Nc1ccccc1-c1ccccc1)c1nc2ccccc2s1",
    "values": {
     "yield": "61%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3n",
@@ -122,7 +187,12 @@
    "smiles": "O=C(NCc1ccccc1)c1nc2ccccc2s1",
    "values": {
     "yield": "74%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3o",
@@ -130,7 +200,12 @@
    "smiles": "O=C(NCCc1ccccc1)c1nc2ccccc2s1",
    "values": {
     "yield": "57%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3p",
@@ -157,7 +232,12 @@
    "smiles": "Cc1ccc(NC(=O)c2nc3ccc(Cl)cc3s2)cc1",
    "values": {
     "yield": "62%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3s",
@@ -165,7 +245,12 @@
    "smiles": "Cc1ccc(NC(=O)c2nc3ccc(Br)cc3s2)cc1",
    "values": {
     "yield": "66%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   },
   {
    "id": "3t",
@@ -173,7 +258,12 @@
    "smiles": "Cc1ccc(NC(=O)c2nc3ccc4ccccc4c3s2)cc1",
    "values": {
     "yield": "33%"
-   }
+   },
+   "abbreviate": [
+    "Me",
+    "OMe",
+    "CF3"
+   ]
   }
  ],
  "provenance": "Structures verified against Supporting Information File 1 of the source article (BJOC 22-127, https://doi.org/10.3762/bjoc.22.127): 3a-3i, 3j, 3k-3p, 3r and 3s match the characterised compounds or, for 3j (0% yield, not isolated), the figure. 3q (N-octadecyl, drawn with 3p's NH-Alk structure as in the figure) and 3t (N-(p-tolyl)naphtho[2,1-d]thiazole-2-carboxamide, 33%) were added from the figure afterwards; their structures are to be checked against the SI like the others.",
