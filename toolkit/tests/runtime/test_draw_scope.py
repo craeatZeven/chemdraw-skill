@@ -373,7 +373,6 @@ def test_header_r_marks_share_the_highlight_colour(tmp_path):
 
 
 @pytest.mark.parametrize("columns", [0, 9, 2.5, True, "4"])
-@pytest.mark.parametrize("columns", [0, 9, 2.5, True, "4"])
 def test_columns_is_a_small_whole_number(columns):
     report = draw_figure(_brief(columns=columns))
     assert report["ok"] is False and any("columns" in e for e in report["errors"]), report["errors"]
