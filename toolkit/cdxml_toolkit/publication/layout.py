@@ -351,9 +351,14 @@ def header_objects(spec, style, left, top):
         mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), style['bond_length'])
         if spec.get('rmark_in_ring'):
             xy = _r_marks_inside_rings(xy, mol, style['bond_length'])
-        if side == 'products' and float(spec.get('depiction_rotation') or 0):
+        # A header item may ask for its own turn (a reagent drawn the other way round in the source
+        # figure); otherwise the products follow the grid's orientation.
+        turn = item.get('rotation')
+        if turn is None and side == 'products':
+            turn = spec.get('depiction_rotation')
+        if float(turn or 0):
             # The general reaction above the grid must face the same way as the cells below it.
-            angle=math.radians(float(spec.get('depiction_rotation')))
+            angle=math.radians(float(turn))
             c,sn=math.cos(angle),math.sin(angle)
             hx=sum(x for x,_ in xy)/len(xy); hy=sum(y for _,y in xy)/len(xy)
             xy=[((x-hx)*c-(y-hy)*sn+hx, (x-hx)*sn+(y-hy)*c+hy) for x,y in xy]

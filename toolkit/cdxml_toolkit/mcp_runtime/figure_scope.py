@@ -98,8 +98,8 @@ def _header_errors(header) -> list[str]:
                         errors.append(f"header {side}[{number}] text item has unknown keys {unknown}.")
                     continue
                 errors.append(f"header {side}[{number}] needs a smiles, a name or a text; write R groups as [*:1], [*:2].")
-            elif set(item) - {"smiles", "name", "label"}:
-                errors.append(f"header {side}[{number}] has unknown keys {sorted(set(item) - {'smiles', 'name', 'label'})}.")
+            elif set(item) - {"smiles", "name", "label", "rotation"}:
+                errors.append(f"header {side}[{number}] has unknown keys {sorted(set(item) - {'smiles', 'name', 'label', 'rotation'})}.")
     for side in ("above", "below"):
         if side in header and not (isinstance(header[side], list) and all(isinstance(t, str) for t in header[side])):
             errors.append(f"header {side} must be a list of condition lines.")
@@ -366,7 +366,10 @@ def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
                 rebuilt.append({"text": item["text"], **({"label": str(item["label"])} if item.get("label") else {})})
             elif queue:
                 g = queue.pop(0)
-                rebuilt.append({"smiles": g["smiles"], **({"label": str(item["label"])} if item.get("label") else {})})
+                entry = {"smiles": g["smiles"], **({"label": str(item["label"])} if item.get("label") else {})}
+                if item.get("rotation") is not None:
+                    entry["rotation"] = item["rotation"]
+                rebuilt.append(entry)
         out[side] = rebuilt
     return out, errors
 

@@ -625,7 +625,7 @@ def test_a_scope_brief_header_is_checked():
     assert _validate({**base, 'header': {'substrates': [{'smiles': 'CC'}], 'products': [{'smiles': 'CCO'}],
                                          'above': ['O2']}}) == []
     for header, message in (({'products': [{'smiles': 'C'}]}, 'substrates'),
-                            ({'substrates': [{'smiles': 'C'}], 'products': [{}]}, 'smiles or a name'),
+                            ({'substrates': [{'smiles': 'C'}], 'products': [{}]}, 'needs a smiles'),
                             ({'substrates': [{'smiles': 'C'}], 'products': [{'smiles': 'C'}], 'arrow': 'x'}, 'unknown keys')):
         assert any(message in e for e in _validate({**base, 'header': header})), header
 

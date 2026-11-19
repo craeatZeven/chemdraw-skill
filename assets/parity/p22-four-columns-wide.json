@@ -279,7 +279,8 @@
    },
    {
     "smiles": "ClCC(=O)N[*:2]",
-    "label": "2a,c–r"
+    "label": "2a,c–r",
+    "rotation": 180
    },
    {
     "text": "S8"
