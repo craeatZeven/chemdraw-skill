@@ -196,6 +196,9 @@ def field_text(record, field):
     rendered = value if value != '' else '—'
     if value != '' and field.get('unit'): rendered += ' ' + field['unit']
     label = field.get('label', field['column'])
+    if field.get('format'):
+        # A source figure may put the number first ("67% yield") or bind the unit to it ("67%").
+        return str(field['format']).format(value=rendered, label=label)
     return f'{label}: {rendered}' if label else rendered
 
 

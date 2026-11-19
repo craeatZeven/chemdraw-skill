@@ -1,0 +1,83 @@
+{
+ "kind": "scope",
+ "provenance": "Transcribed from BJOC 22-128 scheme 17 (compounds 45a-45e): the bicyclo[2.2.1]hept-5-ene core carrying the (E)-3-oxoprop-1-enyl chain and an ester, with yield, ee and dr read off the figure. 45a OCH2CF3, 45b OCH2Ph, 45c O-adamantyl, 45d OAc (mixed anhydride, as drawn), 45e propargyl.",
+ "title": "selected examples",
+ "fields": [
+  {
+   "key": "yield",
+   "label": "yield",
+   "inline": false,
+   "hide_label": false,
+   "format": "{value}% {label}"
+  },
+  {
+   "key": "ee",
+   "label": "ee",
+   "inline": false,
+   "hide_label": false,
+   "format": "{value}% {label}"
+  },
+  {
+   "key": "dr",
+   "label": "dr",
+   "inline": false,
+   "hide_label": false,
+   "format": "{value} {label}"
+  }
+ ],
+ "species": [
+  {
+   "id": "45a",
+   "label": "45a",
+   "smiles": "FC(F)(F)COC(=O)[C@H]1([C@H](C=CC=O)[C@@H]2C=C[C@H]1C2)",
+   "values": {
+    "yield": "67",
+    "ee": "90",
+    "dr": "7.2:1"
+   }
+  },
+  {
+   "id": "45b",
+   "label": "45b",
+   "smiles": "c1ccccc1COC(=O)[C@H]1([C@H](C=CC=O)[C@@H]2C=C[C@H]1C2)",
+   "values": {
+    "yield": "87",
+    "ee": "77",
+    "dr": "8.2:1"
+   }
+  },
+  {
+   "id": "45c",
+   "label": "45c",
+   "smiles": "[C@H]1([C@H](C=CC=O)[C@@H]2C=C[C@H]1C2)C(=O)OC34CC5CC(CC(C5)C3)C4",
+   "values": {
+    "yield": "36",
+    "ee": "97",
+    "dr": "2.1:1"
+   }
+  },
+  {
+   "id": "45d",
+   "label": "45d",
+   "smiles": "CC(=O)OC(=O)[C@H]1([C@H](C=CC=O)[C@@H]2C=C[C@H]1C2)",
+   "values": {
+    "yield": "50",
+    "ee": "97",
+    "dr": "4.5:1"
+   }
+  },
+  {
+   "id": "45e",
+   "label": "45e",
+   "smiles": "C#CCOC(=O)[C@H]1([C@H](C=CC=O)[C@@H]2C=C[C@H]1C2)",
+   "values": {
+    "yield": "60",
+    "ee": "81",
+    "dr": "2.7:1"
+   }
+  }
+ ],
+ "columns": 3,
+ "width_mm": 180,
+ "height_mm": 200
+}

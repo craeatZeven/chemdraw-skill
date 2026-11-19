@@ -423,7 +423,7 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 457: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 459: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_tools`
 
@@ -661,7 +661,7 @@
 - **function**, line 15: `local_path(base, value)` - No public docstring in the audited version.
 - **function**, line 11: `sha256(path)` - No public docstring in the audited version.
 - **function**, line 36: `table_rows(path, sheet = None)` - No public docstring in the audited version.
-- **function**, line 202: `write_json(path, value)` - No public docstring in the audited version.
+- **function**, line 205: `write_json(path, value)` - No public docstring in the audited version.
 
 ## `publication.house_styles`
 

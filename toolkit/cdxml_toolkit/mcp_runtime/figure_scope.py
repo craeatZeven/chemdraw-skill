@@ -72,7 +72,8 @@ def _fields(brief: dict) -> tuple[list[dict], list[str]]:
         # leaves the line out where the value is empty instead of drawing a dash.
         fields.append({"key": key, "label": "" if label is None else str(label), "unit": item.get("unit") or None,
                        "show_label": item.get("show_label") is True, "hide_label": item.get("show_label") is False,
-                       "optional": item.get("optional") is True})
+                       "optional": item.get("optional") is True,
+                        "format": item.get("format") or None})
     return fields, errors
 
 
@@ -338,6 +339,7 @@ def _cell_fields(fields: list[dict], notes: bool, definitions: bool = False) -> 
     compact = len(fields) == 1 and not fields[0].get("show_label")
     cells = [{"column": columns[f["key"]], "label": "" if compact or f.get("hide_label") else f["label"],
               **({"unit": f["unit"]} if f["unit"] else {}), **({"optional": True} if f.get("optional") else {}),
+              **({"format": f["format"]} if f.get("format") else {}),
               **({"inline": True} if compact else {})}
              for f in fields]
     if definitions:

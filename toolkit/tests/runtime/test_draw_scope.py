@@ -578,3 +578,16 @@ def test_a_ring_edge_mark_crosses_its_edge_squarely():
     edge_angle = _math.atan2(edge[3] - edge[1], edge[2] - edge[0])
     difference = abs(((_math.degrees(stroke - edge_angle) + 90) % 180) - 90)
     assert abs(90 - difference) < 5, (edge_angle, stroke, difference)
+
+def test_a_field_format_puts_the_number_before_its_name():
+    # BJOC 22-128 scheme 17 prints "67% yield" / "90% ee" / "7.2:1 dr": the number leads and the unit
+    # binds to it, which the default "yield: 67" cannot express.
+    from cdxml_toolkit.publication.data import field_text
+
+    record = {"values": {"v1": "67", "v2": "90"}}
+    assert field_text(record, {"column": "v1", "label": "yield", "format": "{value}% {label}"}) == "67% yield"
+    assert field_text(record, {"column": "v2", "label": "ee", "format": "{value}% {label}"}) == "90% ee"
+    # Without a template the old reading stands.
+    assert field_text(record, {"column": "v1", "label": "yield"}) == "yield: 67"
+    # An empty optional value stays empty rather than being formatted.
+    assert field_text({"values": {"v1": ""}}, {"column": "v1", "label": "yield", "optional": True}) == ""
