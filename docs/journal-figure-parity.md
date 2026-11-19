@@ -617,6 +617,38 @@ so this is a wiring job, not a new geometry.
 Done when: no drawn label box overlaps a bond it does not belong to, asserted on this brief, and the
 CF3 of 3k clears the amide.
 
+### P48 - The ring mark of a general reaction sits on the ring edge  (open: needs a design)
+
+The source figure puts `R1` at the midpoint of the ring's left edge, with a short horizontal bond
+running in from outside, across that edge and across the inner double-bond line. Ours hangs the mark
+off a vertex, so the bond leaves from a corner instead of the middle of an edge.
+
+Measured and rejected, so nobody repeats them:
+
+- Placing the mark at the ring's centre (0.42, then 0.28 of a bond length) buries the bond under the
+  label and puts the text across the ring edge.
+- Dropping the mark's bond and parking it at the centre is refused with
+  `chemical_semantics_changed: source=*c1ccccc1; roundtrip=*.c1ccccc1`. That refusal is correct: a
+  removed bond really is a different molecule, so this must not be worked around.
+- Turning the ring 30 degrees so its left side is an edge turns the whole structure and slants the
+  bond; it reads worse than the vertex attachment.
+
+Two designs remain, and one has to be chosen before more time goes into this:
+
+**A, faithful.** Draw the edge mark as decoration: a `line` object for the short bond from the edge
+midpoint outwards, a `text` object for `R1`, and the real R atom left out of the drawing (its
+chemistry still comes from the brief's SMILES). The header identity check then has to accept "a
+decorative mark stands here" instead of reporting a missing fragment. Done when the page looks like
+the source, the readback says `matched` or a new `decoration_accounted`, and a test asserts it.
+
+**B, conservative.** State in this document that attaching at a vertex is the equivalent drawing this
+pipeline can express, with the difference from the source written down, and stop.
+
+The current baseline both options start from: header structures are drawn at 1.7 times the grid's
+bond length (`header_bond` in `publication/layout.py`), the mark sits 0.75 of that bond outside its
+ring atom, and its number is written as `"R"` plus `U+00B9` in one run (a `face="64"` run is drawn by
+ChemDraw as a raised prefix, which read `1R`).
+
 ## What the layout cannot do yet
 
 The seven items above share one root: the renderer lays a figure out as rows of well-formed
