@@ -56,9 +56,12 @@ def _hex(rgb):
     return '#%02X%02X%02X' % tuple(max(0, min(255, round(v * 255))) for v in rgb)
 
 
-def normalize_palette(palette: Iterable[str] | None):
+def normalize_palette(palette: Iterable[str] | None | str):
     if palette is None:
         return None
+    if isinstance(palette, str):
+        from .publication.palettes import resolve_palette
+        return resolve_palette(palette)['allowed']
     out = []
     for item in palette:
         text = str(item).strip()
@@ -67,6 +70,74 @@ def normalize_palette(palette: Iterable[str] | None):
         else:
             raise ValueError(f'A palette colour is #RRGGBB, not {item!r}')
     return tuple(out)
+
+
+def resolve_profile(profile: str) -> dict[str, Any]:
+    """Return checker rules for ``acs1996``, any measurement preset, or any house style."""
+    if profile in PROFILES:
+        return PROFILES[profile]
+    from .chemdraw.style_presets import STYLE_PRESETS, style_preset, style_preset_slug
+    from .publication.house_styles import house_style, load_house_styles
+    from .publication.palettes import resolve_palette
+
+    house = None
+    houses = load_house_styles()
+    if profile in houses:
+        house = house_style(profile)
+        slug = house.base_preset
+    else:
+        try:
+            slug = style_preset_slug(profile)
+        except ValueError as exc:
+            available = ', '.join(list(PROFILES) + sorted(STYLE_PRESETS) + sorted(houses))
+            raise ValueError(f'Unknown profile {profile!r}; available: {available}') from exc
+
+    preset = style_preset(slug)
+    attrs = preset['attributes']
+    settings = {
+        'BondLength': float(attrs['BondLength']),
+        'LineWidth': float(attrs['LineWidth']),
+        'BoldWidth': float(attrs['BoldWidth']),
+        'HashSpacing': float(attrs['HashSpacing']),
+        'MarginWidth': float(attrs['MarginWidth']),
+        'LabelSize': float(attrs['LabelSize']),
+        'CaptionSize': float(attrs['CaptionSize']),
+        'ChainAngle': float(attrs['ChainAngle']),
+    }
+    if house is not None:
+        measured = house.measured or {}
+        bond = settings['BondLength']
+        line = measured.get('line_width_over_bond_length')
+        if isinstance(line, (int, float)) and line > 0:
+            settings['LineWidth'] = float(f'{min(max(float(line) * bond, 0.3), 3.0):.3g}')
+        bold = measured.get('bold_width_over_bond_length')
+        if isinstance(bold, (int, float)) and bold > 0:
+            settings['BoldWidth'] = float(f'{min(max(float(bold) * bond, 0.8), 6.0):.3g}')
+        cap = measured.get('bond_length_over_cap_height')
+        if isinstance(cap, (int, float)) and cap > 0:
+            settings['LabelSize'] = float(f'{min(max(bond / float(cap) / 0.716, 6.0), 14.0):.3g}')
+
+    latin_fonts: list[str] = []
+    for role in ('label', 'caption'):
+        fname = preset['fonts'][role][0]
+        if fname not in latin_fonts:
+            latin_fonts.append(fname)
+    if 'Arial' not in latin_fonts and 'Helvetica' in latin_fonts:
+        latin_fonts.append('Arial')
+
+    pal = resolve_palette(house if house is not None else slug)
+    caption_size = settings['CaptionSize']
+    label_size = settings['LabelSize']
+    extra_sizes = tuple(sorted({label_size, caption_size} - {caption_size}))
+    return {
+        'settings': settings,
+        'latin_fonts': tuple(latin_fonts),
+        'cjk_fonts': ('SimSun',),
+        'text_size': caption_size,
+        'extra_text_sizes': extra_sizes,
+        'min_text_size': min(6.0, label_size, caption_size),
+        'palette': pal['allowed'],
+    }
 
 
 def _run_markup(run) -> str:
@@ -366,9 +437,7 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
     bonds on purpose). Errors are things ChemDraw would drop, misdraw or that break the house
     rules; warnings need a look.
     """
-    if profile not in PROFILES:
-        raise ValueError(f'Unknown profile {profile!r}; available: {", ".join(PROFILES)}')
-    rules = PROFILES[profile]
+    rules = resolve_profile(profile)
     allowed = rules['palette'] if palette == 'profile' else normalize_palette(palette)
     errors: list[dict] = []
     warnings: list[dict] = []
@@ -435,7 +504,7 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
             _issue(errors, 'font_undefined', f'"{content[:12]}" uses a font id that is not in the font table')
         size = float(run.get('size', root.get('CaptionSize', rules['text_size'])))
         sizes[size] = sizes.get(size, 0) + 1
-    accepted = {rules['text_size'], *(float(v) for v in allow_sizes)}
+    accepted = {rules['text_size'], *rules.get('extra_text_sizes', ()), *(float(v) for v in allow_sizes)}
     for size, count in sorted(sizes.items()):
         if size < rules['min_text_size']:
             _issue(errors, 'text_too_small', f'{count} text run(s) at {size:g} pt are below the {rules["min_text_size"]:g} pt minimum')

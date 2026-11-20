@@ -27,7 +27,7 @@ from .figure_draw import (
 from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manifest_style
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
-              "highlight_varying", "header"}
+              "highlight_varying", "header", "group_colors"}
 HEADER_KEYS = {"substrates", "products", "above", "below"}
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
@@ -125,6 +125,13 @@ def _validate(brief: dict) -> list[str]:
     if highlight is not None and not (highlight is True or highlight is False or (
             isinstance(highlight, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", highlight))):
         errors.append("highlight_varying must be true, false or a hex colour like #FF6600.")
+    group_colors = brief.get("group_colors")
+    if group_colors is not None and group_colors != "auto":
+        if not isinstance(group_colors, dict) or not all(
+            isinstance(k, str) and isinstance(v, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", v)
+            for k, v in group_colors.items()
+        ):
+            errors.append('group_colors must be "auto" or an object mapping group names to #RRGGBB colours.')
 
     species = brief.get("species")
     if not isinstance(species, list) or not species:
@@ -221,27 +228,58 @@ def _varying_atoms(grounded: list[dict]) -> tuple[dict[str, list[int]], str | No
     return varying, None
 
 
-def _highlight_brief(brief: dict, grounded: list[dict]) -> tuple[dict, dict[str, int], list[str]]:
+def _resolve_group_colors(brief: dict, house: Any) -> dict[str, str]:
+    raw = brief.get("group_colors")
+    if not raw:
+        return {}
+    if isinstance(raw, dict):
+        return {str(k): str(v).upper() for k, v in raw.items()}
+    from ..publication.palettes import resolve_palette
+    slug = brief_style(brief)[0]
+    band_colors = resolve_palette(house if house is not None else slug)["band_colors"]
+    groups = list(dict.fromkeys(_text(e.get("group")) for e in brief.get("species") or []
+                                if isinstance(e, dict) and _text(e.get("group"))))
+    return {g: band_colors[i % len(band_colors)] for i, g in enumerate(groups)}
+
+
+def _highlight_brief(
+    brief: dict,
+    grounded: list[dict],
+    house: Any = None,
+    group_colors: dict[str, str] | None = None,
+) -> tuple[dict, dict[str, int], list[str], str | None]:
     """The brief with the varying group of each compound coloured, as atom and bond colours.
 
     A compound that sets its own color, atom_colors or bond_colors keeps them. The bond that
     joins a group to the core is coloured with it, so a methyl drawn as a bare line shows.
+    When ``group_colors`` maps a compound's section band to a colour, that band's colour
+    is used for its varying group so band rules, titles and substituents match.
     """
     wanted = brief.get("highlight_varying")
     if not wanted:
-        return brief, {}, []
-    colour = wanted if isinstance(wanted, str) else HIGHLIGHT
+        return brief, {}, [], None
+    house_var = house.figure_convention("substrate_scope", "variation_color") if house is not None else None
+    applied_note = None
+    if isinstance(wanted, str):
+        default_colour = wanted.upper()
+    elif house_var:
+        default_colour = str(house_var).upper()
+        applied_note = f"substrate_scope.variation_color={default_colour}"
+    else:
+        default_colour = HIGHLIGHT
     varying, problem = _varying_atoms(grounded)
     if problem:
-        return brief, {}, [problem]
+        return brief, {}, [problem], applied_note
     smiles = {g["id"]: g["smiles"] for g in grounded}
     styled = copy.deepcopy(brief)
     counts: dict[str, int] = {}
+    gcolors = group_colors or {}
     for entry in styled["species"]:
         ident = str(entry["id"])
         atoms = varying.get(ident) or []
         if not atoms or any(k in entry for k in ("color", "atom_colors", "bond_colors")):
             continue
+        colour = gcolors.get(_text(entry.get("group"))) or default_colour
         mol = Chem.MolFromSmiles(smiles[ident])
         chosen = set(atoms)
         entry["atom_colors"] = [{"atoms": atoms, "color": colour}]
@@ -249,7 +287,7 @@ def _highlight_brief(brief: dict, grounded: list[dict]) -> tuple[dict, dict[str,
                                            if {b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & chosen],
                                  "color": colour}]
         counts[ident] = len(atoms)
-    return styled, counts, []
+    return styled, counts, [], applied_note
 
 
 def _cell_fields(fields: list[dict], notes: bool, definitions: bool = False) -> list[dict]:
@@ -292,7 +330,7 @@ def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
 
 
 def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[dict], render: bool,
-                  header: dict | None = None) -> Path:
+                  header: dict | None = None, group_colors: dict[str, str] | None = None) -> Path:
     columns = {f["key"]: f"v{i}" for i, f in enumerate(fields, 1)}
     notes = any(isinstance(e, dict) and e.get("note") for e in brief["species"])
     definitions = any(isinstance(e, dict) and e.get("definition") for e in brief["species"])
@@ -334,6 +372,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         "style": style,
         "native_render": render,
         **({"header": header} if header else {}),
+        **({"group_colors": group_colors} if group_colors else {}),
     }
     path = work / "spec.json"
     path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
@@ -386,8 +425,12 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
         return _failure([f"Refusing to overwrite an existing folder: {target}"], kind="scope")
 
     house = brief_house(brief)
+    group_colors = _resolve_group_colors(brief, house)
+    variation_applied: str | None = None
     try:
-        styled, highlighted, highlight_warnings = _highlight_brief(brief, drawn)
+        styled, highlighted, highlight_warnings, variation_applied = _highlight_brief(
+            brief, drawn, house=house, group_colors=group_colors
+        )
     except Exception as exc:  # a failed comparison leaves the panel uncoloured, and says so
         styled, highlighted, highlight_warnings = brief, {}, [f"highlight_varying could not compare the compounds: {exc}"]
     restyle = house is not None or any(isinstance(e, dict) and any(k in e for k in SPECIES_STYLE)
@@ -395,7 +438,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     try:
         with tempfile.TemporaryDirectory(prefix="scope-inputs-") as scratch:
             # A page that is edited afterwards is rendered after the edit, not by the builder.
-            spec = _write_inputs(Path(scratch), brief, grounded, fields, render and not restyle, header)
+            spec = _write_inputs(Path(scratch), brief, grounded, fields, render and not restyle, header, group_colors)
             result = publication.publication_figure("create", str(spec), str(target))
     except Exception as exc:
         return _failure([f"The scope panel could not be drawn: {exc}"], kind="scope")
@@ -408,7 +451,9 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     pages = [{"path": str(target / p["file"]), "file": p["file"], "compounds": per_page[i]}
              for i, p in enumerate(project["pages"])]
     checks = result["checks"]
-    applied: list[str] = []
+    applied: list[str] = [variation_applied] if variation_applied else []
+    if group_colors:
+        applied.append("group_colors")
     skipped: list[str] = []
     style_warnings: list[str] = []
     if restyle:
@@ -423,7 +468,8 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     if header and highlighted:
         # The general reaction's R marks take the colour of what varies below (BJOC 22-127).
         wanted = brief.get("highlight_varying")
-        colour = wanted if isinstance(wanted, str) else HIGHLIGHT
+        house_var = house.figure_convention("substrate_scope", "variation_color") if house is not None else None
+        colour = wanted if isinstance(wanted, str) else (str(house_var) if house_var else HIGHLIGHT)
         for page in pages:
             path = Path(page["path"])
             text, painted = figure_house.paint_header_marks(path.read_text(encoding="utf-8"), colour)

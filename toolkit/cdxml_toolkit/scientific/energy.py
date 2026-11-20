@@ -207,7 +207,41 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     legacy_ignored = None
     if spec.get('species') is not None:
         spec, legacy_ignored = from_species_spec(spec)
-    style = str(spec.get('style', 'smooth')).lower()
+    house_applied: list[str] = []
+    series_colors: tuple[str, ...] = tuple(SERIES_COLORS)
+    default_style = 'smooth'
+    default_unit = None
+    house_ref = spec.get('house_style')
+    if house_ref is not None:
+        from ..publication.house_styles import HouseStyle, house_style as load_house_style
+        from ..publication.palettes import resolve_palette
+        house = house_ref if isinstance(house_ref, HouseStyle) else load_house_style(str(house_ref))
+        pcols = house.figure_convention('energy_profile', 'pathway_colors')
+        if pcols:
+            series_colors = tuple(pcols)
+            house_applied.append('energy_profile.pathway_colors')
+        else:
+            series_colors = tuple(resolve_palette(house)['band_colors'])
+        lstyle = house.figure_convention('energy_profile', 'level_style')
+        if lstyle in ('bars_dashed_connectors', 'bars_solid_connectors'):
+            default_style = 'levels'
+            if spec.get('style') is None:
+                house_applied.append(f'energy_profile.level_style={lstyle}')
+        elif lstyle == 'smooth_curve':
+            default_style = 'smooth'
+            if spec.get('style') is None:
+                house_applied.append(f'energy_profile.level_style={lstyle}')
+        hunit = house.figure_convention('energy_profile', 'energy_unit')
+        if hunit:
+            default_unit = str(hunit)
+            if spec.get('unit') is None:
+                house_applied.append(f'energy_profile.energy_unit={hunit}')
+    if spec.get('palette') is not None:
+        from ..publication.palettes import resolve_palette
+        series_colors = tuple(resolve_palette(spec['palette'])['band_colors'])
+    if default_unit is not None and spec.get('unit') is None:
+        spec = {**spec, 'unit': default_unit}
+    style = str(spec.get('style') or default_style).lower()
     if style not in ('smooth', 'levels'):
         raise ValueError('style must be "smooth" or "levels"')
     raw_paths = spec.get('pathways')
@@ -238,7 +272,7 @@ def energy_profile(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             raise ValueError(f'{name}: point ids must be unique (give "id" where labels repeat)')
         warnings += _kinds(points, name)
         paths.append({'name': name, 'label': raw.get('label'), 'points': points, 'dashed': bool(raw.get('dashed')),
-                      'color': resolve_color(raw.get('color'), SERIES_COLORS[p_idx % len(SERIES_COLORS)])})
+                      'color': resolve_color(raw.get('color'), series_colors[p_idx % len(series_colors)])})
 
     # ---- structures drawn at stationary points (separate CDXML files, merged in at the end)
     structures = []

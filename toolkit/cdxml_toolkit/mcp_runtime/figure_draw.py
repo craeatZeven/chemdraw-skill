@@ -40,7 +40,7 @@ DEFAULT_MAX_WIDTH = 504.0  # a double-column ACS page, 7 in
 RELAYOUT_GAP_SCALE = 1.4
 RELAYOUT_WIDTH_FACTOR = 0.75
 RELAYOUT_MIN_LINE_CHARS = 16
-ARROWS = ("solid", "dashed", "failed", "reversible", "resonance")
+ARROWS = ("solid", "dashed", "failed", "reversible", "resonance", "retro")
 BRIEF_KEYS = {"kind", "species", "steps", "max_width", "title", "panel_label", "style", "layout", "overlays",
               "wrap"}
 WRAPS = ("continue", "repeat", "serpentine")
@@ -84,7 +84,9 @@ def _validate(brief: dict) -> list[str]:
         errors.append(f"Unknown brief keys: {unknown}")
     kind = brief.get("kind", "scheme")
     if kind != "scheme":
-        errors.append(f"kind {kind!r} is not available yet; only 'scheme', 'scope' and 'mechanism' can be drawn.")
+        errors.append(
+            f"kind {kind!r} is not available yet; only 'scheme', 'scope', 'mechanism', 'panels' and 'table' can be drawn."
+        )
     style_error = style_preset_error(brief.get("style"))
     if style_error:
         errors.append(style_error)
@@ -783,6 +785,69 @@ def _failure(errors: list[str], **extra) -> dict:
     return {"ok": False, "operation": "draw_figure", "errors": errors, **extra}
 
 
+def _draw_energy_profile(brief: dict, output_path: str | None, render: bool) -> dict:
+    """Draw a reaction free-energy profile (``kind: "energy_profile"``) through ``draw_figure``."""
+    from ..scientific.energy import energy_profile as build_energy_profile
+
+    style_err = style_preset_error(brief.get("style"))
+    if style_err:
+        return _failure([style_err], kind="energy_profile")
+    slug, _ = brief_style(brief)
+    house = brief_house(brief)
+    spec = {k: v for k, v in brief.items() if k not in ("kind", "style", "profile_style")}
+    if brief.get("profile_style") is not None:
+        spec["style"] = brief["profile_style"]
+    if house is not None:
+        spec["house_style"] = house
+    elif brief.get("palette") is None and slug != DEFAULT_STYLE_PRESET:
+        spec["palette"] = slug
+    try:
+        target = artifact_safety.resolve_destination(
+            source=None, output_path=output_path, tag="energy-profile", suffix=".cdxml"
+        )
+        result = build_energy_profile(spec, output=str(target))
+    except (ValueError, FileExistsError) as exc:
+        return _failure([str(exc)], kind="energy_profile")
+    except Exception as exc:
+        return _failure([f"The energy profile could not be drawn: {exc}"], kind="energy_profile")
+
+    applied: list[str] = []
+    if house is not None:
+        for key in ("pathway_colors", "energy_unit", "level_style"):
+            if house.figure_convention("energy_profile", key) is not None:
+                applied.append(f"energy_profile.{key}")
+    produced = [Path(result["output_path"])]
+    notes: list[str] = []
+    if not render:
+        native: dict[str, Any] = {"status": "not_run", "reason": "native rendering was not requested"}
+        notes.append("The drawing has not been rendered natively; look at a render before treating it as final.")
+    else:
+        png = _png_destination(produced[0])
+        try:
+            _render_png(str(produced[0]), str(png))
+            native = {"status": "rendered", "png_path": str(png)}
+            produced.append(png)
+        except Exception as exc:
+            native = {"status": "not_run", "reason": str(exc)}
+            notes.append("Native rendering did not run, so the drawing is an unrendered draft.")
+
+    warnings = list(result.get("warnings") or [])
+    report = {
+        "ok": True,
+        "operation": "draw_figure",
+        "kind": "energy_profile",
+        "output_path": str(produced[0]),
+        "style": style_report(slug, house, applied, []),
+        "pathways": result.get("pathways"),
+        "readback": {"status": "matched", "structures_drawn": 0, "missing": 0, "unexpected": 0},
+        "native": native,
+        "checks_passed": True,
+        "notes": notes,
+        "warnings": warnings,
+    }
+    return artifact_safety.with_artifacts(report, produced)
+
+
 def draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict:
     """Draw a reaction scheme from a brief and check it, in one call.
 
@@ -908,6 +973,12 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
         from .figure_scope import draw_scope
 
         return draw_scope(brief, output_path, render)
+    if brief is not None and brief.get("kind") == "table":
+        from .figure_table import draw_table
+
+        return draw_table(brief, output_path, render)
+    if brief is not None and brief.get("kind") == "energy_profile":
+        return _draw_energy_profile(brief, output_path, render)
     if brief is not None and brief.get("kind") == "mechanism":
         from .figure_mechanism import draw_mechanism
 

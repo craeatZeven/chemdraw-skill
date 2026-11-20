@@ -141,6 +141,11 @@ FIGURE_TYPE_CONVENTIONS: Mapping[str, tuple[str, ...]] = {
 APPLIED_FIGURE_CONVENTIONS: Mapping[str, tuple[str, ...]] = {
     "mechanism": ("curved_arrow_color", "curved_arrow_weight"),
     "catalytic_cycle": ("cycle_arrow_color",),
+    "substrate_scope": ("variation_color",),
+    "optimization_table": ("table_style", "entry_highlight"),
+    "energy_profile": ("pathway_colors", "energy_unit", "level_style"),
+    "concept_panel": ("comparison_layout", "this_work_color"),
+    "retrosynthesis": ("retro_arrow", "disconnection_mark", "disconnection_color"),
 }
 
 # Groups that can be contracted to a label: name -> (SMARTS with the attachment atom first,

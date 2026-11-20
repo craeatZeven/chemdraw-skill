@@ -90,9 +90,16 @@ def compare_inventories(a,b):
         diff=structural_diff(x['smiles'],y['smiles'])
         pairs.append({'before_smiles':x['smiles'],'after_smiles':y['smiles'],
             'assigned_center_count_delta':y['assigned_centers']-x['assigned_centers'],'comparison':diff})
+    old_keys = Counter(x['semantic_key'] for x in old)
+    new_keys = Counter(x['semantic_key'] for x in new)
+    added_molecules = sorted((new_keys - old_keys).elements())
+    removed_molecules = sorted((old_keys - new_keys).elements())
     return dict(status='preserved' if semantic else 'changed',
                 connectivity_preserved=connectivity, semantic_inventory_preserved=semantic,
                 composition_preserved=composition,
+                molecule_count_delta=len(new) - len(old),
+                added_molecules=added_molecules,
+                removed_molecules=removed_molecules,
                 molecules=pairs, scope='reader_consistency_not_source_identity')
 
 

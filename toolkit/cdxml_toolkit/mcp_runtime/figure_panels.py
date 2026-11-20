@@ -24,9 +24,14 @@ from typing import Any
 
 from . import artifact_safety, figure_house
 
-PANEL_BRIEF_KEYS = {"kind", "panels", "legend", "style", "max_width"}
-PANEL_KEYS = {"title", "brief", "gallery", "sections"}
+import re
+
+PANEL_BRIEF_KEYS = {"kind", "panels", "legend", "style", "max_width", "layout", "columns", "title_style", "toc"}
+PANEL_KEYS = {"title", "brief", "gallery", "sections", "color", "accent"}
 PANEL_CONTENT = ("brief", "gallery", "sections")
+PANEL_LAYOUTS = ("stacked", "side_by_side")
+TITLE_STYLES = ("box", "rule", "plain")
+INNER_KINDS = ("scheme", "mechanism", "table", "energy_profile")
 SECTION_KEYS = {"title", "brief"}
 GALLERY_KEYS = {"id", "smiles", "name", "caption", *figure_house.SPECIES_STYLE_KEYS}
 MAX_PANELS = 8
@@ -34,7 +39,8 @@ MAX_SECTIONS = 8
 MAX_GALLERY = 40
 TITLE_HEIGHT = 16.0   # a 10 pt line in its box
 TITLE_GAP = 8.0       # between a title box and its panel
-PANEL_GAP = 16.0      # between one panel and the next title
+PANEL_GAP = 16.0      # between one panel row and the next title
+COL_GAP = 20.0        # between side-by-side panel columns
 TITLE_INSET = 4.0     # the title's text from the box's left edge
 SECTION_LEAD = 8.0    # the dashed piece before a section's box
 SECTION_GAP = 4.0     # between a dashed piece and the box
@@ -42,6 +48,8 @@ SECTION_SHARE = 0.6   # a section box spans at least this share of the figure (t
 SECTION_SPACING = 12.0  # between one section's drawing and the next section's rule
 GALLERY_GAP = 24.0    # between gallery cells, across and down
 GALLERY_WIDTH = 480.0  # the default row width of a gallery, in points
+ACS_TOC_MAX_PT = (234.0, 126.0)  # 82.5 x 44.5 mm
+_HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
 def _validate(brief: dict) -> list[str]:
@@ -49,6 +57,15 @@ def _validate(brief: dict) -> list[str]:
     unknown = sorted(set(brief) - PANEL_BRIEF_KEYS)
     if unknown:
         errors.append(f"Unknown brief keys: {unknown}")
+    if brief.get("layout") is not None and brief["layout"] not in PANEL_LAYOUTS:
+        errors.append(f"layout must be one of {list(PANEL_LAYOUTS)}.")
+    cols = brief.get("columns")
+    if cols is not None and (isinstance(cols, bool) or not isinstance(cols, int) or not 1 <= cols <= 4):
+        errors.append("columns must be an integer from 1 to 4.")
+    if brief.get("title_style") is not None and brief["title_style"] not in TITLE_STYLES:
+        errors.append(f"title_style must be one of {list(TITLE_STYLES)}.")
+    if brief.get("toc") is not None and not isinstance(brief["toc"], bool):
+        errors.append("toc must be true or false.")
     panels = brief.get("panels")
     if not isinstance(panels, list) or not 1 <= len(panels) <= MAX_PANELS:
         errors.append(f"panels: give 1 to {MAX_PANELS} panels, each {{title, brief}}.")
@@ -63,6 +80,11 @@ def _validate(brief: dict) -> list[str]:
             errors.append(f"{where} has unknown keys {extra}.")
         if not isinstance(panel.get("title"), str) or not panel["title"].strip():
             errors.append(f"{where} needs a title, the one line in its box (\"(a) previous work\").")
+        pcolor = panel.get("color")
+        if pcolor is not None and not (isinstance(pcolor, str) and _HEX_RE.match(pcolor)):
+            errors.append(f"{where}: color must be a #RRGGBB hex string.")
+        if panel.get("accent") is not None and not isinstance(panel["accent"], bool):
+            errors.append(f"{where}: accent must be true or false.")
         given = [k for k in PANEL_CONTENT if k in panel]
         if len(given) != 1:
             errors.append(f"{where} needs exactly one of brief, gallery or sections.")
@@ -83,8 +105,8 @@ def _validate(brief: dict) -> list[str]:
 
 
 def _inner_errors(inner: Any, where: str) -> list[str]:
-    if not isinstance(inner, dict) or inner.get("kind", "scheme") not in ("scheme", "mechanism"):
-        return [f"{where}: brief must be a scheme or a mechanism brief (a scope panel is a page of its own)."]
+    if not isinstance(inner, dict) or inner.get("kind", "scheme") not in INNER_KINDS:
+        return [f"{where}: brief must be a scheme, mechanism, table or energy_profile brief (a scope panel is a page of its own)."]
     return []
 
 
@@ -251,6 +273,74 @@ def _stack(sizes: list[tuple[float, float]], title_height: float = TITLE_HEIGHT,
     return titles, panels, width, y
 
 
+def _grid_layout(
+    sizes: list[tuple[float, float]],
+    columns: int,
+    title_height: float = TITLE_HEIGHT,
+    gap: float = TITLE_GAP,
+    panel_gap: float = PANEL_GAP,
+    col_gap: float = COL_GAP,
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float], float, float]:
+    """Place panels in a multi-column grid; returns (titles, panels, panel_widths, total_width, bottom)."""
+    if columns <= 1:
+        titles, panels, width, bottom = _stack(sizes, title_height, gap, panel_gap)
+        return titles, panels, [width] * len(sizes), width, bottom
+    col_widths = [0.0] * columns
+    for idx, (w, _) in enumerate(sizes):
+        c = idx % columns
+        col_widths[c] = max(col_widths[c], w)
+    col_xs = [0.0] * columns
+    for c in range(1, columns):
+        col_xs[c] = col_xs[c - 1] + col_widths[c - 1] + col_gap
+    total_width = col_xs[-1] + col_widths[-1]
+    titles: list[tuple[float, float]] = []
+    panels: list[tuple[float, float]] = []
+    panel_widths: list[float] = []
+    y = 0.0
+    for row_start in range(0, len(sizes), columns):
+        if row_start:
+            y += panel_gap
+        row_items = sizes[row_start:row_start + columns]
+        row_h = max(h for _, h in row_items)
+        for offset, (_, _) in enumerate(row_items):
+            x = col_xs[offset]
+            titles.append((x, y))
+            panels.append((x, y + title_height + gap))
+            panel_widths.append(col_widths[offset])
+        y += title_height + gap + row_h
+    return titles, panels, panel_widths, total_width, y
+
+
+def _title_objects(title: str, width: float, title_style: str, text_w: float,
+                   color: str | None = None) -> list[dict]:
+    """Title bar objects: boxed header (default), rule-flanked header, or plain bold header."""
+    color_opt = {"color": color} if color else {}
+    if title_style == "plain":
+        return [{"type": "text", "text": title,
+                 "runs": [{"text": title, "bold": True, **color_opt}],
+                 "position": [0.0, TITLE_HEIGHT - 4.5]}]
+    if title_style == "rule":
+        mid = TITLE_HEIGHT / 2.0
+        pad = 6.0
+        text_w = min(text_w, max(20.0, width - 2 * (SECTION_LEAD + pad)))
+        left_end = max(SECTION_LEAD, (width - text_w) / 2.0 - pad)
+        right_start = min(width - SECTION_LEAD, (width + text_w) / 2.0 + pad)
+        objs: list[dict] = [
+            {"type": "line", "start": [0.0, mid], "end": [left_end, mid], "style": "line", **color_opt},
+            {"type": "text", "text": title, "align": "Center",
+             "runs": [{"text": title, "bold": True, **color_opt}],
+             "position": [width / 2.0, TITLE_HEIGHT - 4.5]},
+            {"type": "line", "start": [right_start, mid], "end": [width, mid], "style": "line", **color_opt},
+        ]
+        return objs
+    return [
+        {"type": "rectangle", "start": [0, 0], "end": [width, TITLE_HEIGHT], **color_opt},
+        {"type": "text", "text": title,
+         **({"runs": [{"text": title, **color_opt}]} if color else {}),
+         "position": [TITLE_INSET, TITLE_HEIGHT - 4.5]},
+    ]
+
+
 def _runs(line: Any) -> list[dict]:
     if isinstance(line, str):
         return [{"text": line}]
@@ -269,14 +359,34 @@ def _compose(objects: list[dict], path: Path) -> Path:
 
 
 def draw_panels(brief: dict, output_path: str | None, render: bool) -> dict:
-    """Draw each panel with draw_figure, then stack them under boxed titles on one page."""
+    """Draw each panel with draw_figure, then arrange them (stacked or side_by_side) on one page."""
     from ..cdxml_check import check_cdxml
     from ..cdxml_compose import content_box, merge_cdxml, parse_cdxml
-    from .figure_draw import _failure, _png_destination, _render_png, draw_figure
+    from ..publication.palettes import resolve_palette
+    from .figure_draw import _failure, _png_destination, _render_png, brief_house, brief_style, draw_figure
 
     errors = _validate(brief)
     if errors:
         return _failure(errors, kind="panels")
+
+    house = brief_house(brief)
+    slug = brief_style(brief)[0]
+    palette = resolve_palette(house if house is not None else slug)
+    accent_color = (
+        (house.figure_convention("concept_panel", "this_work_color") if house else None)
+        or palette["primary"]
+    )
+    layout = brief.get("layout")
+    if layout is None and house is not None:
+        hs_layout = house.figure_convention("concept_panel", "comparison_layout")
+        if hs_layout == "side_by_side":
+            layout = "side_by_side"
+    layout = layout or "stacked"
+    columns = brief.get("columns") or (2 if layout == "side_by_side" else 1)
+    if columns > 1:
+        layout = "side_by_side"
+    title_style = brief.get("title_style") or "box"
+
     reports: list[dict] = []
     with tempfile.TemporaryDirectory(prefix="panels-") as scratch:
         work = Path(scratch)
@@ -330,27 +440,29 @@ def draw_panels(brief: dict, output_path: str | None, render: bool) -> dict:
                 blocks.append([(None, path, size_of(path))])
             reports.append(report)
         rule_height = TITLE_HEIGHT + TITLE_GAP
-        sizes = [(max(w for _, _, (w, _) in block),
-                  sum(h + (rule_height if title else 0) for title, _, (_, h) in block)
-                  + SECTION_SPACING * (len(block) - 1))
-                 for block in blocks]
-        titles, panels, width, bottom = _stack(sizes)
         from ..publication.layout import style_settings, text_width
         text_style = style_settings({})
+        sizes = [(max(max(w for _, _, (w, _) in block), text_width(panel["title"], text_style, bold=True) + 2 * TITLE_INSET),
+                  sum(h + (rule_height if title else 0) for title, _, (_, h) in block)
+                  + SECTION_SPACING * (len(block) - 1))
+                 for panel, block in zip(brief["panels"], blocks)]
+        titles, panels, panel_widths, width, bottom = _grid_layout(sizes, columns)
         parts = []
         for number, (panel, block) in enumerate(zip(brief["panels"], blocks), 1):
-            title = _compose([{"type": "rectangle", "start": [0, 0], "end": [width, TITLE_HEIGHT]},
-                              {"type": "text", "text": panel["title"], "position": [TITLE_INSET, TITLE_HEIGHT - 4.5]}],
+            pwidth = panel_widths[number - 1]
+            pcolor = panel.get("color") or (accent_color if panel.get("accent") else None)
+            tw = text_width(panel["title"], text_style, bold=(title_style in ("rule", "plain")))
+            title = _compose(_title_objects(panel["title"], pwidth, title_style, tw, pcolor),
                              work / f"title-{number}.cdxml")
             parts.append({"file": str(title), "at": list(titles[number - 1]), "anchor": "top-left"})
-            y = panels[number - 1][1]
+            px, y = panels[number - 1]
             for k, (rule, path, (_, height)) in enumerate(block, 1):
                 if rule:
-                    drawn_rule = _compose(_section_rule(rule, width, text_width(rule, text_style)),
+                    drawn_rule = _compose(_section_rule(rule, pwidth, text_width(rule, text_style)),
                                           work / f"rule-{number}-{k}.cdxml")
-                    parts.append({"file": str(drawn_rule), "at": [0.0, y], "anchor": "top-left"})
+                    parts.append({"file": str(drawn_rule), "at": [px, y], "anchor": "top-left"})
                     y += rule_height
-                parts.append({"file": str(path), "at": [0.0, y], "anchor": "top-left"})
+                parts.append({"file": str(path), "at": [px, y], "anchor": "top-left"})
                 y += height + SECTION_SPACING
         if brief.get("legend"):
             lines = [{"type": "text", "text": "".join(r["text"] for r in _runs(line)), "runs": _runs(line),
@@ -375,19 +487,41 @@ def draw_panels(brief: dict, output_path: str | None, render: bool) -> dict:
             produced.append(png)
         except Exception as exc:
             native = {"status": "not_run", "reason": str(exc)}
-    check = check_cdxml(str(target), palette=None)
-    summary = [{"title": p["title"], "layout": r.get("layout"), "readback": r["readback"]["status"],
+    check = check_cdxml(str(target), palette=None, allow_sizes=(8, 9))
+    summary = [{"title": p["title"], "layout": r.get("layout") or r.get("kind"), "readback": r["readback"]["status"],
                 "checks_passed": r.get("checks_passed"), "warnings": r.get("warnings", [])}
                for p, r in zip(brief["panels"], reports)]
-    report = {
+    warnings = list(merged["warnings"])
+    toc_info = None
+    if brief.get("toc"):
+        bx1, by1, bx2, by2 = content_box(list(parse_cdxml(str(target)).find("page")))
+        tw_pt, th_pt = round(bx2 - bx1, 1), round(by2 - by1, 1)
+        fits = tw_pt <= ACS_TOC_MAX_PT[0] and th_pt <= ACS_TOC_MAX_PT[1]
+        toc_info = {
+            "width_pt": tw_pt,
+            "height_pt": th_pt,
+            "acs_max_pt": list(ACS_TOC_MAX_PT),
+            "fits_acs_toc": fits,
+        }
+        if not fits:
+            warnings.append(
+                f"TOC size {tw_pt} x {th_pt} pt exceeds ACS TOC limit "
+                f"{ACS_TOC_MAX_PT[0]:g} x {ACS_TOC_MAX_PT[1]:g} pt (82.5 x 44.5 mm)."
+            )
+    report: dict[str, Any] = {
         "ok": True,
         "operation": "draw_figure",
         "kind": "panels",
+        "layout": layout,
+        "title_style": title_style,
         "output_path": str(target),
         "panels": summary,
+        "panel_positions": [[round(x, 2), round(y, 2)] for x, y in panels],
         "check": {"errors": check["errors"], "warnings": check["warnings"]},
         "native": native,
         "checks_passed": all(p["checks_passed"] for p in summary) and not check["errors"],
-        "warnings": merged["warnings"],
+        "warnings": warnings,
     }
+    if toc_info is not None:
+        report["toc"] = toc_info
     return artifact_safety.with_artifacts(report, produced)

@@ -738,6 +738,7 @@ def _build_text_element(
         f'Z="{z}" '
         f'CaptionJustification="{justification}" '
         f'Justification="{justification}" '
+        f'InterpretChemically="no" '
         f'LineHeight="auto">'
     ]
 
@@ -790,8 +791,8 @@ def _build_label_element(
 # ---------------------------------------------------------------------------
 
 def _arrow_kind(style: Optional[str]) -> Optional[str]:
-    """The ``kind`` for _build_arrow: only reversible and resonance change the shape."""
-    return style if style in ("reversible", "resonance") else None
+    """The ``kind`` for _build_arrow: reversible, resonance and retro change the arrow shape."""
+    return style if style in ("reversible", "resonance", "retro") else None
 
 def _build_arrow(
     tail_x: float,
@@ -810,9 +811,10 @@ def _build_arrow(
     nogo : bool
         If True, adds ``NoGo="Cross"`` — ChemDraw's native failed-arrow
         rendering (bold X through the arrow shaft).
-    kind : "reversible" | "resonance" | None
+    kind : "reversible" | "resonance" | "retro" | None
         ``reversible`` is ChemDraw's equilibrium arrow (two half-headed
-        shafts); ``resonance`` is one shaft with a full head at both ends.
+        shafts); ``resonance`` is one shaft with a full head at both ends;
+        ``retro`` is ChemDraw's open double-shaft retrosynthesis arrow.
     """
     aid = ids.next()
     z = ids.next()
@@ -846,6 +848,9 @@ def _build_arrow(
                   'ArrowShaftSpacing="300"']
     elif kind == "resonance":
         attrs.append('ArrowheadTail="Full"')
+    elif kind == "retro":
+        attrs = [a for a in attrs if not a.startswith('ArrowheadType=')]
+        attrs += ['ArrowheadType="Angle"', 'LineType="Double"', 'ArrowShaftSpacing="300"']
     if dashed:
         attrs.append('LineType="Dashed"')
     if nogo:

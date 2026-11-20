@@ -116,6 +116,7 @@ LINE_JOIN = ', '   # "3a, 64%": the number and the values that share its line
 _FOOTNOTE = re.compile(r'\^([A-Za-z0-9*\u2020\u2021\u00a7]+)')
 _LOCANT = re.compile(r'(?:(?<=^)|(?<=[\s(]))(?:(ortho|meta|para|ipso|cis|trans|syn|anti|endo|exo|tert|sec)(?=[-\s])'
                      r'|([NOSCPRZE])(?=-))')
+_STEREO_PREFIX = re.compile(r'^(cis|trans|rac|syn|anti|endo|exo|ent|epi|meso|E|Z)(-\s*)(.+)$')
 
 
 def caption_runs(text, bold=False):
@@ -123,8 +124,9 @@ def caption_runs(text, bold=False):
 
     ``^b`` marks a footnote letter: it is drawn as an italic superscript and reads back as the
     letter alone ("40%^b" reads "40%b"). The compound label (``bold``) is drawn bold, with
-    subscripts only when it is a formula (``is_formula_label``: PhB(OH)2, not TS2); other lines
-    get formula subscripts (``chemical_runs``).
+    leading stereochemical prefixes (``cis-3a``, ``rac-2a``, ``E-1a``) in italic and subscripts
+    only when it is a formula (``is_formula_label``: PhB(OH)2, not TS2); other lines get
+    formula subscripts (``chemical_runs``).
     """
     pieces, offset = [], 0
     for m in _FOOTNOTE.finditer(text):
@@ -140,7 +142,13 @@ def caption_runs(text, bold=False):
         elif bold and is_formula_label(piece):
             runs += [{**r, 'bold': True} for r in chemical_runs(piece)]
         elif bold:
-            runs.append({'text': piece, 'bold': True})
+            sm = _STEREO_PREFIX.match(piece)
+            if sm:
+                runs.append({'text': sm.group(1), 'italic': True})
+                runs.append({'text': sm.group(2)})
+                runs.append({'text': sm.group(3), 'bold': True})
+            else:
+                runs.append({'text': piece, 'bold': True})
         else:
             runs += chemical_runs(piece) or [{'text': piece}]
     plain = ''.join(piece for piece, _ in pieces)
@@ -447,20 +455,25 @@ def create_pages(records,spec,stage,start_index=0):
                  'right':right}
         manifests.append(current)
         return current,margin,top,0
+    group_colors = spec.get('group_colors') or {}
     def band(current,y,name):
         """Open a group: its name on a rule across the panel, only the locants in italic.
 
         A short piece of rule leads into the name and the rest runs from just after it to the
         content's right edge, which is known only when the page is cropped.
         """
+        base_name = name[:-len(' (continued)')] if name.endswith(' (continued)') else name
+        bcolor = group_colors.get(base_name) or group_colors.get(name)
         label_x=margin+BAND_LEAD+BAND_GAP
         heading=wrap(name,width-label_x-margin-BAND_GAP,style)
         baseline=y+size; rule_y=baseline-size*0.35   # through the middle of the lower-case letters
         after=label_x+text_width(heading.split('\n')[0],style)+BAND_GAP
-        tail={'type':'line','start':[after,rule_y],'end':[width-margin,rule_y],'style':'line'}
-        current['objects'] += [{'type':'line','start':[margin,rule_y],'end':[margin+BAND_LEAD,rule_y],'style':'line'},
+        color_opt = {'color': bcolor} if bcolor else {}
+        runs = [{**r, **color_opt} for r in heading_runs(heading)]
+        tail={'type':'line','start':[after,rule_y],'end':[width-margin,rule_y],'style':'line',**color_opt}
+        current['objects'] += [{'type':'line','start':[margin,rule_y],'end':[margin+BAND_LEAD,rule_y],'style':'line',**color_opt},
                                tail,
-                               {'type':'text','text':heading,'runs':heading_runs(heading),
+                               {'type':'text','text':heading,'runs':runs,
                                 'position':[label_x,baseline],'size':size}]
         current['rules'].append(tail)
         current['right']=max(current['right'],after)

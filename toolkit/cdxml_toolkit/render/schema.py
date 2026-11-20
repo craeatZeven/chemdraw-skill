@@ -68,7 +68,7 @@ VALID_LAYOUTS = frozenset({
 
 VALID_WRAPS = frozenset({"repeat", "continue", "serpentine", "none"})
 
-VALID_ARROW_STYLES = frozenset({"solid", "dashed", "failed"})
+VALID_ARROW_STYLES = frozenset({"solid", "dashed", "failed", "reversible", "resonance", "retro"})
 
 
 @dataclass
