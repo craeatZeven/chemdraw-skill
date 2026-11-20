@@ -27,8 +27,12 @@ from .figure_draw import (
 from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manifest_style
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
-              "highlight_varying", "header", "group_colors"}
+              "highlight_varying", "header", "group_colors", "columns", "row_align", "band_style", "border",
+              "fragment_colors"}
 HEADER_KEYS = {"substrates", "products", "above", "below"}
+HEADER_ITEM_KEYS = {"smiles", "name", "label", "color"}
+ROW_ALIGNS = ("left", "center", "justify")
+BAND_STYLES = ("rule", "pill")
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
 SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", "definition", "secondary_of",
@@ -85,13 +89,17 @@ def _header_errors(header) -> list[str]:
     for side in ("substrates", "products"):
         items = header.get(side)
         if not isinstance(items, list) or not items:
-            errors.append(f"header {side}: list at least one structure, each {{smiles or name, label?}}.")
+            errors.append(f"header {side}: list at least one structure, each {{smiles or name, label?, color?}}.")
             continue
         for number, item in enumerate(items, 1):
             if not isinstance(item, dict) or not (item.get("smiles") or item.get("name")):
                 errors.append(f"header {side}[{number}] needs a smiles or a name; write R groups as [*:1], [*:2].")
-            elif set(item) - {"smiles", "name", "label"}:
-                errors.append(f"header {side}[{number}] has unknown keys {sorted(set(item) - {'smiles', 'name', 'label'})}.")
+            elif set(item) - HEADER_ITEM_KEYS:
+                errors.append(f"header {side}[{number}] has unknown keys {sorted(set(item) - HEADER_ITEM_KEYS)}.")
+            elif item.get("color") is not None and not (
+                isinstance(item["color"], str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", item["color"])
+            ):
+                errors.append(f"header {side}[{number}]: color must be a hex colour like #0B4F8A.")
     for side in ("above", "below"):
         if side in header and not (isinstance(header[side], list) and all(isinstance(t, str) for t in header[side])):
             errors.append(f"header {side} must be a list of condition lines.")
@@ -115,6 +123,34 @@ def _validate(brief: dict) -> list[str]:
         value = brief.get(key)
         if value is not None and not (isinstance(value, (int, float)) and low <= value <= high):
             errors.append(f"{key} must be a number from {low} to {high} millimetres.")
+    columns = brief.get("columns")
+    if columns is not None and not (isinstance(columns, int) and not isinstance(columns, bool) and 1 <= columns <= 10):
+        errors.append("columns must be an integer from 1 to 10.")
+    row_align = brief.get("row_align")
+    if row_align is not None and row_align not in ROW_ALIGNS:
+        errors.append(f"row_align must be one of {list(ROW_ALIGNS)}.")
+    band_style = brief.get("band_style")
+    if band_style is not None and band_style not in BAND_STYLES:
+        errors.append(f"band_style must be one of {list(BAND_STYLES)}.")
+    border = brief.get("border")
+    if border is not None and not (
+        isinstance(border, bool) or (isinstance(border, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", border))
+    ):
+        errors.append("border must be true, false, or a hex colour like #CCCCCC.")
+    frag_colors = brief.get("fragment_colors")
+    if frag_colors is not None:
+        if not isinstance(frag_colors, list):
+            errors.append("fragment_colors must be a list of {smarts, color, include_attaching_bond?} objects.")
+        else:
+            for idx, item in enumerate(frag_colors, 1):
+                if not isinstance(item, dict) or not isinstance(item.get("smarts"), str) or not item["smarts"].strip():
+                    errors.append(f"fragment_colors[{idx}] needs a non-empty smarts pattern.")
+                    continue
+                if Chem.MolFromSmarts(item["smarts"]) is None:
+                    errors.append(f"fragment_colors[{idx}]: invalid SMARTS {item['smarts']!r}.")
+                col = item.get("color")
+                if not (isinstance(col, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", col)):
+                    errors.append(f"fragment_colors[{idx}]: color must be a hex colour like #0B4F8A.")
     footnotes = brief.get("footnotes")
     if footnotes is not None and not (isinstance(footnotes, list) and all(isinstance(f, str) for f in footnotes)):
         errors.append("footnotes must be a list of text lines.")
@@ -248,46 +284,92 @@ def _highlight_brief(
     house: Any = None,
     group_colors: dict[str, str] | None = None,
 ) -> tuple[dict, dict[str, int], list[str], str | None]:
-    """The brief with the varying group of each compound coloured, as atom and bond colours.
+    """The brief with varying groups and/or SMARTS synthon fragments coloured.
 
-    A compound that sets its own color, atom_colors or bond_colors keeps them. The bond that
-    joins a group to the core is coloured with it, so a methyl drawn as a bare line shows.
-    When ``group_colors`` maps a compound's section band to a colour, that band's colour
-    is used for its varying group so band rules, titles and substituents match.
+    A compound that sets its own color, atom_colors or bond_colors keeps them, and secondary
+    by-products (``secondary_of``) stay subordinate grey. ``fragment_colors`` paints matched
+    synthons across all primary structures; ``highlight_varying`` paints atoms outside the
+    maximum common substructure (excluding atoms already painted by ``fragment_colors``).
     """
     wanted = brief.get("highlight_varying")
-    if not wanted:
+    frag_rules = brief.get("fragment_colors") or []
+    if not wanted and not frag_rules:
         return brief, {}, [], None
-    house_var = house.figure_convention("substrate_scope", "variation_color") if house is not None else None
+    warnings: list[str] = []
     applied_note = None
-    if isinstance(wanted, str):
-        default_colour = wanted.upper()
-    elif house_var:
-        default_colour = str(house_var).upper()
-        applied_note = f"substrate_scope.variation_color={default_colour}"
-    else:
-        default_colour = HIGHLIGHT
-    varying, problem = _varying_atoms(grounded)
-    if problem:
-        return brief, {}, [problem], applied_note
+    default_colour = HIGHLIGHT
+    varying: dict[str, list[int]] = {}
+    secondary_ids = {str(e["id"]) for e in brief.get("species") or [] if isinstance(e, dict) and e.get("secondary_of")}
+    if wanted:
+        house_var = house.figure_convention("substrate_scope", "variation_color") if house is not None else None
+        if isinstance(wanted, str):
+            default_colour = wanted.upper()
+        elif house_var:
+            default_colour = str(house_var).upper()
+            applied_note = f"substrate_scope.variation_color={default_colour}"
+        primary_grounded = [g for g in grounded if g["id"] not in secondary_ids]
+        varying, problem = _varying_atoms(primary_grounded)
+        if problem:
+            warnings.append(problem)
+    compiled_frags = [(Chem.MolFromSmarts(r["smarts"]), r["color"].upper(), bool(r.get("include_attaching_bond")))
+                      for r in frag_rules if Chem.MolFromSmarts(r["smarts"]) is not None]
     smiles = {g["id"]: g["smiles"] for g in grounded}
     styled = copy.deepcopy(brief)
     counts: dict[str, int] = {}
     gcolors = group_colors or {}
     for entry in styled["species"]:
         ident = str(entry["id"])
-        atoms = varying.get(ident) or []
-        if not atoms or any(k in entry for k in ("color", "atom_colors", "bond_colors")):
+        if entry.get("secondary_of") or ident not in smiles:
             continue
-        colour = gcolors.get(_text(entry.get("group"))) or default_colour
+        if any(k in entry for k in ("color", "atom_colors", "bond_colors")):
+            continue
         mol = Chem.MolFromSmiles(smiles[ident])
-        chosen = set(atoms)
-        entry["atom_colors"] = [{"atoms": atoms, "color": colour}]
-        entry["bond_colors"] = [{"bonds": [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds()
-                                           if {b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & chosen],
-                                 "color": colour}]
-        counts[ident] = len(atoms)
-    return styled, counts, [], applied_note
+        if mol is None:
+            continue
+        contracted_inner: set[int] = set()
+        if entry.get("definition"):
+            from ..publication.layout import label_group
+            named = label_group(mol, entry["definition"])
+            if named and len(named["atoms"]) > 1:
+                contracted_inner = set(named["atoms"][1:])
+        atom_specs: list[dict] = []
+        bond_specs: list[dict] = []
+        claimed: set[int] = set()
+        for pat, fcol, inc_attach in compiled_frags:
+            matched: set[int] = set()
+            for m in mol.GetSubstructMatches(pat):
+                matched.update(m)
+            fresh = sorted(matched - claimed - contracted_inner)
+            if not fresh:
+                continue
+            fset = set(fresh)
+            atom_specs.append({"atoms": fresh, "color": fcol})
+            bonds = [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds()
+                     if ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & fset if inc_attach
+                         else {b.GetBeginAtomIdx(), b.GetEndAtomIdx()} <= fset)
+                     and not ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & contracted_inner)]
+            if bonds:
+                bond_specs.append({"bonds": bonds, "color": fcol})
+            claimed.update(fset)
+        if wanted:
+            var_atoms = [a for a in (varying.get(ident) or []) if a not in claimed and a not in contracted_inner]
+            if var_atoms:
+                colour = gcolors.get(_text(entry.get("group"))) or default_colour
+                vset = set(var_atoms)
+                atom_specs.append({"atoms": var_atoms, "color": colour})
+                vbonds = [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds()
+                          if ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & vset
+                              and not ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} <= claimed)
+                              and not ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & contracted_inner))]
+                if vbonds:
+                    bond_specs.append({"bonds": vbonds, "color": colour})
+                claimed.update(vset)
+        if atom_specs:
+            entry["atom_colors"] = atom_specs
+            if bond_specs:
+                entry["bond_colors"] = bond_specs
+            counts[ident] = len(claimed)
+    return styled, counts, warnings, applied_note
 
 
 def _cell_fields(fields: list[dict], notes: bool, definitions: bool = False) -> list[dict]:
@@ -322,10 +404,14 @@ def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
     errors: list[str] = []
     for side in ("substrates", "products"):
         items = [{"id": f"header {side} {n}", **item} for n, item in enumerate(header[side], 1)]
-        grounded, more = _ground([{k: v for k, v in i.items() if k != "label"} for i in items])
+        grounded, more = _ground([{k: v for k, v in i.items() if k not in ("label", "color")} for i in items])
         errors += more
-        out[side] = [{"smiles": g["smiles"], **({"label": str(i["label"])} if i.get("label") else {})}
-                     for g, i in zip(grounded, items)]
+        out[side] = [
+            {"smiles": g["smiles"],
+             **({"label": str(i["label"])} if i.get("label") else {}),
+             **({"color": str(i["color"]).upper()} if i.get("color") else {})}
+            for g, i in zip(grounded, items)
+        ]
     return out, errors
 
 
@@ -359,6 +445,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         preset = style_preset_as_manifest_style(slug)
         preset.pop("font_size")
         style.update(preset)
+    title = brief["title"] if "title" in brief and brief["title"] is not None else "Substrate scope"
     spec = {
         "mode": "scope", "table": "table.csv", "label_column": "label", "group_column": "group",
         **({"secondary_column": SECONDARY_COLUMN} if secondary else {}),
@@ -366,13 +453,17 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         # A definition such as "Alk = C7H15" also draws that group as its label.
         **({"label_groups_from": DEFINITION_COLUMN} if definitions else {}),
         "fields": _cell_fields(fields, notes, definitions),
-        "title": brief.get("title") or "Substrate scope",
+        "title": title,
         "conditions": brief.get("conditions") or "",
         "footnotes": brief.get("footnotes") or [],
         "style": style,
         "native_render": render,
         **({"header": header} if header else {}),
         **({"group_colors": group_colors} if group_colors else {}),
+        **({"columns": brief["columns"]} if brief.get("columns") is not None else {}),
+        **({"row_align": brief["row_align"]} if brief.get("row_align") is not None else {}),
+        **({"band_style": brief["band_style"]} if brief.get("band_style") is not None else {}),
+        **({"border": brief["border"]} if brief.get("border") else {}),
     }
     path = work / "spec.json"
     path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")

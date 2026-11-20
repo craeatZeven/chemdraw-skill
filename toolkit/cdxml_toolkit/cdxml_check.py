@@ -461,11 +461,14 @@ def check_cdxml(source, *, profile: str = 'acs1996', palette: Iterable[str] | No
                 'warnings': [], 'summary': {}}
 
     # ---- document settings
+    accepted = {rules['text_size'], *rules.get('extra_text_sizes', ()), *(float(v) for v in allow_sizes)}
     for name, expected in rules['settings'].items():
         value = root.get(name)
         if value is None:
             _issue(warnings, 'setting_missing', f'{name} is not set (expected {expected:g})', setting=name)
         elif abs(float(value) - expected) > SETTING_TOLERANCE:
+            if name == 'CaptionSize' and any(abs(float(value) - s) <= SETTING_TOLERANCE for s in accepted):
+                continue
             _issue(errors, 'setting', f'{name} is {value}, expected {expected:g}', setting=name, found=value)
 
     # ---- fonts and text
