@@ -22,20 +22,23 @@ because the rule is easy to get wrong:
 licence containing `-NC`, `-ND`, "noncommercial" or "no derivatives" before a file is
 written. `file` holds the bare name; the image is `<file>.png`.
 
-## What is here — 71 figures, 14 MB
+## What is here — 89 figures
 
 | Journal | Count |
 | --- | --- |
 | Beilstein J. Org. Chem. | 51 |
-| Communications Chemistry | 11 |
-| Nature Communications | 9 |
+| Nature Communications | 14 |
+| Communications Chemistry | 14 |
+| Nature Synthesis | 4 |
+| Nature Catalysis | 4 |
+| Nature Chemistry | 2 |
 
 | Type | Count |
 | --- | --- |
+| substrate_scope | 26 |
 | reaction_scheme | 10 |
 | mechanism | 10 |
 | concept_panel | 10 |
-| substrate_scope | 8 |
 | structure_panel | 6 |
 | graphical_abstract | 6 |
 | assignment_panel | 4 |

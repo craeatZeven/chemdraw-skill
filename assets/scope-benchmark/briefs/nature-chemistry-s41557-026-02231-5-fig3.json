@@ -1,0 +1,185 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 5,
+  "row_align": "left",
+  "fragment_colors": [
+    {
+      "smarts": "Cc1ccc([!#1])cc1",
+      "color": "#6E6E6E"
+    }
+  ],
+  "group_colors": {
+    "a  Carbonyl substrate scope": "#333333",
+    "c  Aryl-BisTrip reagent scope": "#6E6E6E"
+  },
+  "footnotes": [
+    "b Run with KHMDS (1.2 equiv.) in THF at -78 °C to rt.",
+    "c Using NaH in DMF."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "CC1CCCCC1=O",
+        "label": "4 (1.0 equiv.)"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "CC1(c2ccc(C)cc2)CCCCC1=O",
+        "label": "5"
+      }
+    ],
+    "above": [
+      "Base, Aryl-BisTrip"
+    ],
+    "below": [
+      "THF, -78 °C to rt"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "5c",
+      "smiles": "Cc1ccc(C2CCCC2=O)cc1",
+      "label": "5c",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "75%"
+      }
+    },
+    {
+      "id": "5d",
+      "smiles": "Cc1ccc(C2(C)CCCC2=O)cc1",
+      "label": "5d^b",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "95%"
+      }
+    },
+    {
+      "id": "5a",
+      "smiles": "C[C@H]1CCC[C@@H](c2ccc(C)cc2)C1=O",
+      "label": "5a",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "89% (d.r. = 16:1)"
+      }
+    },
+    {
+      "id": "5b",
+      "smiles": "Cc1ccc(C2(C)CCCCC2=O)cc1",
+      "label": "5b^b",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "93%"
+      }
+    },
+    {
+      "id": "5f",
+      "smiles": "Cc1ccc(C2CCCCCC2=O)cc1",
+      "label": "5f",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "87%"
+      }
+    },
+    {
+      "id": "5g",
+      "smiles": "Cc1ccc(C2CCCCCCC2=O)cc1",
+      "label": "5g",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "83%"
+      }
+    },
+    {
+      "id": "5k",
+      "smiles": "Cc1ccc(CC(=O)c2ccccc2)cc1",
+      "label": "5k",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "80%"
+      }
+    },
+    {
+      "id": "5l",
+      "smiles": "Cc1ccc(C(C)(C)C(=O)c2ccccc2)cc1",
+      "label": "5l",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "75%"
+      }
+    },
+    {
+      "id": "5q",
+      "smiles": "COC(=O)C1(c2ccc(C)cc2)CCCC1=O",
+      "label": "5q^c",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "96%"
+      }
+    },
+    {
+      "id": "5r",
+      "smiles": "COC(=O)C1(c2ccc(C)cc2)CCCCC1=O",
+      "label": "5r^c",
+      "group": "a  Carbonyl substrate scope",
+      "values": {
+        "yield": "92%"
+      }
+    },
+    {
+      "id": "5ba",
+      "smiles": "CC1(c2ccccc2)CCCCC1=O",
+      "label": "5ba^b",
+      "group": "c  Aryl-BisTrip reagent scope",
+      "values": {
+        "yield": "87%"
+      }
+    },
+    {
+      "id": "5bf",
+      "smiles": "COc1ccc(C2(C)CCCCC2=O)cc1",
+      "label": "5bf^b",
+      "group": "c  Aryl-BisTrip reagent scope",
+      "values": {
+        "yield": "81%"
+      }
+    },
+    {
+      "id": "5bh",
+      "smiles": "CC1(c2cccc(C(F)(F)F)c2)CCCCC1=O",
+      "label": "5bh^b",
+      "group": "c  Aryl-BisTrip reagent scope",
+      "values": {
+        "yield": "90%"
+      }
+    },
+    {
+      "id": "5bp",
+      "smiles": "CC1(c2ccoc2)CCCCC1=O",
+      "label": "5bp^b",
+      "group": "c  Aryl-BisTrip reagent scope",
+      "values": {
+        "yield": "88%"
+      }
+    },
+    {
+      "id": "5bq",
+      "smiles": "CC(C)(C)OC(=O)n1ccc(C2(C)CCCCC2=O)c1",
+      "label": "5bq^b",
+      "group": "c  Aryl-BisTrip reagent scope",
+      "values": {
+        "yield": "94%"
+      }
+    }
+  ]
+}

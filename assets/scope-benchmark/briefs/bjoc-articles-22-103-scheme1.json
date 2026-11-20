@@ -1,0 +1,137 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "beilstein_joc",
+  "width_mm": 180,
+  "columns": 4,
+  "row_align": "center",
+  "fragment_colors": [
+    {
+      "smarts": "C(F)(F)F",
+      "color": "#008080",
+      "include_attaching_bond": true
+    },
+    {
+      "smarts": "C(F)(F)C(F)F",
+      "color": "#008080",
+      "include_attaching_bond": true
+    },
+    {
+      "smarts": "c1cc[nH]c1",
+      "color": "#1B4D89"
+    }
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "[C-]#[N+]Cc1ccc([*:1])cc1",
+        "label": "1a–c",
+        "color": "#1B4D89"
+      },
+      {
+        "smiles": "O=c1cc([*:2])oc2ccc([*:3])cc12",
+        "label": "2a–l"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "O=C(c1ccccc1O)c1c([*:2])[nH]c(-c2ccc([*:1])cc2)c1",
+        "label": "3a–t"
+      }
+    ],
+    "above": [
+      "AgOAc (10 mol %)"
+    ],
+    "below": [
+      "MeCN, 60 °C, 3 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "3a",
+      "smiles": "O=C(c1ccccc1O)c1c(C(F)(F)F)[nH]c(-c2ccccc2)c1",
+      "label": "3a",
+      "values": {
+        "yield": "83%"
+      }
+    },
+    {
+      "id": "3b",
+      "smiles": "Cc1ccc(-c2[nH]c(C(F)(F)F)c(C(=O)c3ccccc3O)c2)cc1",
+      "label": "3b",
+      "values": {
+        "yield": "88%"
+      }
+    },
+    {
+      "id": "3c",
+      "smiles": "COc1ccc(-c2[nH]c(C(F)(F)F)c(C(=O)c3ccccc3O)c2)cc1",
+      "label": "3c",
+      "values": {
+        "yield": "81%"
+      }
+    },
+    {
+      "id": "3d",
+      "smiles": "Cc1ccc(O)c(C(=O)c2c(C(F)(F)F)[nH]c(-c3ccccc3)c2)c1",
+      "label": "3d",
+      "values": {
+        "yield": "76%"
+      }
+    },
+    {
+      "id": "3e",
+      "smiles": "COc1ccc(O)c(C(=O)c2c(C(F)(F)F)[nH]c(-c3ccccc3)c2)c1",
+      "label": "3e",
+      "values": {
+        "yield": "79%"
+      }
+    },
+    {
+      "id": "3f",
+      "smiles": "Fc1ccc(O)c(C(=O)c2c(C(F)(F)F)[nH]c(-c3ccccc3)c2)c1",
+      "label": "3f",
+      "values": {
+        "yield": "74%"
+      }
+    },
+    {
+      "id": "3g",
+      "smiles": "Clc1ccc(O)c(C(=O)c2c(C(F)(F)F)[nH]c(-c3ccccc3)c2)c1",
+      "label": "3g",
+      "values": {
+        "yield": "72%"
+      }
+    },
+    {
+      "id": "3h",
+      "smiles": "Brc1ccc(O)c(C(=O)c2c(C(F)(F)F)[nH]c(-c3ccccc3)c2)c1",
+      "label": "3h",
+      "values": {
+        "yield": "69%"
+      }
+    },
+    {
+      "id": "3i",
+      "smiles": "O=C(c1ccccc1O)c1c(C(F)(F)C(F)F)[nH]c(-c2ccccc2)c1",
+      "label": "3i",
+      "values": {
+        "yield": "77%"
+      }
+    },
+    {
+      "id": "3j",
+      "smiles": "Cc1ccc(-c2[nH]c(C(F)(F)C(F)F)c(C(=O)c3ccccc3O)c2)cc1",
+      "label": "3j",
+      "values": {
+        "yield": "80%"
+      }
+    }
+  ]
+}

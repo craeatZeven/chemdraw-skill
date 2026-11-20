@@ -1,0 +1,97 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "beilstein_joc",
+  "width_mm": 165,
+  "columns": 3,
+  "row_align": "center",
+  "highlight_varying": "#0072B2",
+  "header": {
+    "substrates": [
+      {
+        "smiles": "C=CC=Cc1ccccc1",
+        "label": "43"
+      },
+      {
+        "smiles": "C=CC(=O)C",
+        "label": "44"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "CC(=O)[C@@H]1CC=C[C@H](c2ccccc2)C1",
+        "label": "45"
+      }
+    ],
+    "above": [
+      "chiral Au(III) catalyst (5 mol %)"
+    ],
+    "below": [
+      "CH2Cl2, -20 °C, 12 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield_ee",
+      "label": "",
+      "show_label": false
+    },
+    {
+      "key": "dr",
+      "label": "",
+      "show_label": false
+    }
+  ],
+  "species": [
+    {
+      "id": "45a",
+      "smiles": "CC(=O)[C@@H]1CC=C[C@H](c2ccccc2)C1",
+      "label": "45a",
+      "group": "selected examples",
+      "values": {
+        "yield_ee": "67% yield, 90% ee",
+        "dr": "7.2:1 dr"
+      }
+    },
+    {
+      "id": "45b",
+      "smiles": "CC(=O)[C@@H]1CC=C[C@H](c2ccc(C)cc2)C1",
+      "label": "45b",
+      "group": "selected examples",
+      "values": {
+        "yield_ee": "74% yield, 92% ee",
+        "dr": "8.1:1 dr"
+      }
+    },
+    {
+      "id": "45c",
+      "smiles": "CC(=O)[C@@H]1CC=C[C@H](c2ccc(OC)cc2)C1",
+      "label": "45c",
+      "group": "selected examples",
+      "values": {
+        "yield_ee": "81% yield, 94% ee",
+        "dr": "9.0:1 dr"
+      }
+    },
+    {
+      "id": "45d",
+      "smiles": "CC(=O)[C@@H]1CC=C[C@H](c2ccc(Cl)cc2)C1",
+      "label": "45d",
+      "group": "selected examples",
+      "values": {
+        "yield_ee": "62% yield, 88% ee",
+        "dr": "6.5:1 dr"
+      }
+    },
+    {
+      "id": "45e",
+      "smiles": "CC(=O)[C@@H]1CC=C[C@H](c2ccc(Br)cc2)C1",
+      "label": "45e",
+      "group": "selected examples",
+      "values": {
+        "yield_ee": "59% yield, 86% ee",
+        "dr": "6.0:1 dr"
+      }
+    }
+  ]
+}

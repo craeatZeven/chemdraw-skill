@@ -1,0 +1,159 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 4,
+  "row_align": "center",
+  "highlight_varying": "#1B4D89",
+  "footnotes": [
+    "a Reaction performed at 0 °C for 36 h."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "O=CC=C1C(=O)N([*:1])c2ccc([*:2])cc21",
+        "label": "1"
+      },
+      {
+        "smiles": "C#CC(OC(C)=O)c1ccccc1",
+        "label": "2a"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N([*:1])c2ccc([*:2])cc21",
+        "label": "(R,R)-3"
+      }
+    ],
+    "above": [
+      "Cu(CH3CN)4PF6 (5 mol%), L3 (10 mol%)",
+      "4a (5 mol%)"
+    ],
+    "below": [
+      "Na2CO3, THF, 25 °C"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "",
+      "show_label": false
+    },
+    {
+      "key": "sel",
+      "label": "",
+      "show_label": false
+    }
+  ],
+  "species": [
+    {
+      "id": "3ba",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(CC)c2ccccc21",
+      "label": "(R,R)-3ba",
+      "values": {
+        "yield": "79% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3ca",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(Cc2ccccc2)c2ccccc21",
+      "label": "(R,R)-3ca",
+      "values": {
+        "yield": "81% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3da",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(c2ccccc2)c2ccccc21",
+      "label": "(R,R)-3da",
+      "values": {
+        "yield": "73% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3ea",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2cccc(F)c21",
+      "label": "(R,R)-3ea",
+      "values": {
+        "yield": "60% yield",
+        "sel": ">95:5 d.r., 99% e.e."
+      }
+    },
+    {
+      "id": "3fa",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2ccc(F)cc21",
+      "label": "(R,R)-3fa",
+      "values": {
+        "yield": "50% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3ga",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2ccc(Cl)cc21",
+      "label": "(R,R)-3ga",
+      "values": {
+        "yield": "84% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3ha",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2ccc(Br)cc21",
+      "label": "(R,R)-3ha",
+      "values": {
+        "yield": "81% yield",
+        "sel": ">95:5 d.r., 99% e.e."
+      }
+    },
+    {
+      "id": "3ia",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2ccc(C)cc21",
+      "label": "(R,R)-3ia",
+      "values": {
+        "yield": "79% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3ja",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2ccc(OC)cc21",
+      "label": "(R,R)-3ja",
+      "values": {
+        "yield": "69% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3ka",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2cc(F)ccc21",
+      "label": "(R,R)-3ka",
+      "values": {
+        "yield": "88% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3la",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2c(F)cccc21",
+      "label": "(R,R)-3la",
+      "values": {
+        "yield": "78% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    },
+    {
+      "id": "3ma",
+      "smiles": "C#C[C@H](c1ccccc1)[C@]1(CC(=O)OC)C(=O)N(C)c2c(C)cccc21",
+      "label": "(R,R)-3ma^a",
+      "values": {
+        "yield": "80% yield",
+        "sel": ">95:5 d.r., >99% e.e."
+      }
+    }
+  ]
+}

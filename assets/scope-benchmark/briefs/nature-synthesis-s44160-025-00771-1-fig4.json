@@ -1,0 +1,212 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 230,
+  "columns": 5,
+  "row_align": "left",
+  "fragment_colors": [
+    {
+      "smarts": "c1ccccc1",
+      "color": "#0B4F8A"
+    }
+  ],
+  "highlight_varying": "#8B1E24",
+  "group_colors": {
+    "Scope of arylsodium compounds": "#0B4F8A",
+    "Scope of secondary alkyl halides": "#5B3B8C",
+    "Scope of primary alkyl bromides": "#8B1E24"
+  },
+  "footnotes": [
+    "a Yield determined by GC using dodecane as internal standard.",
+    "b 10 mol% Fe(acac)3 used."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "[Na]c1ccccc1",
+        "label": "Ar-Na",
+        "color": "#0B4F8A"
+      },
+      {
+        "smiles": "BrC1CCCCC1",
+        "label": "alkyl-Br",
+        "color": "#8B1E24"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "c1ccc(C2CCCCC2)cc1",
+        "label": "31–53"
+      }
+    ],
+    "above": [
+      "Fe(acac)3 (5 mol%)"
+    ],
+    "below": [
+      "MCH/TMEDA, 0 °C, 1 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "31",
+      "smiles": "CC(C)(C)c1ccc(C2CCCCC2)cc1",
+      "label": "31",
+      "group": "Scope of arylsodium compounds",
+      "values": {
+        "yield": "82% yield"
+      }
+    },
+    {
+      "id": "32",
+      "smiles": "Cc1ccc(C2CCCCC2)cc1",
+      "label": "32",
+      "group": "Scope of arylsodium compounds",
+      "values": {
+        "yield": "54% yield^a"
+      }
+    },
+    {
+      "id": "33",
+      "smiles": "Cc1cccc(C2CCCCC2)c1",
+      "label": "33",
+      "group": "Scope of arylsodium compounds",
+      "values": {
+        "yield": "42% yield"
+      }
+    },
+    {
+      "id": "34",
+      "smiles": "CCc1ccc(C2CCCCC2)cc1",
+      "label": "34",
+      "group": "Scope of arylsodium compounds",
+      "values": {
+        "yield": "81% yield"
+      }
+    },
+    {
+      "id": "36",
+      "smiles": "CCCCc1ccc(C2CCCCC2)cc1",
+      "label": "36",
+      "group": "Scope of arylsodium compounds",
+      "values": {
+        "yield": "71% yield"
+      }
+    },
+    {
+      "id": "39",
+      "smiles": "COc1ccccc1C1CCCCC1",
+      "label": "39",
+      "group": "Scope of arylsodium compounds",
+      "values": {
+        "yield": "33% yield^b"
+      }
+    },
+    {
+      "id": "40",
+      "smiles": "CN(C)c1ccc(C2CCCCC2)cc1",
+      "label": "40",
+      "group": "Scope of arylsodium compounds",
+      "values": {
+        "yield": "56% yield"
+      }
+    },
+    {
+      "id": "43",
+      "smiles": "CC(C)(C)c1ccc(C2CCCC2)cc1",
+      "label": "43",
+      "group": "Scope of secondary alkyl halides",
+      "values": {
+        "yield": "48% yield"
+      }
+    },
+    {
+      "id": "44",
+      "smiles": "CC(C)(C)c1ccc(C2CCC2)cc1",
+      "label": "44",
+      "group": "Scope of secondary alkyl halides",
+      "values": {
+        "yield": "85% yield"
+      }
+    },
+    {
+      "id": "45",
+      "smiles": "CC(C)(C)c1ccc(C2CCOCC2)cc1",
+      "label": "45",
+      "group": "Scope of secondary alkyl halides",
+      "values": {
+        "yield": "52% yield"
+      }
+    },
+    {
+      "id": "46",
+      "smiles": "CC(C)(C)c1ccc(C2CCN(C)CC2)cc1",
+      "label": "46",
+      "group": "Scope of secondary alkyl halides",
+      "values": {
+        "yield": "70% yield"
+      }
+    },
+    {
+      "id": "47",
+      "smiles": "CC(C)(C)c1ccc(C2CCC(F)(F)CC2)cc1",
+      "label": "47",
+      "group": "Scope of secondary alkyl halides",
+      "values": {
+        "yield": "58% yield"
+      }
+    },
+    {
+      "id": "48",
+      "smiles": "CCC(C)c1ccc(C(C)(C)C)cc1",
+      "label": "48",
+      "group": "Scope of primary alkyl bromides",
+      "values": {
+        "yield": "55% yield^a"
+      }
+    },
+    {
+      "id": "49",
+      "smiles": "CC(C)Cc1ccc(C(C)(C)C)cc1",
+      "label": "49",
+      "group": "Scope of primary alkyl bromides",
+      "values": {
+        "yield": "90% yield"
+      }
+    },
+    {
+      "id": "51",
+      "smiles": "CC(C)(C)c1ccc(CC2CCCCC2)cc1",
+      "label": "51",
+      "group": "Scope of primary alkyl bromides",
+      "values": {
+        "yield": "71% yield"
+      }
+    },
+    {
+      "id": "52",
+      "smiles": "CC(C)(C)c1ccc(CC2CCCC2)cc1",
+      "label": "52",
+      "group": "Scope of primary alkyl bromides",
+      "values": {
+        "yield": "79% yield"
+      }
+    },
+    {
+      "id": "53",
+      "smiles": "CC(C)(C)c1ccc(CC2CCC2)cc1",
+      "label": "53",
+      "group": "Scope of primary alkyl bromides",
+      "values": {
+        "yield": "82% yield"
+      }
+    }
+  ],
+  "height_mm": 340
+}

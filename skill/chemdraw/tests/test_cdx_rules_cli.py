@@ -96,4 +96,5 @@ def test_audit_corpus_script_passes_cc_by_check():
     report = json.loads(proc.stdout)
     assert report["ok"] is True
     assert report["declared_types"] == 23
-    assert report["total_figures"] == 71
+    assert report["total_figures"] >= 89
+    assert report["coverage"]["substrate_scope"]["count"] >= 26

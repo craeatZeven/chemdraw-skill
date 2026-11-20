@@ -1,0 +1,204 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 230,
+  "columns": 4,
+  "row_align": "left",
+  "fragment_colors": [
+    {
+      "smarts": "C(=O)c1ccccc1",
+      "color": "#8B1E24",
+      "include_attaching_bond": true
+    },
+    {
+      "smarts": "[Cl]",
+      "color": "#8B1E24",
+      "include_attaching_bond": true
+    }
+  ],
+  "group_colors": {
+    "a  Unactivated alkenes": "#6B4C9A",
+    "b  Vinyl arenes": "#008080",
+    "c  Aroyl chlorides": "#8B1E24"
+  },
+  "header": {
+    "substrates": [
+      {
+        "smiles": "C=CCCc1ccccc1",
+        "label": "Olefin A",
+        "color": "#008080"
+      },
+      {
+        "smiles": "O=C(Cl)c1ccccc1",
+        "label": "Aroyl chloride B",
+        "color": "#8B1E24"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "O=C(CC(Cl)CCc1ccccc1)c1ccccc1",
+        "label": "1–68"
+      }
+    ],
+    "above": [
+      "Cu(I) photocatalyst (2 mol%), blue LEDs"
+    ],
+    "below": [
+      "THF, r.t., 24 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "1",
+      "smiles": "O=C(CC(Cl)CCc1ccccc1)c1ccccc1",
+      "label": "1",
+      "group": "a  Unactivated alkenes",
+      "values": {
+        "yield": "72%"
+      }
+    },
+    {
+      "id": "6",
+      "smiles": "O=C(CC(Cl)CC1CCCC1)c1ccccc1",
+      "label": "6",
+      "group": "a  Unactivated alkenes",
+      "values": {
+        "yield": "59%"
+      }
+    },
+    {
+      "id": "12",
+      "smiles": "N#CCCCCC(Cl)CC(=O)c1ccccc1",
+      "label": "12",
+      "group": "a  Unactivated alkenes",
+      "values": {
+        "yield": "60%"
+      }
+    },
+    {
+      "id": "15",
+      "smiles": "CNCCCC(Cl)CC(=O)c1ccccc1",
+      "label": "15",
+      "group": "a  Unactivated alkenes",
+      "values": {
+        "yield": "0%"
+      }
+    },
+    {
+      "id": "16",
+      "smiles": "CC(C)(C)OC(=O)NCCCC(Cl)CC(=O)c1ccccc1",
+      "label": "16",
+      "group": "a  Unactivated alkenes",
+      "values": {
+        "yield": "53%"
+      }
+    },
+    {
+      "id": "17",
+      "smiles": "O=C(CC(Cl)CCCO)c1ccccc1",
+      "label": "17",
+      "group": "a  Unactivated alkenes",
+      "values": {
+        "yield": "25%"
+      }
+    },
+    {
+      "id": "27",
+      "smiles": "O=C(c1ccccc1)C1CCCCCCC1Cl",
+      "label": "27",
+      "group": "a  Unactivated alkenes",
+      "values": {
+        "yield": "78% (d.r. 90:10)"
+      }
+    },
+    {
+      "id": "31",
+      "smiles": "CC(C)(C)OC(=O)N1CCC(Cl)(CC(=O)c2ccccc2)CC1",
+      "label": "31",
+      "group": "a  Unactivated alkenes",
+      "values": {
+        "yield": "64%"
+      }
+    },
+    {
+      "id": "2",
+      "smiles": "O=C(CC(Cl)c1ccccc1)c1ccccc1",
+      "label": "2",
+      "group": "b  Vinyl arenes",
+      "values": {
+        "yield": "96%"
+      }
+    },
+    {
+      "id": "41",
+      "smiles": "N#Cc1ccc(C(Cl)CC(=O)c2ccccc2)cc1",
+      "label": "41",
+      "group": "b  Vinyl arenes",
+      "values": {
+        "yield": "94%"
+      }
+    },
+    {
+      "id": "42",
+      "smiles": "O=C(CC(Cl)c1ccc(C(F)(F)F)cc1)c1ccccc1",
+      "label": "42",
+      "group": "b  Vinyl arenes",
+      "values": {
+        "yield": "92%"
+      }
+    },
+    {
+      "id": "58",
+      "smiles": "O=C(CC(Cl)c1ccncc1)c1ccccc1",
+      "label": "58",
+      "group": "b  Vinyl arenes",
+      "values": {
+        "yield": "0%"
+      }
+    },
+    {
+      "id": "59",
+      "smiles": "Cc1ccccc1C(=O)CC(Cl)c1ccccc1",
+      "label": "59",
+      "group": "c  Aroyl chlorides",
+      "values": {
+        "yield": "88%"
+      }
+    },
+    {
+      "id": "62",
+      "smiles": "COc1ccc(C(=O)CC(Cl)c2ccccc2)cc1",
+      "label": "62",
+      "group": "c  Aroyl chlorides",
+      "values": {
+        "yield": "75%"
+      }
+    },
+    {
+      "id": "67",
+      "smiles": "O=C(CC(Cl)c1ccccc1)c1cccc2ccccc12",
+      "label": "67",
+      "group": "c  Aroyl chlorides",
+      "values": {
+        "yield": "51%"
+      }
+    },
+    {
+      "id": "68",
+      "smiles": "O=C(CC(Cl)c1ccccc1)c1cccs1",
+      "label": "68",
+      "group": "c  Aroyl chlorides",
+      "values": {
+        "yield": "82%"
+      }
+    }
+  ],
+  "height_mm": 340
+}

@@ -1,0 +1,145 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 230,
+  "columns": 3,
+  "row_align": "left",
+  "fragment_colors": [
+    {
+      "smarts": "O=C(O)C(N)",
+      "color": "#1A47B8",
+      "include_attaching_bond": true
+    },
+    {
+      "smarts": "O=C(OCc1ccccc1)N",
+      "color": "#8B1E24",
+      "include_attaching_bond": true
+    }
+  ],
+  "group_colors": {
+    "a) Amino acid scope": "#1A47B8",
+    "b) N-Terminus protecting group": "#8B1E24",
+    "c) PTC C-terminus": "#8B1E24"
+  },
+  "footnotes": [
+    "a HPLC yield (Isolated yield in parentheses) [epimerization level %]."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "CC(C)[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)S",
+        "label": "PTC 1",
+        "color": "#8B1E24"
+      },
+      {
+        "smiles": "N[C@@H]([*:1])C(=O)O",
+        "label": "amino acid (2 equiv)",
+        "color": "#1A47B8"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "CC(C)[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)N[C@@H]([*:1])C(=O)O",
+        "label": "2"
+      }
+    ],
+    "above": [
+      "HOPO-Phy (1.5 equiv)"
+    ],
+    "below": [
+      "DMSO/tol (1:1, 100 mM), 30 °C, 6 h, air"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "",
+      "show_label": false
+    }
+  ],
+  "species": [
+    {
+      "id": "2bb",
+      "smiles": "CC(C)[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)N[C@@H](C(C)C)C(=O)O",
+      "label": "Cbz-Phe-Val-Val-OH (2bb)",
+      "group": "a) Amino acid scope",
+      "values": {
+        "yield": "99% (84%) [<1]"
+      }
+    },
+    {
+      "id": "2ba",
+      "smiles": "CC(C)[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)N[C@@H](C)C(=O)O",
+      "label": "Cbz-Phe-Val-Ala-OH (2ba)",
+      "group": "a) Amino acid scope",
+      "values": {
+        "yield": "82% (67%) [2.1]"
+      }
+    },
+    {
+      "id": "2bc",
+      "smiles": "CC(C)[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)NCC(=O)O",
+      "label": "Cbz-Phe-Val-Gly-OH (2bc)",
+      "group": "a) Amino acid scope",
+      "values": {
+        "yield": "75% (66%) [1.0]"
+      }
+    },
+    {
+      "id": "2bd",
+      "smiles": "CC(C)[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)N[C@@H](Cc1ccccc1)C(=O)O",
+      "label": "Cbz-Phe-Val-Phe-OH (2bd)",
+      "group": "a) Amino acid scope",
+      "values": {
+        "yield": "96% (86%) [1.7]"
+      }
+    },
+    {
+      "id": "2bi",
+      "smiles": "CC(C)[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)N[C@@H](CO)C(=O)O",
+      "label": "Cbz-Phe-Val-Ser-OH (2bi)",
+      "group": "a) Amino acid scope",
+      "values": {
+        "yield": "84% (61%) [<1]"
+      }
+    },
+    {
+      "id": "2bp",
+      "smiles": "CC(C)[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)N[C@@H](C(C)(C)C)C(=O)O",
+      "label": "Cbz-Phe-Val-tLeu-OH (2bp)",
+      "group": "a) Amino acid scope",
+      "values": {
+        "yield": "92% (93%) [<1]"
+      }
+    },
+    {
+      "id": "2db",
+      "smiles": "CC(C)(C)OC(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](C(C)C)C(=O)O",
+      "label": "Boc-Phe-Val-Val-OH (2db)",
+      "group": "b) N-Terminus protecting group",
+      "values": {
+        "yield": "90% (76%) [<1]"
+      }
+    },
+    {
+      "id": "2ab",
+      "smiles": "O=C(O)[C@H](C(C)C)NC(=O)[C@H](Cc1ccccc1)NC(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1",
+      "label": "Cbz-Phe-Phe-Val-OH (2ab)",
+      "group": "c) PTC C-terminus",
+      "values": {
+        "yield": "67% (85%) [<1]"
+      }
+    },
+    {
+      "id": "2gb",
+      "smiles": "CC(C)[C@H](NC(=O)[C@@H]1CCCN1C(=O)[C@H](Cc1ccccc1)NC(=O)OCc1ccccc1)C(=O)O",
+      "label": "Cbz-Phe-Pro-Val-OH (2gb)",
+      "group": "c) PTC C-terminus",
+      "values": {
+        "yield": "86% (63%) [<1]"
+      }
+    }
+  ],
+  "height_mm": 340
+}

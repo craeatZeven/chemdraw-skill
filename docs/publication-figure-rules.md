@@ -59,7 +59,7 @@ Built-in semantic palettes (`toolkit/cdxml_toolkit/publication/palettes.py`, acc
 | Figure Type | Primary Automated Entry | Key Layout & Colour Rules Enforced | Corpus Status & Priority Next Steps |
 | --- | --- | --- | --- |
 | `reaction_scheme` | `cdx.py draw` (`kind: "scheme"`) | Auto linear/continue-wrap/convergent/divergent/fan, 28 house styles, formula subscripts, `InterpretChemically="no"` | Well covered (10+ witnesses) |
-| `substrate_scope` | `cdx.py draw` (`kind: "scope"`) | Header reaction with coloured `R¹`/`R²`, compact 1-line captions (`3a, 64%`), `0%` kept, `drawn_with` families, grey `secondary_of`, `group_colors` per-band theming, `variation_color` | Well covered (7+ witnesses); keep closing per-journal header styles |
+| `substrate_scope` | `cdx.py draw` (`kind: "scope"`) | Omitted title (`title: ""`), centred colour-coded general reaction header, row-aligned caption baselines, `columns` + `row_align: "center"|"justify"`, SMARTS `fragment_colors` synthon provenance, `highlight_varying`, `band_style: "rule"|"pill"`, `border`, `0%` kept, `drawn_with` families, grey `secondary_of`, `group_colors`, italic `*note*` and superscript footnotes | **26 CC BY 4.0 witnesses across 6 journals** + 26 imitation briefs in `assets/scope-benchmark/` |
 | `optimization_table` | `cdx.py draw` (`kind: "table"`) | Optional general reaction header, booktabs 3-line rules with zero `text_over_ink`, Arial-metric column widths, formula subscripts, `^a` footnotes, optimal-row highlight (`bold`/`color`/`shaded`/`boxed`) | 3 witnesses; embeds inside `kind: "panels"` |
 | `mechanism` | `cdx.py draw` (`kind: "mechanism"`) | Native ChemDraw arc arrows, per-arrow pathway colours, collision avoidance, inline Newman projections (`attach`), equilibrium arrows, `generic_rings` | Well covered (10 witnesses); unify 14.4 pt default with `scientific mechanism` |
 | `catalytic_cycle` | `cdx.py draw` (`layout: "catalytic-cycle"`) | Native circular arc arrows, radial enter/leave species, closed dashed `overlays`, `generic_rings`, `cycle_arrow_color` | 1 witness — collect ≥2 more true catalytic-cycle witnesses |
@@ -89,17 +89,23 @@ Run `python scripts/audit_corpus.py --markdown` at any time to verify CC BY 4.0 
 
 ```bash
 # 1. Inspect schema & minimal example before writing a brief
-python skill/chemdraw/scripts/cdx.py schema table
+python skill/chemdraw/scripts/cdx.py schema scope
 
 # 2. Draw & render
 python skill/chemdraw/scripts/cdx.py draw brief.json out.cdxml --render
 
 # 3. Check house rules against the exact target style profile
-python skill/chemdraw/scripts/cdx.py check out.cdxml --profile acs_jacs --allow-sizes 8
+python skill/chemdraw/scripts/cdx.py check out.cdxml --profile nature_portfolio --allow-sizes 8,10
 
 # 4. Validate structural integrity (add --native --cross-reader on machines with ChemDraw)
 python skill/chemdraw/scripts/cdx.py validate out.cdxml
 
-# 5. Audit corpus licence discipline and coverage across all 23 types
+# 5. Run the 26-case cross-journal substrate_scope imitation benchmark
+#    Portable (no ChemDraw):
+python scripts/run_scope_benchmark.py --no-render
+#    With local ChemDraw + side-by-side comparison PNGs:
+python scripts/run_scope_benchmark.py --render --side-by-side --output-dir output/scope-benchmark
+
+# 6. Audit corpus licence discipline and coverage across all 23 types
 python scripts/audit_corpus.py --markdown
 ```

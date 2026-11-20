@@ -1,0 +1,170 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 230,
+  "columns": 4,
+  "row_align": "left",
+  "fragment_colors": [
+    {
+      "smarts": "O[Si](C)(C)C",
+      "color": "#0B4F8A",
+      "include_attaching_bond": true
+    },
+    {
+      "smarts": "C(=O)N1CCC1",
+      "color": "#0B4F8A"
+    }
+  ],
+  "group_colors": {
+    "Imine scope": "#8B1E24",
+    "Acylsilane scope": "#0B4F8A"
+  },
+  "footnotes": [
+    "a Diastereomeric ratios determined by 1H NMR of the crude mixture.",
+    "b Run at 120 °C for 24 h."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "O=C([Si](C)(C)C)c1ccccc1",
+        "label": "1 (3.0 equiv.)",
+        "color": "#0B4F8A"
+      },
+      {
+        "smiles": "c1ccc(C=Nc2ccccc2)cc1",
+        "label": "2",
+        "color": "#8B1E24"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "C[Si](C)(C)OC1(c2ccccc2)C(=O)N(c2ccccc2)C1c1ccccc1",
+        "label": "3"
+      }
+    ],
+    "above": [
+      "Pd2(dba)3 (5.0 mol%), IPr* (10 mol%)"
+    ],
+    "below": [
+      "Toluene, 110 °C, 17 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "3aa",
+      "smiles": "C[Si](C)(C)O[C@]1(c2ccccc2)C(=O)N(c2ccccc2)[C@H]1c1ccccc1",
+      "label": "3aa",
+      "group": "Imine scope",
+      "values": {
+        "yield": "70% (6.4:1)^a"
+      }
+    },
+    {
+      "id": "3ab",
+      "smiles": "COc1ccc(N2C(=O)[C@@](O[Si](C)(C)C)(c3ccccc3)[C@@H]2c2ccccc2)cc1",
+      "label": "3ab",
+      "group": "Imine scope",
+      "values": {
+        "yield": "81% (10:1)"
+      }
+    },
+    {
+      "id": "3ac",
+      "smiles": "C[Si](C)(C)O[C@]1(c2ccccc2)C(=O)N(c2ccc(C(F)(F)F)cc2)[C@H]1c1ccccc1",
+      "label": "3ac",
+      "group": "Imine scope",
+      "values": {
+        "yield": "63% (3.3:1)"
+      }
+    },
+    {
+      "id": "3ad",
+      "smiles": "Cc1cccc(C)c1[C@@H]1N(c2ccccc2)C(=O)[C@]1(O[Si](C)(C)C)c1ccccc1",
+      "label": "3ad",
+      "group": "Imine scope",
+      "values": {
+        "yield": "76% (1.2:1)"
+      }
+    },
+    {
+      "id": "3af",
+      "smiles": "C[Si](C)(C)OC1(c2ccccc2)C(=O)N(c2ccccc2)C1(c1ccccc1)c1ccccc1",
+      "label": "3af",
+      "group": "Imine scope",
+      "values": {
+        "yield": "81%"
+      }
+    },
+    {
+      "id": "3ag",
+      "smiles": "C[Si](C)(C)OC1(c2ccccc2)C(=O)N(Cc2ccccc2)C1(c1ccccc1)c1ccccc1",
+      "label": "3ag",
+      "group": "Imine scope",
+      "values": {
+        "yield": "94%"
+      }
+    },
+    {
+      "id": "3ah",
+      "smiles": "C[C@]1(c2ccccc2)N(c2ccccc2)C(=O)[C@]1(O[Si](C)(C)C)c1ccccc1",
+      "label": "3ah",
+      "group": "Imine scope",
+      "values": {
+        "yield": "94% (1.5:1)"
+      }
+    },
+    {
+      "id": "3aj",
+      "smiles": "C[Si](C)(C)OC1(c2ccccc2)C(=O)N(Cc2ccccc2)C12CCCCCC2",
+      "label": "3aj",
+      "group": "Imine scope",
+      "values": {
+        "yield": "82%"
+      }
+    },
+    {
+      "id": "3bg",
+      "smiles": "COc1ccc(C2(O[Si](C)(C)C)C(=O)N(Cc3ccccc3)C2(c2ccccc2)c2ccccc2)cc1",
+      "label": "3bg",
+      "group": "Acylsilane scope",
+      "values": {
+        "yield": "85%^b"
+      }
+    },
+    {
+      "id": "3cg",
+      "smiles": "C[Si](C)(C)OC1(c2ccc(F)cc2)C(=O)N(Cc2ccccc2)C1(c1ccccc1)c1ccccc1",
+      "label": "3cg",
+      "group": "Acylsilane scope",
+      "values": {
+        "yield": "79%"
+      }
+    },
+    {
+      "id": "3gg",
+      "smiles": "Cc1cc(C)cc(C2(O[Si](C)(C)C)C(=O)N(Cc3ccccc3)C2(c2ccccc2)c2ccccc2)c1",
+      "label": "3gg",
+      "group": "Acylsilane scope",
+      "values": {
+        "yield": "54%"
+      }
+    },
+    {
+      "id": "3hg",
+      "smiles": "C[Si](C)(c1ccccc1)OC1(c2ccccc2)C(=O)N(Cc2ccccc2)C1(c1ccccc1)c1ccccc1",
+      "label": "3hg",
+      "group": "Acylsilane scope",
+      "values": {
+        "yield": "93%"
+      }
+    }
+  ],
+  "height_mm": 340
+}

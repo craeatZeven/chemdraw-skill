@@ -1,0 +1,185 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 5,
+  "row_align": "center",
+  "fragment_colors": [
+    {
+      "smarts": "N1CC(CC)(CC)C1",
+      "color": "#1B4D89"
+    },
+    {
+      "smarts": "S(=O)(=O)F",
+      "color": "#8B1E24",
+      "include_attaching_bond": true
+    }
+  ],
+  "highlight_varying": "#8B1E24",
+  "footnotes": [
+    "a 1H NMR yield using CH2Br2 as internal standard; isolated yield in parentheses.",
+    "b 48 h reaction time."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "O=S(=O)(F)N=Cc1ccc([*:1])cc1",
+        "label": "1",
+        "color": "#8B1E24"
+      },
+      {
+        "smiles": "C=C(CC)CC",
+        "label": "2",
+        "color": "#1B4D89"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc([*:1])cc1",
+        "label": "3"
+      }
+    ],
+    "above": [
+      "3-F-TX (10 mol%)"
+    ],
+    "below": [
+      "(CH2Cl)2, 16 h, 390-nm purple LEDs"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "3a",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc(OC)cc1",
+      "label": "3a",
+      "values": {
+        "yield": "91%^a (65%)"
+      }
+    },
+    {
+      "id": "3b",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccccc1OC",
+      "label": "3b",
+      "values": {
+        "yield": "81%^a"
+      }
+    },
+    {
+      "id": "3c",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1c(F)cccc1OC",
+      "label": "3c",
+      "values": {
+        "yield": "42%^a"
+      }
+    },
+    {
+      "id": "3d",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccccc1",
+      "label": "3d",
+      "values": {
+        "yield": "75%"
+      }
+    },
+    {
+      "id": "3e",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc(C)cc1",
+      "label": "3e",
+      "definition": "X = Me",
+      "values": {
+        "yield": "86%"
+      }
+    },
+    {
+      "id": "3g",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc(F)cc1",
+      "label": "3g",
+      "definition": "X = F",
+      "drawn_with": "3e",
+      "values": {
+        "yield": "78%"
+      }
+    },
+    {
+      "id": "3h",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc(Cl)cc1",
+      "label": "3h",
+      "definition": "X = Cl",
+      "drawn_with": "3e",
+      "values": {
+        "yield": "74%"
+      }
+    },
+    {
+      "id": "3i",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc(Br)cc1",
+      "label": "3i",
+      "definition": "X = Br",
+      "drawn_with": "3e",
+      "values": {
+        "yield": "71%"
+      }
+    },
+    {
+      "id": "3j",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc(-c2ccccc2)cc1",
+      "label": "3j",
+      "values": {
+        "yield": "70%^a"
+      }
+    },
+    {
+      "id": "3k",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccccc1C",
+      "label": "3k",
+      "values": {
+        "yield": "49%^b"
+      }
+    },
+    {
+      "id": "3n",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1cccc(C(=O)OC)c1",
+      "label": "3n",
+      "values": {
+        "yield": "62%"
+      }
+    },
+    {
+      "id": "3o",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc(C(F)(F)F)cc1",
+      "label": "3o",
+      "values": {
+        "yield": "60%"
+      }
+    },
+    {
+      "id": "3p",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc2c(c1)OC(F)(F)O2",
+      "label": "3p",
+      "values": {
+        "yield": "54%"
+      }
+    },
+    {
+      "id": "3w",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc(OC)nc1",
+      "label": "3w",
+      "values": {
+        "yield": "55%"
+      }
+    },
+    {
+      "id": "3x",
+      "smiles": "CCC1(CC)CN(S(=O)(=O)F)C1c1ccc2ncoc2c1",
+      "label": "3x",
+      "values": {
+        "yield": "53%"
+      }
+    }
+  ]
+}

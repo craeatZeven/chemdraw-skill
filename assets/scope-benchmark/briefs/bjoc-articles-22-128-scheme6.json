@@ -1,0 +1,74 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "beilstein_joc",
+  "width_mm": 170,
+  "columns": 4,
+  "row_align": "center",
+  "header": {
+    "substrates": [
+      {
+        "smiles": "C#CC(OC(=O)[*:3])CC([*:1])=C[*:4]",
+        "label": "1,5-enynes"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "O=C([*:3])OC1=CCC2([*:1])C([*:4])C12",
+        "label": "17–20"
+      }
+    ],
+    "above": [
+      "[L14]-AuCl (2 mol %)",
+      "AgSbF6 (2 mol %)"
+    ],
+    "below": [
+      "DCM, T, t"
+    ]
+  },
+  "fields": [
+    {
+      "key": "perf",
+      "label": "Yield/ee",
+      "show_label": false
+    }
+  ],
+  "species": [
+    {
+      "id": "17",
+      "smiles": "CC(=O)OC1=CC[C@@]2(C)C[C@@H]12",
+      "label": "17",
+      "group": "selected examples",
+      "values": {
+        "perf": "49%, 84% ee"
+      }
+    },
+    {
+      "id": "18",
+      "smiles": "CC(=O)OC1=CC[C@]23CCCC[C@H]2[C@@H]13",
+      "label": "18",
+      "group": "selected examples",
+      "values": {
+        "perf": "19%, 48% ee"
+      }
+    },
+    {
+      "id": "19",
+      "smiles": "CC(=O)OC1=CC[C@@]2(c3ccccc3)C[C@@H]12",
+      "label": "19",
+      "group": "selected examples",
+      "values": {
+        "perf": "20%, 94% ee"
+      }
+    },
+    {
+      "id": "20",
+      "smiles": "CC1CCC(OC(=O)OCc2ccccc2)=CC1",
+      "label": "20",
+      "group": "selected examples",
+      "values": {
+        "perf": "87%, 56% ee"
+      }
+    }
+  ]
+}

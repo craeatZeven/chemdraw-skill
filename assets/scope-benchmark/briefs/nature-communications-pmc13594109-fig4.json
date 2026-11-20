@@ -1,0 +1,144 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 4,
+  "row_align": "left",
+  "highlight_varying": true,
+  "group_colors": {
+    "para substituents": "#1B4D89",
+    "ortho substituents": "#1B4D89",
+    "N-heterocycles": "#1B4D89",
+    "C-nucleophiles": "#D95F02"
+  },
+  "footnotes": [
+    "a Reactions run with 2 mol% eSNAr1.3 in KPi buffer (pH 7.5).",
+    "b Regioisomer isolated separately after preparative HPLC."
+  ],
+  "fields": [
+    {
+      "key": "yield",
+      "label": "",
+      "show_label": false
+    },
+    {
+      "key": "ee",
+      "label": "",
+      "show_label": false,
+      "optional": true
+    }
+  ],
+  "species": [
+    {
+      "id": "3",
+      "smiles": "O=[N+]([O-])c1ccc([C@]2(C)C(=O)CCC2=O)cc1",
+      "label": "3^a",
+      "group": "para substituents",
+      "values": {
+        "yield": "91% yield",
+        "ee": "98% *e.e.*"
+      }
+    },
+    {
+      "id": "4",
+      "smiles": "N#Cc1ccc([C@]2(C)C(=O)CCC2=O)cc1",
+      "label": "4",
+      "group": "para substituents",
+      "values": {
+        "yield": "84% yield",
+        "ee": "96% *e.e.*"
+      }
+    },
+    {
+      "id": "5",
+      "smiles": "FC(F)(F)c1ccc([C@]2(C)C(=O)CCC2=O)cc1",
+      "label": "5",
+      "group": "para substituents",
+      "values": {
+        "yield": "78% yield",
+        "ee": "95% *e.e.*"
+      }
+    },
+    {
+      "id": "6",
+      "smiles": "CC(=O)c1ccc([C@]2(C)C(=O)CCC2=O)cc1",
+      "label": "6",
+      "group": "para substituents",
+      "values": {
+        "yield": "72% yield",
+        "ee": "94% *e.e.*"
+      }
+    },
+    {
+      "id": "12",
+      "smiles": "O=[N+]([O-])c1ccc([C@]2(C)C(=O)CCC2=O)c(F)c1",
+      "label": "12^a",
+      "group": "ortho substituents",
+      "values": {
+        "yield": "86% yield",
+        "ee": "97% *e.e.*"
+      }
+    },
+    {
+      "id": "13",
+      "smiles": "O=[N+]([O-])c1ccc([C@]2(C)C(=O)CCC2=O)c(Cl)c1",
+      "label": "13",
+      "group": "ortho substituents",
+      "values": {
+        "yield": "75% yield",
+        "ee": "92% *e.e.*"
+      }
+    },
+    {
+      "id": "14a",
+      "smiles": "O=[N+]([O-])c1ccc([C@]2(C)C(=O)CCC2=O)nc1",
+      "label": "14a",
+      "group": "N-heterocycles",
+      "values": {
+        "yield": "48% yield",
+        "ee": "95% *e.e.*"
+      }
+    },
+    {
+      "id": "14b",
+      "smiles": "O=[N+]([O-])c1ccc(O)nc1",
+      "label": "14b^b",
+      "group": "N-heterocycles",
+      "secondary_of": "14a",
+      "values": {
+        "yield": "19% yield"
+      }
+    },
+    {
+      "id": "15",
+      "smiles": "O=[N+]([O-])c1cnc([C@]2(C)C(=O)CCC2=O)cn1",
+      "label": "15",
+      "group": "N-heterocycles",
+      "values": {
+        "yield": "81% yield",
+        "ee": "93% *e.e.*"
+      }
+    },
+    {
+      "id": "19",
+      "smiles": "O=[N+]([O-])c1ccc([C@]2(CC)C(=O)CCC2=O)cc1",
+      "label": "19",
+      "group": "C-nucleophiles",
+      "values": {
+        "yield": "83% yield",
+        "ee": "96% *e.e.*"
+      }
+    },
+    {
+      "id": "20",
+      "smiles": "O=[N+]([O-])c1ccc([C@]2(Cc3ccccc3)C(=O)CCC2=O)cc1",
+      "label": "20",
+      "group": "C-nucleophiles",
+      "values": {
+        "yield": "77% yield",
+        "ee": "94% *e.e.*"
+      }
+    }
+  ]
+}

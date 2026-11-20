@@ -1,0 +1,159 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 230,
+  "columns": 4,
+  "row_align": "left",
+  "group_colors": {
+    "With TBA+ Nu-": "#2B7BBA",
+    "Organic & bioactive nucleophiles": "#1B4D89"
+  },
+  "highlight_varying": "#2B7BBA",
+  "footnotes": [
+    "a Using 1.5 equiv. TBA+ Nu- in MeCN.",
+    "b Using PhMgBr (1.5 equiv.) in THF."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "IC12CC(C1)(C2)C[*:1]",
+        "label": "2"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "IC12CC(C1)(C2)C[*:2]",
+        "label": "3–21",
+        "color": "#2B7BBA"
+      }
+    ],
+    "above": [
+      "1.0 equiv. H–Nu, 1.0–2.0 equiv. K2CO3"
+    ],
+    "below": [
+      "MeCN (0.1–0.2 M)"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "2'",
+      "smiles": "ICC12CC(I)(C1)C2",
+      "label": "2'",
+      "group": "With TBA+ Nu-",
+      "values": {
+        "yield": "95%^a"
+      }
+    },
+    {
+      "id": "8",
+      "smiles": "N#CCC12CC(I)(C1)C2",
+      "label": "8",
+      "group": "With TBA+ Nu-",
+      "values": {
+        "yield": "81%^a"
+      }
+    },
+    {
+      "id": "10",
+      "smiles": "ClCC12CC(I)(C1)C2",
+      "label": "10",
+      "group": "With TBA+ Nu-",
+      "values": {
+        "yield": "84%^a"
+      }
+    },
+    {
+      "id": "11",
+      "smiles": "[N-]=[N+]=NCC12CC(I)(C1)C2",
+      "label": "11",
+      "group": "With TBA+ Nu-",
+      "values": {
+        "yield": "79%^a"
+      }
+    },
+    {
+      "id": "12",
+      "smiles": "IC12CC(C1)(C2)Cc1ccccc1",
+      "label": "12",
+      "group": "Organic & bioactive nucleophiles",
+      "values": {
+        "yield": "91%^b"
+      }
+    },
+    {
+      "id": "13",
+      "smiles": "CN(CCc1ccccn1)CC12CC(I)(C1)C2",
+      "label": "13",
+      "group": "Organic & bioactive nucleophiles",
+      "note": "*From betahistine*",
+      "values": {
+        "yield": "72%"
+      }
+    },
+    {
+      "id": "14",
+      "smiles": "O=C1CCC(N2C(=O)c3ccccc3C2=O)C(=O)N1CC12CC(I)(C1)C2",
+      "label": "14",
+      "group": "Organic & bioactive nucleophiles",
+      "note": "*From thalidomide*",
+      "values": {
+        "yield": "96%"
+      }
+    },
+    {
+      "id": "15",
+      "smiles": "O=S(=O)(CC12CC(I)(C1)C2)c1ccccc1",
+      "label": "15",
+      "group": "Organic & bioactive nucleophiles",
+      "values": {
+        "yield": "67%"
+      }
+    },
+    {
+      "id": "7",
+      "smiles": "IC12CC(C1)(C2)CSc1nc2ccccc2s1",
+      "label": "7",
+      "group": "Organic & bioactive nucleophiles",
+      "values": {
+        "yield": "92%"
+      }
+    },
+    {
+      "id": "19",
+      "smiles": "IC12CC(C1)(C2)CSc1cccc2cccnc12",
+      "label": "19",
+      "group": "Organic & bioactive nucleophiles",
+      "values": {
+        "yield": "90%"
+      }
+    },
+    {
+      "id": "20",
+      "smiles": "COC(=O)[C@H](CSCC12CC(I)(C1)C2)NC(C)=O",
+      "label": "20",
+      "group": "Organic & bioactive nucleophiles",
+      "note": "*From N-Ac-L-cysteine*",
+      "values": {
+        "yield": "99%"
+      }
+    },
+    {
+      "id": "5",
+      "smiles": "COc1ccc2c(c1)c(CC(=O)OCC13CC(I)(C1)C3)c(C)n2C(=O)c1ccc(Cl)cc1",
+      "label": "5",
+      "group": "Organic & bioactive nucleophiles",
+      "note": "*From indomethacin*",
+      "values": {
+        "yield": "96%"
+      }
+    }
+  ],
+  "height_mm": 340
+}

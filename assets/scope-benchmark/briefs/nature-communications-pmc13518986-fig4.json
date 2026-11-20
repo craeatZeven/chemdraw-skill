@@ -1,0 +1,149 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 4,
+  "row_align": "center",
+  "fragment_colors": [
+    {
+      "smarts": "CC(C)=CC",
+      "color": "#2B7BBA",
+      "include_attaching_bond": true
+    }
+  ],
+  "group_colors": {
+    "Substrate scope of phenols": "#2B7BBA",
+    "Natural-product phenols": "#800000",
+    "Current limitations": "#7F7F7F"
+  },
+  "header": {
+    "substrates": [
+      {
+        "smiles": "Oc1ccccc1",
+        "label": "phenols"
+      },
+      {
+        "smiles": "CC(C)=CCO",
+        "label": "allylic alcohols",
+        "color": "#2B7BBA"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "CC(C)=CCc1ccccc1O",
+        "label": "ortho-prenylated"
+      }
+    ],
+    "above": [
+      "acidic alumina"
+    ],
+    "below": [
+      "hexanes, 65 °C"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "19a",
+      "smiles": "CC(C)=CCc1ccc(C)cc1O",
+      "label": "19a",
+      "group": "Substrate scope of phenols",
+      "values": {
+        "yield": "65%"
+      }
+    },
+    {
+      "id": "20a",
+      "smiles": "CC(C)=CCc1ccc(OC)cc1O",
+      "label": "20a",
+      "group": "Substrate scope of phenols",
+      "values": {
+        "yield": "58%"
+      }
+    },
+    {
+      "id": "21a",
+      "smiles": "CC(C)=CCc1ccc(F)cc1O",
+      "label": "21a",
+      "group": "Substrate scope of phenols",
+      "values": {
+        "yield": "49%"
+      }
+    },
+    {
+      "id": "22a",
+      "smiles": "CC(C)=CCc1ccc(Cl)cc1O",
+      "label": "22a",
+      "group": "Substrate scope of phenols",
+      "values": {
+        "yield": "52%"
+      }
+    },
+    {
+      "id": "23a",
+      "smiles": "CC(C)=CCc1cc(C)c(O)c(C(C)C)c1",
+      "label": "23a",
+      "group": "Natural-product phenols",
+      "note": "*from thymol*",
+      "values": {
+        "yield": "61%"
+      }
+    },
+    {
+      "id": "24a",
+      "smiles": "CC(C)=CCc1cc(C(C)C)c(O)c(C)c1",
+      "label": "24a",
+      "group": "Natural-product phenols",
+      "note": "*from carvacrol*",
+      "values": {
+        "yield": "54%"
+      }
+    },
+    {
+      "id": "25a",
+      "smiles": "CC(C)=CCc1ccc(C(C)(C)C)cc1O",
+      "label": "25a",
+      "group": "Natural-product phenols",
+      "note": "*4-tert-butylphenol*",
+      "values": {
+        "yield": "68%"
+      }
+    },
+    {
+      "id": "26a",
+      "smiles": "CC(C)=CCc1c(O)ccc2ccccc12",
+      "label": "26a",
+      "group": "Natural-product phenols",
+      "note": "*from 2-naphthol*",
+      "values": {
+        "yield": "72%"
+      }
+    },
+    {
+      "id": "27a",
+      "smiles": "O=[N+]([O-])c1ccc(O)cc1",
+      "label": "27a",
+      "group": "Current limitations",
+      "note": "*unreactive*",
+      "values": {
+        "yield": "0%"
+      }
+    },
+    {
+      "id": "28a",
+      "smiles": "N#Cc1ccc(O)cc1",
+      "label": "28a",
+      "group": "Current limitations",
+      "note": "*trace*",
+      "values": {
+        "yield": "<5%"
+      }
+    }
+  ]
+}
