@@ -408,7 +408,7 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 405: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 496: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_table`
 
@@ -668,22 +668,23 @@
 
 ## `publication.layout`
 
-- **function**, line 618: `bounds(node, style)` - No public docstring in the audited version.
-- **function**, line 122: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 648: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 190: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
-- **function**, line 405: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 792: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 146: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
+- **function**, line 822: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 246: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
+- **function**, line 478: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
+- **function**, line 190: `footnote_runs(footer)` - Format multi-line footnotes with italic superscript leading markers and chemical subscripts.
 - **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
-- **function**, line 265: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
-- **function**, line 277: `header_objects(spec, style, left, top)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, the products with their labels. Returns (objects, bottom, right).
-- **function**, line 160: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
-- **function**, line 228: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
+- **function**, line 321: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
+- **function**, line 347: `header_objects(spec, style, left, top)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, the products with their labels. Returns (objects, bottom, right).
+- **function**, line 216: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
+- **function**, line 284: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 644: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 215: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
-- **function**, line 335: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 818: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 271: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
+- **function**, line 408: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
 - **function**, line 42: `text_width(value, style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 47: `wrap(value, width, style)` - No public docstring in the audited version.
