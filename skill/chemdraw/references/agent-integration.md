@@ -89,9 +89,11 @@ cdx.py render A.cdxml [B.cdxml ...] [--out-dir DIR] [--replace]
 cdx.py build SPEC.json OUT.cdxml [--render] [--replace] [--allow-draft]   rebuilds its own earlier output in place
 cdx.py scientific nmr|plot|tlc|apparatus|mechanism|stack_nmr|lcms_plate SPEC.json OUTPUT [--render]
 cdx.py scientific energy_profile|energy_cycle|jablonski|mo_diagram|electron_configuration|crystal_field|lewis|unit_cell|flowchart|electrochemical_cell|periodic_table|huckel_mo|phase_diagram|binary_phase_diagram|pourbaix|latimer|frost|ellingham|correlation_diagram|walsh_diagram|potential_surface|tanabe_sugano|compose SPEC.json NEW.cdxml [--render] [--report NEW.json]
-cdx.py check A.cdxml [B.cdxml ...] [--palette any|#RRGGBB,...] [--allow-sizes 8,6] [--ignore CODE]   house-rule check, no ChemDraw needed
+cdx.py check A.cdxml [B.cdxml ...] [--profile acs1996|PRESET|HOUSE] [--palette any|NAME|#RRGGBB,...] [--allow-sizes 8,6] [--ignore CODE]   house-rule check, no ChemDraw needed
+cdx.py validate FILE.cdxml [--output-dir NEW_DIR] [--native] [--cross-reader]   saved-file structural, native save-cycle and cross-reader validation
+cdx.py schema [scheme|scope|mechanism|panels|table|energy_profile|build]   print JSON schema and minimal example for a drawing kind
 cdx.py circles IN.cdxml NEW.cdxml [--fragment ID] [--render]   Kekule aromatic rings redrawn with circles
-cdx.py draw BRIEF.json [OUTPUT] [--render] [--style PRESET] [--out NEW.json]   checked scheme, scope panel or mechanism from a brief
+cdx.py draw BRIEF.json [OUTPUT] [--render] [--style PRESET] [--out NEW.json]   checked scheme, scope panel, table, panels or mechanism from a brief
 cdx.py styles [PRESET] [--json]          built-in journal style presets (ChemDraw stock style sheets)
 cdx.py decimer IMAGE [--hand-drawn] [--preflight] [--timeout S] [--out NEW.json]
 cdx.py ocsr IMAGE [--engines a,b|all] [--hand-drawn] [--preflight] [--no-upload] [--timeout S] [--out NEW.json] [--accel MODE]   several OCSR engines, compared (`decimer` is `ocsr IMAGE --engines decimer-api`)

@@ -345,17 +345,9 @@ diamond, however correct its chemistry.
 ## Renders kept beside the parity briefs
 
 `assets/parity/` holds one brief per parity item that needed a figure to argue about, plus the
-render each produced on the machine with ChemDraw and RDKit. The PNGs are the state of the
-drawing when the brief was written, not an approved target: two still show a defect recorded
-here so a later fix has something to diff against.
-
-Regenerate with `cdx.py draw assets/parity/<brief>.json <new>.cdxml --render`. Scope briefs
-write a directory (`<new>.cdxml/png/page-001.png`); the others write a PNG beside the CDXML.
-The output path must not already exist.
-One brief per parity item that needed a figure to argue about, plus the render each produced
-on the machine that has ChemDraw and RDKit. The PNGs are **the state of the drawing when the
-brief was written**, not an approved target: two of them still show a defect that is recorded
-here so a later fix has something to diff against.
+render each produced on a machine with ChemDraw and RDKit. The PNGs are **the state of the
+drawing when the brief was written**, not an approved target: two of them still show a defect
+that is recorded here so a later fix has something to diff against.
 
 Regenerate any of them with:
 

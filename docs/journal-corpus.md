@@ -35,18 +35,18 @@ written. `file` holds the bare name; the image is `<file>.png`.
 | reaction_scheme | 10 |
 | mechanism | 10 |
 | concept_panel | 10 |
-| substrate_scope | 7 |
+| substrate_scope | 8 |
 | structure_panel | 6 |
 | graphical_abstract | 6 |
-| optimization_table | 4 |
-| assignment_panel | 3 |
+| assignment_panel | 4 |
+| optimization_table | 3 |
 | polymer | 2 |
 | coordination_complex | 2 |
 | markush | 2 |
 | biomolecule | 2 |
 | biosynthesis | 2 |
 | energy_profile | 2 |
-| catalytic_cycle | 2 |
+| catalytic_cycle | 1 |
 | retrosynthesis | 1 |
 
 ## Conventions here that this Skill does not produce yet
