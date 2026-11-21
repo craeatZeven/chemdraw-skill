@@ -549,10 +549,15 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     style_warnings: list[str] = []
     if restyle:
         slug = brief_style(brief)[0]
-        for page in pages:
+        page_species: list[dict[str, str]] = [{} for _ in pages]
+        for ident, compound in project["compounds"].items():
+            fragment = compound["objects"]["fragment"]
+            if fragment is not None:
+                page_species[compound["page"]][str(fragment)] = ident
+        for page, fragment_species in zip(pages, page_species):
             path = Path(page["path"])
             text, page_applied, skipped, warned = figure_house.apply_scope_conventions(
-                path.read_text(encoding="utf-8"), styled, drawn, house, slug)
+                path.read_text(encoding="utf-8"), styled, drawn, house, slug, fragment_species)
             path.write_text(str(text), encoding="utf-8")
             applied += [a for a in page_applied if a not in applied]
             style_warnings += [w for w in warned if w not in style_warnings]

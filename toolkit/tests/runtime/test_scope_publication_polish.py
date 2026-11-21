@@ -159,6 +159,43 @@ def test_fragment_colors_multi_synthon_and_secondary_stays_grey(tmp_path):
     assert sec_colors <= {(128, 128, 128)}
 
 
+@pytest.mark.parametrize("highlight", [
+    {"fragment_colors": [{"smarts": "[CH3]O", "color": "#0072B2"}]},
+    {"highlight_varying": True},
+])
+def test_scope_highlights_take_precedence_over_abbreviations(tmp_path, highlight):
+    brief = {
+        "kind": "scope", **highlight,
+        "species": [
+            {"id": "1a", "smiles": "COc1ccc(C(F)(F)F)cc1", "abbreviate": ["OMe", "CF3"]},
+            {"id": "1b", "smiles": "Clc1ccc(C(F)(F)F)cc1"},
+        ],
+    }
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] and report["readback"]["status"] == "matched", report
+    labels = ["".join(n.find("t").itertext()) for n in _root(report).findall('.//n[@NodeType="Fragment"]')]
+    assert len(labels) == 1 and labels[0] in ("CF3", "F3C")
+    assert any("OMe" in w and "marked" in w for w in report["warnings"])
+
+
+def test_scope_abbreviations_leave_the_expanded_header_alone(tmp_path):
+    brief = {
+        "kind": "scope",
+        "header": {"substrates": [{"smiles": "COc1ccccc1"}], "products": [{"smiles": "Oc1ccccc1"}]},
+        "species": [
+            {"id": "first", "smiles": "COc1ccccc1", "abbreviate": []},
+            {"id": "repeat", "smiles": "COc1ccccc1", "abbreviate": ["OMe"]},
+        ],
+    }
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] and report["readback"]["status"] == "matched", report
+    page = _root(report).find("page")
+    assert not page.findall('./fragment/n[@NodeType="Fragment"]')
+    first, repeat = page.findall("group")
+    assert not first.findall('./fragment/n[@NodeType="Fragment"]')
+    assert len(repeat.findall('./fragment/n[@NodeType="Fragment"]')) == 1
+
+
 def test_footnote_superscripts_subscripts_and_italic_notes(tmp_path):
     brief = {
         "kind": "scope",

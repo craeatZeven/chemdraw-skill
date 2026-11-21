@@ -96,6 +96,44 @@ def test_a_species_can_abbreviate_without_a_house_style(tmp_path):
     assert "species abbreviations (2 contracted)" in report["style"]["applied"]
 
 
+@pytest.mark.parametrize("smiles, group, reason", [
+    ("CO[C@H](C)c1ccccc1", "OMe", "stereochemistry"),
+    ("CO/C=C(/F)Cl", "OMe", "stereochemistry"),
+    ("[13CH3]Oc1ccccc1", "OMe", "chemical identity"),
+])
+def test_abbreviation_preserves_chemical_detail(tmp_path, smiles, group, reason):
+    brief = {"species": [{"id": "A", "smiles": smiles, "abbreviate": [group]},
+                         {"id": "B", "smiles": "CCO"}],
+             "steps": [{"substrates": ["A"], "products": ["B"]}]}
+    report, root = _draw(tmp_path, brief)
+    assert not root.findall('.//n[@NodeType="Fragment"]')
+    assert report["readback"]["status"] == "matched"
+    assert any(reason in w and group in w for w in report["warnings"])
+
+
+@pytest.mark.parametrize("style", [
+    {"atom_colors": [{"atoms": [0], "color": "#0072B2"}]},
+    {"bond_colors": [{"bonds": [[1, 2]], "color": "#0072B2"}]},
+    {"disconnections": [{"bond": [1, 2]}]},
+])
+def test_abbreviation_keeps_a_marked_group_expanded(tmp_path, style):
+    report, root = _draw(tmp_path, _brief(ArB={"abbreviate": ["OMe"], **style}))
+    assert not root.findall('.//n[@NodeType="Fragment"]')
+    assert any("OMe" in w and "marked" in w for w in report["warnings"])
+    assert report["readback"]["status"] == "matched"
+
+
+def test_abbreviation_keeps_an_explicitly_mapped_reaction_centre_expanded(tmp_path):
+    brief = {"species": [{"id": "A", "smiles": "c1cc[c:2](Cl)cc1"},
+                         {"id": "B", "smiles": "C[OH:1]"},
+                         {"id": "P", "smiles": "C[O:1][c:2]1ccccc1", "abbreviate": ["OMe"]}],
+             "steps": [{"substrates": ["A", "B"], "products": ["P"]}]}
+    report, root = _draw(tmp_path, brief)
+    assert not root.findall('.//n[@NodeType="Fragment"]')
+    assert any("OMe" in w and "reaction centre" in w for w in report["warnings"])
+    assert report["readback"]["status"] == "matched"
+
+
 def test_a_species_list_overrides_the_card(tmp_path, monkeypatch):
     card = {
         "slug": "_example", "kind": "journal", "display_name": "Example", "applies_to": ["Ex."],

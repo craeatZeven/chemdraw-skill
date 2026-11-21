@@ -132,10 +132,15 @@ def _with_weight(face: str | None, bold: bool) -> str:
     return str((value & ~1) | (1 if bold else 0))
 
 
-def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict]):
+def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict],
+                       fragment_species: Mapping[str, str] | None = None):
     """(species id, fragment element, fragment mol) for every drawn species, in document order."""
     page = root.find("page")
     frag_els = {f.get("id", ""): f for f in page.iter("fragment")}
+    if fragment_species is not None:
+        return [(fragment_species[frag_id], frag_els[frag_id], mol)
+                for frag_id, mol in read_fragments(cdxml)
+                if frag_id in fragment_species and frag_id in frag_els]
     key_to_ids: dict[str, list[str]] = {}
     for g in grounded:
         if not g.get("smiles"):
@@ -660,7 +665,8 @@ def _add_disconnection_mark(
 
 
 def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
-                          house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]:
+                          house: HouseStyle | None = None, *,
+                          fragment_species: Mapping[str, str] | None = None) -> tuple[Any, list[str], list[str]]:
     """The brief's own colours, disconnections, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
 
     Runs after the house conventions so a colour the brief asks for wins over the card's.
@@ -681,7 +687,7 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
     page = root.find("page")
     colors = _Colors(root)
     smiles = {g["id"]: g["smiles"] for g in grounded}
-    drawn = _species_fragments(root, str(cdxml), grounded) if (wants_paint or wants_abbrev) else []
+    drawn = _species_fragments(root, str(cdxml), grounded, fragment_species) if (wants_paint or wants_abbrev) else []
     used_ids = [int(v) for el in root.iter() for v in [el.get("id")] if v and v.isdigit()]
     ids = renderer._IDGen(max(used_ids, default=1000) + 1)
 
@@ -769,6 +775,7 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
     if wants_abbrev:
         count = 0
         from_card = False
+        centres = _mapped_reaction_centres(brief.get("steps") or [], smiles)
         for sp_id, frag_el, frag_mol in drawn:
             sp = species.get(sp_id) or {}
             groups = sp["abbreviate"] if "abbreviate" in sp else card_groups
@@ -780,7 +787,10 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
             if nodes is None:
                 warnings.append(f"Species {sp_id}: the drawn structure could not be matched, so no group was abbreviated.")
                 continue
-            count += _abbreviate(frag_el, src, nodes, [str(g) for g in groups], ids)
+            contracted, reasons = _abbreviate(frag_el, src, nodes, groups, ids,
+                                             _marked_atoms(sp), centres.get(sp_id, set()))
+            count += contracted
+            warnings.extend(f"Species {sp_id}: {name} kept expanded because {reason}." for name, reason in reasons)
         if from_card:
             applied.append(f"abbreviate_groups ({count} contracted)")
         else:
@@ -1219,7 +1229,7 @@ def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
 
 
 def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None,
-                            slug: str) -> tuple[Any, list[str], list[str], list[str]]:
+                            slug: str, fragment_species: Mapping[str, str]) -> tuple[Any, list[str], list[str], list[str]]:
     """A scope page already in its preset: compound-number face and colour, the brief's species
     colours and abbreviations (the card's abbreviate_groups too), then the measured geometry."""
     applied: list[str] = []
@@ -1236,7 +1246,7 @@ def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], ho
         # A scope page keeps each structure, its number and its values in one <group>.
         group_of = {id(f): g for g in page.iter("group") for f in g.findall("fragment")}
         label_els = []
-        for sp_id, el, _ in _species_fragments(root, str(cdxml), grounded):
+        for sp_id, el, _ in _species_fragments(root, str(cdxml), grounded, fragment_species):
             group = group_of.get(id(el))
             found = [t for t in group.findall("t") if _text_of(t) == labels.get(sp_id)] if group is not None else []
             label_t = found[0] if found else _label_of(page, el, labels.get(sp_id))
@@ -1261,7 +1271,7 @@ def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], ho
         for key, value in (section.get("conventions") or {}).items():
             if value is not None:
                 skipped.append(f"substrate_scope.{key}: guidance for finishing the panel, not drawn by the tool")
-    cdxml, more, warned = apply_species_styling(cdxml, brief, grounded, house)
+    cdxml, more, warned = apply_species_styling(cdxml, brief, grounded, house, fragment_species=fragment_species)
     applied += more
     warnings += warned
     # Abbreviation labels are made at ACS size; on a styled page they take the page's label size.
@@ -1331,26 +1341,104 @@ def _color_new_bonds(brief: Mapping, smiles: dict, first: dict, index: str, warn
     return coloured
 
 
-def _abbreviate(frag_el: ET.Element, src: Any, nodes: list[ET.Element], groups: list[str], ids) -> int:
+def _mapped_side(species, mols):
+    atoms, bonds = {}, {}
+    for ident in species:
+        mol = mols.get(ident)
+        if mol is None:
+            continue
+        for atom in mol.GetAtoms():
+            number = atom.GetAtomMapNum()
+            if number in atoms:
+                return {}, {}  # the same map number has two meanings on this side
+            if number:
+                atoms[number] = (ident, atom.GetIdx(), atom.GetAtomicNum())
+        for bond in mol.GetBonds():
+            a, b = bond.GetBeginAtom().GetAtomMapNum(), bond.GetEndAtom().GetAtomMapNum()
+            if a and b:
+                bonds[tuple(sorted((a, b)))] = bond.GetBondType()
+    return atoms, bonds
+
+
+def _mapped_reaction_centres(steps, smiles):
+    """Atom indices at changed bonds whose endpoints are explicitly mapped on both sides."""
+    if not steps:
+        return {}
+    mols = {ident: Chem.MolFromSmiles(text) for ident, text in smiles.items() if text}
+    centres: dict[str, set[int]] = {}
+    for step in steps:
+        left, before = _mapped_side(_as_list(step.get("substrates")), mols)
+        right, after = _mapped_side(_as_list(step.get("products")), mols)
+        shared = {number for number in left.keys() & right.keys() if left[number][2] == right[number][2]}
+        for pair in before.keys() | after.keys():
+            if set(pair) <= shared and before.get(pair) != after.get(pair):
+                for side in (left, right):
+                    for number in pair:
+                        ident, index, _ = side[number]
+                        centres.setdefault(ident, set()).add(index)
+    return centres
+
+
+def _marked_atoms(species: Mapping) -> set[int]:
+    """Atoms or bond endpoints individually marked in the figure, including scope highlights."""
+    marked = {index for item in _as_list(species.get("atom_colors")) for index in item["atoms"]}
+    marked.update(index for item in _as_list(species.get("bond_colors")) for pair in item["bonds"] for index in pair)
+    marked.update(index for item in _as_list(species.get("disconnections")) for index in item["bond"])
+    return marked
+
+
+def _stereo_atoms(mol: Any) -> set[int]:
+    centres = {atom.GetIdx() for atom in mol.GetAtoms() if atom.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED}
+    for bond in mol.GetBonds():
+        if bond.GetStereo() != Chem.BondStereo.STEREONONE:
+            centres.update((bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()))
+    return centres | {nb.GetIdx() for idx in centres for nb in mol.GetAtomWithIdx(idx).GetNeighbors()}
+
+
+def _abbreviate(frag_el: ET.Element, src: Any, nodes: list[ET.Element], groups: list[str], ids,
+                marked: set[int], centres: set[int]) -> tuple[int, list[tuple[str, str]]]:
     used: set[int] = set()
     count = 0
-    groups = list(dict.fromkeys(group_name(g) for g in groups))
-    order = sorted(groups, key=lambda g: -Chem.MolFromSmarts(ABBREVIATIONS[g][0]).GetNumAtoms())
-    for name in order:
-        smarts, expansion, left_label, right_label = ABBREVIATIONS[name]
-        for match in src.GetSubstructMatches(Chem.MolFromSmarts(smarts)):
+    kept: dict[tuple[str, str], None] = {}
+    queries = {name: Chem.MolFromSmarts(ABBREVIATIONS[name][0]) for name in dict.fromkeys(map(group_name, groups))}
+    stereo = _stereo_atoms(src)
+    for name, query in sorted(queries.items(), key=lambda item: -item[1].GetNumAtoms()):
+        _, expansion, left_label, right_label = ABBREVIATIONS[name]
+        expected = semantic_key(Chem.MolFromSmiles("*" + expansion))
+        for match in src.GetSubstructMatches(query):
             group = set(match)
-            if group & used:
+            if group & used or any(nodes[i].get("NodeType") == "Fragment" for i in match):
                 continue
             external = [(a, nb.GetIdx()) for a in match for nb in src.GetAtomWithIdx(a).GetNeighbors()
                         if nb.GetIdx() not in group]
             if len(external) != 1 or external[0][0] != match[0]:
                 continue
+            head, outside = external[0]
+            bond = src.GetBondBetweenAtoms(head, outside)
+            if bond.GetBondType() != Chem.BondType.SINGLE or bond.IsInRing():
+                continue
+            if group & stereo:
+                kept[name, "it depicts stereochemistry"] = None
+                continue
+            if group & centres:
+                kept[name, "it overlaps the mapped reaction centre"] = None
+                continue
+            if group & marked:
+                kept[name, "it contains marked atoms or bonds"] = None
+                continue
+            # Compare the actual substituent, with a dummy at the attachment point, to the
+            # catalogue expansion. SMARTS alone can match isotopes or other variants.
+            cut = Chem.FragmentOnBonds(src, [bond.GetIdx()], dummyLabels=[(0, 0)])
+            indices: list[tuple[int, ...]] = []
+            fragments = Chem.GetMolFrags(cut, asMols=True, fragsMolAtomMapping=indices)
+            actual = next(part for part, atoms in zip(fragments, indices) if head in atoms)
+            if semantic_key(actual) != expected:
+                kept[name, "the label would change its chemical identity"] = None
+                continue
             used |= group
-            _contract(frag_el, nodes, match, external[0][1], expansion,
-                      left_label, right_label, ids)
+            _contract(frag_el, nodes, match, outside, expansion, left_label, right_label, ids)
             count += 1
-    return count
+    return count, list(kept)
 
 
 def _contract(frag_el: ET.Element, nodes: list[ET.Element], match: tuple, outside: int,
