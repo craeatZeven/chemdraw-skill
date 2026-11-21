@@ -164,6 +164,48 @@ class TestRetrosynthesisArrows:
 
 
 class TestOptimizationTableFigure:
+    def test_shaded_and_boxed_rows_have_distinct_backgrounds(self, tmp_path):
+        out = tmp_path / "opt_highlight.cdxml"
+        brief = {
+            "kind": "table", "style": "nature", "columns": ["Entry", "Yield"],
+            "rows": [
+                {"Entry": "1", "Yield": "61%", "highlight": "shaded"},
+                {"Entry": "2", "Yield": "88%", "highlight": "boxed"},
+                {"Entry": "3", "Yield": "45%"},
+            ],
+        }
+        report = draw_figure(brief, str(out))
+        assert report["checks_passed"], report
+        root = ET.parse(out).getroot()
+        rects = root.findall("page/graphic[@GraphicType='Rectangle']")
+        assert [r.get("FillType") for r in rects] == ["Solid", "None"]
+        fills = root.findall("colortable/color")
+        rgb = fills[int(rects[0].get("color")) - 2]
+        fill = "#" + "".join(f"{round(float(rgb.get(channel)) * 255):02X}" for channel in "rgb")
+        assert fill == resolve_palette("nature")["highlight_fill"]
+        assert root.find("page")[0] is rects[0]
+
+    def test_default_shade_is_visible_and_accepted_by_the_checker(self, tmp_path):
+        out = tmp_path / "opt_highlight.cdxml"
+        brief = {"kind": "table", "columns": ["Entry"], "rows": [{"Entry": "1", "highlight": "shaded"}]}
+        assert draw_figure(brief, str(out))["checks_passed"]
+        shade = resolve_palette("acs1996")["highlight_fill"]
+        assert shade != "#FFFFFF"
+        report = check_cdxml(out)
+        assert report["ok"], report
+        assert shade in report["summary"]["colors"]
+
+    def test_automatic_row_highlight_respects_house_style_none(self, tmp_path):
+        out = tmp_path / "opt_highlight.cdxml"
+        brief = {
+            "kind": "table", "style": "org_lett", "columns": ["Entry"],
+            "rows": [{"Entry": "1", "highlight": True}, {"Entry": "2", "highlight": "bold"}],
+        }
+        assert draw_figure(brief, str(out))["checks_passed"]
+        runs = {s.text: s for s in ET.parse(out).iter("s")}
+        assert int(runs["1"].get("face", "0")) & 1 == 0
+        assert int(runs["2"].get("face", "0")) & 1 == 1
+
     def test_draw_optimization_table_clean_booktabs_with_header_and_highlight(self, tmp_path):
         out = tmp_path / "opt_table.cdxml"
         brief = {

@@ -16,14 +16,14 @@ from typing import Any, Iterable, Mapping
 from xml.etree import ElementTree as ET
 
 from .cdxml_compose import ID_REFERENCES
+from .publication.palettes import PALETTES, resolve_palette
 
 PROFILES: dict[str, dict[str, Any]] = {
     'acs1996': {
         'settings': {'BondLength': 14.4, 'LineWidth': 0.6, 'BoldWidth': 2.0, 'HashSpacing': 2.5,
                      'MarginWidth': 1.6, 'LabelSize': 10.0, 'CaptionSize': 10.0, 'ChainAngle': 120.0},
         'latin_fonts': ('Arial',), 'cjk_fonts': ('SimSun',), 'text_size': 10.0, 'min_text_size': 6.0,
-        # Grey marks a subordinate structure: a secondary product beside the main one in a scope.
-        'palette': ('#000000', '#FFFFFF', '#FF6600', '#336699', '#808080'),
+        'palette': PALETTES['acs1996']['allowed'],
     },
 }
 _CJK = re.compile(r'[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]')
@@ -60,7 +60,6 @@ def normalize_palette(palette: Iterable[str] | None | str):
     if palette is None:
         return None
     if isinstance(palette, str):
-        from .publication.palettes import resolve_palette
         return resolve_palette(palette)['allowed']
     out = []
     for item in palette:
@@ -78,7 +77,6 @@ def resolve_profile(profile: str) -> dict[str, Any]:
         return PROFILES[profile]
     from .chemdraw.style_presets import STYLE_PRESETS, style_preset, style_preset_slug
     from .publication.house_styles import house_style, load_house_styles
-    from .publication.palettes import resolve_palette
 
     house = None
     houses = load_house_styles()

@@ -175,28 +175,23 @@ def _resolve_highlight_style(
     house: HouseStyle | None,
     palette: dict[str, Any],
     override_color: str | None,
-) -> tuple[bool, str | None, bool]:
-    """Return (bold, text_color, draw_box) for a row's highlight setting."""
+) -> tuple[bool, str | None, str | None]:
+    """Return (bold, text colour, rectangle fill type) for a row's highlight setting."""
+    if row_hl is True:
+        entry_hl = house.figure_convention("optimization_table", "entry_highlight") if house else None
+        row_hl = {"bold_row": "bold", "shaded_row": "shaded", "boxed_row": "boxed", "none": None}.get(entry_hl, "color")
     if not row_hl:
-        return False, None, False
+        return False, None, None
     accent = override_color or palette["primary"]
     if isinstance(row_hl, str) and _HEX_RE.match(row_hl):
-        return True, row_hl.upper(), False
+        return True, row_hl.upper(), None
     if row_hl == "bold":
-        return True, None, False
-    if row_hl == "color":
-        return True, accent, False
+        return True, None, None
     if row_hl == "shaded":
-        return True, accent, True
+        return True, accent, "solid"
     if row_hl == "boxed":
-        return True, accent, True
-    # row_hl is True: follow the house style's optimization_table.entry_highlight if declared
-    entry_hl = house.figure_convention("optimization_table", "entry_highlight") if house else None
-    if entry_hl == "bold_row":
-        return True, None, False
-    if entry_hl in ("shaded_row", "boxed_row"):
-        return True, accent, True
-    return True, accent, False
+        return True, accent, "none"
+    return True, accent, None
 
 
 def draw_table(brief: dict, output_path: str | None, render: bool) -> dict:
@@ -266,16 +261,16 @@ def draw_table(brief: dict, output_path: str | None, render: bool) -> dict:
     header_cells = [_format_cell(c["label"], bold=True) for c in cols]
     col_widths = [max(24.0, _measure_runs(p, r, layout_style, bold=True)) for p, r in header_cells]
 
-    formatted_rows: list[tuple[list[tuple[str, list[dict] | None]], bool, str | None, bool]] = []
+    formatted_rows: list[tuple[list[tuple[str, list[dict] | None]], str | None, str | None]] = []
     override_hl_color = brief.get("highlight_color")
     for row_map, row_hl in norm_rows:
-        bold, color, draw_box = _resolve_highlight_style(row_hl, house, palette, override_hl_color)
+        bold, color, fill_type = _resolve_highlight_style(row_hl, house, palette, override_hl_color)
         cells: list[tuple[str, list[dict] | None]] = []
         for idx, col in enumerate(cols):
             plain, runs = _format_cell(row_map.get(col["key"]), bold=bold, color=color)
             cells.append((plain, runs))
             col_widths[idx] = max(col_widths[idx], _measure_runs(plain, runs, layout_style, bold=bold))
-        formatted_rows.append((cells, bold, color, draw_box))
+        formatted_rows.append((cells, color, fill_type))
 
     # Measure optional header reaction scheme first so table width aligns cleanly with it
     objects: list[dict[str, Any]] = []
@@ -364,8 +359,8 @@ def draw_table(brief: dict, output_path: str | None, render: bool) -> dict:
 
     row_pitch = size * 1.65
     row_baseline = mid_rule_y + size * 1.35
-    for r_idx, (cells, _bold, color, draw_box) in enumerate(formatted_rows):
-        if draw_box:
+    for r_idx, (cells, color, fill_type) in enumerate(formatted_rows):
+        if fill_type:
             # Frame strictly clear of cap-top and descenders so text_over_ink stays zero
             box_top = row_baseline - size * 1.15
             box_bottom = row_baseline + size * 0.48
@@ -373,7 +368,9 @@ def draw_table(brief: dict, output_path: str | None, render: bool) -> dict:
                 "type": "rectangle",
                 "start": [table_left + 1.0, box_top],
                 "end": [table_right - 1.0, box_bottom],
-                "color": color or palette["primary"],
+                "color": palette["highlight_fill"] if fill_type == "solid" else color,
+                "fill_type": fill_type,
+                "background": fill_type == "solid",
             })
         for c_idx, (col, (plain, runs)) in enumerate(zip(cols, cells)):
             align = col["align"]

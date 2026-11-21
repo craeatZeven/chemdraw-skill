@@ -151,6 +151,8 @@ def _validate(brief: dict) -> list[str]:
                 col = item.get("color")
                 if not (isinstance(col, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", col)):
                     errors.append(f"fragment_colors[{idx}]: color must be a hex colour like #0B4F8A.")
+                if "include_attaching_bond" in item and not isinstance(item["include_attaching_bond"], bool):
+                    errors.append(f"fragment_colors[{idx}]: include_attaching_bond must be true or false.")
     footnotes = brief.get("footnotes")
     if footnotes is not None and not (isinstance(footnotes, list) and all(isinstance(f, str) for f in footnotes)):
         errors.append("footnotes must be a list of text lines.")
@@ -283,18 +285,19 @@ def _highlight_brief(
     grounded: list[dict],
     house: Any = None,
     group_colors: dict[str, str] | None = None,
-) -> tuple[dict, dict[str, int], list[str], str | None]:
+) -> tuple[dict, dict[str, int], list[str], str | None, str | None]:
     """The brief with varying groups and/or SMARTS synthon fragments coloured.
 
     A compound that sets its own color, atom_colors or bond_colors keeps them, and secondary
     by-products (``secondary_of``) stay subordinate grey. ``fragment_colors`` paints matched
     synthons across all primary structures; ``highlight_varying`` paints atoms outside the
-    maximum common substructure (excluding atoms already painted by ``fragment_colors``).
+    maximum common substructure. Each atom and bond keeps the first rule that claims it.
+    Return a header colour when the varying substituents share a single hue.
     """
     wanted = brief.get("highlight_varying")
     frag_rules = brief.get("fragment_colors") or []
     if not wanted and not frag_rules:
-        return brief, {}, [], None
+        return brief, {}, [], None, None
     warnings: list[str] = []
     applied_note = None
     default_colour = HIGHLIGHT
@@ -308,14 +311,18 @@ def _highlight_brief(
             default_colour = str(house_var).upper()
             applied_note = f"substrate_scope.variation_color={default_colour}"
         primary_grounded = [g for g in grounded if g["id"] not in secondary_ids]
-        varying, problem = _varying_atoms(primary_grounded)
+        try:
+            varying, problem = _varying_atoms(primary_grounded)
+        except (RuntimeError, ValueError) as exc:
+            problem = f"highlight_varying could not compare the compounds: {exc}"
         if problem:
             warnings.append(problem)
-    compiled_frags = [(Chem.MolFromSmarts(r["smarts"]), r["color"].upper(), bool(r.get("include_attaching_bond")))
-                      for r in frag_rules if Chem.MolFromSmarts(r["smarts"]) is not None]
+    compiled_frags = [(Chem.MolFromSmarts(r["smarts"]), r["color"].upper(), r.get("include_attaching_bond", False))
+                      for r in frag_rules]
     smiles = {g["id"]: g["smiles"] for g in grounded}
     styled = copy.deepcopy(brief)
     counts: dict[str, int] = {}
+    varying_colors: set[str] = set()
     gcolors = group_colors or {}
     for entry in styled["species"]:
         ident = str(entry["id"])
@@ -335,41 +342,37 @@ def _highlight_brief(
         atom_specs: list[dict] = []
         bond_specs: list[dict] = []
         claimed: set[int] = set()
+        claimed_bonds: set[tuple[int, int]] = set()
+        bond_pairs = [(b.GetBeginAtomIdx(), b.GetEndAtomIdx()) for b in mol.GetBonds()]
+        visible_bonds = [pair for pair in bond_pairs if not contracted_inner.intersection(pair)]
         for pat, fcol, inc_attach in compiled_frags:
-            matched: set[int] = set()
-            for m in mol.GetSubstructMatches(pat):
-                matched.update(m)
-            fresh = sorted(matched - claimed - contracted_inner)
+            matched = {idx for match in mol.GetSubstructMatches(pat) for idx in match}
+            fresh = matched - claimed - contracted_inner
             if not fresh:
                 continue
-            fset = set(fresh)
-            atom_specs.append({"atoms": fresh, "color": fcol})
-            bonds = [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds()
-                     if ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & fset if inc_attach
-                         else {b.GetBeginAtomIdx(), b.GetEndAtomIdx()} <= fset)
-                     and not ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & contracted_inner)]
+            atom_specs.append({"atoms": sorted(fresh), "color": fcol})
+            bonds = [pair for pair in visible_bonds if pair not in claimed_bonds
+                     and (fresh.intersection(pair) if inc_attach else fresh.issuperset(pair))]
             if bonds:
                 bond_specs.append({"bonds": bonds, "color": fcol})
-            claimed.update(fset)
-        if wanted:
-            var_atoms = [a for a in (varying.get(ident) or []) if a not in claimed and a not in contracted_inner]
-            if var_atoms:
-                colour = gcolors.get(_text(entry.get("group"))) or default_colour
-                vset = set(var_atoms)
-                atom_specs.append({"atoms": var_atoms, "color": colour})
-                vbonds = [[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds()
-                          if ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & vset
-                              and not ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} <= claimed)
-                              and not ({b.GetBeginAtomIdx(), b.GetEndAtomIdx()} & contracted_inner))]
-                if vbonds:
-                    bond_specs.append({"bonds": vbonds, "color": colour})
-                claimed.update(vset)
+                claimed_bonds.update(bonds)
+            claimed.update(fresh)
+        var_atoms = set(varying.get(ident, ())) - claimed - contracted_inner
+        if var_atoms:
+            colour = gcolors.get(_text(entry.get("group"))) or default_colour
+            varying_colors.add(colour)
+            atom_specs.append({"atoms": sorted(var_atoms), "color": colour})
+            bonds = [pair for pair in visible_bonds if pair not in claimed_bonds and var_atoms.intersection(pair)]
+            if bonds:
+                bond_specs.append({"bonds": bonds, "color": colour})
+            claimed.update(var_atoms)
         if atom_specs:
             entry["atom_colors"] = atom_specs
             if bond_specs:
                 entry["bond_colors"] = bond_specs
             counts[ident] = len(claimed)
-    return styled, counts, warnings, applied_note
+    header_color = next(iter(varying_colors)) if len(varying_colors) == 1 else None
+    return styled, counts, warnings, applied_note, header_color
 
 
 def _cell_fields(fields: list[dict], notes: bool, definitions: bool = False) -> list[dict]:
@@ -517,13 +520,9 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
 
     house = brief_house(brief)
     group_colors = _resolve_group_colors(brief, house)
-    variation_applied: str | None = None
-    try:
-        styled, highlighted, highlight_warnings, variation_applied = _highlight_brief(
-            brief, drawn, house=house, group_colors=group_colors
-        )
-    except Exception as exc:  # a failed comparison leaves the panel uncoloured, and says so
-        styled, highlighted, highlight_warnings = brief, {}, [f"highlight_varying could not compare the compounds: {exc}"]
+    styled, highlighted, highlight_warnings, variation_applied, header_color = _highlight_brief(
+        brief, drawn, house=house, group_colors=group_colors
+    )
     restyle = house is not None or any(isinstance(e, dict) and any(k in e for k in SPECIES_STYLE)
                                        for e in styled["species"])
     try:
@@ -549,24 +548,24 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
     style_warnings: list[str] = []
     if restyle:
         slug = brief_style(brief)[0]
-        for page in pages:
+        fragment_ids = [{} for _ in pages]
+        for ident, compound in project["compounds"].items():
+            fragment_id = compound["objects"]["fragment"]
+            if fragment_id is not None:
+                fragment_ids[compound["page"]][fragment_id] = ident
+        for page, bindings in zip(pages, fragment_ids):
             path = Path(page["path"])
             text, page_applied, skipped, warned = figure_house.apply_scope_conventions(
-                path.read_text(encoding="utf-8"), styled, drawn, house, slug)
+                path.read_text(encoding="utf-8"), styled, drawn, house, slug, bindings)
             path.write_text(str(text), encoding="utf-8")
             applied += [a for a in page_applied if a not in applied]
             style_warnings += [w for w in warned if w not in style_warnings]
-    if header and highlighted:
-        # The general reaction's R marks take the colour of what varies below (BJOC 22-127).
-        wanted = brief.get("highlight_varying")
-        house_var = house.figure_convention("substrate_scope", "variation_color") if house is not None else None
-        colour = wanted if isinstance(wanted, str) else (str(house_var) if house_var else HIGHLIGHT)
-        for page in pages:
-            path = Path(page["path"])
-            text, painted = figure_house.paint_header_marks(path.read_text(encoding="utf-8"), colour)
-            if painted:
-                path.write_text(str(text), encoding="utf-8")
-                applied.append("header_marks_highlighted")
+    if header and header_color:
+        path = Path(pages[0]["path"])
+        text, painted = figure_house.paint_header_marks(path.read_text(encoding="utf-8"), header_color, header=header)
+        if painted:
+            path.write_text(str(text), encoding="utf-8")
+            applied.append("header_marks_highlighted")
     if render:
         # Rendering is not a styling step: a plain panel needs its PNG too. This used
         # to sit inside ``if restyle`` so an unstyled scope panel with render=true

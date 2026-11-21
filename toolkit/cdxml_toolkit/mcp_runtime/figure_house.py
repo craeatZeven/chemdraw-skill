@@ -132,10 +132,19 @@ def _with_weight(face: str | None, bold: bool) -> str:
     return str((value & ~1) | (1 if bold else 0))
 
 
-def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict]):
+def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict],
+                       fragment_ids: Mapping[str, str] | None = None):
     """(species id, fragment element, fragment mol) for every drawn species, in document order."""
     page = root.find("page")
     frag_els = {f.get("id", ""): f for f in page.iter("fragment")}
+    if fragment_ids is not None:
+        # Publication layout binds cells by ID. The same structure may occur in several
+        # cells or in the header, and fragment IDs are local to each page.
+        bound = {}
+        for fragment_id, mol in read_fragments(cdxml):
+            if fragment_id in fragment_ids:
+                bound[fragment_id] = Chem.CombineMols(bound[fragment_id], mol) if fragment_id in bound else mol
+        return [(fragment_ids[fid], frag_els[fid], mol) for fid, mol in bound.items()]
     key_to_ids: dict[str, list[str]] = {}
     for g in grounded:
         if not g.get("smiles"):
@@ -660,7 +669,8 @@ def _add_disconnection_mark(
 
 
 def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
-                          house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]:
+                          house: HouseStyle | None = None, *,
+                          fragment_ids: Mapping[str, str] | None = None) -> tuple[Any, list[str], list[str]]:
     """The brief's own colours, disconnections, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
 
     Runs after the house conventions so a colour the brief asks for wins over the card's.
@@ -681,7 +691,7 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
     page = root.find("page")
     colors = _Colors(root)
     smiles = {g["id"]: g["smiles"] for g in grounded}
-    drawn = _species_fragments(root, str(cdxml), grounded) if (wants_paint or wants_abbrev) else []
+    drawn = _species_fragments(root, str(cdxml), grounded, fragment_ids) if (wants_paint or wants_abbrev) else []
     used_ids = [int(v) for el in root.iter() for v in [el.get("id")] if v and v.isdigit()]
     ids = renderer._IDGen(max(used_ids, default=1000) + 1)
 
@@ -1199,7 +1209,7 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
     return _wrap(root, cdxml), [f"generic rings ({count})"] if count else [], warnings
 
 
-def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
+def paint_header_marks(cdxml: Any, color: str, *, header: Mapping | None = None) -> tuple[Any, int]:
     """Colour the R marks of a scope's general reaction like what varies in the grid below
     (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents). Marks are generic nodes
     outside every compound group; the R and its raised number are both painted. Returns the
@@ -1208,8 +1218,11 @@ def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
     page = root.find("page")
     if page is None:
         return cdxml, 0
-    in_cells = {id(n) for g in page.iter("group") for n in g.iter("n")}
-    marks = [n for n in page.iter("n") if n.get("NodeType") == "GenericNickname" and id(n) not in in_cells]
+    fragments = page.findall("fragment")
+    if header is not None:
+        items = [*header["substrates"], *header["products"]]
+        fragments = [fragment for fragment, item in zip(fragments, items) if not item.get("color")]
+    marks = [n for fragment in fragments for n in fragment.findall("n[@NodeType='GenericNickname']")]
     if not marks:
         return cdxml, 0
     index = _Colors(root).index(color)
@@ -1219,7 +1232,7 @@ def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
 
 
 def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None,
-                            slug: str) -> tuple[Any, list[str], list[str], list[str]]:
+                            slug: str, fragment_ids: Mapping[str, str]) -> tuple[Any, list[str], list[str], list[str]]:
     """A scope page already in its preset: compound-number face and colour, the brief's species
     colours and abbreviations (the card's abbreviate_groups too), then the measured geometry."""
     applied: list[str] = []
@@ -1236,7 +1249,7 @@ def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], ho
         # A scope page keeps each structure, its number and its values in one <group>.
         group_of = {id(f): g for g in page.iter("group") for f in g.findall("fragment")}
         label_els = []
-        for sp_id, el, _ in _species_fragments(root, str(cdxml), grounded):
+        for sp_id, el, _ in _species_fragments(root, str(cdxml), grounded, fragment_ids):
             group = group_of.get(id(el))
             found = [t for t in group.findall("t") if _text_of(t) == labels.get(sp_id)] if group is not None else []
             label_t = found[0] if found else _label_of(page, el, labels.get(sp_id))
@@ -1261,7 +1274,7 @@ def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], ho
         for key, value in (section.get("conventions") or {}).items():
             if value is not None:
                 skipped.append(f"substrate_scope.{key}: guidance for finishing the panel, not drawn by the tool")
-    cdxml, more, warned = apply_species_styling(cdxml, brief, grounded, house)
+    cdxml, more, warned = apply_species_styling(cdxml, brief, grounded, house, fragment_ids=fragment_ids)
     applied += more
     warnings += warned
     # Abbreviation labels are made at ACS size; on a styled page they take the page's label size.

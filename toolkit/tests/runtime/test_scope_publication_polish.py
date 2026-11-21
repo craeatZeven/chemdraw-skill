@@ -22,6 +22,90 @@ def _texts(root: ET.Element) -> list[str]:
     return ["".join(t.itertext()) for t in root.iter("t")]
 
 
+def _ink(root, element):
+    index = int(element.get("color", "0"))
+    if index < 2:
+        return ("#000000", "#FFFFFF")[index]
+    rgb = root.findall("colortable/color")[index - 2]
+    return "#" + "".join(f"{round(float(rgb.get(channel)) * 255):02X}" for channel in "rgb")
+
+
+def test_fragments_keep_their_attachment_bonds(tmp_path):
+    brief = {
+        "kind": "scope", "highlight_varying": True,
+        "fragment_colors": [
+            {"smarts": "c1ccccc1", "color": "#0072B2", "include_attaching_bond": True},
+            {"smarts": "[Cl]", "color": "#009E73", "include_attaching_bond": True},
+        ],
+        "species": [
+            {"id": "1", "smiles": "Clc1ccccc1"},
+            {"id": "2", "smiles": "Brc1ccccc1"},
+        ],
+    }
+    report = draw_figure(brief, str(tmp_path / "scope"))
+    assert report["checks_passed"], report
+    root = _root(report)
+    for element, color in [("17", "#009E73"), ("35", "#FF6600")]:
+        frag = next(f for f in root.findall("page/group/fragment") if f.find(f"n[@Element='{element}']") is not None)
+        node = frag.find(f"n[@Element='{element}']")
+        assert _ink(root, node) == color
+        bond = next(b for b in frag.findall("b") if node.get("id") in (b.get("B"), b.get("E")))
+        assert _ink(root, bond) == "#0072B2"
+
+
+def test_scope_styles_follow_compound_bindings_across_pages(tmp_path):
+    brief = {
+        "kind": "scope", "title": "", "columns": 1, "height_mm": 60,
+        "header": {"substrates": [{"smiles": "Cc1ccccc1"}], "products": [{"smiles": "COc1ccccc1"}]},
+        "species": [
+            {"id": str(i), "label": str(i), "smiles": "Cc1ccccc1", "color": color}
+            for i, color in enumerate(("#0072B2", "#D55E00", "#009E73", "#CC79A7"), 1)
+        ],
+    }
+    report = draw_figure(brief, str(tmp_path / "scope"))
+    assert report["checks_passed"], report
+    assert len(report["pages"]) > 1
+    actual = {}
+    for page in report["pages"]:
+        root = ET.parse(page["path"]).getroot()
+        assert all(_ink(root, bond) == "#000000" for bond in root.findall("page/fragment/b"))
+        for cell in root.findall("page/group"):
+            actual["".join(cell.find("t").itertext())] = {_ink(root, b) for b in cell.findall("fragment/b")}
+    assert actual == {entry["id"]: {entry["color"]} for entry in brief["species"]}
+
+
+@pytest.mark.parametrize("second_band,expected", [("#0072B2", "#0072B2"), ("#009E73", "#000000")])
+def test_header_r_marks_reflect_the_varying_colours(tmp_path, second_band, expected):
+    brief = {
+        "kind": "scope", "title": "", "highlight_varying": True,
+        "group_colors": {"Aryl": "#0072B2", "Modified": second_band},
+        "header": {
+            "substrates": [{"smiles": "c1ccc([*:1])cc1"}, {"smiles": "CC[*:2]", "color": "#D55E00"}],
+            "products": [{"smiles": "Cc1ccc([*:1])cc1"}],
+        },
+        "species": [
+            {"id": "1", "smiles": "Clc1ccccc1", "group": "Aryl"},
+            {"id": "2", "smiles": "Brc1ccccc1", "group": "Modified"},
+        ],
+    }
+    report = draw_figure(brief, str(tmp_path / "scope"))
+    assert report["checks_passed"], report
+    root = _root(report)
+    marks = root.findall("page/fragment/n[@NodeType='GenericNickname']")
+    assert [{_ink(root, run) for run in mark.iter("s")} for mark in marks] == [
+        {expected}, {"#D55E00"}, {expected},
+    ]
+
+
+def test_fragment_attachment_flag_requires_a_boolean():
+    report = draw_figure({
+        "kind": "scope", "species": [{"id": "1", "smiles": "Clc1ccccc1"}],
+        "fragment_colors": [{"smarts": "[Cl]", "color": "#0072B2", "include_attaching_bond": "false"}],
+    })
+    assert not report["ok"]
+    assert any("include_attaching_bond" in error for error in report["errors"])
+
+
 def test_empty_title_omits_title_element(tmp_path):
     brief = {
         "kind": "scope",

@@ -97,7 +97,6 @@ PALETTES: Mapping[str, Mapping[str, Any]] = MappingProxyType({
         secondary="#FF6600",
         accent="#FF6600",
         new_bond="#FF6600",
-        highlight_fill="#FFFFFF",
         band_colors=("#336699", "#FF6600", "#808080"),
     ),
     "acs_jacs": _make(
