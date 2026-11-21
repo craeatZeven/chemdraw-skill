@@ -13,10 +13,11 @@ or toolkit install needed. ``--no-render`` audits the corpus (pairs, baseline
 sizes) without ChemDraw.
 
 journal — the 26-case cross-journal substrate_scope imitation benchmark
-(briefs in ``assets/scope-benchmark/``, toolkit runtime required)::
+(briefs in ``assets/scope-benchmark/``, toolkit runtime required). With
+``--render`` it reports raw and normalized pixel differences for each case::
 
     python scripts/run_scope_benchmark.py --corpus journal --no-render
-    python scripts/run_scope_benchmark.py --corpus journal --render --side-by-side
+    python scripts/run_scope_benchmark.py --corpus journal --render --side-by-side --output-dir output/journal-benchmark
 
 coverage mode writes ``<output-dir>/renders/<name>.png``,
 ``<output-dir>/comparisons/<name>.compare.png`` (baseline | fresh render) and
@@ -36,6 +37,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from statistics import median
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "assets" / "scope-benchmark" / "manifest.json"
@@ -44,10 +46,22 @@ COVERAGE_DIR = ROOT / "assets" / "coverage"
 
 # Grey-level distance above which a pixel counts as "different".
 DIFF_THRESHOLD = 16
+JOURNAL_CANVAS_HEIGHT = 900
 
 
 def _load_manifest() -> dict:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
+
+
+def _open_rgb(path: Path, *, white_background: bool = False):
+    from PIL import Image
+
+    with Image.open(path) as image:
+        if white_background and ("A" in image.getbands() or "transparency" in image.info):
+            rgba = image.convert("RGBA")
+            background = Image.new("RGBA", rgba.size, "white")
+            return Image.alpha_composite(background, rgba).convert("RGB")
+        return image.convert("RGB")
 
 
 def _stitch_side_by_side(
@@ -57,6 +71,8 @@ def _stitch_side_by_side(
     title: str,
     left_label: str = "Published Original (CC BY 4.0)",
     right_label: str = "ChemDraw Skill Imitation",
+    *,
+    white_background: bool = False,
 ) -> bool:
     try:
         from PIL import Image, ImageDraw
@@ -64,12 +80,15 @@ def _stitch_side_by_side(
         return False
     if not orig_png.is_file() or not drawn_png.is_file():
         return False
-    left = Image.open(orig_png).convert("RGB")
-    right = Image.open(drawn_png).convert("RGB")
+    left = _open_rgb(orig_png, white_background=white_background)
+    right = _open_rgb(drawn_png, white_background=white_background)
     target_h = max(min(max(left.height, right.height), 1800), 900)
+    lanczos = getattr(Image, "Resampling", Image).LANCZOS
+
     def _scale(im: Image.Image) -> Image.Image:
         ratio = target_h / max(im.height, 1)
-        return im.resize((max(1, int(im.width * ratio)), target_h), Image.Resampling.LANCZOS)
+        return im.resize((max(1, int(im.width * ratio)), target_h), lanczos)
+
     l_im = _scale(left)
     r_im = _scale(right)
     pad, banner_h = 24, 48
@@ -84,32 +103,37 @@ def _stitch_side_by_side(
     return True
 
 
+def _difference_metrics(baseline, render) -> dict:
+    """Measure same-size RGB images using the histogram of their grayscale difference."""
+    from PIL import ImageChops
+
+    hist = ImageChops.difference(baseline, render).convert("L").histogram()
+    total = sum(hist)
+    return {
+        "rmse": round(math.sqrt(sum(count * level**2 for level, count in enumerate(hist)) / total), 3),
+        "diff_pixel_ratio": round(sum(hist[DIFF_THRESHOLD + 1:]) / total, 4),
+    }
+
+
+def _raw_pixel_metrics(baseline, render) -> dict:
+    out = {
+        "baseline_size": list(baseline.size),
+        "render_size": list(render.size),
+        "size_match": baseline.size == render.size,
+        "rmse": None,
+        "diff_pixel_ratio": None,
+    }
+    if out["size_match"]:
+        out.update(_difference_metrics(baseline, render))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # coverage corpus
 # ---------------------------------------------------------------------------
 
 def _pixel_metrics(baseline: Path, render: Path) -> dict:
-    """Size check + RMSE + differing-pixel ratio (pure Pillow, C-speed histogram)."""
-    from PIL import Image, ImageChops
-
-    b = Image.open(baseline).convert("RGB")
-    r = Image.open(render).convert("RGB")
-    out = {
-        "baseline_size": [b.width, b.height],
-        "render_size": [r.width, r.height],
-        "size_match": b.size == r.size,
-        "rmse": None,
-        "diff_pixel_ratio": None,
-    }
-    if not out["size_match"]:
-        return out
-    hist = ImageChops.difference(b, r).convert("L").histogram()
-    total = float(sum(hist))
-    if total == 0:
-        return out
-    out["rmse"] = round(math.sqrt(sum(v * d * d for d, v in enumerate(hist)) / total), 3)
-    out["diff_pixel_ratio"] = round(sum(hist[DIFF_THRESHOLD + 1:]) / total, 4)
-    return out
+    return _raw_pixel_metrics(_open_rgb(baseline), _open_rgb(render))
 
 
 def _collect_coverage_cases(only: list | None, limit: int | None, renders_dir: Path) -> list[dict]:
@@ -298,13 +322,61 @@ def _run_coverage(args: argparse.Namespace) -> int:
 # journal corpus (26-case imitation benchmark, toolkit runtime required)
 # ---------------------------------------------------------------------------
 
+def _journal_pixel_metrics(baseline: Path, render: Path) -> tuple[dict, dict]:
+    """Compare a published crop and a native render before and after resizing."""
+    from PIL import Image
+
+    original = _open_rgb(baseline, white_background=True)
+    imitation = _open_rgb(render, white_background=True)
+    raw = _raw_pixel_metrics(original, imitation)
+    lanczos = getattr(Image, "Resampling", Image).LANCZOS
+
+    def scale(image):
+        width = max(1, round(image.width * JOURNAL_CANVAS_HEIGHT / image.height))
+        return image.resize((width, JOURNAL_CANVAS_HEIGHT), lanczos)
+
+    scaled = [scale(original), scale(imitation)]
+    canvas_size = (max(image.width for image in scaled), JOURNAL_CANVAS_HEIGHT)
+    canvases = []
+    for image in scaled:
+        canvas = Image.new("RGB", canvas_size, "white")
+        canvas.paste(image, (0, 0))
+        canvases.append(canvas)
+    normalized = {
+        **raw,
+        "normalized": True,
+        "canvas_size": list(canvas_size),
+        "baseline_scaled_size": list(scaled[0].size),
+        "render_scaled_size": list(scaled[1].size),
+        "aspect_ratio_delta": round(abs(original.width / original.height - imitation.width / imitation.height), 4),
+        **_difference_metrics(*canvases),
+    }
+    return raw, normalized
+
+
+def _aggregate_journal_metrics(rows: list[dict]) -> dict:
+    measured = [row for row in rows if row["pixel_metrics_normalized"] is not None]
+    aggregate = {"cases_measured": len(measured)}
+    for metric, precision in (("rmse", 4), ("diff_pixel_ratio", 5)):
+        values = [(row["slug"], row["pixel_metrics_normalized"][metric]) for row in measured]
+        scores = [score for _, score in values]
+        worst_slug, worst_score = max(values, key=lambda pair: pair[1], default=(None, None))
+        aggregate.update({
+            f"{metric}_best": min(scores, default=None),
+            f"{metric}_median": round(median(scores), precision) if scores else None,
+            f"{metric}_worst": worst_score,
+            f"{metric}_worst_case": worst_slug,
+        })
+    return aggregate
+
+
 def _run_in_toolkit(args: argparse.Namespace) -> int:
     # Import toolkit runtime directly (this script is invoked via the runtime Python or bootstraps through cdx.py py).
     from cdxml_toolkit.cdxml_check import check_cdxml
     from cdxml_toolkit.mcp_runtime.figure_draw import draw_figure
     try:
         from cdxml_toolkit.mcp_runtime.figure_scope import draw_scope
-    except Exception:      # 老 runtime 没有 scope 入口时退回 draw_figure
+    except Exception:  # Older runtimes use draw_figure for scope briefs.
         draw_scope = None
 
     os.environ.setdefault("CHEMDRAW_OFFLINE", "1")
@@ -325,13 +397,7 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
         cleanup = not args.keep_temp
 
     def _draw_for_kind(brief, out, render):
-        """按 brief.kind 选对入口。
-
-        踩坑记录：原来一律调 draw_figure（scheme 校验器），而 scope brief 带
-        row_align / fragment_colors / columns 等 scope 专有键，会被判 unknown；
-        正确入口是 figure_scope.draw_scope —— 这也是 journal 模式一直 FAIL 的真因，
-        与 runtime 版本无关。
-        """
+        """Route scope briefs to the validator that accepts scope-specific fields."""
         kind = (brief or {}).get("kind") or "scheme"
         if kind == "scope" and draw_scope is not None:
             return draw_scope(brief, output_path=out, render=render)
@@ -346,6 +412,7 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
         if case_dir.exists():
             shutil.rmtree(case_dir)
         report = _draw_for_kind(brief, str(case_dir), bool(args.render))
+        native = report.get("native") or {}
         entry = {
             "slug": slug,
             "journal": case["journal"],
@@ -359,10 +426,13 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
             "lint_issues": len((report.get("lint") or {}).get("issues") or []),
             "warnings": report.get("warnings") or [],
             "errors": report.get("errors") or [],
-            "native_status": (report.get("native") or {}).get("status"),
+            "native_status": native.get("status"),
             "check_errors": [],
             "check_warnings": [],
             "side_by_side": None,
+            "pixel_metrics": None,
+            "pixel_metrics_normalized": None,
+            "visual_metrics_error": None,
         }
         if report.get("ok"):
             for page in report.get("pages") or []:
@@ -374,13 +444,26 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
                 )
                 entry["check_errors"].extend(chk.get("errors") or [])
                 entry["check_warnings"].extend(chk.get("warnings") or [])
-            if args.render and args.side_by_side:
-                pngs = (report.get("native") or {}).get("png_paths") or []
-                if pngs:
-                    comp = out_root / "comparisons" / f"{slug}.compare.png"
-                    if _stitch_side_by_side(ROOT / case["corpus_png"], Path(pngs[0]), comp,
-                                            f"[{case['journal']}] {slug}"):
-                        entry["side_by_side"] = str(comp)
+            if args.render:
+                pngs = native.get("png_paths") or []
+                png = pngs[0] if pngs else native.get("png_path")
+                if not png:
+                    entry["visual_metrics_error"] = native.get("reason") or "Native render did not produce a PNG."
+                else:
+                    reference = ROOT / case["corpus_png"]
+                    render_png = Path(png)
+                    try:
+                        raw, normalized = _journal_pixel_metrics(reference, render_png)
+                    except (ImportError, OSError) as exc:
+                        entry["visual_metrics_error"] = str(exc)
+                    else:
+                        entry["pixel_metrics"] = raw
+                        entry["pixel_metrics_normalized"] = normalized
+                        if args.side_by_side:
+                            comp = out_root / "comparisons" / f"{slug}.compare.png"
+                            if _stitch_side_by_side(reference, render_png, comp,
+                                                    f"[{case['journal']}] {slug}", white_background=True):
+                                entry["side_by_side"] = str(comp)
         case_ok = (
             entry["ok"]
             and entry["checks_passed"]
@@ -392,10 +475,16 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
         if case_ok:
             passed += 1
         status = "PASS" if case_ok else "FAIL"
+        metrics = entry["pixel_metrics_normalized"]
+        pixel_info = ""
+        if metrics:
+            pixel_info = f"  rmse={metrics['rmse']:.3f}  diff={metrics['diff_pixel_ratio']:.2%}"
+        elif entry["visual_metrics_error"]:
+            pixel_info = f"  visual metrics unavailable: {entry['visual_metrics_error']}"
         print(
             f"[{idx:02d}/{len(cases):02d}] {status}  {slug:48s}  pages={entry['pages']}  "
             f"readback={entry['readback']}  chk_err={len(entry['check_errors'])}  "
-            f"warn={len(entry['warnings'])}"
+            f"warn={len(entry['warnings'])}{pixel_info}"
         )
         if not case_ok:
             if entry["errors"]:
@@ -406,6 +495,7 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
                 print("    warnings:", entry["warnings"][:3])
         results.append(entry)
 
+    aggregate = _aggregate_journal_metrics(results)
     summary = {
         "figure_type": "substrate_scope",
         "total": len(results),
@@ -413,11 +503,21 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
         "failed": len(results) - passed,
         "rendered": bool(args.render),
         "output_dir": str(out_root),
+        "diff_threshold_grey": DIFF_THRESHOLD,
+        "normalization_height_px": JOURNAL_CANVAS_HEIGHT,
+        "pixel_metrics_normalized": aggregate,
         "cases": results,
     }
     report_path = out_root / "benchmark-report.json"
     report_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"\nSUMMARY: {passed}/{len(results)} passed (rendered={bool(args.render)}) -> {report_path}")
+    if args.render:
+        print(f"VISUAL: measured {aggregate['cases_measured']}/{len(results)} at {JOURNAL_CANVAS_HEIGHT} px height")
+    if aggregate["cases_measured"]:
+        print(f"  RMSE median={aggregate['rmse_median']}  "
+              f"worst={aggregate['rmse_worst']} ({aggregate['rmse_worst_case']})")
+        print(f"  Differing pixels median={aggregate['diff_pixel_ratio_median']:.2%}  "
+              f"worst={aggregate['diff_pixel_ratio_worst']:.2%} ({aggregate['diff_pixel_ratio_worst_case']})")
     if cleanup:
         shutil.rmtree(out_root, ignore_errors=True)
     return 0 if passed == len(results) else 1

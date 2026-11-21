@@ -107,9 +107,35 @@ python scripts/run_scope_benchmark.py --render --side-by-side --output-dir outpu
 #    coverage audit only (no ChemDraw):
 python scripts/run_scope_benchmark.py --no-render
 #    26-case cross-journal substrate_scope imitation benchmark (toolkit runtime):
-python scripts/run_scope_benchmark.py --corpus journal --no-render
-python scripts/run_scope_benchmark.py --corpus journal --render --side-by-side
+python scripts/run_scope_benchmark.py --corpus journal --no-render --output-dir output/journal-audit
+python scripts/run_scope_benchmark.py --corpus journal --render --side-by-side --output-dir output/journal-benchmark
 
 # 6. Audit corpus licence discipline and coverage across all 23 types
 python scripts/audit_corpus.py --markdown
 ```
+
+### Reading the journal visual metrics
+
+With `--render`, the benchmark compares each published crop with the first native
+ChemDraw PNG for that case. It composites transparency over white and records
+two sets of values in `benchmark-report.json`.
+
+- `pixel_metrics` records the original image dimensions and whether they match.
+  RMSE and the differing-pixel ratio are available when those dimensions match.
+- `pixel_metrics_normalized` scales each image to 900 pixels high with Lanczos
+  resampling, preserving its aspect ratio. Both images are aligned at the top
+  left on a white canvas as wide as the wider image. The report records the
+  canvas and scaled image sizes, plus the absolute difference in aspect ratio.
+
+Both comparisons convert the absolute RGB channel differences to grayscale on
+a 0–255 scale. RMSE is the root mean square of those values. The differing-pixel
+ratio is the fraction of canvas pixels whose difference exceeds 16. Lower
+values indicate closer pixel agreement. These measurements reflect layout,
+cropping, and rendering differences. The benchmark uses readback, lint, and
+CDXML checks to determine whether each case passes.
+
+The report summarizes the normalized measurements with the number of measured
+cases, the best and median values, and the worst value and case for each metric.
+`--no-render` leaves the case metrics empty. If a render is requested but its
+PNG is missing or unreadable, `visual_metrics_error` records the reason. Add
+`--side-by-side` to save comparison images alongside the metrics.
