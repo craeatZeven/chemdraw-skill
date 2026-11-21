@@ -47,19 +47,19 @@
 <arrow id="1044" Z="1044" Tail3D="226.56 240.00 0" Head3D="235.12 227.48 0" Center3D="240.00 240.00 0" AngularSize="-68.73" ArrowheadHead="Full" ArrowheadTail="None" ArrowheadType="Solid" HeadSize="400" ArrowheadCenterSize="350" ArrowheadWidth="100" FillType="None" />
 <t id="1045" p="240.00 176.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">H-C-H 3D 110.3° (projection 68.7°)</s></t>
 <t id="1046" p="240.00 306.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">unequal hybridisation (CH</s><s font="3" size="10.0" face="32">3</s><s font="3" size="10.0" face="0">Cl)</s></t>
-<graphic id="1047" GraphicType="Line" LineType="Dashed" BoundingBox="410.00 100.00 450.00 100.00"/>
-<graphic id="1048" Z="1048" GraphicType="Oval" BoundingBox="425.54 95.94 434.46 104.06" Center3D="430.00 100.00 0.00" MajorAxisEnd3D="434.46 100.00 0.00" MinorAxisEnd3D="430.00 104.06 0.00" OvalType="Filled" color="4" />
-<graphic id="1049" Z="1049" GraphicType="Oval" BoundingBox="422.00 89.00 486.00 111.00" Center3D="454.00 100.00 0.00" MajorAxisEnd3D="486.00 100.00 0.00" MinorAxisEnd3D="454.00 111.00 0.00" OvalType="Shaded" color="4" />
-<graphic id="1050" Z="1050" GraphicType="Oval" BoundingBox="374.00 89.00 438.00 111.00" Center3D="406.00 100.00 0.00" MajorAxisEnd3D="374.00 100.00 0.00" MinorAxisEnd3D="406.00 89.00 0.00" OvalType="Shaded" color="4" />
+<graphic id="1047" Z="1047" GraphicType="Oval" BoundingBox="422.00 89.00 486.00 111.00" Center3D="454.00 100.00 0.00" MajorAxisEnd3D="486.00 100.00 0.00" MinorAxisEnd3D="454.00 111.00 0.00" OvalType="Shaded" color="4" />
+<graphic id="1048" Z="1048" GraphicType="Oval" BoundingBox="374.00 89.00 438.00 111.00" Center3D="406.00 100.00 0.00" MajorAxisEnd3D="374.00 100.00 0.00" MinorAxisEnd3D="406.00 89.00 0.00" OvalType="Shaded" color="4" />
+<graphic id="1049" Z="1049" GraphicType="Oval" BoundingBox="425.54 95.94 434.46 104.06" Center3D="430.00 100.00 0.00" MajorAxisEnd3D="434.46 100.00 0.00" MinorAxisEnd3D="430.00 104.06 0.00" OvalType="Filled" color="4" />
+<graphic id="1050" GraphicType="Line" LineType="Dashed" BoundingBox="410.00 100.00 450.00 100.00"/>
 <t id="1051" p="430.00 148.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">σ overlap</s></t>
 <t id="1052" p="430.00 58.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">internuclear axis</s></t>
-<graphic id="1053" GraphicType="Line" LineType="Dashed" BoundingBox="590.00 100.00 630.00 100.00"/>
-<graphic id="1054" Z="1054" GraphicType="Oval" BoundingBox="608.34 55.87 611.66 80.13" Center3D="610.00 68.00 0.00" MajorAxisEnd3D="610.00 55.87 0.00" MinorAxisEnd3D="611.66 68.00 0.00" OvalType="Filled" color="4" />
-<graphic id="1055" Z="1055" GraphicType="Oval" BoundingBox="608.34 119.87 611.66 144.13" Center3D="610.00 132.00 0.00" MajorAxisEnd3D="610.00 144.13 0.00" MinorAxisEnd3D="608.34 132.00 0.00" OvalType="Filled" color="5" />
-<graphic id="1056" Z="1056" GraphicType="Oval" BoundingBox="591.00 36.00 613.00 100.00" Center3D="602.00 68.00 0.00" MajorAxisEnd3D="602.00 36.00 0.00" MinorAxisEnd3D="613.00 68.00 0.00" OvalType="Shaded" color="4" />
-<graphic id="1057" Z="1057" GraphicType="Oval" BoundingBox="591.00 100.00 613.00 164.00" Center3D="602.00 132.00 0.00" MajorAxisEnd3D="602.00 164.00 0.00" MinorAxisEnd3D="591.00 132.00 0.00" OvalType="Shaded" color="5" />
-<graphic id="1058" Z="1058" GraphicType="Oval" BoundingBox="607.00 36.00 629.00 100.00" Center3D="618.00 68.00 0.00" MajorAxisEnd3D="618.00 36.00 0.00" MinorAxisEnd3D="629.00 68.00 0.00" OvalType="Shaded" color="4" />
-<graphic id="1059" Z="1059" GraphicType="Oval" BoundingBox="607.00 100.00 629.00 164.00" Center3D="618.00 132.00 0.00" MajorAxisEnd3D="618.00 164.00 0.00" MinorAxisEnd3D="607.00 132.00 0.00" OvalType="Shaded" color="5" />
+<graphic id="1053" Z="1053" GraphicType="Oval" BoundingBox="591.00 36.00 613.00 100.00" Center3D="602.00 68.00 0.00" MajorAxisEnd3D="602.00 36.00 0.00" MinorAxisEnd3D="613.00 68.00 0.00" OvalType="Shaded" color="4" />
+<graphic id="1054" Z="1054" GraphicType="Oval" BoundingBox="591.00 100.00 613.00 164.00" Center3D="602.00 132.00 0.00" MajorAxisEnd3D="602.00 164.00 0.00" MinorAxisEnd3D="591.00 132.00 0.00" OvalType="Shaded" color="5" />
+<graphic id="1055" Z="1055" GraphicType="Oval" BoundingBox="607.00 36.00 629.00 100.00" Center3D="618.00 68.00 0.00" MajorAxisEnd3D="618.00 36.00 0.00" MinorAxisEnd3D="629.00 68.00 0.00" OvalType="Shaded" color="4" />
+<graphic id="1056" Z="1056" GraphicType="Oval" BoundingBox="607.00 100.00 629.00 164.00" Center3D="618.00 132.00 0.00" MajorAxisEnd3D="618.00 164.00 0.00" MinorAxisEnd3D="607.00 132.00 0.00" OvalType="Shaded" color="5" />
+<graphic id="1057" Z="1057" GraphicType="Oval" BoundingBox="608.34 55.87 611.66 80.13" Center3D="610.00 68.00 0.00" MajorAxisEnd3D="610.00 55.87 0.00" MinorAxisEnd3D="611.66 68.00 0.00" OvalType="Filled" color="4" />
+<graphic id="1058" Z="1058" GraphicType="Oval" BoundingBox="608.34 119.87 611.66 144.13" Center3D="610.00 132.00 0.00" MajorAxisEnd3D="610.00 144.13 0.00" MinorAxisEnd3D="608.34 132.00 0.00" OvalType="Filled" color="5" />
+<graphic id="1059" GraphicType="Line" LineType="Dashed" BoundingBox="590.00 100.00 630.00 100.00"/>
 <t id="1060" p="610.00 194.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">π overlap</s></t>
 <t id="1061" p="610.00 24.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">internuclear axis</s></t>
 </page></CDXML>

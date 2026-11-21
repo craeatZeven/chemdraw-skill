@@ -253,12 +253,12 @@ def _draw_sigma(canvas, origin, spec):
     left = (origin[0] - separation / 2, origin[1])
     right = (origin[0] + separation / 2, origin[1])
     positive = spec.get('positive_color')
-    canvas.segment((left[0] - 12, origin[1]), (right[0] + 12, origin[1]), dashed=True)
+    lobe(canvas, left, 0, size, width, phase=1, fill=fill, color=positive)
+    lobe(canvas, right, 180, size, width, phase=1, fill=fill, color=positive)
     overlap_major, overlap_minor = _inner_radii(size, width, size - separation)
     lobe(canvas, (origin[0] - overlap_major, origin[1]), 0, 2 * overlap_major, 2 * overlap_minor,
          phase=1, fill='solid', color=positive)
-    lobe(canvas, left, 0, size, width, phase=1, fill=fill, color=positive)
-    lobe(canvas, right, 180, size, width, phase=1, fill=fill, color=positive)
+    canvas.segment((left[0] - 12, origin[1]), (right[0] + 12, origin[1]), dashed=True)
     canvas.label((origin[0], origin[1] + 48), 'σ overlap', align='Center')
     canvas.label((origin[0], origin[1] - 42), 'internuclear axis', align='Center')
     return {'kind': 'sigma', 'lobe_count': 2, 'overlap_regions': 1,
@@ -272,15 +272,15 @@ def _draw_pi(canvas, origin, spec):
     left = (origin[0] - separation / 2, origin[1])
     right = (origin[0] + separation / 2, origin[1])
     positive, negative = spec.get('positive_color'), spec.get('negative_color')
-    canvas.segment((left[0] - 12, origin[1]), (right[0] + 12, origin[1]), dashed=True)
+    for nucleus in (left, right):
+        p_orbital(canvas, nucleus, -90, size, width, phase=1, fill=fill,
+                  color=positive, negative_color=negative)
     overlap_width, overlap_height = _inner_radii(width, size, separation)
     lobe(canvas, (origin[0], origin[1] - size / 2 + overlap_height), -90, 2 * overlap_height, 2 * overlap_width,
          phase=1, fill='solid', color=positive)
     lobe(canvas, (origin[0], origin[1] + size / 2 - overlap_height), 90, 2 * overlap_height, 2 * overlap_width,
          phase=-1, fill='solid', color=negative)
-    for nucleus in (left, right):
-        p_orbital(canvas, nucleus, -90, size, width, phase=1, fill=fill,
-                  color=positive, negative_color=negative)
+    canvas.segment((left[0] - 12, origin[1]), (right[0] + 12, origin[1]), dashed=True)
     canvas.label((origin[0], origin[1] + size + 30), 'π overlap', align='Center')
     canvas.label((origin[0], origin[1] - size - 12), 'internuclear axis', align='Center')
     return {'kind': 'pi', 'lobe_count': 4, 'overlap_regions': 2,
