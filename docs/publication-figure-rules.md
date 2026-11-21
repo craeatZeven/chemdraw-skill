@@ -27,8 +27,9 @@ Colour in publication chemistry figures is **semantic, restrained, and print-saf
 
 - **Hard budget**: use at most **3–4 semantic hues** per figure (plus `#000000` ink, `#FFFFFF` background, and `#808080` grey for subordinate by-products or spectators).
 - **Synthon provenance rule**: when colouring substrates (e.g. electrophile blue, nucleophile orange/red), carry the exact same hues into the corresponding fragments of the product and across every cell of a scope panel.
+- **Scope highlight precedence**: explicit cell colours control that cell. Automatic SMARTS rules claim atoms and bonds in brief order. Variation highlighting fills the remaining eligible atoms and bonds. Secondary products stay grey by default. A general reaction header can inherit one shared variation hue on its R marks. Explicit header colours take precedence.
 - **Per-band consistency rule**: in multi-section substrate scopes (e.g. *para* substituents vs *C*-nucleophiles), the band rule, italic band heading, and highlighted varying substituents inside that band share one accent hue (`group_colors`).
-- **Optimal-entry highlight rule**: in optimization tables, highlight the optimal row with bold + the active palette's primary hue (matching the catalyst/parameter highlighted on the header reaction arrow when present).
+- **Optimal-entry highlight rule**: use bold and the active palette's primary hue by default or follow the house style's entry highlight. Shaded rows use the palette's fill behind bold accent text. Boxed rows use the accent as an outline.
 
 Built-in semantic palettes (`toolkit/cdxml_toolkit/publication/palettes.py`, accepted by `cdx.py check --palette <name>` and derived automatically by `--profile <house_style>`):
 

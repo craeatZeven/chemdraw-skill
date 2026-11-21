@@ -681,8 +681,16 @@ _DRAW_SCHEMAS = {
                 'row_align': {'enum': ['left', 'center', 'justify']},
                 'band_style': {'enum': ['rule', 'pill']},
                 'border': {'type': ['boolean', 'string'], 'description': 'true or #RRGGBB outer rounded panel frame'},
-                'fragment_colors': {'type': 'array', 'description': 'SMARTS-based synthon provenance: [{smarts, color, include_attaching_bond?}]'},
-                'highlight_varying': {'type': ['boolean', 'string']},
+                'fragment_colors': {
+                    'type': 'array', 'description': 'SMARTS provenance in priority order. The first rule to claim an atom or bond supplies its colour.',
+                    'items': {'type': 'object', 'required': ['smarts', 'color'], 'properties': {
+                        'smarts': {'type': 'string', 'minLength': 1},
+                        'color': {'type': 'string', 'pattern': '^#[0-9A-Fa-f]{6}$'},
+                        'include_attaching_bond': {'type': 'boolean', 'default': False},
+                    }},
+                },
+                'highlight_varying': {'type': ['boolean', 'string'], 'pattern': '^#[0-9A-Fa-f]{6}$',
+                                      'description': 'Highlight unclaimed atoms outside the common core. A hex value overrides the fallback colour.'},
                 'group_colors': {'type': ['string', 'object'], 'description': '"auto" or {group: "#RRGGBB"}'},
                 'fields': {'type': 'array'},
                 'species': {
@@ -731,7 +739,7 @@ _DRAW_SCHEMAS = {
                 'max_width': {'type': 'number', 'default': 504},
                 'header': {'type': 'object', 'properties': {'substrates': {}, 'products': {}, 'above': {}, 'below': {}}},
                 'columns': {'type': 'array', 'items': {'oneOf': [{'type': 'string'}, {'type': 'object'}]}},
-                'rows': {'type': 'array', 'description': 'Objects keyed by column key (+ optional highlight: true|bold|color|shaded|boxed|#RRGGBB)'},
+                'rows': {'type': 'array', 'description': 'Rows accept highlight: true (house style), bold, color, shaded (palette fill), boxed (accent outline), or #RRGGBB.'},
                 'footnotes': {'type': 'array', 'items': {'type': 'string'}},
             },
         },

@@ -299,7 +299,7 @@ source for chemistry and report the circled file as a drawing.
 Checks a saved CDXML against the house rules of [ACS 1996 drawings](acs1996-drawings.md):
 document settings (bond length 14.4, line 0.6, bold 2.0, hash 2.5, margin 1.6, label and caption
 10 pt Arial, chain angle 120), Chinese text in SimSun, text sizes (`--allow-sizes 8,6`), the
-palette (black, white, #FF6600, #336699 and the grey #808080 of a secondary structure;
+palette (black, white, #FF6600, #336699, secondary-structure grey #808080, and row fill #F2F6FA;
 `--palette any` or a list), the median drawn bond,
 duplicate ids, references to missing objects, curves ChemDraw would drop, lone unlabelled
 carbons that render blank and an XML declaration of `utf8`. It also reports what the native
