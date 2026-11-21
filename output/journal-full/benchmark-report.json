@@ -1,0 +1,1089 @@
+{
+  "figure_type": "substrate_scope",
+  "total": 26,
+  "passed": 26,
+  "failed": 0,
+  "rendered": true,
+  "output_dir": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full",
+  "cases": [
+    {
+      "slug": "bjoc-articles-22-103-scheme1",
+      "journal": "Beilstein J. Org. Chem.",
+      "figure": "Scheme 1",
+      "archetype": "synthon_three_color",
+      "check_profile": "beilstein_joc",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1210\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "bond_length_spread",
+          "message": "2 of 308 bonds differ from the median by more than 25% (normal for chairs, cages and Newman projections)"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\bjoc-articles-22-103-scheme1.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "bjoc-articles-22-125-scheme2",
+      "journal": "Beilstein J. Org. Chem.",
+      "figure": "Scheme 2",
+      "archetype": "synthon_three_color",
+      "check_profile": "beilstein_joc",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1177\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\bjoc-articles-22-125-scheme2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "bjoc-articles-22-127-scheme2",
+      "journal": "Beilstein J. Org. Chem.",
+      "figure": "Scheme 2",
+      "archetype": "classic_header_grid",
+      "check_profile": "beilstein_joc",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1142\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "text_over_ink",
+          "message": "1 caption(s) sit on other ink: 'Alk = C{sub:18}H{sub:37}' overlaps ', '",
+          "cases": [
+            "'Alk = C{sub:18}H{sub:37}' overlaps ', '"
+          ]
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\bjoc-articles-22-127-scheme2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "bjoc-articles-22-128-scheme10",
+      "journal": "Beilstein J. Org. Chem.",
+      "figure": "Scheme 10",
+      "archetype": "asymmetric_stereo_scope",
+      "check_profile": "beilstein_joc",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1141\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1142\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1143\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\bjoc-articles-22-128-scheme10.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "bjoc-articles-22-128-scheme17",
+      "journal": "Beilstein J. Org. Chem.",
+      "figure": "Scheme 17",
+      "archetype": "asymmetric_stereo_scope",
+      "check_profile": "beilstein_joc",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1134\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1135\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1136\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\bjoc-articles-22-128-scheme17.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "bjoc-articles-22-128-scheme6",
+      "journal": "Beilstein J. Org. Chem.",
+      "figure": "Scheme 6",
+      "archetype": "asymmetric_stereo_scope",
+      "check_profile": "beilstein_joc",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1116\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1117\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1118\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\bjoc-articles-22-128-scheme6.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "communications-chemistry-s42004-022-00692-6-fig2",
+      "journal": "Communications Chemistry",
+      "figure": "Fig. 2",
+      "archetype": "multi_band_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [
+        "41: No usable common core; independently depicted"
+      ],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1160\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1161\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1162\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1578\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1579\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2057\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2058\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\communications-chemistry-s42004-022-00692-6-fig2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "communications-chemistry-s42004-022-00764-7-fig2",
+      "journal": "Communications Chemistry",
+      "figure": "Fig. 2",
+      "archetype": "family_r_group_table",
+      "check_profile": "acs1996",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1283\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "bond_length_spread",
+          "message": "2 of 285 bonds differ from the median by more than 25% (normal for chairs, cages and Newman projections)"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\communications-chemistry-s42004-022-00764-7-fig2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "communications-chemistry-s42004-023-01030-0-fig2",
+      "journal": "Communications Chemistry",
+      "figure": "Fig. 2",
+      "archetype": "synthon_two_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1311\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1312\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1313\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2262\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2263\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2409\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2410\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\communications-chemistry-s42004-023-01030-0-fig2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-catalysis-s41929-023-01081-5-fig2",
+      "journal": "Nature Catalysis",
+      "figure": "Fig. 2",
+      "archetype": "synthon_two_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1243\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1244\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1245\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2355\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2356\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "bond_length_spread",
+          "message": "10 of 498 bonds differ from the median by more than 25% (normal for chairs, cages and Newman projections)"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-catalysis-s41929-023-01081-5-fig2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-catalysis-s41929-024-01153-0-fig3",
+      "journal": "Nature Catalysis",
+      "figure": "Fig. 3",
+      "archetype": "pill_band_category_scope",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1193\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1195\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1625\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2051\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2260\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-catalysis-s41929-024-01153-0-fig3.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-catalysis-s41929-025-01357-y-fig3",
+      "journal": "Nature Catalysis",
+      "figure": "Fig. 3",
+      "archetype": "multi_band_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1170\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1171\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1172\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1823\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1824\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2159\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"2160\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-catalysis-s41929-025-01357-y-fig3.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-catalysis-s41929-025-01405-7-fig2",
+      "journal": "Nature Catalysis",
+      "figure": "Fig. 2",
+      "archetype": "family_r_group_table",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1176\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-catalysis-s41929-025-01405-7-fig2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-chemistry-s41557-023-01174-5-fig3",
+      "journal": "Nature Chemistry",
+      "figure": "Fig. 3",
+      "archetype": "asymmetric_stereo_scope",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1186\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1187\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1188\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1850\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1851\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "bond_length_spread",
+          "message": "4 of 325 bonds differ from the median by more than 25% (normal for chairs, cages and Newman projections)"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-chemistry-s41557-023-01174-5-fig3.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-chemistry-s41557-026-02231-5-fig3",
+      "journal": "Nature Chemistry",
+      "figure": "Fig. 3",
+      "archetype": "synthon_two_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1105\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1106\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1107\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1811\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1812\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "bond_length_spread",
+          "message": "1 of 275 bonds differ from the median by more than 25% (normal for chairs, cages and Newman projections)"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-chemistry-s41557-026-02231-5-fig3.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-communications-pmc13518986-fig4",
+      "journal": "Nature Communications",
+      "figure": "Fig. 4",
+      "archetype": "multi_band_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1113\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1114\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1115\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1352\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1353\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1637\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1638\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-communications-pmc13518986-fig4.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-communications-pmc13594109-fig4",
+      "journal": "Nature Communications",
+      "figure": "Fig. 4",
+      "archetype": "multi_band_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1002\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1003\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1317\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1318\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1488\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1489\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1701\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1702\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-communications-pmc13594109-fig4.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-communications-s41467-022-29059-0-fig2",
+      "journal": "Nature Communications",
+      "figure": "Fig. 2",
+      "archetype": "asymmetric_stereo_scope",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1248\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "bond_length_spread",
+          "message": "15 of 388 bonds differ from the median by more than 25% (normal for chairs, cages and Newman projections)"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-communications-s41467-022-29059-0-fig2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-communications-s41467-022-32614-4-fig3",
+      "journal": "Nature Communications",
+      "figure": "Fig. 3",
+      "archetype": "pill_band_category_scope",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1156\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1158\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1499\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1836\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-communications-s41467-022-32614-4-fig3.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-communications-s41467-022-35062-2-fig2",
+      "journal": "Nature Communications",
+      "figure": "Fig. 2",
+      "archetype": "synthon_two_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1145\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-communications-s41467-022-35062-2-fig2.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-communications-s41467-023-40180-6-fig4",
+      "journal": "Nature Communications",
+      "figure": "Fig. 4",
+      "archetype": "bioactive_late_stage",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1120\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-communications-s41467-023-40180-6-fig4.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-communications-s41467-025-62466-7-fig4",
+      "journal": "Nature Communications",
+      "figure": "Fig. 4",
+      "archetype": "bioactive_late_stage",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1144\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-communications-s41467-025-62466-7-fig4.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-synthesis-s44160-024-00566-w-fig4",
+      "journal": "Nature Synthesis",
+      "figure": "Fig. 4",
+      "archetype": "multi_band_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1207\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1208\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1209\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1932\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1933\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-synthesis-s44160-024-00566-w-fig4.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-synthesis-s44160-024-00631-4-fig4",
+      "journal": "Nature Synthesis",
+      "figure": "Fig. 4",
+      "archetype": "pill_band_category_scope",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1098\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1100\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1573\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-synthesis-s44160-024-00631-4-fig4.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-synthesis-s44160-025-00771-1-fig4",
+      "journal": "Nature Synthesis",
+      "figure": "Fig. 4",
+      "archetype": "multi_band_color",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1120\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1121\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1122\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1572\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1573\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1929\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1930\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-synthesis-s44160-025-00771-1-fig4.compare.png",
+      "passed": true
+    },
+    {
+      "slug": "nature-synthesis-s44160-025-00821-8-fig4",
+      "journal": "Nature Synthesis",
+      "figure": "Fig. 4",
+      "archetype": "bioactive_late_stage",
+      "check_profile": "nature_portfolio",
+      "ok": true,
+      "checks_passed": true,
+      "readback": "matched",
+      "pages": 1,
+      "lint_issues": 0,
+      "warnings": [],
+      "errors": [],
+      "native_status": "rendered",
+      "check_errors": [],
+      "check_warnings": [
+        {
+          "code": "setting_missing",
+          "message": "ChainAngle is not set (expected 120)",
+          "setting": "ChainAngle"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1081\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1082\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1083\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1259\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "arrowhead_ratio",
+          "message": "<arrow id=\"1260\"> head 1000/875/0 is not the house 1 : 0.875 : 0.25 shape"
+        },
+        {
+          "code": "bond_length_spread",
+          "message": "28 of 232 bonds differ from the median by more than 25% (normal for chairs, cages and Newman projections)"
+        }
+      ],
+      "side_by_side": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\journal-full\\comparisons\\nature-synthesis-s44160-025-00821-8-fig4.compare.png",
+      "passed": true
+    }
+  ]
+}
