@@ -302,6 +302,10 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
     # Import toolkit runtime directly (this script is invoked via the runtime Python or bootstraps through cdx.py py).
     from cdxml_toolkit.cdxml_check import check_cdxml
     from cdxml_toolkit.mcp_runtime.figure_draw import draw_figure
+    try:
+        from cdxml_toolkit.mcp_runtime.figure_scope import draw_scope
+    except Exception:      # 老 runtime 没有 scope 入口时退回 draw_figure
+        draw_scope = None
 
     os.environ.setdefault("CHEMDRAW_OFFLINE", "1")
     manifest = _load_manifest()
@@ -320,6 +324,19 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
         out_root = Path(tempfile.mkdtemp(prefix="scope-benchmark-"))
         cleanup = not args.keep_temp
 
+    def _draw_for_kind(brief, out, render):
+        """按 brief.kind 选对入口。
+
+        踩坑记录：原来一律调 draw_figure（scheme 校验器），而 scope brief 带
+        row_align / fragment_colors / columns 等 scope 专有键，会被判 unknown；
+        正确入口是 figure_scope.draw_scope —— 这也是 journal 模式一直 FAIL 的真因，
+        与 runtime 版本无关。
+        """
+        kind = (brief or {}).get("kind") or "scheme"
+        if kind == "scope" and draw_scope is not None:
+            return draw_scope(brief, output_path=out, render=render)
+        return draw_figure(brief, output_path=out, render=render)
+
     results = []
     passed = 0
     for idx, case in enumerate(cases, 1):
@@ -328,7 +345,7 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
         case_dir = out_root / slug
         if case_dir.exists():
             shutil.rmtree(case_dir)
-        report = draw_figure(brief, output_path=str(case_dir), render=bool(args.render))
+        report = _draw_for_kind(brief, str(case_dir), bool(args.render))
         entry = {
             "slug": slug,
             "journal": case["journal"],
