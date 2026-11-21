@@ -26,6 +26,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
     from .surface import potential_surface
     from .tanabe import tanabe_sugano
     from .energy import energy_cycle, energy_profile, jablonski
+    from .fmo import fmo_interaction
     from .huckel import huckel_mo
     from .lewis import lewis_structure
     from .orbitals import crystal_field, electron_configuration_diagram, mo_diagram
@@ -57,6 +58,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
         'ellingham': ellingham,
         'correlation_diagram': correlation_diagram,
         'walsh_diagram': walsh_diagram,
+        'fmo_interaction': fmo_interaction,
         'potential_surface': potential_surface,
         'tanabe_sugano': tanabe_sugano,
         'compose': _compose,
@@ -68,7 +70,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
 DIAGRAM_OPERATIONS = ('energy_profile', 'energy_cycle', 'jablonski', 'mo_diagram', 'electron_configuration',
                       'crystal_field', 'lewis', 'unit_cell', 'flowchart', 'electrochemical_cell', 'periodic_table',
                       'huckel_mo', 'orbital_shapes', 'orbital_overlap', 'phase_diagram', 'binary_phase_diagram',
-                      'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'tanabe_sugano', 'compose', 'page')
+                      'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'fmo_interaction', 'potential_surface', 'tanabe_sugano', 'compose', 'page')
 
 def build(operation: str, spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     """Run one diagram workflow; the returned report omits the CDXML text when a file was written."""

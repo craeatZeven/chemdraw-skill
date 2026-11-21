@@ -1,0 +1,18 @@
+{
+  "donor": [
+    {"id": "nCl", "label": "n(Cl)", "energy": 0.0, "electrons": 2}
+  ],
+  "acceptor": [
+    {"id": "pi*", "label": "\u03c0{sub:*(C=C)}", "energy": 5.0, "electrons": 0}
+  ],
+  "mixing": [
+    {"id": "psi1", "label": "\u03c8{sub:1}", "energy": -1.5, "electrons": 2, "from": ["nCl", "pi*"]},
+    {"id": "psi2", "label": "\u03c8{sub:2}", "energy": 6.5, "electrons": 0, "from": ["nCl", "pi*"]}
+  ],
+  "donor_title": "donor (HOMO)",
+  "acceptor_title": "acceptor (LUMO)",
+  "arrows": [
+    {"kind": "delocalisation", "label": "stabilisation"},
+    {"kind": "excitation", "label": "h\u03bd"}
+  ]
+}

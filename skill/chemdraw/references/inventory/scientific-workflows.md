@@ -84,7 +84,7 @@
 
 ## `scientific.diagrams`
 
-- **function**, line 73: `build(operation: str, spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Run one diagram workflow; the returned report omits the CDXML text when a file was written.
+- **function**, line 75: `build(operation: str, spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Run one diagram workflow; the returned report omits the CDXML text when a file was written.
 
 ## `scientific.elements`
 
@@ -103,6 +103,10 @@
 - **function**, line 196: `energy_profile(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Reaction energy profile (potential energy against reaction coordinate).
 - **function**, line 92: `from_species_spec(spec: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]` - Translate the species-list energy-profile format into this builder's pathway format.
 - **function**, line 737: `jablonski(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Jablonski diagram: electronic states with vibrational levels and their transitions.
+
+## `scientific.fmo`
+
+- **function**, line 72: `fmo_interaction(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Frontier-orbital interaction diagram.
 
 ## `scientific.hexagonal`
 

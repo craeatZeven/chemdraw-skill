@@ -3,7 +3,8 @@
 Generators for the diagrams that are not reaction schemes: energy profiles, enthalpy cycles,
 Jablonski diagrams, MO diagrams, Hückel pi orbitals, orbital boxes, crystal-field splitting,
 Lewis structures, cubic and hexagonal unit cells, one-component and binary phase diagrams,
-Pourbaix, Latimer, Frost and Ellingham diagrams, Woodward–Hoffmann correlation diagrams, Walsh
+Pourbaix, Latimer, Frost and Ellingham diagrams, frontier-orbital interaction diagrams,
+Woodward–Hoffmann correlation diagrams, Walsh
 diagrams, potential-energy-surface contours, Tanabe–Sugano diagrams, flow charts, electrochemical cells and the
 periodic table. Each one reads a JSON
 spec, writes one editable ACS 1996 CDXML and prints a report of what the drawing implies.
@@ -41,6 +42,7 @@ feature: fix the spec rather than looking for a way around them.
 | `ellingham` | ΔG° per mole of O{sub:2} along T, crossing temperatures (which element reduces which oxide) | a phase change that makes ΔG° jump instead of kink |
 | `correlation_diagram` | orbital links by the non-crossing rule, thermally allowed or forbidden | reactant and product with different symmetry counts |
 | `walsh_diagram` | total orbital energy along the coordinate, preferred geometry | an energy list that does not match the coordinate |
+| `fmo_interaction` | generated levels from donor/acceptor mixing, the stabilisation and the straddle check | generated levels that do not straddle the donor, electrons that are not conserved |
 | `tanabe_sugano` | every d{sup:n} level along Δ/B from the full ligand-field Hamiltonian, labelled by spin and O{sub:h} symmetry; free-ion terms; spin crossover; Δ and B from two band positions | n outside 2 to 8 |
 | `potential_surface` | contours, minima and first-order saddle points (transition states) with energies and barriers | a malformed grid |
 | `electrochemical_cell` | polarity, electron flow, ion migration from the cell type | (nothing to contradict: none of it is stated) |
@@ -224,6 +226,34 @@ Presets `butadiene_conrotatory`, `butadiene_disrotatory`, `hexatriene_conrotator
 Orbitals of the same symmetry are joined lowest to lowest (the non-crossing rule); links that take
 an occupied orbital to an antibonding one are orange, and the verdict (thermally allowed or
 forbidden) is printed under the diagram.
+
+## fmo_interaction
+
+```json
+{"donor": [{"id": "nCl", "label": "n(Cl)", "energy": 0, "electrons": 2, "coefficient": 1.0}],
+ "acceptor": [{"id": "pi*", "label": "\u03c0{sub:*(C=C)}", "energy": 5, "electrons": 0, "coefficient": 0.7, "phase": -1}],
+ "mixing": [
+   {"id": "psi1", "label": "\u03c8{sub:1}", "energy": -1.5, "electrons": 2, "from": ["nCl", "pi*"]},
+   {"id": "psi2", "label": "\u03c8{sub:2}", "energy": 6.5, "electrons": 0, "from": ["nCl", "pi*"]}]}
+```
+
+A filled donor level on the left, an empty acceptor level on the right, and the mixing block
+between them. Each `mixing` level names the donor and acceptor levels it combines in `from`; a
+dashed correlation line joins every source to every mixing level. A level is `{"id", "label",
+"energy", "electrons"}` (0, 1 or 2 electrons, drawn as ↑↓/↑); `id` defaults to the label without
+markup. The generated levels must straddle the donor — the filled combination stabilised below it,
+the empty combination destabilised above it — and electrons are conserved across the three columns;
+a spec that contradicts either is refused. The report gives the donor HOMO and acceptor LUMO, the
+gap, the stabilisation and the straddle verdict.
+
+`coefficient` (0–1) and `phase` (1 or −1) on a donor or acceptor level draw the frontier-orbital
+coefficient as an S2 phase-coloured lobe sized by `|coefficient|` (red `#C0392B`, blue `#0072B2`);
+`"coefficients": true` turns every level's lobe on. `arrows` draws a `"delocalisation"` arrow from
+the donor HOMO to the stabilised level and an `"excitation"` vertical Franck-Condon dashed arrow
+from the filled to the empty generated level (each may carry `label` and `color`).
+`"shade_stabilisation": true` (default) shades the stabilisation between the donor and the filled
+level. Also `donor_title`, `acceptor_title`, `column_gap`, `height`, `axis`, `y_label` and
+`schematic` (suppress the not-to-scale spacing warning).
 
 ## walsh_diagram
 
