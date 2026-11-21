@@ -9,7 +9,8 @@
   "header": {
     "substrates": [
       {
-        "smiles": "Nc1ccc([*:1])cc1I",
+        "smiles": "Nc1ccccc1I",
+        "ring_r_groups": [{"number": 1, "atoms": [2, 3, 4, 5]}],
         "label": "1a–d"
       },
       {
@@ -19,7 +20,8 @@
     ],
     "products": [
       {
-        "smiles": "O=C(N[*:2])c1nc2cc([*:1])ccc2s1",
+        "smiles": "O=C(N[*:2])c1nc2ccccc2s1",
+        "ring_r_groups": [{"number": 1, "atoms": [7, 8, 9, 10]}],
         "label": "3a–t"
       }
     ],

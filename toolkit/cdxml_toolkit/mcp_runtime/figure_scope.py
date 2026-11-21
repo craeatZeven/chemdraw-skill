@@ -19,6 +19,7 @@ from typing import Any
 from rdkit import Chem
 
 from ..chemistry_semantics import document_inventory, semantic_key
+from ..layout.ring_r_groups import ring_r_group_sites
 from . import artifact_safety
 from . import figure_house
 from .figure_draw import (
@@ -30,7 +31,7 @@ SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "
               "highlight_varying", "header", "group_colors", "columns", "row_align", "band_style", "border",
               "fragment_colors"}
 HEADER_KEYS = {"substrates", "products", "above", "below"}
-HEADER_ITEM_KEYS = {"smiles", "name", "label", "color"}
+HEADER_ITEM_KEYS = {"smiles", "name", "label", "color", "ring_r_groups"}
 ROW_ALIGNS = ("left", "center", "justify")
 BAND_STYLES = ("rule", "pill")
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
@@ -100,6 +101,16 @@ def _header_errors(header) -> list[str]:
                 isinstance(item["color"], str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", item["color"])
             ):
                 errors.append(f"header {side}[{number}]: color must be a hex colour like #0B4F8A.")
+            elif "ring_r_groups" in item:
+                smiles = item.get("smiles")
+                mol = Chem.MolFromSmiles(smiles) if isinstance(smiles, str) and smiles else None
+                if mol is None:
+                    errors.append(f"header {side}[{number}]: ring_r_groups requires a valid scaffold smiles.")
+                else:
+                    try:
+                        list(ring_r_group_sites(mol, item["ring_r_groups"]))
+                    except ValueError as exc:
+                        errors.append(f"header {side}[{number}]: {exc}.")
     for side in ("above", "below"):
         if side in header and not (isinstance(header[side], list) and all(isinstance(t, str) for t in header[side])):
             errors.append(f"header {side} must be a list of condition lines.")
@@ -404,12 +415,13 @@ def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
     errors: list[str] = []
     for side in ("substrates", "products"):
         items = [{"id": f"header {side} {n}", **item} for n, item in enumerate(header[side], 1)]
-        grounded, more = _ground([{k: v for k, v in i.items() if k not in ("label", "color")} for i in items])
+        grounded, more = _ground(items)
         errors += more
         out[side] = [
             {"smiles": g["smiles"],
              **({"label": str(i["label"])} if i.get("label") else {}),
-             **({"color": str(i["color"]).upper()} if i.get("color") else {})}
+             **({"color": str(i["color"]).upper()} if i.get("color") else {}),
+             **({"ring_r_groups": i["ring_r_groups"]} if i.get("ring_r_groups") else {})}
             for g, i in zip(grounded, items)
         ]
     return out, errors

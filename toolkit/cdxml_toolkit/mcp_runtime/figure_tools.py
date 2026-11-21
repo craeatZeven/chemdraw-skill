@@ -12,7 +12,10 @@ from xml.etree import ElementTree as ET
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdCIPLabeler, rdDepictor
 
-from ..chemistry_semantics import semantic_key, validate_fragment, document_inventory, read_molecules, inventory_keys
+from ..chemistry_semantics import (
+    semantic_key, validate_fragment, document_inventory, read_molecules, inventory_keys, _remove_ring_r_groups,
+)
+from ..layout.ring_r_groups import ring_r_group_layout, ring_r_group_sites
 from ..vision import stereo_audit
 from . import artifact_safety
 
@@ -589,6 +592,7 @@ def _strip_multi_attachments_for_inventory(root_el: ET.Element) -> ET.Element:
     """Return a deep copy of root_el with MultiAttachment nodes and their coordination bonds removed."""
     cleaned = deepcopy(root_el)
     for frag in cleaned.iter('fragment'):
+        _remove_ring_r_groups(frag)
         ma_ids = {
             n.get('id')
             for n in list(frag.findall('n'))
@@ -931,7 +935,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 'smiles', 'molblock', 'file', 'fragment_index', 'position', 'coordinates', 'rotation', 'label',
                 'preserve_coordinates', 'align_to', 'alignment_mode', 'bond_length', 'cip_labels', 'atom_numbers',
                 'annotation_offsets', 'highlight_atoms', 'highlight_bonds', 'highlight_color', 'color', 'bond_displays',
-                'ring_fills', 'atom_halos', 'multi_attachments', 'crossings', 'ts_bracket',
+                'ring_fills', 'atom_halos', 'multi_attachments', 'ring_r_groups', 'crossings', 'ts_bracket',
             },
             'text': {'position', 'text', 'runs', 'size', 'align', 'color'},
             'arrow': {'start', 'end', 'style', 'color'},
@@ -957,6 +961,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             # A numbered R group ([*:1]) is drawn R1; the number is a label, not chemistry.
             r_numbers = {a.GetIdx(): a.GetAtomMapNum() for a in mol.GetAtoms()
                          if a.GetAtomicNum() == 0 and a.GetAtomMapNum()}
+            group_sites = list(ring_r_group_sites(mol, item.get('ring_r_groups', [])))
             for index in r_numbers:
                 mol.GetAtomWithIdx(index).SetAtomMapNum(0)
             if item.get('multi_attachments'):
@@ -1020,10 +1025,28 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                     x, y = a['x'] - cx, a['y'] - cy
                     a['x'] = px + scale * (x * math.cos(angle) - y * math.sin(angle))
                     a['y'] = py - scale * (x * math.sin(angle) + y * math.cos(angle))
+            points = [(a['x'], a['y']) for a in atoms]
+            placements = ring_r_group_layout(mol, points, group_sites, local_bond_length)
+            marks = [{'index': index, 'x': label[0], 'y': label[1], 'atomic_number': 0,
+                      'symbol': '*', 'generic_number': number}
+                     for index, (number, _, _, label) in enumerate(placements, len(atoms) + 1)]
             gen = _IDGen(start=next_id)
             fragment_xml, atom_map, fragment_id = _build_fragment(atoms, bonds, gen)
             fragment = ET.fromstring(fragment_xml)
+            if marks:
+                marks_xml, _, _ = _build_fragment(marks, [], gen)
+                for i, mark_node in enumerate(ET.fromstring(marks_xml).findall('n'), len(atoms)):
+                    fragment.insert(i, mark_node)
             next_id = max(int(n.get('id')) for n in fragment.iter() if n.get('id')) + 1
+            for label_node, (_, sites, center, _) in zip(fragment.findall('n')[len(atoms):], placements):
+                label_node.set('LabelDisplay', 'Left')
+                label_node.find('t').set('InterpretChemically', 'no')
+                anchor = ET.Element('n', {
+                    'id': uid(), 'p': f'{center[0]:.2f} {center[1]:.2f}', 'NodeType': 'MultiAttachment',
+                    'Attachments': ' '.join(str(atom_map[i + 1]) for i in sites),
+                })
+                fragment.insert(len(fragment.findall('n')), anchor)
+                ET.SubElement(fragment, 'b', {'id': uid(), 'B': anchor.get('id'), 'E': label_node.get('id')})
             for run in fragment.iter('s'):
                 run.set('font', font_id)
                 run.set('size', str(font_size))
@@ -1082,8 +1105,10 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                     'back': _resolve_crossing_bond_id(b_ref, fragment, atom_map),
                 })
 
-            xx = [a['x'] for a in atoms]
-            yy = [a['y'] for a in atoms]
+            xx = [a['x'] for a in [*atoms, *marks]]
+            yy = [a['y'] for a in [*atoms, *marks]]
+            if marks:
+                fragment.set('BoundingBox', f'{min(xx):.2f} {min(yy):.2f} {max(xx):.2f} {max(yy):.2f}')
             remember(item, fragment, (min(xx) - font_size / 2, min(yy) - font_size, max(xx) + font_size / 2, max(yy) + font_size / 2))
 
             if item.get('ring_fills'):

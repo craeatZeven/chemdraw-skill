@@ -369,3 +369,65 @@ def test_header_r_marks_share_the_highlight_colour(tmp_path):
     orange = str(table.index((0xFF, 0x66, 0x00)) + 2)
     marks = [n for n in root.iter("n") if n.get("NodeType") == "GenericNickname"]
     assert marks and all(n.get("color") == orange for n in marks)
+
+
+def test_header_r_group_bond_enters_ring_between_atoms(tmp_path):
+    # The substituent can occupy several sites on the benzene part of the fused system.
+    brief = _brief(highlight_varying=True, header={
+        "substrates": [{"smiles": "Nc1ccccc1I", "ring_r_groups": [{"number": 1, "atoms": [2, 3, 4, 5]}]}],
+        "products": [{"smiles": "O=C(N[*:2])c1nc2ccccc2s1",
+                      "ring_r_groups": [{"number": 1, "atoms": [7, 8, 9, 10]}]}],
+    })
+    brief["species"][0].update(smiles="Nc1ccccc1I", color="#204060")
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] and report["checks_passed"], report
+    assert report["readback"]["status"] == "matched"
+    (root,) = _pages(report)
+    headers = root.findall("./page/fragment")
+    assert len(headers) == 2
+    assert headers[0].find("b").get("color") is None
+    assert root.find("./page/group/fragment/b").get("color") is not None
+    for fragment, sites, ring in zip(headers, ([2, 3, 4, 5], [7, 8, 9, 10]),
+                                      ([1, 2, 3, 4, 5, 6], [6, 7, 8, 9, 10, 11])):
+        anchor = fragment.find('n[@NodeType="MultiAttachment"]')
+        mark = fragment.find('n[@GenericNickname="R1"]')
+        nodes = fragment.findall("n")
+        assert anchor.get("Attachments").split() == [nodes[i].get("id") for i in sites]
+        assert [(s.text, s.get("face")) for s in mark.iter("s")] == [("R", "96"), ("1", "64")]
+        assert anchor.get("color") is None
+        bond = fragment.find(f'b[@B="{anchor.get("id")}"]')
+        assert bond.get("E") == mark.get("id")
+        assert bond.get("color") == mark.get("color")
+
+        def point(node):
+            return tuple(map(float, node.get("p").split()))
+
+        points = [point(nodes[i]) for i in ring]
+        start, end = point(anchor), point(mark)
+        assert start == pytest.approx(tuple(sum(c) / len(ring) for c in zip(*points)), abs=0.01)
+
+        def side(a, b, p):
+            return (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+
+        crossings = [
+            (a, b) for a, b in zip(points, points[1:] + points[:1])
+            if side(a, b, start) * side(a, b, end) < 0 and side(start, end, a) * side(start, end, b) < 0
+        ]
+        assert len(crossings) == 1
+    fixed = headers[1].find('n[@GenericNickname="R2"]')
+    assert any(fixed.get("id") in (b.get("B"), b.get("E")) and
+               headers[1].find('n[@NodeType="MultiAttachment"]').get("id") not in (b.get("B"), b.get("E"))
+               for b in headers[1].findall("b"))
+
+
+@pytest.mark.parametrize("sites", ([0, 2], [2, 2], [2, 99], [2], [True, 2]))
+def test_header_ring_r_group_requires_distinct_sites_on_one_ring(tmp_path, sites):
+    brief = _brief(header={
+        "substrates": [{"smiles": "Nc1ccccc1I", "ring_r_groups": [{"number": 1, "atoms": sites}]}],
+        "products": [{"smiles": "c1ccccc1"}],
+    })
+    target = tmp_path / "scope"
+    report = draw_figure(brief, output_path=str(target))
+    assert not report["ok"]
+    assert any("ring_r_groups" in error and "atoms" in error for error in report["errors"])
+    assert not target.exists()

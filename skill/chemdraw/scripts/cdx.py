@@ -600,6 +600,47 @@ def cmd_validate(ns):
     return 0 if result.get('ok') else 1
 
 
+_HEADER_STRUCTURE_SCHEMA = {
+    'type': 'array',
+    'minItems': 1,
+    'items': {
+        'type': 'object',
+        'anyOf': [{'required': ['smiles']}, {'required': ['name']}],
+        'dependentRequired': {'ring_r_groups': ['smiles']},
+        'properties': {
+            'smiles': {'type': 'string'},
+            'name': {'type': 'string'},
+            'label': {},
+            'color': {'type': ['string', 'null'], 'pattern': '^#[0-9A-Fa-f]{6}$'},
+            'ring_r_groups': {
+                'type': 'array',
+                'description': 'Variable-position groups on a scaffold SMILES',
+                'items': {
+                    'type': 'object',
+                    'required': ['number', 'atoms'],
+                    'additionalProperties': False,
+                    'properties': {
+                        'number': {'type': 'integer', 'minimum': 1},
+                        'atoms': {'type': 'array', 'minItems': 2, 'uniqueItems': True,
+                                  'items': {'type': 'integer', 'minimum': 0}},
+                    },
+                },
+            },
+        },
+    },
+}
+_HEADER_SCHEMA = {
+    'type': 'object',
+    'required': ['substrates', 'products'],
+    'properties': {
+        'substrates': _HEADER_STRUCTURE_SCHEMA,
+        'products': _HEADER_STRUCTURE_SCHEMA,
+        'above': {'type': 'array', 'items': {'type': 'string'}},
+        'below': {'type': 'array', 'items': {'type': 'string'}},
+    },
+}
+
+
 _DRAW_SCHEMAS = {
     'scheme': {
         'entry': 'cdx.py draw brief.json out.cdxml --render',
@@ -676,7 +717,7 @@ _DRAW_SCHEMAS = {
                 'style': {'type': 'string'},
                 'conditions': {'type': 'string'},
                 'footnotes': {'type': 'array', 'items': {'type': 'string'}},
-                'header': {'type': 'object', 'properties': {'substrates': {'description': '[{smiles|name, label?, color?}]'}, 'products': {'description': '[{smiles|name, label?, color?}]'}, 'above': {}, 'below': {}}},
+                'header': _HEADER_SCHEMA,
                 'columns': {'type': 'integer', 'minimum': 1, 'maximum': 10},
                 'row_align': {'enum': ['left', 'center', 'justify']},
                 'band_style': {'enum': ['rule', 'pill']},
@@ -729,7 +770,7 @@ _DRAW_SCHEMAS = {
                 'table_style': {'enum': ['horizontal_rules', 'grid', 'none']},
                 'highlight_color': {'type': 'string', 'pattern': '^#[0-9A-Fa-f]{6}$'},
                 'max_width': {'type': 'number', 'default': 504},
-                'header': {'type': 'object', 'properties': {'substrates': {}, 'products': {}, 'above': {}, 'below': {}}},
+                'header': _HEADER_SCHEMA,
                 'columns': {'type': 'array', 'items': {'oneOf': [{'type': 'string'}, {'type': 'object'}]}},
                 'rows': {'type': 'array', 'description': 'Objects keyed by column key (+ optional highlight: true|bold|color|shaded|boxed|#RRGGBB)'},
                 'footnotes': {'type': 'array', 'items': {'type': 'string'}},

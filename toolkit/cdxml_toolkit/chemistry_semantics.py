@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from copy import deepcopy
 from pathlib import Path
 from xml.etree import ElementTree as ET
 from rdkit import Chem
@@ -117,8 +118,31 @@ def inventory_keys(mols, like=None):
     return found
 
 
+def _remove_ring_r_groups(fragment):
+    """Remove native variable-position R marks from a readback copy of a fragment."""
+    anchors = {n.get('id'): n for n in fragment.findall('n')
+               if n.get('NodeType') == 'MultiAttachment' and n.get('Attachments')}
+    if not anchors:
+        return
+    labels = {n.get('id'): n for n in fragment.findall('n')
+              if n.get('NodeType') == 'GenericNickname'
+              and n.get('GenericNickname', '')[:1] == 'R'
+              and n.get('GenericNickname', '')[1:].isdigit()}
+    bonds = fragment.findall('b')
+    incident = Counter(endpoint for b in bonds for endpoint in (b.get('B'), b.get('E')))
+    for bond in bonds:
+        anchor, label = bond.get('B'), bond.get('E')
+        if anchor not in anchors:
+            anchor, label = label, anchor
+        if (anchor in anchors and label in labels and incident[anchor] == incident[label] == 1
+                and bond.get('Order', '1') == '1'):
+            fragment.remove(anchors[anchor])
+            fragment.remove(labels[label])
+            fragment.remove(bond)
+
+
 def read_fragments(value):
-    """Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order."""
+    """Read top-level CDXML fragments in document order, using the scaffold for variable R groups."""
     root = ET.parse(str(value)).getroot() if isinstance(value, Path) else ET.fromstring(value)
     # Reaction text IDs are not molecules. Parse each top-level fragment separately.
     parents = {child: parent for parent in root.iter() for child in parent}
@@ -133,6 +157,9 @@ def read_fragments(value):
             parent = parents.get(parent)
         if nested:
             continue
+        if fragment.find('n[@NodeType="MultiAttachment"]') is not None:
+            fragment = deepcopy(fragment)
+            _remove_ring_r_groups(fragment)
         block = '<CDXML><page id="90000000">' + ET.tostring(fragment, encoding='unicode') + '</page></CDXML>'
         parsed = Chem.MolsFromCDXML(block)
         if not parsed:

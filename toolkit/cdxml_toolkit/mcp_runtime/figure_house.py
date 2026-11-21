@@ -132,10 +132,11 @@ def _with_weight(face: str | None, bold: bool) -> str:
     return str((value & ~1) | (1 if bold else 0))
 
 
-def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict]):
+def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict], *, scope_cells: bool = False):
     """(species id, fragment element, fragment mol) for every drawn species, in document order."""
     page = root.find("page")
-    frag_els = {f.get("id", ""): f for f in page.iter("fragment")}
+    fragments = page.findall(".//group/fragment") if scope_cells else page.iter("fragment")
+    frag_els = {f.get("id", ""): f for f in fragments}
     key_to_ids: dict[str, list[str]] = {}
     for g in grounded:
         if not g.get("smiles"):
@@ -681,7 +682,8 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
     page = root.find("page")
     colors = _Colors(root)
     smiles = {g["id"]: g["smiles"] for g in grounded}
-    drawn = _species_fragments(root, str(cdxml), grounded) if (wants_paint or wants_abbrev) else []
+    drawn = (_species_fragments(root, str(cdxml), grounded, scope_cells=brief.get("kind") == "scope")
+             if wants_paint or wants_abbrev else [])
     used_ids = [int(v) for el in root.iter() for v in [el.get("id")] if v and v.isdigit()]
     ids = renderer._IDGen(max(used_ids, default=1000) + 1)
 
@@ -1213,8 +1215,14 @@ def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
     if not marks:
         return cdxml, 0
     index = _Colors(root).index(color)
+    mark_ids = {n.get("id") for n in marks}
+    anchors = {n.get("id") for n in page.iter("n") if n.get("NodeType") == "MultiAttachment"}
     for node in marks:
         _paint(node, index)
+    for bond in page.iter("b"):
+        ends = {bond.get("B"), bond.get("E")}
+        if ends & anchors and ends & mark_ids:
+            _paint(bond, index)
     return _wrap(root, cdxml), len(marks)
 
 
@@ -1236,7 +1244,7 @@ def apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], ho
         # A scope page keeps each structure, its number and its values in one <group>.
         group_of = {id(f): g for g in page.iter("group") for f in g.findall("fragment")}
         label_els = []
-        for sp_id, el, _ in _species_fragments(root, str(cdxml), grounded):
+        for sp_id, el, _ in _species_fragments(root, str(cdxml), grounded, scope_cells=True):
             group = group_of.get(id(el))
             found = [t for t in group.findall("t") if _text_of(t) == labels.get(sp_id)] if group is not None else []
             label_t = found[0] if found else _label_of(page, el, labels.get(sp_id))
