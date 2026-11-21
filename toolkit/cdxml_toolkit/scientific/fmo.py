@@ -4,11 +4,13 @@ A filled donor level sits on the left, an empty acceptor level on the right, and
 mixing block between them: the donor and acceptor mix into two new levels that straddle
 the donor (the filled combination stabilised below it, the empty combination
 destabilised above it), joined by dashed correlation lines. Ground-state delocalisation
-and vertical (Franck-Condon) excitation arrows can be overlaid, and a level may carry a
-``coefficient`` whose phase-coloured lobe is drawn to scale with ``|coefficient|``.
+and vertical (Franck-Condon) excitation arrows can be overlaid. Coefficient lobes scale
+with ``|coefficient|``; each interacting donor/acceptor pair is labelled with ``|ci cj|``.
+The double-headed dE marker spans the donor HOMO and the lowest empty acceptor orbital.
 """
 from __future__ import annotations
 
+from itertools import product
 from typing import Any, Mapping
 
 from .canvas import BLUE, Canvas, caption_box, plain
@@ -57,8 +59,8 @@ def _columns(spec):
     donor, acceptor, mixing = columns['donor'], columns['acceptor'], columns['mixing']
     if not any(lv['electrons'] for lv in donor):
         raise ValueError('the donor needs at least one occupied level')
-    if not acceptor:
-        raise ValueError('the acceptor needs at least one level')
+    if not any(lv['electrons'] == 0 for lv in acceptor):
+        raise ValueError('the acceptor needs at least one empty orbital for its LUMO')
     ids = {lv['id'] for lv in donor + acceptor}
     for lv in mixing:
         if not lv['from']:
@@ -81,7 +83,9 @@ def fmo_interaction(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     ``"delocalisation"`` arrow (donor HOMO to the stabilised level) and an ``"excitation"``
     vertical Franck-Condon arrow; ``"shade_stabilisation": true`` shades the stabilisation
     between the donor and the filled mixing level. ``"coefficients": true`` (or a per-level
-    ``coefficient``) draws phase-coloured lobes sized by ``|coefficient|``.
+    ``coefficient``) draws phase-coloured lobes sized by ``|coefficient|`` and labels each
+    interacting donor/acceptor pair with its magnitude product. The dE marker and ``gap``
+    report the acceptor LUMO minus donor HOMO energy; the acceptor must have an empty orbital.
     """
     columns = _columns(spec)
     donor, acceptor, mixing = columns['donor'], columns['acceptor'], columns['mixing']
@@ -95,7 +99,7 @@ def fmo_interaction(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
 
     # Physics checks.
     donor_homo = max((lv for lv in donor if lv['electrons']), key=lambda lv: lv['energy'])
-    acceptor_lumo = min(acceptor, key=lambda lv: lv['energy'])
+    acceptor_lumo = min((lv for lv in acceptor if lv['electrons'] == 0), key=lambda lv: lv['energy'])
     filled = [lv for lv in mixing if lv['electrons']]
     empty = [lv for lv in mixing if not lv['electrons']]
     straddles = bool(filled and empty and max(lv['energy'] for lv in filled) < donor_homo['energy']
@@ -140,9 +144,12 @@ def fmo_interaction(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         for ref in lv['from']:
             source = source_index[ref]
             if source['column'] == 'donor':
-                node = c.segment((source['x2'] + 2.0, source['y']), (lv['x1'] - 2.0, lv['y']), dashed=True)
+                tail, head = (source['x2'], source['y']), (lv['x1'], lv['y'])
             else:
-                node = c.segment((source['x1'] - 2.0, source['y']), (lv['x2'] + 2.0, lv['y']), dashed=True)
+                tail, head = (source['x1'], source['y']), (lv['x2'], lv['y'])
+            node = c.segment(tail, head, dashed=True)
+            node.set('Tail3D', f'{tail[0]} {tail[1]} 0')
+            node.set('Head3D', f'{head[0]} {head[1]} 0')
             links.append({'from': source['id'], 'to': lv['id'], 'node_id': node.get('id')})
 
     # Level lines, spin arrows and labels.
@@ -167,6 +174,34 @@ def fmo_interaction(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         else:
             rise = lv['y'] - caption_box(0.0, lv['y'], lv['label'])[1]
             c.label((cx, lv['y'] + 6.5 + rise), lv['label'], align='Center')
+
+    gap_x = c.extent[2] + 18.0
+    gap_arrow = c.arrow((gap_x, donor_homo['y']), (gap_x, acceptor_lumo['y']),
+                        tail_style='Full', head_size=800) if gap else None
+    c.label((gap_x + 5.0, (donor_homo['y'] + acceptor_lumo['y']) / 2),
+            f'dE = {gap:g}', size=8, valign='middle')
+
+    coefficient_pairs = []
+    seen_pairs = set()
+    pair_y = max(lv['y'] for lv in every) + 52.0
+    for lv in mixing:
+        sources = [source_index[ref] for ref in lv['from']]
+        for left, right in product((s for s in sources if s['column'] == 'donor'),
+                                   (s for s in sources if s['column'] == 'acceptor')):
+            pair = (left['id'], right['id'])
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+            if not spec.get('coefficients') and left['coefficient'] is None and right['coefficient'] is None:
+                continue
+            ci = left['coefficient'] if left['coefficient'] is not None else 1.0
+            cj = right['coefficient'] if right['coefficient'] is not None else 1.0
+            magnitude = abs(ci * cj)
+            c.label((centers['mixing'], pair_y + 14.0 * len(coefficient_pairs)),
+                    f'|c({left["id"]})c({right["id"]})| = {magnitude:.2f}', size=8, align='Center')
+            coefficient_pairs.append({'donor': left['id'], 'acceptor': right['id'],
+                                      'magnitude_product': magnitude,
+                                      'label_node_id': c.page[-1].get('id')})
 
     # Optional arrows.
     drawn_arrows: list[dict[str, Any]] = []
@@ -207,6 +242,8 @@ def fmo_interaction(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         'donor_homo': {'id': donor_homo['id'], 'label': donor_homo['label'], 'energy': donor_homo['energy']},
         'acceptor_lumo': {'id': acceptor_lumo['id'], 'label': acceptor_lumo['label'], 'energy': acceptor_lumo['energy']},
         'gap': round(gap, 6),
+        'gap_arrow_node_id': gap_arrow.get('id') if gap_arrow is not None else None,
+        'coefficient_pairs': coefficient_pairs,
         'stabilisation': round(stabilisation, 6),
         'straddles_donor': straddles,
         'electrons': total_after,

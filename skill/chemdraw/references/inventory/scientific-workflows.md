@@ -106,7 +106,7 @@
 
 ## `scientific.fmo`
 
-- **function**, line 72: `fmo_interaction(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Frontier-orbital interaction diagram.
+- **function**, line 74: `fmo_interaction(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Frontier-orbital interaction diagram.
 
 ## `scientific.hexagonal`
 

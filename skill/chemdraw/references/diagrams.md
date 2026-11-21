@@ -243,12 +243,18 @@ dashed correlation line joins every source to every mixing level. A level is `{"
 "energy", "electrons"}` (0, 1 or 2 electrons, drawn as ↑↓/↑); `id` defaults to the label without
 markup. The generated levels must straddle the donor — the filled combination stabilised below it,
 the empty combination destabilised above it — and electrons are conserved across the three columns;
-a spec that contradicts either is refused. The report gives the donor HOMO and acceptor LUMO, the
-gap, the stabilisation and the straddle verdict.
+a spec that contradicts either is refused. The acceptor LUMO is its lowest empty orbital;
+an acceptor without an empty orbital is refused. The report's `gap` is the acceptor LUMO energy
+minus the donor HOMO energy, marked on the diagram by a vertical double-headed arrow labelled
+`dE`. The report also gives the stabilisation and the straddle verdict.
 
 `coefficient` (0–1) and `phase` (1 or −1) on a donor or acceptor level draw the frontier-orbital
-coefficient as an S2 phase-coloured lobe sized by `|coefficient|` (red `#C0392B`, blue `#0072B2`);
-`"coefficients": true` turns every level's lobe on. `arrows` draws a `"delocalisation"` arrow from
+coefficient as a phase-coloured lobe sized by `|coefficient|` (red `#C0392B`, blue `#0072B2`);
+`"coefficients": true` turns every donor and acceptor lobe on (missing coefficients default to 1).
+For each donor/acceptor pair named together in a mixing level, coefficient mode also labels the
+magnitude product `|c(donor)c(acceptor)|` below the diagram and returns it in `coefficient_pairs`,
+with the label's CDXML node ID. For example, coefficients 0.5 and 0.4 give 0.20.
+`arrows` draws a `"delocalisation"` arrow from
 the donor HOMO to the stabilised level and an `"excitation"` vertical Franck-Condon dashed arrow
 from the filled to the empty generated level (each may carry `label` and `color`).
 `"shade_stabilisation": true` (default) shades the stabilisation between the donor and the filled
