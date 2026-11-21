@@ -127,17 +127,18 @@ def p_orbital(canvas, at, angle_deg=-90.0, size=36.0, width=16.0, coefficient=1.
 
 def _angle_arc(canvas, center, vectors, radius, label, label_level=0):
     first, second = vectors
-    projected = _vector_angle(first, second, dimensions=2)
     a0 = math.atan2(first[1], first[0])
     a1 = math.atan2(second[1], second[0])
     start = (center[0] + radius * math.cos(a0), center[1] + radius * math.sin(a0))
     end = (center[0] + radius * math.cos(a1), center[1] + radius * math.sin(a1))
+    sweep = math.degrees((a0 - a1 + math.pi) % (2 * math.pi) - math.pi)
     canvas.add('arrow', {
         'Tail3D': f'{start[0]:.2f} {start[1]:.2f} 0',
         'Head3D': f'{end[0]:.2f} {end[1]:.2f} 0',
         'Center3D': f'{center[0]:.2f} {center[1]:.2f} 0',
-        'AngularSize': f'{projected:.2f}',
-        'ArrowheadHead': 'None', 'ArrowheadTail': 'None', 'FillType': 'None',
+        'AngularSize': f'{sweep:.2f}',
+        'ArrowheadHead': 'Full', 'ArrowheadTail': 'None', 'ArrowheadType': 'Solid',
+        'HeadSize': '400', 'ArrowheadCenterSize': '350', 'ArrowheadWidth': '100', 'FillType': 'None',
     })
     canvas.see(*start); canvas.see(*end)
     canvas.label((center[0], center[1] - radius * 2.5 - 20 - 14 * label_level),
@@ -235,6 +236,14 @@ def _overlap_options(spec):
     return size, width, separation, fill
 
 
+def _inner_radii(x_full, y_full, center_distance):
+    ratio = center_distance / x_full
+    x_radius = (x_full - center_distance) / 2
+    y_radius = y_full / 2 * math.sqrt(1 - ratio * ratio)
+    scale = 0.98 * (-ratio + math.sqrt(ratio * ratio + 4 * ratio)) / 2
+    return scale * x_radius, scale * y_radius
+
+
 def _draw_sigma(canvas, origin, spec):
     size, width, separation, fill = _overlap_options(spec)
     if separation >= size:
@@ -243,7 +252,9 @@ def _draw_sigma(canvas, origin, spec):
     right = (origin[0] + separation / 2, origin[1])
     positive = spec.get('positive_color')
     canvas.segment((left[0] - 12, origin[1]), (right[0] + 12, origin[1]), dashed=True)
-    lobe(canvas, left, 0, separation, width, phase=1, fill='solid', color=positive)
+    overlap_major, overlap_minor = _inner_radii(size, width, size - separation)
+    lobe(canvas, (origin[0] - overlap_major, origin[1]), 0, 2 * overlap_major, 2 * overlap_minor,
+         phase=1, fill='solid', color=positive)
     lobe(canvas, left, 0, size, width, phase=1, fill=fill, color=positive)
     lobe(canvas, right, 180, size, width, phase=1, fill=fill, color=positive)
     canvas.label((origin[0], origin[1] + 48), 'σ overlap', align='Center')
@@ -260,10 +271,10 @@ def _draw_pi(canvas, origin, spec):
     right = (origin[0] + separation / 2, origin[1])
     positive, negative = spec.get('positive_color'), spec.get('negative_color')
     canvas.segment((left[0] - 12, origin[1]), (right[0] + 12, origin[1]), dashed=True)
-    overlap_width = width - separation
-    lobe(canvas, origin, -90, size, overlap_width,
+    overlap_width, overlap_height = _inner_radii(width, size, separation)
+    lobe(canvas, (origin[0], origin[1] - size / 2 + overlap_height), -90, 2 * overlap_height, 2 * overlap_width,
          phase=1, fill='solid', color=positive)
-    lobe(canvas, origin, 90, size, overlap_width,
+    lobe(canvas, (origin[0], origin[1] + size / 2 - overlap_height), 90, 2 * overlap_height, 2 * overlap_width,
          phase=-1, fill='solid', color=negative)
     for nucleus in (left, right):
         p_orbital(canvas, nucleus, -90, size, width, phase=1, fill=fill,

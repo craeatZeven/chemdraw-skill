@@ -18,6 +18,19 @@ from typing import Any, Mapping
 _IDS_BASE = 1000
 
 
+def _caption_extent(element):
+    from .canvas import caption_box
+    pieces = []
+    for run in element.iter("s"):
+        face = int(run.get("face", "0")) & 96
+        prefix = "{sub:" if face == 32 else "{sup:" if face == 64 else ""
+        pieces.append(f"{prefix}{run.text or ''}{'}' if prefix else ''}")
+    x, y = (float(value) for value in element.get("p").split()[:2])
+    size = max((float(run.get("size", 10)) for run in element.iter("s")), default=10.0)
+    align = element.get("Justification", "Left")
+    return caption_box(x, y, "".join(pieces), size, align if align in ("Left", "Center", "Right") else "Left")
+
+
 def _bbox(page):
     xs, ys = [], []
     for element in page.iter():
@@ -31,6 +44,10 @@ def _bbox(page):
             if point:
                 xs.append(float(point.split()[0]))
                 ys.append(float(point.split()[1]))
+        if element.tag == "t" and element.get("p"):
+            x0, y0, x1, y1 = _caption_extent(element)
+            xs += [x0, x1]
+            ys += [y0, y1]
         curve = element.get("CurvePoints")
         if curve:
             values = [float(value) for value in curve.split()]

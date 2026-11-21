@@ -9,7 +9,7 @@
 <graphic id="1006" Z="1006" GraphicType="Oval" BoundingBox="57.78 78.56 81.44 102.22" Center3D="69.61 90.39 10.39" MajorAxisEnd3D="59.22 100.78 20.78" MinorAxisEnd3D="63.95 84.74 10.39" OvalType="Shaded" color="4" />
 <graphic id="1007" GraphicType="Line" BoundingBox="80.00 80.00 116.00 116.00"/>
 <graphic id="1008" Z="1008" GraphicType="Oval" BoundingBox="78.56 78.56 102.22 102.22" Center3D="90.39 90.39 -10.39" MajorAxisEnd3D="100.78 100.78 -20.78" MinorAxisEnd3D="84.74 96.05 -10.39" OvalType="Shaded" color="4" />
-<arrow id="1009" Z="1009" Tail3D="90.69 69.31 0" Head3D="69.31 69.31 0" Center3D="80.00 80.00 0" AngularSize="90.00" ArrowheadHead="None" ArrowheadTail="None" FillType="None" />
+<arrow id="1009" Z="1009" Tail3D="90.69 69.31 0" Head3D="69.31 69.31 0" Center3D="80.00 80.00 0" AngularSize="90.00" ArrowheadHead="Full" ArrowheadTail="None" ArrowheadType="Solid" HeadSize="400" ArrowheadCenterSize="350" ArrowheadWidth="100" FillType="None" />
 <t id="1010" p="80.00 25.80" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">3D angle 109.5° (projection 90.0°)</s></t>
 <t id="1011" p="80.00 146.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">sp</s><s font="3" size="10.0" face="64">3</s></t>
 <graphic id="1012" GraphicType="Line" BoundingBox="240.00 80.00 276.00 80.00"/>
@@ -20,7 +20,7 @@
 <graphic id="1017" Z="1017" GraphicType="Oval" BoundingBox="219.64 48.32 242.36 80.51" Center3D="231.00 64.41 0.00" MajorAxisEnd3D="222.00 48.82 0.00" MinorAxisEnd3D="237.93 60.41 0.00" OvalType="Shaded" color="4" />
 <graphic id="1018" Z="1018" GraphicType="Oval" BoundingBox="233.60 80.00 246.40 80.00" Center3D="240.00 80.00 14.40" MajorAxisEnd3D="240.00 80.00 28.80" MinorAxisEnd3D="246.40 80.00 14.40" OvalType="Shaded" color="4" />
 <graphic id="1019" Z="1019" GraphicType="Oval" BoundingBox="233.60 80.00 246.40 80.00" Center3D="240.00 80.00 -14.40" MajorAxisEnd3D="240.00 80.00 -28.80" MinorAxisEnd3D="246.40 80.00 -14.40" OvalType="Shaded" color="5" />
-<arrow id="1020" Z="1020" Tail3D="255.12 80.00 0" Head3D="232.44 93.09 0" Center3D="240.00 80.00 0" AngularSize="120.00" ArrowheadHead="None" ArrowheadTail="None" FillType="None" />
+<arrow id="1020" Z="1020" Tail3D="255.12 80.00 0" Head3D="232.44 93.09 0" Center3D="240.00 80.00 0" AngularSize="-120.00" ArrowheadHead="Full" ArrowheadTail="None" ArrowheadType="Solid" HeadSize="400" ArrowheadCenterSize="350" ArrowheadWidth="100" FillType="None" />
 <t id="1021" p="240.00 25.80" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">120.0°</s></t>
 <t id="1022" p="240.00 146.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">sp</s><s font="3" size="10.0" face="64">2</s></t>
 <graphic id="1023" GraphicType="Line" BoundingBox="80.00 240.00 116.00 240.00"/>
@@ -31,7 +31,7 @@
 <graphic id="1028" Z="1028" GraphicType="Oval" BoundingBox="74.00 240.00 86.00 267.00" Center3D="80.00 253.50 0.00" MajorAxisEnd3D="80.00 267.00 0.00" MinorAxisEnd3D="74.00 253.50 0.00" OvalType="Shaded" color="5" />
 <graphic id="1029" Z="1029" GraphicType="Oval" BoundingBox="74.80 240.00 85.20 240.00" Center3D="80.00 240.00 11.70" MajorAxisEnd3D="80.00 240.00 23.40" MinorAxisEnd3D="85.20 240.00 11.70" OvalType="Shaded" color="4" />
 <graphic id="1030" Z="1030" GraphicType="Oval" BoundingBox="74.80 240.00 85.20 240.00" Center3D="80.00 240.00 -11.70" MajorAxisEnd3D="80.00 240.00 -23.40" MinorAxisEnd3D="85.20 240.00 -11.70" OvalType="Shaded" color="5" />
-<arrow id="1031" Z="1031" Tail3D="95.12 240.00 0" Head3D="64.88 240.00 0" Center3D="80.00 240.00 0" AngularSize="180.00" ArrowheadHead="None" ArrowheadTail="None" FillType="None" />
+<arrow id="1031" Z="1031" Tail3D="95.12 240.00 0" Head3D="64.88 240.00 0" Center3D="80.00 240.00 0" AngularSize="-180.00" ArrowheadHead="Full" ArrowheadTail="None" ArrowheadType="Solid" HeadSize="400" ArrowheadCenterSize="350" ArrowheadWidth="100" FillType="None" />
 <t id="1032" p="80.00 185.80" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">180.0°</s></t>
 <t id="1033" p="80.00 306.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">sp</s></t>
 <graphic id="1034" GraphicType="Line" BoundingBox="240.00 240.00 288.00 240.00"/>
@@ -42,20 +42,20 @@
 <graphic id="1039" Z="1039" GraphicType="Oval" BoundingBox="225.35 211.80 243.79 240.30" Center3D="234.57 226.05 -8.05" MajorAxisEnd3D="229.14 212.10 -16.11" MinorAxisEnd3D="242.02 223.15 -8.05" OvalType="Shaded" color="4" />
 <graphic id="1040" GraphicType="Line" BoundingBox="240.00 240.00 228.50 269.54"/>
 <graphic id="1041" Z="1041" GraphicType="Oval" BoundingBox="224.84 239.72 243.66 269.83" Center3D="234.25 254.77 -8.53" MajorAxisEnd3D="228.50 269.54 -17.06" MinorAxisEnd3D="226.79 251.87 -8.53" OvalType="Shaded" color="4" />
-<arrow id="1042" Z="1042" Tail3D="253.44 240.00 0" Head3D="226.56 240.00 0" Center3D="240.00 240.00 0" AngularSize="180.00" ArrowheadHead="None" ArrowheadTail="None" FillType="None" />
+<arrow id="1042" Z="1042" Tail3D="253.44 240.00 0" Head3D="226.56 240.00 0" Center3D="240.00 240.00 0" AngularSize="-180.00" ArrowheadHead="Full" ArrowheadTail="None" ArrowheadType="Solid" HeadSize="400" ArrowheadCenterSize="350" ArrowheadWidth="100" FillType="None" />
 <t id="1043" p="240.00 190.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">H-C-Cl 3D 108.6° (projection 180.0°)</s></t>
-<arrow id="1044" Z="1044" Tail3D="226.56 240.00 0" Head3D="235.12 227.48 0" Center3D="240.00 240.00 0" AngularSize="68.73" ArrowheadHead="None" ArrowheadTail="None" FillType="None" />
+<arrow id="1044" Z="1044" Tail3D="226.56 240.00 0" Head3D="235.12 227.48 0" Center3D="240.00 240.00 0" AngularSize="-68.73" ArrowheadHead="Full" ArrowheadTail="None" ArrowheadType="Solid" HeadSize="400" ArrowheadCenterSize="350" ArrowheadWidth="100" FillType="None" />
 <t id="1045" p="240.00 176.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">H-C-H 3D 110.3° (projection 68.7°)</s></t>
 <t id="1046" p="240.00 306.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">unequal hybridisation (CH</s><s font="3" size="10.0" face="32">3</s><s font="3" size="10.0" face="0">Cl)</s></t>
 <graphic id="1047" GraphicType="Line" LineType="Dashed" BoundingBox="410.00 100.00 450.00 100.00"/>
-<graphic id="1048" Z="1048" GraphicType="Oval" BoundingBox="422.00 89.00 438.00 111.00" Center3D="430.00 100.00 0.00" MajorAxisEnd3D="438.00 100.00 0.00" MinorAxisEnd3D="430.00 111.00 0.00" OvalType="Filled" color="4" />
+<graphic id="1048" Z="1048" GraphicType="Oval" BoundingBox="425.54 95.94 434.46 104.06" Center3D="430.00 100.00 0.00" MajorAxisEnd3D="434.46 100.00 0.00" MinorAxisEnd3D="430.00 104.06 0.00" OvalType="Filled" color="4" />
 <graphic id="1049" Z="1049" GraphicType="Oval" BoundingBox="422.00 89.00 486.00 111.00" Center3D="454.00 100.00 0.00" MajorAxisEnd3D="486.00 100.00 0.00" MinorAxisEnd3D="454.00 111.00 0.00" OvalType="Shaded" color="4" />
 <graphic id="1050" Z="1050" GraphicType="Oval" BoundingBox="374.00 89.00 438.00 111.00" Center3D="406.00 100.00 0.00" MajorAxisEnd3D="374.00 100.00 0.00" MinorAxisEnd3D="406.00 89.00 0.00" OvalType="Shaded" color="4" />
 <t id="1051" p="430.00 148.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">σ overlap</s></t>
 <t id="1052" p="430.00 58.00" Justification="Center" CaptionJustification="Center" InterpretChemically="no"><s font="3" size="10.0" face="0">internuclear axis</s></t>
 <graphic id="1053" GraphicType="Line" LineType="Dashed" BoundingBox="590.00 100.00 630.00 100.00"/>
-<graphic id="1054" Z="1054" GraphicType="Oval" BoundingBox="607.00 36.00 613.00 100.00" Center3D="610.00 68.00 0.00" MajorAxisEnd3D="610.00 36.00 0.00" MinorAxisEnd3D="613.00 68.00 0.00" OvalType="Filled" color="4" />
-<graphic id="1055" Z="1055" GraphicType="Oval" BoundingBox="607.00 100.00 613.00 164.00" Center3D="610.00 132.00 0.00" MajorAxisEnd3D="610.00 164.00 0.00" MinorAxisEnd3D="607.00 132.00 0.00" OvalType="Filled" color="5" />
+<graphic id="1054" Z="1054" GraphicType="Oval" BoundingBox="608.34 55.87 611.66 80.13" Center3D="610.00 68.00 0.00" MajorAxisEnd3D="610.00 55.87 0.00" MinorAxisEnd3D="611.66 68.00 0.00" OvalType="Filled" color="4" />
+<graphic id="1055" Z="1055" GraphicType="Oval" BoundingBox="608.34 119.87 611.66 144.13" Center3D="610.00 132.00 0.00" MajorAxisEnd3D="610.00 144.13 0.00" MinorAxisEnd3D="608.34 132.00 0.00" OvalType="Filled" color="5" />
 <graphic id="1056" Z="1056" GraphicType="Oval" BoundingBox="591.00 36.00 613.00 100.00" Center3D="602.00 68.00 0.00" MajorAxisEnd3D="602.00 36.00 0.00" MinorAxisEnd3D="613.00 68.00 0.00" OvalType="Shaded" color="4" />
 <graphic id="1057" Z="1057" GraphicType="Oval" BoundingBox="591.00 100.00 613.00 164.00" Center3D="602.00 132.00 0.00" MajorAxisEnd3D="602.00 164.00 0.00" MinorAxisEnd3D="591.00 132.00 0.00" OvalType="Shaded" color="5" />
 <graphic id="1058" Z="1058" GraphicType="Oval" BoundingBox="607.00 36.00 629.00 100.00" Center3D="618.00 68.00 0.00" MajorAxisEnd3D="618.00 36.00 0.00" MinorAxisEnd3D="629.00 68.00 0.00" OvalType="Shaded" color="4" />

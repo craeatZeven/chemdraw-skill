@@ -8,9 +8,13 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from cdxml_toolkit.cdxml_check import check_cdxml
+from cdxml_toolkit.cdxml_check import check_cdxml, _curved_arrows
+from cdxml_toolkit.scientific.canvas import caption_box
 from cdxml_toolkit.scientific.orbital_lobes import lobe, orbital_overlap, orbital_shapes, p_orbital
 from cdxml_toolkit.scientific.page import compose_page
+
+
+ORBITAL_PALETTE = ["#000000", "#FFFFFF", "#C0392B", "#0072B2"]
 
 
 SKILL_SCRIPTS = Path(__file__).resolve().parents[2] / "skill" / "chemdraw" / "scripts"
@@ -60,10 +64,60 @@ def _intersection(a, b):
     return max(aa[0], bb[0]), max(aa[1], bb[1]), min(aa[2], bb[2]), min(aa[3], bb[3])
 
 
+def _minor_vector(node):
+    return tuple(m - c for m, c in zip(_point(node, "MinorAxisEnd3D"), _point(node, "Center3D")))
+
+
+def _ellipse_value(node, xy):
+    center = _point(node, "Center3D")
+    major = _axis_vector(node)
+    minor = _minor_vector(node)
+    major_length = math.hypot(*major)
+    minor_length = math.hypot(*minor)
+    delta = tuple(xy[i] - center[i] for i in range(2))
+    along = sum(delta[i] * major[i] for i in range(2)) / major_length
+    across = sum(delta[i] * minor[i] for i in range(2)) / minor_length
+    return (along / major_length) ** 2 + (across / minor_length) ** 2
+
+
 def _assert_nonempty_intersection(a, b, overlap):
     expected = _intersection(a, b)
     assert expected[2] > expected[0] and expected[3] > expected[1]
-    assert _box(overlap) == pytest.approx(expected, abs=0.02)
+    box = _box(overlap)
+    assert expected[0] - 0.02 <= box[0] <= box[2] <= expected[2] + 0.02
+    assert expected[1] - 0.02 <= box[1] <= box[3] <= expected[3] + 0.02
+    center = _point(overlap, "Center3D")
+    major, minor = _axis_vector(overlap), _minor_vector(overlap)
+    for degrees in (0, 45, 90, 135, 180, 225, 270, 315):
+        theta = math.radians(degrees)
+        xy = tuple(center[i] + major[i] * math.cos(theta) + minor[i] * math.sin(theta)
+                   for i in range(2))
+        assert _ellipse_value(a, xy) <= 1.0 + 1e-6
+        assert _ellipse_value(b, xy) <= 1.0 + 1e-6
+
+
+def _assert_arc_endpoints(root):
+    arcs = [node for node in root.iter("arrow") if node.get("AngularSize") is not None]
+    sampled = _curved_arrows(root)
+    assert len(sampled) == len(arcs)
+    for (_, points), arc in zip(sampled, arcs):
+        assert math.dist(points[-1], _point(arc, "Head3D")[:2]) < 0.5
+
+
+def _markup(node):
+    pieces = []
+    for run in node.iter("s"):
+        face = int(run.get("face", "0")) & 96
+        prefix = "{sub:" if face == 32 else "{sup:" if face == 64 else ""
+        pieces.append(f"{prefix}{run.text or ''}{'}' if prefix else ''}")
+    return "".join(pieces)
+
+
+def _caption_extent(node):
+    x, y = _point(node, "p")[:2]
+    size = max(float(run.get("size", 10)) for run in node.iter("s"))
+    align = node.get("Justification", "Left")
+    return caption_box(x, y, _markup(node), size, align if align in ("Left", "Center", "Right") else "Left")
 
 
 def _colors(root):
@@ -121,7 +175,8 @@ def test_orbital_shapes_panel_counts_angles_axes_and_arcs(hybridisation, count, 
     else:
         assert f"{expected_angle:.1f}°" in text
     assert len([node for node in root.iter("graphic") if node.get("GraphicType") == "Line"]) >= len(hybrids)
-    assert check_cdxml(result["cdxml"], palette=None)["ok"]
+    _assert_arc_endpoints(root)
+    assert check_cdxml(result["cdxml"], palette=ORBITAL_PALETTE)["ok"]
 
 
 def test_sp2_p_axis_is_perpendicular_to_the_hybrid_plane():
@@ -161,7 +216,8 @@ def test_unequal_hybridisation_has_distinct_hch_and_hccl_angles_and_matching_arc
         assert abs(float(arc.get("AngularSize"))) == pytest.approx(_angle(a, b, dimensions=2), abs=0.02)
     text = " ".join("".join(node.itertext()) for node in root.iter("t"))
     assert "CH3Cl" in text and f"H-C-Cl 3D {cl_angles[0]:.1f}°" in text and "H-C-H 3D 110.3°" in text
-    assert check_cdxml(result["cdxml"], palette=None)["ok"]
+    _assert_arc_endpoints(root)
+    assert check_cdxml(result["cdxml"], palette=ORBITAL_PALETTE)["ok"]
 
 
 def test_pi_overlap_has_four_lobes_with_matching_upper_and_opposite_lower_phases():
@@ -182,7 +238,7 @@ def test_pi_overlap_has_four_lobes_with_matching_upper_and_opposite_lower_phases
     assert lower_colors == ["#0072B2", "#0072B2"]
     assert set(upper_colors).isdisjoint(lower_colors)
     assert len(_overlaps(root)) == 2
-    assert check_cdxml(result["cdxml"], palette=None)["ok"]
+    assert check_cdxml(result["cdxml"], palette=ORBITAL_PALETTE)["ok"]
 
 
 @pytest.mark.parametrize("size,width,separation", [(64, 22, 16), (80, 30, 24), (50, 28, 14)])
@@ -235,7 +291,7 @@ def test_acs_build_exposes_lobes_shapes_and_overlap():
     root = ET.fromstring(text)
     assert len(_lobes(root)) == 9
     assert len(_overlaps(root)) == 2
-    assert check_cdxml(text, palette=None)["ok"]
+    assert check_cdxml(text, palette=ORBITAL_PALETTE)["ok"]
     with pytest.raises(ValueError, match="unknown key"):
         acs_builder.build_from_spec({"objects": [{"type": "orbital_shapes", "hybridisation": "sp3", "angel": 30}]})
 
@@ -254,7 +310,7 @@ def test_orbital_panels_compose_with_valid_colors_and_page_frame(tmp_path):
     for node in root.iter("graphic"):
         if node.get("color"):
             assert int(node.get("color")) in colors
-    checked = check_cdxml(result["cdxml"], palette=None)
+    checked = check_cdxml(result["cdxml"], palette=ORBITAL_PALETTE)
     assert checked["errors"] == []
     assert not [warning for warning in checked["warnings"] if warning["code"] == "outside_page"]
     page = root.find("page")
@@ -264,6 +320,9 @@ def test_orbital_panels_compose_with_valid_colors_and_page_frame(tmp_path):
             if node.get(attribute):
                 x, y = _point(node, attribute)[:2]
                 assert 0 <= x <= width and 0 <= y <= height
+    for node in root.iter("t"):
+        x0, y0, x1, y1 = _caption_extent(node)
+        assert 0 <= x0 <= x1 <= width and 0 <= y0 <= y1 <= height
 
 
 def test_phase_colors_do_not_relax_the_default_text_palette():
@@ -271,6 +330,10 @@ def test_phase_colors_do_not_relax_the_default_text_palette():
         {"type": "text", "at": [20, 20], "text": "ordinary red text", "color": "#C0392B"}
     ]})
     assert "palette" in {error["code"] for error in check_cdxml(text)["errors"]}
+    third = acs_builder.build_from_spec({"objects": [
+        {"type": "text", "at": [20, 20], "text": "unlisted colour", "color": "#123456"}
+    ]})
+    assert "palette" in {error["code"] for error in check_cdxml(third, palette=ORBITAL_PALETTE)["errors"]}
 
 
 @pytest.mark.parametrize("spec,expected", [
