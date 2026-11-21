@@ -98,9 +98,9 @@
 - **function**, line 110: `conformer_errors(ident: str, spec: Any) -> list[str]` - No public docstring in the audited version.
 - **function**, line 221: `drawing(spec: Mapping[str, Any], cx: float = 0.0, cy: float = 0.0) -> dict[str, Any]` - No public docstring in the audited version.
 - **function**, line 232: `fragment(ident: str, spec: Mapping[str, Any], label: str | None) -> Any` - No public docstring in the audited version.
-- **function**, line 254: `inventory(spec: Mapping[str, Any]) -> list[str]` - No public docstring in the audited version.
-- **function**, line 318: `palette_xml(inner_xml: str) -> str` - No public docstring in the audited version.
-- **function**, line 292: `xml(frag: Any, next_id) -> list[str]` - No public docstring in the audited version.
+- **function**, line 263: `inventory(spec: Mapping[str, Any]) -> list[str]` - No public docstring in the audited version.
+- **function**, line 327: `palette_xml(inner_xml: str) -> str` - No public docstring in the audited version.
+- **function**, line 301: `xml(frag: Any, next_id) -> list[str]` - No public docstring in the audited version.
 
 ## `render.parser`
 

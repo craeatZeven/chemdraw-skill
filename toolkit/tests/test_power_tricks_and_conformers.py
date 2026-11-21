@@ -85,6 +85,50 @@ def test_chair_cyclohexane_chair1_and_chair2_geometry():
     labels = ["".join(n.itertext()) for n in root.findall(".//fragment/n") if list(n)]
     assert "OH" in labels and "Me" in labels and "tBu" in labels
 
+    # Corner angle at C2 (between C2->C1 and C2->C3) is 40 deg (u=-60 deg, v=160 deg)
+    pts2 = c2["ring_coords"]
+    e21 = (pts2[0][0] - pts2[1][0], pts2[0][1] - pts2[1][1])
+    e23 = (pts2[2][0] - pts2[1][0], pts2[2][1] - pts2[1][1])
+    cos_corner = (e21[0] * e23[0] + e21[1] * e23[1]) / (math.hypot(*e21) * math.hypot(*e23))
+    assert math.isclose(math.degrees(math.acos(cos_corner)), 40.0, abs_tol=1e-6)
+
+    # Rear axial C6-H in chair2 passes behind front ring bond C3-C4 (front bond carries CrossingBonds)
+    # and keeps >= 3.0 pt clearance from C3-C4 at default ACS bond length 14.4 pt.
+    from cdxml_toolkit.label_geometry import label_box
+
+    c2_h6 = chair_cyclohexane(
+        flip=True,
+        substituents={
+            1: {"ax": {"label": "Br", "display": "Bold"}},
+            4: {"eq": "Me"},
+            6: {"ax": {"label": "H", "display": "WedgedHashBegin"}},
+        },
+        bond_length=14.4,
+    )
+    c2_root = ET.fromstring(c2_h6["cdxml"])
+    c2_bonds = {b.get("id"): b for b in c2_root.findall(".//fragment/b")}
+    c2_nodes = {n.get("id"): n for n in c2_root.findall(".//fragment/n")}
+    h6_bond = next(b for b in c2_bonds.values() if b.get("Display") == "WedgedHashBegin")
+    crossing_ring_bonds = [b for b in c2_bonds.values() if h6_bond.get("id") in (b.get("CrossingBonds") or "").split()]
+    assert len(crossing_ring_bonds) == 1
+    assert int(crossing_ring_bonds[0].get("Z")) > int(h6_bond.get("Z"))
+
+    # Left-pointing equatorial substituent (C4 eq) uses Right justification
+    me_node = next(n for n in c2_nodes.values() if "".join(n.itertext()) == "Me")
+    assert me_node.find("t").get("LabelJustification") == "Right"
+
+    h6_atom = next(a for a in c2_h6["atoms"] if a.get("symbol") == "H" and a.get("ring_position") == 6)
+    hx1, hy1, hx2, hy2 = label_box("H", h6_atom["x"], h6_atom["y"], "Left")
+    p3, p4 = c2_h6["ring_coords"][2], c2_h6["ring_coords"][3]
+    min_d = min(
+        math.hypot(
+            max(hx1 - (p3[0] + t * (p4[0] - p3[0])), 0.0, (p3[0] + t * (p4[0] - p3[0])) - hx2),
+            max(hy1 - (p3[1] + t * (p4[1] - p3[1])), 0.0, (p3[1] + t * (p4[1] - p3[1])) - hy2),
+        )
+        for t in (i / 40.0 for i in range(41))
+    )
+    assert min_d >= 3.0, f"rear axial H too close to front ring bond: {min_d:.2f} pt"
+
 
 def test_newman_projection_staggered_and_eclipsed():
     stag = newman_projection(
@@ -137,11 +181,46 @@ def test_haworth_fischer_and_bicyclic_cages(tmp_path):
     f_texts = ["".join(n.itertext()) for n in f_root.findall(".//fragment/n") if list(n)]
     assert "CHO" in f_texts and "CH2OH" in f_texts and f_texts.count("OH") == 2
 
-    for scaf in ("norbornane", "bicyclo_222", "adamantane"):
+    from rdkit import Chem
+    from cdxml_toolkit.chemistry_semantics import read_fragments
+    from cdxml_toolkit.templates.conformers import _segment_crossing_params
+
+    expected_cage_smiles = {
+        "norbornane": "C1CC2CCC1C2",
+        "bicyclo_222": "C1CC2CCC1CC2",
+        "adamantane": "C1C2CC3CC1CC(C2)C3",
+    }
+    for scaf, expected_smi in expected_cage_smiles.items():
+        bare = bicyclic_cage(scaffold=scaf, bond_length=16.0)
+        mols = [m for _, m in read_fragments(bare["cdxml"])]
+        assert len(mols) == 1
+        assert Chem.MolToSmiles(mols[0]) == Chem.CanonSmiles(expected_smi), f"{scaf} graph mismatch"
+
         cage = bicyclic_cage(scaffold=scaf, substituents={1: "Br"}, bond_length=16.0)
         c_root = ET.fromstring(cage["cdxml"])
-        crossing = [b for b in c_root.findall(".//fragment/b") if b.get("CrossingBonds")]
+        node_xy = {
+            n.get("id"): tuple(map(float, n.get("p").split()))
+            for n in c_root.findall(".//fragment/n")
+        }
+        bond_map = {b.get("id"): b for b in c_root.findall(".//fragment/b")}
+        crossing = [b for b in bond_map.values() if b.get("CrossingBonds")]
         assert len(crossing) >= 1, f"{scaf} missing CrossingBonds"
+        for fb in crossing:
+            a1, e1 = node_xy[fb.get("B")], node_xy[fb.get("E")]
+            l1 = math.hypot(e1[0] - a1[0], e1[1] - a1[1])
+            for rid in fb.get("CrossingBonds").split():
+                rb = bond_map[rid]
+                assert int(fb.get("Z")) > int(rb.get("Z")), f"{scaf} front bond Z must exceed rear bond Z"
+                a2, e2 = node_xy[rb.get("B")], node_xy[rb.get("E")]
+                l2 = math.hypot(e2[0] - a2[0], e2[1] - a2[1])
+                params = _segment_crossing_params(a1, e1, a2, e2)
+                assert params is not None, f"{scaf} CrossingBonds must be a real geometric intersection"
+                t, u = params
+                margin = min(t, 1.0 - t, u, 1.0 - u) * min(l1, l2)
+                assert margin >= 0.25 * 16.0, f"{scaf} crossing too close to vertex ({margin:.2f} pt)"
+                cos_a = abs(((e1[0] - a1[0]) * (e2[0] - a2[0]) + (e1[1] - a1[1]) * (e2[1] - a2[1])) / (l1 * l2))
+                ang = math.degrees(math.acos(min(1.0, cos_a)))
+                assert ang >= 40.0, f"{scaf} crossing angle too shallow ({ang:.1f} deg)"
 
     out_file = tmp_path / "chair_out.cdxml"
     cdxml_str = build_conformer_cdxml({"template": "chair", "flip": True}, output_path=out_file)
@@ -332,14 +411,14 @@ def test_haworth_lower_up_labels_sit_outside_the_ring():
 CONFORMER_SPECS = {
     "chair": {"substituents": {"1": {"ax": {"label": "Br", "display": "Bold"}, "eq": "H"}}},
     "newman": {"front": [{"label": "F", "display": "WedgeBegin"}, "H", "H"],
-               "rear": [{"label": "F", "display": "WedgedHash"}, "H", "H"]},
+               "rear": [{"label": "F", "display": "WedgedHashBegin"}, "H", "H"]},
     "haworth": {"substituents": {"1": {"up": {"label": "OMe", "display": "Bold"}}}},
     "fischer": {"top": {"label": "CHO", "display": "Bold"},
-                "centers": [{"left": {"label": "H", "display": "WedgedHash"},
+                "centers": [{"left": {"label": "H", "display": "WedgedHashBegin"},
                              "right": {"label": "OH", "display": "WedgeBegin"}}],
                 "bottom": "CH2OH"},
     "norbornane": {"substituents": {"7": {"label": "Br", "display": "WedgeBegin"}}},
-    "bicyclo_222": {"substituents": {"1": {"label": "Br", "display": "WedgedHash"}}},
+    "bicyclo_222": {"substituents": {"1": {"label": "Br", "display": "WedgedHashBegin"}}},
     "adamantane": {"substituents": {"1": {"label": "Br", "display": "Bold"}}},
 }
 
@@ -364,11 +443,11 @@ def test_every_conformer_template_draws_and_reads_back_in_a_scheme(tmp_path, tem
 
 @pytest.mark.parametrize("template, expected", [
     ("chair", {"Bold"}),
-    ("newman", {"WedgeBegin", "WedgedHash"}),
+    ("newman", {"WedgeBegin", "WedgedHashBegin"}),
     ("haworth", {"Bold", "WedgeBegin"}),
-    ("fischer", {"Bold", "WedgeBegin", "WedgedHash"}),
+    ("fischer", {"Bold", "WedgeBegin", "WedgedHashBegin"}),
     ("norbornane", {"WedgeBegin"}),
-    ("bicyclo_222", {"WedgedHash"}),
+    ("bicyclo_222", {"WedgedHashBegin"}),
     ("adamantane", {"Bold"}),
 ])
 def test_structured_substituents_write_bond_displays(template, expected):
@@ -376,6 +455,18 @@ def test_structured_substituents_write_bond_displays(template, expected):
     root = ET.fromstring(result)
     displays = {b.get("Display") for b in root.findall(".//fragment/b") if b.get("Display")}
     assert expected <= displays
+
+
+def test_wedged_hash_alias_normalizes_to_canonical_cdxml_display():
+    result = build_conformer_cdxml({
+        "template": "chair",
+        "flip": True,
+        "substituents": {"2": {"ax": {"label": "H", "display": "WedgedHash"}}},
+    })
+    root = ET.fromstring(result)
+    displays = {b.get("Display") for b in root.findall(".//fragment/b") if b.get("Display")}
+    assert "WedgedHashBegin" in displays
+    assert "WedgedHash" not in displays
 
 
 @pytest.mark.parametrize("spec, message", [
@@ -462,10 +553,17 @@ def test_figure_2_10_brief_draws_axial_bromide_beta_hydrogens_and_products(tmp_p
     assert report["ok"] and report["checks_passed"], report
     root = ET.parse(report["output_path"]).getroot()
     displays = {b.get("Display") for b in root.iter("b") if b.get("Display")}
-    assert {"Bold", "WedgeBegin", "WedgedHash"} <= displays
+    assert {"Bold", "WedgeBegin", "WedgedHashBegin"} <= displays
+    assert "WedgedHash" not in displays
+    bond_ids = {b.get("id") for b in root.iter("b")}
+    crossing_bonds = [b for b in root.iter("b") if b.get("CrossingBonds")]
+    assert len(crossing_bonds) == 2  # both cis and trans chairs cross C3-C4 over rear C6-H
+    for b in crossing_bonds:
+        assert all(ref in bond_ids for ref in b.get("CrossingBonds").split())
     for fragment in root.findall(".//page/fragment"):
         nodes = {n.get("id") for n in fragment.findall("n")}
         assert all(b.get("B") in nodes and b.get("E") in nodes for b in fragment.findall("b"))
     text = " ".join("".join(t.itertext()) for t in root.iter("t"))
     assert "cis (Br a, up)" in text
+    assert "trans (Br a, up; Me a, down)" in text
     assert "1-methyl isomer" in text and "3-methyl isomer" in text

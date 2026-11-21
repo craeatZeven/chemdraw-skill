@@ -33,11 +33,14 @@ _SIMPLE_ELEMENTS: dict[str, int] = {
     "I": 53,
 }
 
-BOND_DISPLAYS = frozenset({"Bold", "WedgeBegin", "WedgedHash"})
+BOND_DISPLAYS = frozenset({"Bold", "WedgeBegin", "WedgeEnd", "WedgedHashBegin", "WedgedHashEnd"})
+_DISPLAY_ALIASES: dict[str, str] = {
+    "WedgedHash": "WedgedHashBegin",
+}
 
 
 def _substituent(value: Any) -> tuple[str, str | None]:
-    """Return a substituent's label and optional CDXML bond display."""
+    """Return a substituent's label and optional canonical CDXML bond display."""
     if isinstance(value, Mapping):
         if set(value) - {"label", "display"} or not isinstance(value.get("label"), str):
             raise ValueError('a structured substituent must be {"label": "...", "display": "..."}')
@@ -48,8 +51,10 @@ def _substituent(value: Any) -> tuple[str, str | None]:
         display = None
     if not label:
         raise ValueError("a substituent label cannot be empty")
-    if display is not None and display not in BOND_DISPLAYS:
-        raise ValueError(f"display must be one of {sorted(BOND_DISPLAYS)}, not {display!r}")
+    if display is not None:
+        display = _DISPLAY_ALIASES.get(display, display)
+        if display not in BOND_DISPLAYS:
+            raise ValueError(f"display must be one of {sorted(BOND_DISPLAYS)}, not {display!r}")
     return label, display
 
 
@@ -304,7 +309,8 @@ def chair_cyclohexane(
         invert while opposite ring bonds remain strictly parallel.
     substituents : mapping of 1..6 -> {"ax": label, "eq": label}, optional
         Substituents placed along exact vertical axial or parallel equatorial vectors.
-        A label may be a string or {"label": "...", "display": "Bold"|"WedgeBegin"|"WedgedHash"}.
+        A label may be a string or {"label": "...", "display": "Bold"|"WedgeBegin"|"WedgedHashBegin"}
+        ("WedgedHash" is accepted as an alias for "WedgedHashBegin").
     cx, cy : float
         Ring centroid in CDXML points.
     bond_length : float
@@ -315,8 +321,9 @@ def chair_cyclohexane(
 
     # Three generator bond vectors (u = C1->C2, v = C2->C3, w = C3->C4) of exact length L.
     # Central symmetry guarantees opposite bonds (C4->C5 = -u, C5->C6 = -v, C6->C1 = -w)
-    # are strictly parallel and equal in length.
-    u = (L * math.cos(math.radians(-55.0)), sign_y * L * math.sin(math.radians(-55.0)))
+    # are strictly parallel and equal in length.  60 deg / +-20 deg opens the chair corners
+    # to 40 deg while keeping >= 3.0 pt clearance between rear axial H labels and front bonds.
+    u = (L * math.cos(math.radians(-60.0)), sign_y * L * math.sin(math.radians(-60.0)))
     v = (L * math.cos(math.radians(160.0)), sign_y * L * math.sin(math.radians(160.0)))
     w = (L * math.cos(math.radians(-160.0)), sign_y * L * math.sin(math.radians(-160.0)))
 
@@ -356,15 +363,22 @@ def chair_cyclohexane(
 
     atoms: list[dict[str, Any]] = []
     bonds: list[dict[str, Any]] = []
+    # Front-to-back depth for chair perspective:
+    #   flip=False (chair1): front carbons {5, 6, 1}, rear carbons {2, 3, 4}
+    #   flip=True  (chair2): front carbons {2, 3, 4}, rear carbons {5, 6, 1}
+    front_carbons = {2, 3, 4} if flip else {5, 6, 1}
     for k, (rx, ry) in enumerate(ring_coords, start=1):
         atoms.append({"index": k, "symbol": "C", "x": rx, "y": ry, "ring_position": k})
     for k in range(6):
+        a1, a2 = k + 1, ((k + 1) % 6) + 1
         bonds.append({
             "index": k + 1,
-            "atom1": k + 1,
-            "atom2": ((k + 1) % 6) + 1,
+            "atom1": a1,
+            "atom2": a2,
             "order": 1,
             "is_ring_bond": True,
+            "crossing_bonds": [],
+            "z": 40 + k if (a1 in front_carbons and a2 in front_carbons) else 20 + k,
         })
 
     if substituents:
@@ -380,12 +394,14 @@ def chair_cyclohexane(
                 label, display = _substituent(sub_map[key])
                 new_idx = len(atoms) + 1
                 sx, sy = rx + vec[0], ry + vec[1]
+                just = "Right" if vec[0] < -0.25 * L else "Left"
                 atoms.append({
                     "index": new_idx,
                     "symbol": label,
                     "x": sx,
                     "y": sy,
                     "show_label": True,
+                    "justification": just,
                     "attachment": "ax" if key.startswith("ax") else "eq",
                     "ring_position": pos,
                 })
@@ -396,7 +412,30 @@ def chair_cyclohexane(
                     "order": 1,
                     "display": display,
                     "attachment": "ax" if key.startswith("ax") else "eq",
+                    "crossing_bonds": [],
+                    "z": 50 + len(bonds) if pos in front_carbons else 10 + len(bonds),
                 })
+
+    # Detect true 3D crossings between ring bonds and substituent bonds (e.g. rear axial
+    # C6-H passing behind front ring bond C3-C4 in chair2, or front axial C3-H passing
+    # in front of rear ring bond C5-C6).
+    atom_xy = {int(a["index"]): (float(a["x"]), float(a["y"])) for a in atoms}
+    ring_bonds = [b for b in bonds if b.get("is_ring_bond")]
+    sub_bonds = [b for b in bonds if not b.get("is_ring_bond")]
+    for sb in sub_bonds:
+        pos = int(sb["atom1"])
+        sp1, sp2 = atom_xy[pos], atom_xy[int(sb["atom2"])]
+        for rb in ring_bonds:
+            ra1, ra2 = int(rb["atom1"]), int(rb["atom2"])
+            if pos in (ra1, ra2):
+                continue
+            if _segments_intersect(sp1, sp2, atom_xy[ra1], atom_xy[ra2]):
+                if pos in front_carbons:
+                    sb["crossing_bonds"].append(rb["index"])
+                    sb["z"] = max(int(sb.get("z", 50)), int(rb.get("z", 20)) + 10)
+                else:
+                    rb["crossing_bonds"].append(sb["index"])
+                    rb["z"] = max(int(rb.get("z", 40)), int(sb.get("z", 10)) + 10)
 
     fragment_xml, cdxml, _, _ = _build_fragment_and_cdxml(atoms, bonds, bond_length=L)
     return {
@@ -528,7 +567,7 @@ def newman_projection(
     """Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
 
     Each front/rear substituent may be a label string or
-    {"label": "...", "display": "Bold"|"WedgeBegin"|"WedgedHash"}.
+    {"label": "...", "display": "Bold"|"WedgeBegin"|"WedgeEnd"|"WedgedHashBegin"|"WedgedHashEnd"}.
 
     ``attach`` bonds the front carbon to the rest of a molecule (BJOC 22-125 scheme 4): the
     front substituent written ``"*"`` is replaced by a drawn group ``{"root", "atoms",
@@ -986,6 +1025,66 @@ def fischer_projection(
     }
 
 
+def _project_3d_cage(
+    pts3d: Mapping[int, tuple[float, float, float]],
+    bond_pairs: Sequence[tuple[int, int]],
+    az_deg: float,
+    el_deg: float,
+    cx: float,
+    cy: float,
+    bond_length: float,
+) -> tuple[dict[int, tuple[float, float]], dict[int, float]]:
+    """Orthographically project 3D cage coordinates (y up, z toward viewer) to CDXML 2D + depth."""
+    az = math.radians(az_deg)
+    el = math.radians(el_deg)
+    ca, sa = math.cos(az), math.sin(az)
+    ce, se = math.cos(el), math.sin(el)
+    rotated: dict[int, tuple[float, float, float]] = {}
+    for idx, (x, y, z) in pts3d.items():
+        x1 = x * ca + z * sa
+        z1 = -x * sa + z * ca
+        y2 = y * ce - z1 * se
+        z2 = y * se + z1 * ce
+        rotated[idx] = (x1, -y2, z2)  # CDXML +y points downward
+
+    lengths = [
+        math.hypot(rotated[a][0] - rotated[b][0], rotated[a][1] - rotated[b][1])
+        for a, b in bond_pairs
+    ]
+    mean_len = (sum(lengths) / len(lengths)) or 1.0
+    scale = bond_length / mean_len
+    xs = [v[0] for v in rotated.values()]
+    ys = [v[1] for v in rotated.values()]
+    mid_x = 0.5 * (min(xs) + max(xs))
+    mid_y = 0.5 * (min(ys) + max(ys))
+    coords = {
+        idx: (cx + (v[0] - mid_x) * scale, cy + (v[1] - mid_y) * scale)
+        for idx, v in rotated.items()
+    }
+    depths = {idx: v[2] * scale for idx, v in rotated.items()}
+    return coords, depths
+
+
+def _segment_crossing_params(
+    a: tuple[float, float],
+    b: tuple[float, float],
+    c: tuple[float, float],
+    d: tuple[float, float],
+) -> tuple[float, float] | None:
+    """Return intersection parameters (t, u) in (0, 1) if open segments AB and CD strictly cross."""
+    rx, ry = b[0] - a[0], b[1] - a[1]
+    sx, sy = d[0] - c[0], d[1] - c[1]
+    denom = rx * sy - ry * sx
+    if abs(denom) < 1e-9:
+        return None
+    qpx, qpy = c[0] - a[0], c[1] - a[1]
+    t = (qpx * sy - qpy * sx) / denom
+    u = (qpx * ry - qpy * rx) / denom
+    if 1e-4 < t < 1.0 - 1e-4 and 1e-4 < u < 1.0 - 1e-4:
+        return (t, u)
+    return None
+
+
 def bicyclic_cage(
     *,
     scaffold: str = "norbornane",
@@ -994,82 +1093,84 @@ def bicyclic_cage(
     cy: float = 160.0,
     bond_length: float = 16.0,
 ) -> dict[str, Any]:
-    """Generate a bridged cage with CrossingBonds; substituents accept strings or {label, display}."""
+    """Generate a 3D perspective bridged cage with exact geometric CrossingBonds.
+
+    Substituents accept strings or {"label": "...", "display": "Bold"|"WedgeBegin"|"WedgedHashBegin"}.
+    """
     L = float(bond_length)
     scaf = scaffold.strip().lower()
 
     if scaf == "norbornane":
-        # Bicyclo[2.2.1]heptane: C1, C4 bridgeheads; C2-C3 front; C6-C5 rear; C7 top methano bridge.
-        # C1-C7 and C4-C7 cross in front of rear bond C5-C6.
-        coords = {
-            1: (cx - 1.15 * L, cy + 0.15 * L),
-            2: (cx - 0.60 * L, cy + 0.85 * L),
-            3: (cx + 0.60 * L, cy + 0.85 * L),
-            4: (cx + 1.15 * L, cy + 0.15 * L),
-            5: (cx + 0.42 * L, cy - 0.25 * L),
-            6: (cx - 0.42 * L, cy - 0.25 * L),
-            7: (cx, cy - 1.10 * L),
+        # Bicyclo[2.2.1]heptane (C7H12): C1, C4 bridgeheads; C2-C3 front 2C bridge;
+        # C5-C6 rear 2C bridge; C7 top methano bridge.  Front bond C3-C4 crosses rear C5-C6.
+        pts3d = {
+            1: (-0.75, 0.0, 0.0),
+            2: (-0.50, -0.58, +0.78),
+            3: (+0.50, -0.58, +0.78),
+            4: (+0.75, 0.0, 0.0),
+            5: (+0.50, -0.58, -0.78),
+            6: (-0.50, -0.58, -0.78),
+            7: (0.0, +0.66, 0.0),
         }
-        raw_bonds = [
-            (1, 2, False),
-            (2, 3, False),
-            (3, 4, False),
-            (4, 5, False),
-            (5, 6, False),  # bond 5: rear horizontal C5-C6
-            (6, 1, False),
-            (1, 7, True),   # bond 7: front bridge C1-C7 crosses bond 5
-            (4, 7, True),   # bond 8: front bridge C4-C7 crosses bond 5
+        bond_pairs = [
+            (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 1), (1, 7), (4, 7),
         ]
+        coords, depths = _project_3d_cage(pts3d, bond_pairs, az_deg=-27.0, el_deg=12.0, cx=cx, cy=cy, bond_length=L)
     elif scaf in ("bicyclo_222", "bicyclo[2.2.2]octane"):
         scaf = "bicyclo_222"
-        coords = {
-            1: (cx, cy - 1.20 * L),
-            2: (cx - 0.95 * L, cy - 0.50 * L),
-            3: (cx - 0.95 * L, cy + 0.50 * L),
-            4: (cx, cy + 1.20 * L),
-            5: (cx + 0.95 * L, cy - 0.45 * L),
-            6: (cx + 0.95 * L, cy + 0.45 * L),
-            7: (cx + 0.32 * L, cy - 0.35 * L),
-            8: (cx + 0.32 * L, cy + 0.35 * L),
+        # Bicyclo[2.2.2]octane (C8H14): D3h barrel with C1 at top apex and C4 at bottom;
+        # front bond C8-C4 crosses rear vertical bridge C5-C6 cleanly near its midpoint.
+        r222 = math.sqrt(1.0 - 0.33**2)
+        pts3d = {
+            1: (0.0, +0.83, 0.0),
+            2: (-r222, +0.50, 0.0),
+            3: (-r222, -0.50, 0.0),
+            4: (0.0, -0.83, 0.0),
+            5: (0.5 * r222, +0.50, -0.5 * math.sqrt(3.0) * r222),
+            6: (0.5 * r222, -0.50, -0.5 * math.sqrt(3.0) * r222),
+            7: (0.5 * r222, +0.50, +0.5 * math.sqrt(3.0) * r222),
+            8: (0.5 * r222, -0.50, +0.5 * math.sqrt(3.0) * r222),
         }
-        raw_bonds = [
-            (1, 2, False),
-            (2, 3, False),
-            (3, 4, False),
-            (1, 5, False),
-            (5, 6, False),
-            (6, 4, False),
-            (1, 7, True),
-            (7, 8, True),   # front bridge C7-C8
-            (8, 4, True),
+        bond_pairs = [
+            (1, 2), (2, 3), (3, 4), (1, 5), (5, 6), (6, 4), (1, 7), (7, 8), (8, 4),
         ]
+        coords, depths = _project_3d_cage(pts3d, bond_pairs, az_deg=10.0, el_deg=-24.0, cx=cx, cy=cy, bond_length=L)
     elif scaf == "adamantane":
-        coords = {
-            1: (cx, cy - 1.35 * L),
-            2: (cx - 0.95 * L, cy - 0.65 * L),
-            3: (cx - 0.95 * L, cy + 0.35 * L),
-            4: (cx, cy + 0.95 * L),
-            5: (cx + 0.95 * L, cy + 0.35 * L),
-            6: (cx + 0.95 * L, cy - 0.65 * L),
-            7: (cx - 0.35 * L, cy - 0.10 * L),
-            8: (cx + 0.35 * L, cy - 0.85 * L),
-            9: (cx + 0.35 * L, cy + 0.15 * L),
-            10: (cx - 0.35 * L, cy + 0.90 * L),
+        # Adamantane (tricyclo[3.3.1.1^3,7]decane, C10H16): exact diamondoid tetrahedral
+        # cage oriented with bridgehead C1 at the top apex. Bridgeheads: 1, 3, 5, 7;
+        # methylenes: 2 (1-3), 4 (3-5), 6 (5-7), 8 (7-1), 9 (1-5), 10 (3-7).
+        # Front bond C7-C8 crosses rear chair bond C4-C5 nearly perpendicularly at midpoint.
+        s2 = math.sqrt(2.0)
+        s3 = math.sqrt(3.0)
+        s6 = math.sqrt(6.0)
+        ex = (1.0 / s2, -1.0 / s2, 0.0)
+        ey = (1.0 / s3, 1.0 / s3, 1.0 / s3)
+        ez = (-1.0 / s6, -1.0 / s6, 2.0 / s6)
+        raw_diamond = {
+            1: (1.0, 1.0, 1.0),
+            2: (2.0, 0.0, 0.0),
+            3: (1.0, -1.0, -1.0),
+            4: (0.0, 0.0, -2.0),
+            5: (-1.0, 1.0, -1.0),
+            6: (-2.0, 0.0, 0.0),
+            7: (-1.0, -1.0, 1.0),
+            8: (0.0, 0.0, 2.0),
+            9: (0.0, 2.0, 0.0),
+            10: (0.0, -2.0, 0.0),
         }
-        raw_bonds = [
-            (1, 2, False),
-            (2, 3, False),
-            (3, 10, False),
-            (10, 5, False),
-            (5, 6, False),
-            (6, 8, False),
-            (8, 1, False),
-            (1, 7, True),
-            (7, 4, True),   # front bridge crosses rear cage bond
-            (4, 5, True),
-            (3, 4, True),
-            (6, 9, False),
+        pts3d = {
+            idx: (
+                v[0] * ex[0] + v[1] * ex[1] + v[2] * ex[2],
+                v[0] * ey[0] + v[1] * ey[1] + v[2] * ey[2],
+                v[0] * ez[0] + v[1] * ez[1] + v[2] * ez[2],
+            )
+            for idx, v in raw_diamond.items()
+        }
+        bond_pairs = [
+            (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7),
+            (7, 8), (8, 1), (1, 9), (9, 5), (3, 10), (10, 7),
         ]
+        coords, depths = _project_3d_cage(pts3d, bond_pairs, az_deg=-15.0, el_deg=22.0, cx=cx, cy=cy, bond_length=L)
     else:
         raise ValueError(f"Unsupported bicyclic/cage scaffold: {scaffold!r}")
 
@@ -1079,51 +1180,64 @@ def bicyclic_cage(
     ]
 
     bonds: list[dict[str, Any]] = []
-    for b_idx, (a1, a2, is_front) in enumerate(raw_bonds, start=1):
+    for b_idx, (a1, a2) in enumerate(bond_pairs, start=1):
         bonds.append({
             "index": b_idx,
             "atom1": a1,
             "atom2": a2,
             "order": 1,
-            "is_front": is_front,
+            "is_front": False,
             "crossing_bonds": [],
         })
 
-    # Detect geometric crossings between front bonds and rear bonds
-    any_crossing = False
-    for fb in bonds:
-        if not fb["is_front"]:
-            continue
-        p1 = coords[fb["atom1"]]
-        p2 = coords[fb["atom2"]]
-        for rb in bonds:
-            if rb["is_front"] or rb["index"] == fb["index"]:
+    # Detect true geometric crossings and order front-over-rear by 3D depth z at the crossing point.
+    rear_indices: set[int] = set()
+    for i, b1 in enumerate(bonds):
+        a1, e1 = b1["atom1"], b1["atom2"]
+        for b2 in bonds[i + 1 :]:
+            a2, e2 = b2["atom1"], b2["atom2"]
+            if len({a1, e1, a2, e2}) < 4:
                 continue
-            if len({fb["atom1"], fb["atom2"], rb["atom1"], rb["atom2"]}) < 4:
+            params = _segment_crossing_params(coords[a1], coords[e1], coords[a2], coords[e2])
+            if params is None:
                 continue
-            q1 = coords[rb["atom1"]]
-            q2 = coords[rb["atom2"]]
-            if _segments_intersect(p1, p2, q1, q2):
-                fb["crossing_bonds"].append(rb["index"])
-                any_crossing = True
+            t, u = params
+            z1 = depths[a1] + t * (depths[e1] - depths[a1])
+            z2 = depths[a2] + u * (depths[e2] - depths[a2])
+            front, rear = (b1, b2) if z1 >= z2 else (b2, b1)
+            front["is_front"] = True
+            front["crossing_bonds"].append(rear["index"])
+            rear_indices.add(rear["index"])
 
-    if not any_crossing:
-        # Ensure the primary front bridge carries explicit CrossingBonds over the rear bridge
-        front_candidates = [b for b in bonds if b["is_front"]]
-        rear_candidates = [b for b in bonds if not b["is_front"]]
-        if front_candidates and rear_candidates:
-            front_candidates[0]["crossing_bonds"].append(rear_candidates[-1]["index"])
+    for b in bonds:
+        b["z"] = 10 + b["index"] if b["index"] in rear_indices else 50 + b["index"]
 
     if substituents:
+        adj: dict[int, list[int]] = {idx: [] for idx in coords}
+        for a1, a2 in bond_pairs:
+            adj[a1].append(a2)
+            adj[a2].append(a1)
         for raw_pos, entry in substituents.items():
             pos = int(raw_pos)
             if pos not in coords or not entry:
                 continue
             label, display = _substituent(entry)
             px, py = coords[pos]
-            dx, dy = px - cx, py - cy
-            norm = math.hypot(dx, dy) or 1.0
-            sx, sy = px + (dx / norm) * L, py + (dy / norm) * L
+            # Point substituent along the outward bisector away from incident cage bonds;
+            # fall back to centroid-outward if incident unit vectors cancel.
+            vx, vy = 0.0, 0.0
+            for nb in adj[pos]:
+                nx, ny = coords[nb]
+                nd = math.hypot(nx - px, ny - py) or 1.0
+                vx -= (nx - px) / nd
+                vy -= (ny - py) / nd
+            norm = math.hypot(vx, vy)
+            if norm < 0.25:
+                vx, vy = px - cx, py - cy
+                norm = math.hypot(vx, vy) or 1.0
+            ux, uy = vx / norm, vy / norm
+            sx, sy = px + ux * L, py + uy * L
+            just = "Right" if ux < -0.25 else "Left"
             new_idx = len(atoms) + 1
             atoms.append({
                 "index": new_idx,
@@ -1131,6 +1245,7 @@ def bicyclic_cage(
                 "x": sx,
                 "y": sy,
                 "show_label": True,
+                "justification": just,
                 "attached_to": pos,
             })
             bonds.append({
@@ -1141,6 +1256,7 @@ def bicyclic_cage(
                 "display": display,
                 "is_front": False,
                 "crossing_bonds": [],
+                "z": 60 + len(bonds),
             })
 
     fragment_xml, cdxml, _, _ = _build_fragment_and_cdxml(atoms, bonds, bond_length=L)

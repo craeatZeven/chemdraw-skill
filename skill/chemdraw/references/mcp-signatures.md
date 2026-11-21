@@ -4,7 +4,7 @@
 > Lookup table, not a guide. Fetch one tool with `python scripts/cdx.py sig NAME` (several: `sig A B`; all names: `cdx.py tools`). Do not read this file end to end.
 
 Distribution: `cdxml-toolkit-community 0.7.0a3`
-Profile: `full (default)`
+Profile: `full`
 Tools: `69`
 
 ## Extended Tools
@@ -213,7 +213,8 @@ species [{id, smiles or name or conformer, label?, ring_fills?, atom_halos?, ts_
 atom_colors?, bond_colors?, abbreviate?, orientation?, caption?, box?}]. A conformer is
 {template: chair|newman|haworth|fischer|norbornane|bicyclo_222|adamantane, bond_length?,
 ...template options}; it replaces smiles/name and skips atom-balance checking. Substituents
-accept a label string or {label, display: Bold|WedgeBegin|WedgedHash}. Chair substituents
+accept a label string or {label, display: Bold|WedgeBegin|WedgeEnd|WedgedHashBegin|WedgedHashEnd}
+(WedgedHash is normalized to WedgedHashBegin). Chair substituents
 map positions 1..6 to {ax|eq: substituent}; Newman front/rear each list three; Haworth
 positions 1..5 map to {up|down: substituent}; Fischer centers list {left, right} and top/
 bottom are substituents; cages map their atom positions to substituents. Conformer

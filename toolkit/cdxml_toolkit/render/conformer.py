@@ -232,14 +232,23 @@ def drawing(spec: Mapping[str, Any], cx: float = 0.0, cy: float = 0.0) -> dict[s
 def fragment(ident: str, spec: Mapping[str, Any], label: str | None) -> Any:
     from . import renderer as R
 
+    from ..label_geometry import label_box
+
     normalized = copy.deepcopy(dict(spec))
     normalized.setdefault("template", "newman")
     drawn = drawing(normalized)
     atoms = [dict(a) for a in drawn["atoms"]]
     for atom in atoms:
+        reach = list(atom.get("reach") or ())
         if atom.get("charge_box"):
             x1, y1, x2, y2 = atom.pop("charge_box")
-            atom["reach"] = [(x1 - atom["x"], y1 - atom["y"]), (x2 - atom["x"], y2 - atom["y"])]
+            reach.extend([(x1 - atom["x"], y1 - atom["y"]), (x2 - atom["x"], y2 - atom["y"])])
+        sym = str(atom.get("symbol", "C"))
+        if atom.get("show_label", sym != "C"):
+            bx1, by1, bx2, by2 = label_box(sym, atom["x"], atom["y"], str(atom.get("justification", "Left")))
+            reach.extend([(bx1 - atom["x"], by1 - atom["y"]), (bx2 - atom["x"], by2 - atom["y"])])
+        if reach:
+            atom["reach"] = reach
     ref = StructureRef(id=ident, label=label, conformer=normalized)
     frag = R.ResolvedFragment(ref=ref, atoms=atoms, bonds=[dict(b) for b in drawn["bonds"]])
     frag.bbox = R._fragment_bbox(atoms)

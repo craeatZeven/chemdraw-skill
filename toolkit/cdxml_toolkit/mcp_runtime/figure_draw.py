@@ -850,7 +850,8 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     atom_colors?, bond_colors?, abbreviate?, orientation?, caption?, box?}]. A conformer is
     {template: chair|newman|haworth|fischer|norbornane|bicyclo_222|adamantane, bond_length?,
     ...template options}; it replaces smiles/name and skips atom-balance checking. Substituents
-    accept a label string or {label, display: Bold|WedgeBegin|WedgedHash}. Chair substituents
+    accept a label string or {label, display: Bold|WedgeBegin|WedgeEnd|WedgedHashBegin|WedgedHashEnd}
+    (WedgedHash is normalized to WedgedHashBegin). Chair substituents
     map positions 1..6 to {ax|eq: substituent}; Newman front/rear each list three; Haworth
     positions 1..5 map to {up|down: substituent}; Fischer centers list {left, right} and top/
     bottom are substituents; cages map their atom positions to substituents. Conformer

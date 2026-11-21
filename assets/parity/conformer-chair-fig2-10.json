@@ -1,51 +1,100 @@
 {
-  "kind": "scheme",
-  "title": "E2 elimination of cis-1-bromo-2-methylcyclohexane",
-  "layout": "divergent",
+  "kind": "panels",
   "max_width": 640,
-  "species": [
+  "panels": [
     {
-      "id": "cis-diaxial",
-      "label": "cis (Br a, up)",
-      "conformer": {
-        "template": "chair",
-        "flip": true,
-        "bond_length": 14.4,
-        "substituents": {
-          "1": {
-            "ax": {"label": "Br", "display": "Bold"}
+      "title": "(a) cis isomer: two anti-periplanar β-H",
+      "brief": {
+        "kind": "scheme",
+        "layout": "divergent",
+        "max_width": 640,
+        "species": [
+          {
+            "id": "cis-diaxial",
+            "label": "cis (Br a, up)",
+            "conformer": {
+              "template": "chair",
+              "flip": true,
+              "bond_length": 14.4,
+              "substituents": {
+                "1": {
+                  "ax": {"label": "Br", "display": "Bold"}
+                },
+                "2": {
+                  "ax": {"label": "H", "display": "WedgedHashBegin"},
+                  "eq": {"label": "Me", "display": "WedgeBegin"}
+                },
+                "6": {
+                  "ax": {"label": "H", "display": "WedgedHashBegin"}
+                }
+              }
+            }
           },
-          "2": {
-            "ax": {"label": "H", "display": "WedgedHash"},
-            "eq": {"label": "Me", "display": "WedgeBegin"}
+          {
+            "id": "alkene-1",
+            "label": "1-methyl isomer (major)",
+            "smiles": "CC1=CCCCC1"
           },
-          "6": {
-            "ax": {"label": "H", "display": "WedgedHash"}
+          {
+            "id": "alkene-3",
+            "label": "3-methyl isomer (minor)",
+            "smiles": "CC1CC=CCC1"
           }
-        }
+        ],
+        "steps": [
+          {
+            "substrates": ["cis-diaxial"],
+            "products": ["alkene-1"],
+            "above": ["E2 (2-H, major)"]
+          },
+          {
+            "substrates": ["cis-diaxial"],
+            "products": ["alkene-3"],
+            "above": ["E2 (6-H, minor)"]
+          }
+        ]
       }
     },
     {
-      "id": "alkene-1",
-      "label": "1-methyl isomer",
-      "smiles": "CC1=CCCCC1"
-    },
-    {
-      "id": "alkene-3",
-      "label": "3-methyl isomer",
-      "smiles": "CC1CC=CCC1"
-    }
-  ],
-  "steps": [
-    {
-      "substrates": ["cis-diaxial"],
-      "products": ["alkene-1"],
-      "above": ["E2 at C2"]
-    },
-    {
-      "substrates": ["cis-diaxial"],
-      "products": ["alkene-3"],
-      "above": ["E2 at C6"]
+      "title": "(b) trans isomer: single anti-periplanar β-H",
+      "brief": {
+        "kind": "scheme",
+        "max_width": 640,
+        "species": [
+          {
+            "id": "trans-diaxial",
+            "label": "trans (Br a, up; Me a, down)",
+            "conformer": {
+              "template": "chair",
+              "flip": true,
+              "bond_length": 14.4,
+              "substituents": {
+                "1": {
+                  "ax": {"label": "Br", "display": "Bold"}
+                },
+                "2": {
+                  "ax": {"label": "Me", "display": "WedgeBegin"}
+                },
+                "6": {
+                  "ax": {"label": "H", "display": "WedgedHashBegin"}
+                }
+              }
+            }
+          },
+          {
+            "id": "alkene-3-only",
+            "label": "3-methyl isomer (only)",
+            "smiles": "CC1CC=CCC1"
+          }
+        ],
+        "steps": [
+          {
+            "substrates": ["trans-diaxial"],
+            "products": ["alkene-3-only"],
+            "above": ["E2 (6-H only)"]
+          }
+        ]
+      }
     }
   ]
 }
