@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
-<CDXML BondLength="14.4" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" LabelFont="3" CaptionFont="3" LabelSize="10" CaptionSize="10" LabelFace="96" BoundingBox="0 0 298.77 271.79"><colortable><color r="1" g="1" b="1" /><color r="0" g="0" b="0" /></colortable><fonttable><font id="3" charset="iso-8859-1" name="Arial" /></fonttable><page id="1" BoundingBox="0 0 298.77 271.79" Width="298.77" Height="271.79" WidthPages="2" HeightPages="2"><graphic id="2" GraphicType="Rectangle" BoundingBox="12 12 286.77 28" color="3" />
+<CDXML BondLength="14.4" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" LabelFont="3" CaptionFont="3" LabelSize="10" CaptionSize="10" LabelFace="96" BoundingBox="0 0 298.77 283.08"><colortable><color r="1" g="1" b="1" /><color r="0" g="0" b="0" /></colortable><fonttable><font id="3" charset="iso-8859-1" name="Arial" /></fonttable><page id="1" BoundingBox="0 0 298.77 283.08" Width="298.77" Height="283.08" WidthPages="2" HeightPages="2"><graphic id="2" GraphicType="Rectangle" BoundingBox="12 12 286.77 28" color="3" />
     <t id="3" p="16 23.5" Justification="Left" InterpretChemically="no"><s font="3" size="10" face="0" color="3">(a) cis isomer: two anti-periplanar β-H</s></t>
   <fragment id="4" BoundingBox="17.79 40.62 65.58 81.9" Z="1045">
 <n id="5" p="44.85 55.02" Z="1046" />
@@ -19,7 +19,7 @@
 <b id="22" Z="1038" B="8" E="9" />
 <b id="23" Z="1039" B="9" E="10" />
 <b id="24" Z="1040" B="10" E="5" />
-<b id="25" Z="1035" B="5" E="11" Display="Bold" />
+<b id="25" Z="1035" B="5" E="11" Display="WedgeBegin" />
 <b id="26" Z="1043" B="6" E="13" Display="WedgedHashBegin" />
 <b id="27" Z="1044" B="6" E="15" Display="WedgeBegin" />
 <b id="28" Z="1036" B="10" E="17" Display="WedgedHashBegin" />
@@ -34,13 +34,13 @@
 <fragment id="32" BoundingBox="177.83 48.48 221.03 73.42" Z="1063">
 <n id="33" p="221.03 60.95" Z="1065" />
 <n id="34" p="206.63 60.95" Z="1067" />
-<n id="35" p="199.43 48.48" Z="1069" />
-<n id="36" p="185.03 48.48" Z="1071" />
+<n id="35" p="199.43 73.42" Z="1069" />
+<n id="36" p="185.03 73.42" Z="1071" />
 <n id="37" p="177.83 60.95" Z="1073" />
-<n id="38" p="185.03 73.42" Z="1075" />
-<n id="39" p="199.43 73.42" Z="1077" />
+<n id="38" p="185.03 48.48" Z="1075" />
+<n id="39" p="199.43 48.48" Z="1077" />
 <b id="40" Z="1079" B="33" E="34" />
-<b id="41" Z="1081" B="34" E="35" Order="2" DoublePosition="Right" />
+<b id="41" Z="1081" B="34" E="35" Order="2" DoublePosition="Left" />
 <b id="42" Z="1083" B="35" E="36" />
 <b id="43" Z="1085" B="36" E="37" />
 <b id="44" Z="1087" B="37" E="38" />
@@ -50,80 +50,80 @@
 <t id="47" p="199.43 88.87" BoundingBox="145.38 79.77 253.48 90.87" Z="1093" CaptionJustification="Center" Justification="Center" LineHeight="auto">
 <s font="3" size="10.0" color="0" face="0">1-methyl isomer (major)</s>
 </t>
-<arrow id="48" BoundingBox="79.63 119.97 160.13 127.97" Z="1095" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="160.13 123.97 0" Tail3D="79.63 123.97 0" LineWidth="0.60" />
-<t id="49" p="119.88 117.97" BoundingBox="84.63 108.87 155.13 119.97" Z="1097" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<arrow id="48" BoundingBox="79.63 125.03 160.13 133.03" Z="1095" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="160.13 129.03 0" Tail3D="79.63 129.03 0" LineWidth="0.60" />
+<t id="49" p="119.88 123.03" BoundingBox="84.63 113.93 155.13 125.03" Z="1097" CaptionJustification="Center" Justification="Center" LineHeight="auto">
 <s font="3" size="10.0" color="0" face="0">E2</s><s font="3" size="10.0" color="0" face="96"> (6-H, minor)</s>
 </t>
-<fragment id="50" BoundingBox="177.83 111.5 221.03 136.44" Z="1099">
-<n id="51" p="177.83 123.97" Z="1101" />
-<n id="52" p="192.23 123.97" Z="1103" />
-<n id="53" p="199.43 111.5" Z="1105" />
-<n id="54" p="213.83 111.5" Z="1107" />
-<n id="55" p="221.03 123.97" Z="1109" />
-<n id="56" p="213.83 136.44" Z="1111" />
-<n id="57" p="199.43 136.44" Z="1113" />
-<b id="58" Z="1115" B="51" E="52" />
+<fragment id="50" BoundingBox="177.83 110.32 206.63 147.73" Z="1099">
+<n id="51" p="206.63 122.79" Z="1101" />
+<n id="52" p="199.43 135.26" Z="1103" />
+<n id="53" p="185.03 135.26" Z="1105" />
+<n id="54" p="177.83 147.73" Z="1107" />
+<n id="55" p="177.83 122.79" Z="1109" />
+<n id="56" p="185.03 110.32" Z="1111" />
+<n id="57" p="199.43 110.32" Z="1113" />
+<b id="58" Z="1115" B="51" E="52" Order="2" DoublePosition="Left" />
 <b id="59" Z="1117" B="52" E="53" />
 <b id="60" Z="1119" B="53" E="54" />
-<b id="61" Z="1121" B="54" E="55" Order="2" DoublePosition="Left" />
+<b id="61" Z="1121" B="53" E="55" />
 <b id="62" Z="1123" B="55" E="56" />
 <b id="63" Z="1125" B="56" E="57" />
-<b id="64" Z="1127" B="57" E="52" />
+<b id="64" Z="1127" B="57" E="51" />
 </fragment>
-<t id="65" p="199.43 151.89" BoundingBox="145.38 142.79 253.48 153.89" Z="1129" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<t id="65" p="192.23 163.18" BoundingBox="138.18 154.08 246.28 165.18" Z="1129" CaptionJustification="Center" Justification="Center" LineHeight="auto">
 <s font="3" size="10.0" color="0" face="0">3-methyl isomer (minor)</s>
 </t>
-<graphic id="66" Z="1131" GraphicType="Line" BoundingBox="79.63 60.95 79.63 123.97" />
+<graphic id="66" Z="1131" GraphicType="Line" BoundingBox="79.63 60.95 79.63 129.03" />
 <scheme id="67">
 <step id="68" ReactionStepReactants="4" ReactionStepProducts="32" ReactionStepArrows="30" ReactionStepObjectsAboveArrow="31" />
 <step id="69" ReactionStepReactants="4" ReactionStepProducts="50" ReactionStepArrows="48" ReactionStepObjectsAboveArrow="49" />
 </scheme>
-<graphic id="70" GraphicType="Rectangle" BoundingBox="12 169.89 286.77 185.89" color="3" />
-    <t id="71" p="16 181.39" Justification="Left" InterpretChemically="no"><s font="3" size="10" face="0" color="3">(b) trans isomer: single anti-periplanar β-H</s></t>
-  <fragment id="72" BoundingBox="57.46 198.51 91.72 239.79" Z="2182">
-<n id="73" p="84.52 212.91" Z="2183" />
-<n id="74" p="91.72 225.39" Z="2184" />
-<n id="75" p="78.19 220.46" Z="2185" />
-<n id="76" p="64.66 225.39" Z="2186" />
-<n id="77" p="57.46 212.91" Z="2187" />
-<n id="78" p="70.99 217.84" Z="2188" />
-<n id="79" p="84.52 198.51" Z="2189" Element="35" NumHydrogens="0"><t id="80" p="81.19 202.41" BoundingBox="81.19 193.89 91.19 202.51" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Br</s></t></n>
-<n id="81" p="91.72 239.79" Z="2190" Element="6" NumHydrogens="3"><t id="82" p="87.56 243.69" BoundingBox="87.56 235.17 101.45 243.79" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Me</s></t></n>
-<n id="83" p="70.99 232.24" Z="2191" Element="1" NumHydrogens="0"><t id="84" p="67.38 236.14" BoundingBox="67.38 227.62 74.6 236.24" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">H</s></t></n>
+<graphic id="70" GraphicType="Rectangle" BoundingBox="12 181.18 286.77 197.18" color="3" />
+    <t id="71" p="16 192.68" Justification="Left" InterpretChemically="no"><s font="3" size="10" face="0" color="3">(b) trans isomer: single anti-periplanar β-H</s></t>
+  <fragment id="72" BoundingBox="57.46 209.8 91.72 251.08" Z="2182">
+<n id="73" p="84.52 224.2" Z="2183" />
+<n id="74" p="91.72 236.68" Z="2184" />
+<n id="75" p="78.19 231.75" Z="2185" />
+<n id="76" p="64.66 236.68" Z="2186" />
+<n id="77" p="57.46 224.2" Z="2187" />
+<n id="78" p="70.99 229.13" Z="2188" />
+<n id="79" p="84.52 209.8" Z="2189" Element="35" NumHydrogens="0"><t id="80" p="81.19 213.7" BoundingBox="81.19 205.18 91.19 213.8" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Br</s></t></n>
+<n id="81" p="91.72 251.08" Z="2190" Element="6" NumHydrogens="3"><t id="82" p="87.56 254.98" BoundingBox="87.56 246.46 101.45 255.08" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Me</s></t></n>
+<n id="83" p="70.99 243.53" Z="2191" Element="1" NumHydrogens="0"><t id="84" p="67.38 247.43" BoundingBox="67.38 238.91 74.6 247.53" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">H</s></t></n>
 <b id="85" Z="2175" B="73" E="74" />
 <b id="86" Z="2179" B="74" E="75" />
 <b id="87" Z="2180" B="75" E="76" CrossingBonds="93" />
 <b id="88" Z="2176" B="76" E="77" />
 <b id="89" Z="2177" B="77" E="78" />
 <b id="90" Z="2178" B="78" E="73" />
-<b id="91" Z="2173" B="73" E="79" Display="Bold" />
-<b id="92" Z="2181" B="74" E="81" Display="WedgeBegin" />
+<b id="91" Z="2173" B="73" E="79" Display="WedgeBegin" />
+<b id="92" Z="2181" B="74" E="81" Display="WedgedHashBegin" />
 <b id="93" Z="2174" B="78" E="83" Display="WedgedHashBegin" />
 </fragment>
-<t id="94" p="77.8 257.79" BoundingBox="12 248.69 143.6 259.79" Z="2193" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<t id="94" p="77.8 269.08" BoundingBox="12 259.98 143.6 271.08" Z="2193" CaptionJustification="Center" Justification="Center" LineHeight="auto">
 <s font="3" size="10.0" color="0" face="0">trans (Br a, up; Me a, down)</s>
 </t>
-<arrow id="95" BoundingBox="123.77 214.84 195.77 222.84" Z="2195" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="195.77 218.84 0" Tail3D="123.77 218.84 0" LineWidth="0.60" />
-<t id="96" p="159.77 212.84" BoundingBox="129.22 203.74 190.32 214.84" Z="2197" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<arrow id="95" BoundingBox="123.77 226.13 195.77 234.13" Z="2195" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="195.77 230.13 0" Tail3D="123.77 230.13 0" LineWidth="0.60" />
+<t id="96" p="159.77 224.13" BoundingBox="129.22 215.03 190.32 226.13" Z="2197" CaptionJustification="Center" Justification="Center" LineHeight="auto">
 <s font="3" size="10.0" color="0" face="0">E2</s><s font="3" size="10.0" color="0" face="96"> (6-H only)</s>
 </t>
-<fragment id="97" BoundingBox="213.47 206.37 256.67 231.31" Z="2199">
-<n id="98" p="256.67 218.84" Z="2201" />
-<n id="99" p="242.27 218.84" Z="2203" />
-<n id="100" p="235.07 206.37" Z="2205" />
-<n id="101" p="220.67 206.37" Z="2207" />
-<n id="102" p="213.47 218.84" Z="2209" />
-<n id="103" p="220.67 231.31" Z="2211" />
-<n id="104" p="235.07 231.31" Z="2213" />
-<b id="105" Z="2215" B="98" E="99" />
+<fragment id="97" BoundingBox="213.47 217.66 256.67 242.6" Z="2199">
+<n id="98" p="249.47 242.6" Z="2201" />
+<n id="99" p="235.07 242.6" Z="2203" />
+<n id="100" p="227.87 230.13" Z="2205" />
+<n id="101" p="213.47 230.13" Z="2207" />
+<n id="102" p="235.07 217.66" Z="2209" />
+<n id="103" p="249.47 217.66" Z="2211" />
+<n id="104" p="256.67 230.13" Z="2213" />
+<b id="105" Z="2215" B="98" E="99" Order="2" DoublePosition="Left" />
 <b id="106" Z="2217" B="99" E="100" />
 <b id="107" Z="2219" B="100" E="101" />
-<b id="108" Z="2221" B="101" E="102" Order="2" DoublePosition="Right" />
+<b id="108" Z="2221" B="100" E="102" />
 <b id="109" Z="2223" B="102" E="103" />
 <b id="110" Z="2225" B="103" E="104" />
-<b id="111" Z="2227" B="104" E="99" />
+<b id="111" Z="2227" B="104" E="98" />
 </fragment>
-<t id="112" p="235.07 246.76" BoundingBox="183.37 237.66 286.77 248.76" Z="2229" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<t id="112" p="235.07 258.05" BoundingBox="183.37 248.95 286.77 260.05" Z="2229" CaptionJustification="Center" Justification="Center" LineHeight="auto">
 <s font="3" size="10.0" color="0" face="0">3-methyl isomer (only)</s>
 </t>
 <scheme id="113">

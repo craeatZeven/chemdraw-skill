@@ -553,7 +553,7 @@ def test_figure_2_10_brief_draws_axial_bromide_beta_hydrogens_and_products(tmp_p
     assert report["ok"] and report["checks_passed"], report
     root = ET.parse(report["output_path"]).getroot()
     displays = {b.get("Display") for b in root.iter("b") if b.get("Display")}
-    assert {"Bold", "WedgeBegin", "WedgedHashBegin"} <= displays
+    assert {"WedgeBegin", "WedgedHashBegin"} <= displays
     assert "WedgedHash" not in displays
     bond_ids = {b.get("id") for b in root.iter("b")}
     crossing_bonds = [b for b in root.iter("b") if b.get("CrossingBonds")]
@@ -567,3 +567,114 @@ def test_figure_2_10_brief_draws_axial_bromide_beta_hydrogens_and_products(tmp_p
     assert "cis (Br a, up)" in text
     assert "trans (Br a, up; Me a, down)" in text
     assert "1-methyl isomer" in text and "3-methyl isomer" in text
+
+
+def test_figure_2_10_saved_products_have_expected_connectivity():
+    from rdkit import Chem
+
+    source = Path(__file__).resolve().parents[2] / "assets" / "parity" / "conformer-chair-fig2-10.cdxml"
+    mols = {m.GetIntProp("CDX_FRAG_ID"): m for m in Chem.MolsFromCDXMLFile(str(source))}
+    expected = {
+        32: ("CC1=CCCCC1", "CTMHWPIWNRWQEG-UHFFFAOYSA-N"),
+        50: ("CC1C=CCCC1", "UZPWKTCMUADILM-UHFFFAOYSA-N"),
+        97: ("CC1C=CCCC1", "UZPWKTCMUADILM-UHFFFAOYSA-N"),
+    }
+    assert set(expected) <= set(mols)
+    for fragment_id, (smiles, inchikey) in expected.items():
+        assert Chem.MolToSmiles(mols[fragment_id]) == smiles
+        assert Chem.MolToInchiKey(mols[fragment_id]) == inchikey
+
+
+def test_figure_2_10_saved_substrates_preserve_geometry_and_read_back_cis_trans():
+    from rdkit import Chem
+    from cdxml_toolkit.chemistry_semantics import semantic_key
+
+    source = Path(__file__).resolve().parents[2] / "assets" / "parity" / "conformer-chair-fig2-10.cdxml"
+    root = ET.parse(source).getroot()
+    fragments = {int(f.get("id")): f for f in root.findall(".//page/fragment")}
+
+    def vectors(fragment_id, label):
+        fragment = fragments[fragment_id]
+        nodes = {n.get("id"): n for n in fragment.findall("n")}
+        labelled = [n for n in nodes.values() if "".join(n.itertext()) == label]
+        out = []
+        for node in labelled:
+            bond = next(b for b in fragment.findall("b") if node.get("id") in (b.get("B"), b.get("E")))
+            ring_id = bond.get("E") if bond.get("B") == node.get("id") else bond.get("B")
+            rx, ry = map(float, nodes[ring_id].get("p").split())
+            x, y = map(float, node.get("p").split())
+            out.append((round(x - rx, 2), round(y - ry, 2)))
+        return sorted(out)
+
+    assert vectors(4, "Br") == [(0.0, -14.4)]
+    assert vectors(4, "H") == [(0.0, 14.4), (0.0, 14.4)]
+    assert vectors(72, "Br") == [(0.0, -14.4)]
+    assert vectors(72, "Me") == [(0.0, 14.4)]
+    assert vectors(72, "H") == [(0.0, 14.4)]
+
+    mols = {m.GetIntProp("CDX_FRAG_ID"): m for m in Chem.MolsFromCDXMLFile(str(source))}
+
+    def configurations(mol):
+        centres = dict(Chem.FindMolChiralCenters(mol, includeUnassigned=True, useLegacyImplementation=False))
+        br = next(a for a in mol.GetAtoms() if a.GetSymbol() == "Br").GetNeighbors()[0].GetIdx()
+        methyl = next(a for a in mol.GetAtoms() if a.GetSymbol() == "C" and a.GetDegree() == 1)
+        me = methyl.GetNeighbors()[0].GetIdx()
+        return centres[br], centres[me]
+
+    cis = configurations(mols[4])
+    trans = configurations(mols[72])
+    assert "?" not in cis + trans
+    assert cis[0] != cis[1]
+    assert trans[0] == trans[1]
+    assert semantic_key(mols[4]) != semantic_key(mols[72])
+
+
+@pytest.mark.parametrize("kind", ["scheme", "mechanism"])
+def test_smiles_wins_over_name_in_scheme_and_mechanism(tmp_path, monkeypatch, kind):
+    from cdxml_toolkit.naming import mol_builder
+
+    def unexpected_name_resolution(*args, **kwargs):
+        raise AssertionError("a valid SMILES must not be replaced by name resolution")
+
+    monkeypatch.setattr(mol_builder, "resolve_compound", unexpected_name_resolution)
+    brief = {
+        "kind": kind,
+        "species": [{"id": "a", "smiles": "C", "name": "unresolvable-name"},
+                    {"id": "b", "smiles": "CC", "name": "also-unresolvable"}],
+        "steps": [{"substrates": ["a"], "products": ["b"], "arrow": "reversible"}],
+    }
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / f"{kind}.cdxml"))
+    assert report["ok"] is True, report.get("errors")
+
+
+def test_legacy_newman_rejects_a_conformer_template_key(tmp_path):
+    brief = {
+        "kind": "mechanism",
+        "species": [{"id": "bad", "newman": {"template": "chair"}}],
+        "steps": [{"substrates": ["bad"], "products": ["bad"]}],
+    }
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "bad.cdxml"))
+    assert report["ok"] is False
+    assert any("newman" in error and "template" in error for error in report["errors"])
+    assert not (tmp_path / "bad.cdxml").exists()
+
+
+@pytest.mark.parametrize("substituent", [17, "17"])
+def test_numeric_conformer_substituents_are_rejected(tmp_path, substituent):
+    brief = {
+        "species": [{"id": "bad", "conformer": {"template": "chair", "substituents": {"1": {"ax": substituent}}}}],
+        "steps": [{"substrates": ["bad"], "products": ["bad"]}],
+    }
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "bad.cdxml"))
+    assert report["ok"] is False
+    assert any("substituent" in error and "label" in error for error in report["errors"])
+    assert not (tmp_path / "bad.cdxml").exists()
+
+
+def test_structure_ref_eighth_positional_argument_remains_overlays():
+    from cdxml_toolkit.render.schema import StructureRef
+
+    overlays = ({"atoms": [0], "shape": "circle"},)
+    ref = StructureRef("a", "C", None, None, None, "1", None, overlays)
+    assert ref.overlays is overlays
+    assert ref.conformer is None

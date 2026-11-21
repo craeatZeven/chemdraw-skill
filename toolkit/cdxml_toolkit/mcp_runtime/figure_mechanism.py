@@ -133,7 +133,7 @@ def _validate(brief: dict) -> list[str]:
         if extra:
             errors.append(f"Species {ident}: unknown keys {extra}.")
         given = [key for key in ("smiles", "name", "newman", "conformer") if entry.get(key)]
-        if len(given) != 1:
+        if not given or ({"newman", "conformer"} & set(given) and len(given) != 1):
             errors.append(f"Species {ident} needs exactly one source: smiles or a name, newman or conformer.")
         if "newman" in entry:
             projection_ids.add(ident)
@@ -257,8 +257,11 @@ def _clash_atom(frag: Any, ref: Any) -> dict:
 def _newman_errors(ident: str, spec: Any) -> list[str]:
     if not isinstance(spec, dict):
         return [f"Species {ident}: newman must be an object with front and rear substituents."]
-    errors = [error.replace("conformer", "newman")
-              for error in conformer_runtime.conformer_errors(ident, {"template": "newman", **spec})]
+    if "template" in spec:
+        errors = [f"Species {ident}: newman does not accept a template key; use conformer for a unified template."]
+    else:
+        errors = [error.replace("conformer", "newman")
+                  for error in conformer_runtime.conformer_errors(ident, {"template": "newman", **spec})]
     errors += _attach_errors(ident, spec)
     return errors
 

@@ -18,7 +18,7 @@
               "bond_length": 14.4,
               "substituents": {
                 "1": {
-                  "ax": {"label": "Br", "display": "Bold"}
+                  "ax": {"label": "Br", "display": "WedgeBegin"}
                 },
                 "2": {
                   "ax": {"label": "H", "display": "WedgedHashBegin"},
@@ -38,7 +38,7 @@
           {
             "id": "alkene-3",
             "label": "3-methyl isomer (minor)",
-            "smiles": "CC1CC=CCC1"
+            "smiles": "C1=CC(C)CCC1"
           }
         ],
         "steps": [
@@ -70,10 +70,10 @@
               "bond_length": 14.4,
               "substituents": {
                 "1": {
-                  "ax": {"label": "Br", "display": "Bold"}
+                  "ax": {"label": "Br", "display": "WedgeBegin"}
                 },
                 "2": {
-                  "ax": {"label": "Me", "display": "WedgeBegin"}
+                  "ax": {"label": "Me", "display": "WedgedHashBegin"}
                 },
                 "6": {
                   "ax": {"label": "H", "display": "WedgedHashBegin"}
@@ -84,7 +84,7 @@
           {
             "id": "alkene-3-only",
             "label": "3-methyl isomer (only)",
-            "smiles": "CC1CC=CCC1"
+            "smiles": "C1=CC(C)CCC1"
           }
         ],
         "steps": [

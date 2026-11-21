@@ -415,7 +415,7 @@
 
 ## `mcp_runtime.figure_mechanism`
 
-- **function**, line 984: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+- **function**, line 987: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
 
 ## `mcp_runtime.figure_panels`
 
@@ -772,13 +772,13 @@
 
 ## `templates.conformers`
 
-- **function**, line 1088: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, Any] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage with exact geometric CrossingBonds.
-- **function**, line 1277: `build_conformer(spec: Mapping[str, Any]) -> dict[str, Any]` - Dispatch on ``spec['template']`` and return the generated fragment and document.
-- **function**, line 1335: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
-- **function**, line 294: `chair_cyclohexane(*, flip: bool = False, substituents: Mapping[int, Mapping[str, Any]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 14.4) -> dict[str, Any]` - Generate a 6-membered chair cyclohexane (chair1 or ring-flipped chair2).
-- **function**, line 905: `fischer_projection(*, centers: Sequence[Mapping[str, Any]] = ({'left': 'H', 'right': 'OH'},), top: Any = 'CHO', bottom: Any = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a Fischer cross; every substituent accepts a string or {label, display} object.
-- **function**, line 776: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, Any]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a Haworth ring; up/down labels accept strings or {label, display} objects.
-- **function**, line 555: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[Any] = ('Me', 'H', 'H'), rear: Sequence[Any] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None, charges: Mapping[str, Sequence[int]] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
+- **function**, line 1092: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, Any] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage with exact geometric CrossingBonds.
+- **function**, line 1281: `build_conformer(spec: Mapping[str, Any]) -> dict[str, Any]` - Dispatch on ``spec['template']`` and return the generated fragment and document.
+- **function**, line 1339: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
+- **function**, line 298: `chair_cyclohexane(*, flip: bool = False, substituents: Mapping[int, Mapping[str, Any]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 14.4) -> dict[str, Any]` - Generate a 6-membered chair cyclohexane (chair1 or ring-flipped chair2).
+- **function**, line 909: `fischer_projection(*, centers: Sequence[Mapping[str, Any]] = ({'left': 'H', 'right': 'OH'},), top: Any = 'CHO', bottom: Any = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a Fischer cross; every substituent accepts a string or {label, display} object.
+- **function**, line 780: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, Any]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a Haworth ring; up/down labels accept strings or {label, display} objects.
+- **function**, line 559: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[Any] = ('Me', 'H', 'H'), rear: Sequence[Any] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None, charges: Mapping[str, Sequence[int]] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
 
 ## `vision.stereo_audit`
 

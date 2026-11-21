@@ -132,7 +132,7 @@ def _validate(brief: dict) -> list[str]:
             errors.append(f"Species {ident}: duplicate id.")
         ids.add(ident)
         given = [key for key in ("smiles", "name", "conformer") if entry.get(key)]
-        if len(given) != 1:
+        if not given or ("conformer" in given and len(given) != 1):
             errors.append(f"Species {ident} needs exactly one source: smiles or a name, or conformer.")
         if entry.get("conformer") is not None:
             from ..render.conformer import conformer_errors

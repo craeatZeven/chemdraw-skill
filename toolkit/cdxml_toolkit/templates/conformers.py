@@ -46,11 +46,15 @@ def _substituent(value: Any) -> tuple[str, str | None]:
             raise ValueError('a structured substituent must be {"label": "...", "display": "..."}')
         label = value["label"].strip()
         display = value.get("display")
-    else:
-        label = str(value).strip()
+    elif isinstance(value, str):
+        label = value.strip()
         display = None
+    else:
+        raise ValueError("a substituent label must be text, not a number")
     if not label:
         raise ValueError("a substituent label cannot be empty")
+    if re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", label):
+        raise ValueError("a substituent label cannot be a bare number")
     if display is not None:
         display = _DISPLAY_ALIASES.get(display, display)
         if display not in BOND_DISPLAYS:
