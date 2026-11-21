@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CDXML CreationProgram="ChemDraw 16.0.0.82" BoundingBox="0 0 1620 2160" WindowPosition="-2147483648 -2147483648" WindowSize="-2147483648 -2147483648" FractionalWidths="yes" InterpretChemically="yes" ShowAtomQuery="yes" ShowAtomStereo="no" ShowAtomEnhancedStereo="yes" ShowAtomNumber="no" ShowResidueID="no" ShowBondQuery="yes" ShowBondRxn="yes" ShowBondStereo="no" ShowTerminalCarbonLabels="no" ShowNonTerminalCarbonLabels="no" HideImplicitHydrogens="no" LabelFont="3" LabelSize="10" LabelFace="96" CaptionFont="3" CaptionSize="10" HashSpacing="2.50" MarginWidth="1.60" LineWidth="0.60" BoldWidth="2" BondLength="14.40" BondSpacing="18" ChainAngle="120" LabelJustification="Auto" CaptionJustification="Left" AminoAcidTermini="HOH" ShowSequenceTermini="yes" ShowSequenceBonds="yes" ResidueWrapCount="40" ResidueBlockCount="10" ResidueZigZag="yes" NumberResidueBlocks="no" PrintMargins="36 36 36 36" ChemPropName="" ChemPropFormula="Chemical Formula: " ChemPropExactMass="Exact Mass: " ChemPropMolWt="Molecular Weight: " ChemPropMOverZ="m/z: " ChemPropAnalysis="Elemental Analysis: " ChemPropBoilingPt="Boiling Point: " ChemPropMeltingPt="Melting Point: " ChemPropCritTemp="Critical Temp: " ChemPropCritPres="Critical Pres: " ChemPropCritVol="Critical Vol: " ChemPropGibbs="Gibbs Energy: " ChemPropLogP="Log P: " ChemPropMR="MR: " ChemPropHenry="Henry's Law: " ChemPropEForm="Heat of Form: " ChemProptPSA="tPSA: " ChemPropCLogP="CLogP: " ChemPropCMR="CMR: " ChemPropLogS="LogS: " ChemPropPKa="pKa: " ChemPropID="" color="0" bgcolor="1" RxnAutonumberStart="1" RxnAutonumberConditions="no" RxnAutonumberStyle="Roman" RxnAutonumberFormat="(#)"><colortable>
+<color r="1" g="1" b="1" />
+<color r="0" g="0" b="0" />
+<color r="1" g="0" b="0" />
+<color r="1" g="1" b="0" />
+<color r="0" g="1" b="0" />
+<color r="0" g="1" b="1" />
+<color r="0" g="0" b="1" />
+<color r="1" g="0" b="1" />
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial" />
+</fonttable>
+<page id="1125" BoundingBox="0 0 1620 2160" HeaderPosition="36" FooterPosition="36" PrintTrimMarks="yes" HeightPages="3" WidthPages="3">
+<fragment id="1000" BoundingBox="103.30 279.70 152.15 320.30" Z="1025">
+<n id="1001" p="130.36 294.10" Z="1026" />
+<n id="1002" p="138.62 305.90" Z="1027" />
+<n id="1003" p="125.09 300.97" Z="1028" />
+<n id="1004" p="111.56 305.90" Z="1029" />
+<n id="1005" p="103.30 294.10" Z="1030" />
+<n id="1006" p="116.83 299.03" Z="1031" />
+<n id="1007" p="130.36 279.70" Z="1032" Element="35" NumHydrogens="0"><t id="1008" p="127.03 283.60" BoundingBox="127.03 275.08 137.03 283.70" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Br</s></t></n>
+<n id="1009" p="138.62 320.30" Z="1033" Element="1" NumHydrogens="0"><t id="1010" p="135.01 324.20" BoundingBox="135.01 315.68 142.23 324.30" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">H</s></t></n>
+<n id="1011" p="152.15 300.97" Z="1034" Element="6" NumHydrogens="3"><t id="1012" p="147.99 304.87" BoundingBox="147.99 296.35 161.88 304.97" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">Me</s></t></n>
+<n id="1013" p="116.83 313.43" Z="1035" Element="1" NumHydrogens="0"><t id="1014" p="113.22 317.33" BoundingBox="113.22 308.81 120.44 317.43" LabelJustification="Left" LabelAlignment="Left"><s font="3" size="10" color="0" face="0">H</s></t></n>
+<b id="1015" Z="1036" B="1001" E="1002" />
+<b id="1016" Z="1037" B="1002" E="1003" />
+<b id="1017" Z="1038" B="1003" E="1004" />
+<b id="1018" Z="1039" B="1004" E="1005" />
+<b id="1019" Z="1040" B="1005" E="1006" />
+<b id="1020" Z="1041" B="1006" E="1001" />
+<b id="1021" Z="1042" B="1001" E="1007" Display="Bold" />
+<b id="1022" Z="1043" B="1002" E="1009" Display="WedgedHash" />
+<b id="1023" Z="1044" B="1002" E="1011" Display="WedgeBegin" />
+<b id="1024" Z="1045" B="1006" E="1013" Display="WedgedHash" />
+</fragment>
+<t id="1046" p="130.73 335.75" BoundingBox="97.83 326.65 163.63 337.75" Z="1047" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="0">cis (Br a, up)</s>
+</t>
+<arrow id="1048" BoundingBox="165.77 296.00 237.77 304.00" Z="1049" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="237.77 300.00 0" Tail3D="165.77 300.00 0" LineWidth="0.60" />
+<t id="1050" p="201.77 294.00" BoundingBox="182.97 284.90 220.57 296.00" Z="1051" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="0">E2</s><s font="3" size="10.0" color="0" face="96"> at C</s><s font="3" size="10.0" color="0" face="32">2</s>
+</t>
+<fragment id="1052" BoundingBox="255.47 287.53 298.67 312.47" Z="1053">
+<n id="1054" p="298.67 300.00" Z="1055" />
+<n id="1056" p="284.27 300.00" Z="1057" />
+<n id="1058" p="277.07 287.53" Z="1059" />
+<n id="1060" p="262.67 287.53" Z="1061" />
+<n id="1062" p="255.47 300.00" Z="1063" />
+<n id="1064" p="262.67 312.47" Z="1065" />
+<n id="1066" p="277.07 312.47" Z="1067" />
+<b id="1068" Z="1069" B="1054" E="1056" />
+<b id="1070" Z="1071" B="1056" E="1058" Order="2" DoublePosition="Right" />
+<b id="1072" Z="1073" B="1058" E="1060" />
+<b id="1074" Z="1075" B="1060" E="1062" />
+<b id="1076" Z="1077" B="1062" E="1064" />
+<b id="1078" Z="1079" B="1064" E="1066" />
+<b id="1080" Z="1081" B="1066" E="1056" />
+</fragment>
+<t id="1082" p="277.07 327.92" BoundingBox="241.82 318.82 312.32 329.92" Z="1083" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="0">1-methyl isomer</s>
+</t>
+<arrow id="1084" BoundingBox="165.77 359.02 237.77 367.02" Z="1085" FillType="None" ArrowheadHead="Full" ArrowheadType="Solid" HeadSize="1000" ArrowheadCenterSize="875" ArrowheadWidth="250" Head3D="237.77 363.02 0" Tail3D="165.77 363.02 0" LineWidth="0.60" />
+<t id="1086" p="201.77 357.02" BoundingBox="182.97 347.92 220.57 359.02" Z="1087" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="0">E2</s><s font="3" size="10.0" color="0" face="96"> at C</s><s font="3" size="10.0" color="0" face="32">6</s>
+</t>
+<fragment id="1088" BoundingBox="255.47 350.55 298.67 375.49" Z="1089">
+<n id="1090" p="255.47 363.02" Z="1091" />
+<n id="1092" p="269.87 363.02" Z="1093" />
+<n id="1094" p="277.07 350.55" Z="1095" />
+<n id="1096" p="291.47 350.55" Z="1097" />
+<n id="1098" p="298.67 363.02" Z="1099" />
+<n id="1100" p="291.47 375.49" Z="1101" />
+<n id="1102" p="277.07 375.49" Z="1103" />
+<b id="1104" Z="1105" B="1090" E="1092" />
+<b id="1106" Z="1107" B="1092" E="1094" />
+<b id="1108" Z="1109" B="1094" E="1096" />
+<b id="1110" Z="1111" B="1096" E="1098" Order="2" DoublePosition="Left" />
+<b id="1112" Z="1113" B="1098" E="1100" />
+<b id="1114" Z="1115" B="1100" E="1102" />
+<b id="1116" Z="1117" B="1102" E="1092" />
+</fragment>
+<t id="1118" p="277.07 390.94" BoundingBox="241.82 381.84 312.32 392.94" Z="1119" CaptionJustification="Center" Justification="Center" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="0">3-methyl isomer</s>
+</t>
+<graphic id="1120" Z="1121" GraphicType="Line" BoundingBox="165.77 300.00 165.77 363.02" />
+<scheme id="1122">
+<step id="1123" ReactionStepReactants="1000" ReactionStepProducts="1052" ReactionStepArrows="1048" ReactionStepObjectsAboveArrow="1050" />
+<step id="1124" ReactionStepReactants="1000" ReactionStepProducts="1088" ReactionStepArrows="1084" ReactionStepObjectsAboveArrow="1086" />
+</scheme>
+<t id="1126" p="97.83 261.08" BoundingBox="97.83 251.98 328.13 263.08" Z="1127" CaptionJustification="Left" Justification="Left" LineHeight="auto">
+<s font="3" size="10.0" color="0" face="0">E2</s><s font="3" size="10.0" color="0" face="96"> elimination of cis-1-bromo-2-methylcyclohexane</s>
+</t></page>
+</CDXML>

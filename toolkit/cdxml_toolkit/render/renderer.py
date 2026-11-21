@@ -748,6 +748,17 @@ def _build_fragment(
     return fragment_xml, atom_id_map, frag_id
 
 
+def _build_resolved_fragment(frag: ResolvedFragment, ids: _IDGen) -> Tuple[str, Dict[int, int], int]:
+    if getattr(frag, "conformer", None):
+        from xml.etree import ElementTree as ET
+        from .conformer import xml
+
+        parts = xml(frag, ids.next)
+        fragment = ET.fromstring(parts[0])
+        return "\n".join(parts), {}, int(fragment.get("id"))
+    return _build_fragment(frag.atoms, frag.bonds, ids)
+
+
 # ---------------------------------------------------------------------------
 # Text builder
 # ---------------------------------------------------------------------------
@@ -1292,6 +1303,10 @@ def _resolve_structure_unoriented(
     """
     smiles = ref.smiles
     label = ref.label
+    if ref.conformer:
+        from .conformer import fragment
+
+        return fragment(ref.id, ref.conformer, label)
 
     # Tier 1: Source JSON lookup (by ref.id)
     if source_data and not smiles:
@@ -1763,9 +1778,7 @@ def _layout_serpentine(
             prod_frag.bbox = _fragment_bbox(prod_frag.atoms)
             prod_frag.cx, prod_frag.cy = _bbox_center(prod_frag.bbox)
 
-            frag_xml, _, frag_id = _build_fragment(
-                prod_frag.atoms, prod_frag.bonds, ids,
-            )
+            frag_xml, _, frag_id = _build_resolved_fragment(prod_frag, ids)
             xml_parts.append(frag_xml)
 
             # Compound label
@@ -1880,7 +1893,7 @@ def _layout_divergent(
     step_metadata: List[Dict] = []
 
     # Build SM fragment
-    sm_xml, _, sm_frag_id = _build_fragment(sm_frag.atoms, sm_frag.bonds, ids)
+    sm_xml, _, sm_frag_id = _build_resolved_fragment(sm_frag, ids)
     xml_parts.append(sm_xml)
     all_frag_ids.append(sm_frag_id)
 
@@ -2000,7 +2013,7 @@ def _layout_divergent(
                          branch_y - over_base - label_h - fh / 2.0 - frag.cy)
             frag.bbox = _fragment_bbox(frag.atoms)
             frag.cx, frag.cy = _bbox_center(frag.bbox)
-            ofrag_xml, _, ofrag_id = _build_fragment(frag.atoms, frag.bonds, ids)
+            ofrag_xml, _, ofrag_id = _build_resolved_fragment(frag, ids)
             xml_parts.append(ofrag_xml)
             all_frag_ids.append(ofrag_id)
             step_meta["reactant_ids" if role == "reactant" else "above_ids"].append(ofrag_id)
@@ -2015,7 +2028,7 @@ def _layout_divergent(
             _shift_atoms(prod_frag.atoms, cursor_x + pw / 2.0 - prod_frag.cx, branch_y - prod_frag.cy)
             prod_frag.bbox = _fragment_bbox(prod_frag.atoms)
             prod_frag.cx, prod_frag.cy = _bbox_center(prod_frag.bbox)
-            pfrag_xml, _, pfrag_id = _build_fragment(prod_frag.atoms, prod_frag.bonds, ids)
+            pfrag_xml, _, pfrag_id = _build_resolved_fragment(prod_frag, ids)
             xml_parts.append(pfrag_xml)
             step_meta["product_ids"].append(pfrag_id)
             all_frag_ids.append(pfrag_id)
@@ -2161,7 +2174,7 @@ def _layout_fan(
     sm.cx, sm.cy = _bbox_center(sm.bbox)
 
     xml_parts: List[str] = []
-    sm_xml, _, sm_id = _build_fragment(sm.atoms, sm.bonds, ids)
+    sm_xml, _, sm_id = _build_resolved_fragment(sm, ids)
     xml_parts.append(sm_xml)
     sm_bottom = sm.bbox[3]
     if sm.ref.label:
@@ -2174,7 +2187,7 @@ def _layout_fan(
         _shift_atoms(frag.atoms, x - frag.cx, y - frag.cy)
         frag.bbox = _fragment_bbox(frag.atoms)
         frag.cx, frag.cy = _bbox_center(frag.bbox)
-        fxml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
+        fxml, _, fid = _build_resolved_fragment(frag, ids)
         xml_parts.append(fxml)
         meta[meta_key].append(fid)
         bottom = frag.bbox[3]
@@ -2445,7 +2458,7 @@ def _place_stacked_substrates(
         _shift_atoms(sub.atoms, col_cx - sub.cx, top + _bbox_height(sub.bbox) / 2.0 - sub.cy)
         sub.bbox = _fragment_bbox(sub.atoms)
         sub.cx, sub.cy = _bbox_center(sub.bbox)
-        frag_xml, _, frag_id = _build_fragment(sub.atoms, sub.bonds, ids)
+        frag_xml, _, frag_id = _build_resolved_fragment(sub, ids)
         sub.xml, sub.frag_id = frag_xml, frag_id
         xml_parts.append(frag_xml)
         step_meta["reactant_ids"].append(frag_id)
@@ -2656,7 +2669,7 @@ def _layout_steps_row(
             sub.bbox = _fragment_bbox(sub.atoms)
             sub.cx, sub.cy = _bbox_center(sub.bbox)
 
-            frag_xml, _, frag_id = _build_fragment(sub.atoms, sub.bonds, ids)
+            frag_xml, _, frag_id = _build_resolved_fragment(sub, ids)
             sub.xml = frag_xml
             sub.frag_id = frag_id
             xml_parts.append(frag_xml)
@@ -2744,7 +2757,7 @@ def _layout_steps_row(
                 af.bbox = _fragment_bbox(af.atoms)
                 af.cx, af.cy = _bbox_center(af.bbox)
 
-                frag_xml, _, frag_id = _build_fragment(af.atoms, af.bonds, ids)
+                frag_xml, _, frag_id = _build_resolved_fragment(af, ids)
                 af.xml = frag_xml
                 af.frag_id = frag_id
                 xml_parts.append(frag_xml)
@@ -2804,7 +2817,7 @@ def _layout_steps_row(
                 bf.bbox = _fragment_bbox(bf.atoms)
                 bf.cx, bf.cy = _bbox_center(bf.bbox)
 
-                frag_xml, _, frag_id = _build_fragment(bf.atoms, bf.bonds, ids)
+                frag_xml, _, frag_id = _build_resolved_fragment(bf, ids)
                 bf.xml = frag_xml
                 bf.frag_id = frag_id
                 xml_parts.append(frag_xml)
@@ -2863,7 +2876,7 @@ def _layout_steps_row(
             prod.bbox = _fragment_bbox(prod.atoms)
             prod.cx, prod.cy = _bbox_center(prod.bbox)
 
-            frag_xml, _, frag_id = _build_fragment(prod.atoms, prod.bonds, ids)
+            frag_xml, _, frag_id = _build_resolved_fragment(prod, ids)
             prod.xml = frag_xml
             prod.frag_id = frag_id
             xml_parts.append(frag_xml)
@@ -3524,7 +3537,7 @@ def _layout_catalytic_cycle(
         _shift_atoms(frag.atoms, ix - frag.cx, iy - frag.cy)
         frag.bbox = _fragment_bbox(frag.atoms)
         frag.cx, frag.cy = _bbox_center(frag.bbox)
-        frag_xml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
+        frag_xml, _, fid = _build_resolved_fragment(frag, ids)
         xml_parts.append(frag_xml)
         frag_ids.append(fid)
 
@@ -3781,7 +3794,7 @@ def _layout_catalytic_cycle(
                 frag.bbox = _fragment_bbox(frag.atoms)
                 frag.cx, frag.cy = _bbox_center(frag.bbox)
                 ring = _overlay_box(frag.atoms, getattr(struct, "overlays", ()), frag.bonds)
-                frag_xml, _, fid = _build_fragment(frag.atoms, frag.bonds, ids)
+                frag_xml, _, fid = _build_resolved_fragment(frag, ids)
                 xml_parts.append(frag_xml)
 
                 box_y1, box_y2 = frag.bbox[1], frag.bbox[3]
@@ -3933,9 +3946,15 @@ def _wrap_document(inner_xml: str, ids: _IDGen) -> str:
 
     # Use a generous bounding box
     bbox = "0 0 1620 2160"
+    from .conformer import palette_xml
+
+    header = _format_header(bbox)
+    palette = palette_xml(inner_xml)
+    if palette:
+        header = header.replace("</colortable>", palette + "</colortable>", 1)
 
     doc_parts = [
-        _format_header(bbox),
+        header,
         _PAGE_OPEN.format(page_id=page_id),
         inner_xml,
         _PAGE_CLOSE,
@@ -3972,7 +3991,8 @@ def _validated(produce) -> str:
         result = _ValidatedCDXML(produce())
         from xml.etree import ElementTree as ET
         root = ET.fromstring(result)
-        fragment_ids = {node.get('id') for node in root.iter('fragment')}
+        page = root.find('page')
+        fragment_ids = {node.get('id') for node in (page.findall('fragment') if page is not None else [])}
         validated_ids = {str(receipt['fragment_id']) for receipt in receipts}
         # A drawing that carries a generic label ([Rh], Ar) cannot be read back by design; it is
         # listed apart and does not fail the page. Any other receipt but 'preserved' does.

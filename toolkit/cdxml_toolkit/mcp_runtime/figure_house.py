@@ -85,7 +85,7 @@ def add_highlight_fills(brief: dict, grounded: list[dict], house: HouseStyle | N
     for entry in brief["species"]:
         if not isinstance(entry, dict) or entry.get("id") not in final_products(brief) or entry.get("ring_fills"):
             continue
-        mol = Chem.MolFromSmiles(smiles.get(str(entry["id"]), ""))
+        mol = Chem.MolFromSmiles(smiles.get(str(entry["id"])) or "")
         rings = list(mol.GetRingInfo().AtomRings()) if mol is not None else []
         if rings:
             largest = max(range(len(rings)), key=lambda i: len(rings[i]))
@@ -138,8 +138,12 @@ def _species_fragments(root: ET.Element, cdxml: str, grounded: list[dict]):
     frag_els = {f.get("id", ""): f for f in page.iter("fragment")}
     key_to_ids: dict[str, list[str]] = {}
     for g in grounded:
+        if g.get("conformer"):
+            for key in g.get("inventory") or []:
+                key_to_ids.setdefault(key, []).append(g["id"])
+            continue
         if not g.get("smiles"):
-            continue  # a drawing with no structure behind it (a Newman projection)
+            continue
         mol = Chem.MolFromSmiles(g["smiles"])
         if mol is not None:
             key_to_ids.setdefault(semantic_key(mol), []).append(g["id"])
@@ -624,7 +628,7 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
             for el in list(frag_el.findall("n")) + list(frag_el.findall("b")):
                 _paint(el, index)
         if sp.get("atom_colors") or sp.get("bond_colors"):
-            src = Chem.MolFromSmiles(smiles[sp_id])
+            src = Chem.MolFromSmiles(smiles[sp_id] or "")
             nodes = _atom_nodes(frag_el, frag_mol, src)
             if nodes is None:
                 warnings.append(f"Species {sp_id}: the drawn structure could not be matched, so atom_colors "
@@ -676,7 +680,7 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
             from_card = from_card or ("abbreviate" not in sp and bool(card_groups))
             if not groups:
                 continue
-            src = Chem.MolFromSmiles(smiles[sp_id])
+            src = Chem.MolFromSmiles(smiles[sp_id] or "")
             nodes = _atom_nodes(frag_el, frag_mol, src)
             if nodes is None:
                 warnings.append(f"Species {sp_id}: the drawn structure could not be matched, so no group was abbreviated.")
@@ -1099,7 +1103,7 @@ def apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) ->
     for sp_id, frag_el, frag_mol in _species_fragments(root, str(cdxml), grounded):
         if sp_id not in marks:
             continue  # every drawing of the species is marked (a product drawn again as a substrate)
-        src = Chem.MolFromSmiles(smiles[sp_id])
+        src = Chem.MolFromSmiles(smiles[sp_id] or "")
         nodes = _atom_nodes(frag_el, frag_mol, src)
         if nodes is None:
             raise ValueError(f"species {sp_id!r}: the drawn structure could not be matched to its "
@@ -1215,7 +1219,7 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
     for sp_id, frag_el, frag_mol in _species_fragments(root, str(cdxml), grounded):
         if sp_id not in entries:
             continue
-        src = Chem.MolFromSmiles(smiles[sp_id])
+        src = Chem.MolFromSmiles(smiles[sp_id] or "")
         nodes = _atom_nodes(frag_el, frag_mol, src)
         if nodes is None:
             raise ValueError(f"species {sp_id!r}: the drawn structure could not be matched to its SMILES, "
@@ -1393,7 +1397,7 @@ def _color_new_bonds(brief: Mapping, smiles: dict, first: dict, index: str, warn
                 if smiles[pid] != ends[0]["species"] or pid not in first:
                     continue
                 frag_el, frag_mol = first[pid]
-                nodes = _atom_nodes(frag_el, frag_mol, Chem.MolFromSmiles(smiles[pid]))
+                nodes = _atom_nodes(frag_el, frag_mol, Chem.MolFromSmiles(smiles[pid] or ""))
                 if nodes is None:
                     warnings.append(f"Step {number}: product {pid} could not be matched; new bonds are left black.")
                     break

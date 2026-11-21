@@ -33,6 +33,25 @@ _SIMPLE_ELEMENTS: dict[str, int] = {
     "I": 53,
 }
 
+BOND_DISPLAYS = frozenset({"Bold", "WedgeBegin", "WedgedHash"})
+
+
+def _substituent(value: Any) -> tuple[str, str | None]:
+    """Return a substituent's label and optional CDXML bond display."""
+    if isinstance(value, Mapping):
+        if set(value) - {"label", "display"} or not isinstance(value.get("label"), str):
+            raise ValueError('a structured substituent must be {"label": "...", "display": "..."}')
+        label = value["label"].strip()
+        display = value.get("display")
+    else:
+        label = str(value).strip()
+        display = None
+    if not label:
+        raise ValueError("a substituent label cannot be empty")
+    if display is not None and display not in BOND_DISPLAYS:
+        raise ValueError(f"display must be one of {sorted(BOND_DISPLAYS)}, not {display!r}")
+    return label, display
+
 
 def _runs_xml(label: str, font: int = 3, size: int = 10) -> str:
     """Format a chemical label with subscripted digits as CDXML <s> runs."""
@@ -84,7 +103,8 @@ def _abbreviation_inner_fragment(smiles: str, ax: float, ay: float, next_id) -> 
         x, y = ax + (pos.x - p0.x) * scale, ay - (pos.y - p0.y) * scale
         extra = ""
         if atom.GetAtomicNum() != 6:
-            extra = f' Element="{atom.GetAtomicNum()}" NumHydrogens="{atom.GetTotalNumHs()}"'
+            hydrogens = atom.GetTotalNumHs() - (1 if atom.GetIdx() == 0 else 0)
+            extra = f' Element="{atom.GetAtomicNum()}" NumHydrogens="{max(0, hydrogens)}"'
         lines.append(f'<n id="{ids[atom.GetIdx()]}" p="{x:.2f} {y:.2f}"{extra}/>')
     for bond in mol.GetBonds():
         order = {Chem.BondType.DOUBLE: ' Order="2"', Chem.BondType.TRIPLE: ' Order="3"',
@@ -269,7 +289,7 @@ def _build_fragment_and_cdxml(
 def chair_cyclohexane(
     *,
     flip: bool = False,
-    substituents: Mapping[int, Mapping[str, str]] | None = None,
+    substituents: Mapping[int, Mapping[str, Any]] | None = None,
     cx: float = 180.0,
     cy: float = 160.0,
     bond_length: float = 14.4,
@@ -284,6 +304,7 @@ def chair_cyclohexane(
         invert while opposite ring bonds remain strictly parallel.
     substituents : mapping of 1..6 -> {"ax": label, "eq": label}, optional
         Substituents placed along exact vertical axial or parallel equatorial vectors.
+        A label may be a string or {"label": "...", "display": "Bold"|"WedgeBegin"|"WedgedHash"}.
     cx, cy : float
         Ring centroid in CDXML points.
     bond_length : float
@@ -356,9 +377,7 @@ def chair_cyclohexane(
                              ("eq", equatorial_vectors[pos]), ("equatorial", equatorial_vectors[pos])):
                 if key not in sub_map or not sub_map[key]:
                     continue
-                label = str(sub_map[key]).strip()
-                if not label:
-                    continue
+                label, display = _substituent(sub_map[key])
                 new_idx = len(atoms) + 1
                 sx, sy = rx + vec[0], ry + vec[1]
                 atoms.append({
@@ -375,6 +394,7 @@ def chair_cyclohexane(
                     "atom1": pos,
                     "atom2": new_idx,
                     "order": 1,
+                    "display": display,
                     "attachment": "ax" if key.startswith("ax") else "eq",
                 })
 
@@ -474,7 +494,7 @@ def _place_charges(atoms: list[dict[str, Any]], bonds: list[dict[str, Any]],
         atom["charge_box"] = (px - half, py - half, px + half, py + half)
 
 
-def _charge_errors(charges: Any, front: Sequence[str], rear: Sequence[str]) -> None:
+def _charge_errors(charges: Any, front: Sequence[Any], rear: Sequence[Any]) -> None:
     if not isinstance(charges, Mapping) or set(charges) - {"front", "rear"}:
         raise ValueError("charges are given for front or rear, e.g. {\"rear\": [-1, 0, 0]}")
     for side, labels in (("front", front), ("rear", rear)):
@@ -483,7 +503,8 @@ def _charge_errors(charges: Any, front: Sequence[str], rear: Sequence[str]) -> N
             continue
         if not isinstance(values, (list, tuple)) or len(values) != 3:
             raise ValueError(f"charges {side} lists three values, one per {side} substituent")
-        for value, label in zip(values, labels):
+        for value, entry in zip(values, labels):
+            label, _ = _substituent(entry)
             if value not in (-1, 0, 1) or isinstance(value, bool):
                 raise ValueError("a charge on a projection is plus or minus one, drawn as a circled sign")
             if value and label == "*":
@@ -496,8 +517,8 @@ def newman_projection(
     *,
     conformation: str = "staggered",
     dihedral_offset: float | None = None,
-    front: Sequence[str] = ("Me", "H", "H"),
-    rear: Sequence[str] = ("Br", "H", "Me"),
+    front: Sequence[Any] = ("Me", "H", "H"),
+    rear: Sequence[Any] = ("Br", "H", "Me"),
     cx: float = 180.0,
     cy: float = 160.0,
     bond_length: float = 24.0,
@@ -505,6 +526,9 @@ def newman_projection(
     charges: Mapping[str, Sequence[int]] | None = None,
 ) -> dict[str, Any]:
     """Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
+
+    Each front/rear substituent may be a label string or
+    {"label": "...", "display": "Bold"|"WedgeBegin"|"WedgedHash"}.
 
     ``attach`` bonds the front carbon to the rest of a molecule (BJOC 22-125 scheme 4): the
     front substituent written ``"*"`` is replaced by a drawn group ``{"root", "atoms",
@@ -547,14 +571,17 @@ def newman_projection(
     rear_spoke_starts: list[tuple[float, float]] = []
     rear_spoke_ends: list[tuple[float, float]] = []
 
+    front_labels = [_substituent(entry)[0] for entry in front]
+    rear_labels = [_substituent(entry)[0] for entry in rear]
     if charges is not None:
         _charge_errors(charges, front, rear)
-    if attach is not None and list(front).count("*") != 1:
+    if attach is not None and front_labels.count("*") != 1:
         raise ValueError('An attached group replaces exactly one front substituent written "*".')
-    if attach is None and "*" in front:
+    if attach is None and "*" in front_labels:
         raise ValueError('A front substituent "*" needs an attached group.')
     attached: list[tuple[float, int]] = []
-    for theta_deg, label in zip(front_angles, front):
+    for theta_deg, entry in zip(front_angles, front):
+        label, display = _substituent(entry)
         rad = math.radians(theta_deg)
         ex = cx + L * math.cos(rad)
         ey = cy + L * math.sin(rad)
@@ -563,12 +590,12 @@ def newman_projection(
             attached.append((rad, len(atoms) + 1))
             atoms.append({"index": len(atoms) + 1, "symbol": "*", "x": ex, "y": ey})  # replaced below
             bonds.append({"index": len(bonds) + 1, "atom1": 1, "atom2": len(atoms), "order": 1,
-                          "role": "front_spoke"})
+                          "display": display, "role": "front_spoke"})
             continue
         sub_idx = len(atoms) + 1
         atoms.append({
             "index": sub_idx,
-            "symbol": str(label),
+            "symbol": label,
             "x": ex,
             "y": ey,
             "show_label": True,
@@ -580,6 +607,7 @@ def newman_projection(
             "atom1": 1,
             "atom2": sub_idx,
             "order": 1,
+            "display": display,
             "role": "front_spoke",
         })
 
@@ -595,7 +623,8 @@ def newman_projection(
         "index": len(bonds) + 1, "atom1": 1, "atom2": rear_idx, "order": 1,
         "role": "front_rear", "z": 4,
     })
-    for theta_deg, label in zip(rear_angles, rear):
+    for theta_deg, entry in zip(rear_angles, rear):
+        label, display = _substituent(entry)
         rad = math.radians(theta_deg)
         sx = cx + R * math.cos(rad)
         sy = cy + R * math.sin(rad)
@@ -606,7 +635,7 @@ def newman_projection(
         sub_idx = len(atoms) + 1
         atoms.append({
             "index": sub_idx,
-            "symbol": str(label),
+            "symbol": label,
             "x": ex,
             "y": ey,
             "show_label": True,
@@ -618,6 +647,7 @@ def newman_projection(
             "atom1": rear_idx,
             "atom2": sub_idx,
             "order": 1,
+            "display": display,
             "role": "rear_spoke",
             "z": 5 + len(bonds),
         })
@@ -649,9 +679,9 @@ def newman_projection(
 
     if charges:
         for role, side in (("front_substituent", "front"), ("rear_substituent", "rear")):
-            labels = [label for label in (front if side == "front" else rear) if label != "*"]
-            values = [v for v, label in zip(charges.get(side) or [0, 0, 0], front if side == "front" else rear)
-                      if label != "*"]
+            entries = front if side == "front" else rear
+            values = [v for v, entry in zip(charges.get(side) or [0, 0, 0], entries)
+                      if _substituent(entry)[0] != "*"]
             for atom, value in zip([a for a in atoms if a.get("role") == role], values):
                 if value:
                     atom["charge"] = value
@@ -707,12 +737,12 @@ def _lower_up(sub_spec: Mapping[Any, Any], pos: int) -> bool:
 def haworth_pyranose(
     *,
     anomer: str = "beta",
-    substituents: Mapping[int, Mapping[str, str]] | None = None,
+    substituents: Mapping[int, Mapping[str, Any]] | None = None,
     cx: float = 180.0,
     cy: float = 160.0,
     bond_length: float = 18.0,
 ) -> dict[str, Any]:
-    """Generate a 6-membered Haworth perspective pyranose ring."""
+    """Generate a Haworth ring; up/down labels accept strings or {label, display} objects."""
     L = float(bond_length)
     anomer_norm = anomer.strip().lower()
     if anomer_norm not in ("alpha", "beta"):
@@ -781,9 +811,10 @@ def haworth_pyranose(
             continue
         rx, ry = ring_coords[pos]
         for direction, dy_sign in (("up", -1.0), ("down", 1.0)):
-            label = pos_map.get(direction)
-            if not label:
+            entry = pos_map.get(direction)
+            if not entry:
                 continue
+            label, display = _substituent(entry)
             new_idx = len(atoms) + 1
             sx, sy = rx, ry + dy_sign * L
             just = "Left"
@@ -799,7 +830,7 @@ def haworth_pyranose(
                 sx, sy = rx - side * 0.42 * L, ry + 1.1 * L
             atoms.append({
                 "index": new_idx,
-                "symbol": str(label),
+                "symbol": label,
                 "x": sx,
                 "y": sy,
                 "show_label": True,
@@ -812,6 +843,7 @@ def haworth_pyranose(
                 "atom1": pos,
                 "atom2": new_idx,
                 "order": 1,
+                "display": display,
                 "direction": direction,
             })
 
@@ -833,22 +865,24 @@ def haworth_pyranose(
 
 def fischer_projection(
     *,
-    centers: Sequence[Mapping[str, str]] = ({"left": "H", "right": "OH"},),
-    top: str = "CHO",
-    bottom: str = "CH2OH",
+    centers: Sequence[Mapping[str, Any]] = ({"left": "H", "right": "OH"},),
+    top: Any = "CHO",
+    bottom: Any = "CH2OH",
     cx: float = 180.0,
     cy: float = 120.0,
     bond_length: float = 18.0,
 ) -> dict[str, Any]:
-    """Generate an orthogonal Fischer projection cross backbone."""
+    """Generate a Fischer cross; every substituent accepts a string or {label, display} object."""
     if not centers:
         centers = ({"left": "H", "right": "OH"},)
     L = float(bond_length)
     n_centers = len(centers)
     y_start = float(cy)
 
+    top_label, top_display = _substituent(top)
+    bottom_label, bottom_display = _substituent(bottom)
     atoms: list[dict[str, Any]] = [
-        {"index": 1, "symbol": str(top), "x": float(cx), "y": y_start, "show_label": True, "role": "top"}
+        {"index": 1, "symbol": top_label, "x": float(cx), "y": y_start, "show_label": True, "role": "top"}
     ]
     bonds: list[dict[str, Any]] = []
     backbone_indices: list[int] = [1]
@@ -870,12 +904,13 @@ def fischer_projection(
             "atom1": backbone_indices[-1],
             "atom2": c_idx,
             "order": 1,
+            "display": top_display if k == 1 else None,
             "orientation": "vertical",
         })
         backbone_indices.append(c_idx)
 
-        left_label = str(center.get("left", "H"))
-        right_label = str(center.get("right", "OH"))
+        left_label, left_display = _substituent(center.get("left", "H"))
+        right_label, right_display = _substituent(center.get("right", "OH"))
 
         left_idx = len(atoms) + 1
         atoms.append({
@@ -893,6 +928,7 @@ def fischer_projection(
             "atom1": c_idx,
             "atom2": left_idx,
             "order": 1,
+            "display": left_display,
             "orientation": "horizontal",
         })
 
@@ -912,6 +948,7 @@ def fischer_projection(
             "atom1": c_idx,
             "atom2": right_idx,
             "order": 1,
+            "display": right_display,
             "orientation": "horizontal",
         })
 
@@ -919,7 +956,7 @@ def fischer_projection(
     y_bot = y_start + (n_centers + 1) * L
     atoms.append({
         "index": bot_idx,
-        "symbol": str(bottom),
+        "symbol": bottom_label,
         "x": float(cx),
         "y": y_bot,
         "show_label": True,
@@ -930,6 +967,7 @@ def fischer_projection(
         "atom1": backbone_indices[-1],
         "atom2": bot_idx,
         "order": 1,
+        "display": bottom_display,
         "orientation": "vertical",
     })
 
@@ -951,12 +989,12 @@ def fischer_projection(
 def bicyclic_cage(
     *,
     scaffold: str = "norbornane",
-    substituents: Mapping[int, str] | None = None,
+    substituents: Mapping[int, Any] | None = None,
     cx: float = 180.0,
     cy: float = 160.0,
     bond_length: float = 16.0,
 ) -> dict[str, Any]:
-    """Generate a 3D perspective bridged cage (norbornane, bicyclo_222, adamantane) with CrossingBonds."""
+    """Generate a bridged cage with CrossingBonds; substituents accept strings or {label, display}."""
     L = float(bond_length)
     scaf = scaffold.strip().lower()
 
@@ -1077,10 +1115,11 @@ def bicyclic_cage(
             front_candidates[0]["crossing_bonds"].append(rear_candidates[-1]["index"])
 
     if substituents:
-        for raw_pos, label in substituents.items():
+        for raw_pos, entry in substituents.items():
             pos = int(raw_pos)
-            if pos not in coords or not label:
+            if pos not in coords or not entry:
                 continue
+            label, display = _substituent(entry)
             px, py = coords[pos]
             dx, dy = px - cx, py - cy
             norm = math.hypot(dx, dy) or 1.0
@@ -1088,7 +1127,7 @@ def bicyclic_cage(
             new_idx = len(atoms) + 1
             atoms.append({
                 "index": new_idx,
-                "symbol": str(label),
+                "symbol": label,
                 "x": sx,
                 "y": sy,
                 "show_label": True,
@@ -1099,6 +1138,7 @@ def bicyclic_cage(
                 "atom1": pos,
                 "atom2": new_idx,
                 "order": 1,
+                "display": display,
                 "is_front": False,
                 "crossing_bonds": [],
             })
@@ -1118,11 +1158,8 @@ def bicyclic_cage(
     }
 
 
-def build_conformer_cdxml(
-    spec: Mapping[str, Any],
-    output_path: str | Path | None = None,
-) -> str:
-    """Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document."""
+def build_conformer(spec: Mapping[str, Any]) -> dict[str, Any]:
+    """Dispatch on ``spec['template']`` and return the generated fragment and document."""
     if not isinstance(spec, Mapping):
         raise ValueError("spec must be a mapping with a 'template' key.")
     tmpl = str(spec.get("template") or spec.get("scaffold") or "").strip().lower()
@@ -1131,15 +1168,15 @@ def build_conformer_cdxml(
     cy = float(at[1] if isinstance(at, (list, tuple)) and len(at) >= 2 else spec.get("cy", 160.0))
 
     if tmpl in ("chair", "chair_cyclohexane"):
-        res = chair_cyclohexane(
+        return chair_cyclohexane(
             flip=bool(spec.get("flip", False)),
             substituents=spec.get("substituents"),
             cx=cx,
             cy=cy,
             bond_length=float(spec.get("bond_length", 14.4)),
         )
-    elif tmpl in ("newman", "newman_projection"):
-        res = newman_projection(
+    if tmpl in ("newman", "newman_projection"):
+        return newman_projection(
             conformation=str(spec.get("conformation", "staggered")),
             dihedral_offset=(float(spec["dihedral_offset"]) if spec.get("dihedral_offset") is not None else None),
             front=tuple(spec.get("front", ("Me", "H", "H"))),
@@ -1147,37 +1184,44 @@ def build_conformer_cdxml(
             cx=cx,
             cy=cy,
             bond_length=float(spec.get("bond_length", 24.0)),
+            attach=spec.get("attach"),
+            charges=spec.get("charges"),
         )
-    elif tmpl in ("haworth", "haworth_pyranose"):
-        res = haworth_pyranose(
+    if tmpl in ("haworth", "haworth_pyranose"):
+        return haworth_pyranose(
             anomer=str(spec.get("anomer", "beta")),
             substituents=spec.get("substituents"),
             cx=cx,
             cy=cy,
             bond_length=float(spec.get("bond_length", 18.0)),
         )
-    elif tmpl in ("fischer", "fischer_projection"):
-        res = fischer_projection(
+    if tmpl in ("fischer", "fischer_projection"):
+        return fischer_projection(
             centers=tuple(spec.get("centers", ({"left": "H", "right": "OH"},))),
-            top=str(spec.get("top", "CHO")),
-            bottom=str(spec.get("bottom", "CH2OH")),
+            top=spec.get("top", "CHO"),
+            bottom=spec.get("bottom", "CH2OH"),
             cx=cx,
-            cy= float(at[1] if isinstance(at, (list, tuple)) and len(at) >= 2 else spec.get("cy", 120.0)),
+            cy=float(at[1] if isinstance(at, (list, tuple)) and len(at) >= 2 else spec.get("cy", 120.0)),
             bond_length=float(spec.get("bond_length", 18.0)),
         )
-    elif tmpl in ("norbornane", "bicyclo_222", "adamantane", "bicyclic_cage", "cage"):
+    if tmpl in ("norbornane", "bicyclo_222", "adamantane", "bicyclic_cage", "cage"):
         scaffold_name = str(spec.get("scaffold", "norbornane" if tmpl in ("bicyclic_cage", "cage") else tmpl))
-        res = bicyclic_cage(
+        return bicyclic_cage(
             scaffold=scaffold_name,
             substituents=spec.get("substituents"),
             cx=cx,
             cy=cy,
             bond_length=float(spec.get("bond_length", 16.0)),
         )
-    else:
-        raise ValueError(f"Unknown conformer template: {tmpl!r}")
+    raise ValueError(f"Unknown conformer template: {tmpl!r}")
 
-    cdxml = str(res["cdxml"])
+
+def build_conformer_cdxml(
+    spec: Mapping[str, Any],
+    output_path: str | Path | None = None,
+) -> str:
+    """Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document."""
+    cdxml = str(build_conformer(spec)["cdxml"])
     if output_path is not None:
         Path(output_path).write_text(cdxml, encoding="utf-8")
     return cdxml

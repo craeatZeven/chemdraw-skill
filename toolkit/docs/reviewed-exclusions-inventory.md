@@ -364,14 +364,14 @@
 
 ## `mcp_runtime.figure_draw`
 
-- **function**, line 683: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
-- **function**, line 649: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
-- **function**, line 657: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
+- **function**, line 708: `bold_arrows(cdxml: Any, slug: str) -> Any` - Arrows at 1.5 times the document's line width (the preset's unless a house style measured it).
+- **function**, line 674: `brief_house(brief: dict) -> HouseStyle | None` - The brief's house style, or None when ``style`` is a measurement preset or absent.
+- **function**, line 682: `brief_style(brief: dict) -> tuple[str, float]` - The brief's preset slug (a house style's base preset) and the factor from ACS geometry to it.
 - **function**, line 92: `charge_errors(brief: dict) -> list[str]` - charges: how charges are drawn, superscript (the default) or circled.
-- **function**, line 820: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
-- **function**, line 638: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
-- **function**, line 673: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
-- **function**, line 664: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
+- **function**, line 845: `draw_figure(brief: dict | str, output_path: str | None = None, render: bool = False) -> dict` - Draw a reaction scheme from a brief and check it, in one call.
+- **function**, line 663: `style_preset_error(style: Any) -> str | None` - Error text for a brief ``style`` that is neither a built-in preset nor a house style, else None.
+- **function**, line 698: `style_report(slug: str, house: HouseStyle | None = None, applied: list[str] | None = None, skipped: list[str] | None = None) -> dict` - No public docstring in the audited version.
+- **function**, line 689: `styled(cdxml: Any, slug: str) -> Any` - Apply a preset to a document laid out at ACS geometry; ACS documents are unchanged.
 
 ## `mcp_runtime.figure_editing`
 
@@ -381,31 +381,31 @@
 ## `mcp_runtime.figure_house`
 
 - **function**, line 78: `add_highlight_fills(brief: dict, grounded: list[dict], house: HouseStyle | None) -> str | None` - Ask the ring_fills decoration for the largest ring of each final product.
-- **function**, line 779: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
-- **function**, line 275: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
-- **function**, line 1080: `apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - A dashed outline around one fragment in every structure that carries it.
-- **function**, line 1194: `apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Draw each species' generic rings: a dashed open arc through two bonded atoms that stands for an unspecified ring fused there (BJOC 22-125 scheme 4), on every drawing of it.
-- **function**, line 327: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
-- **function**, line 220: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
-- **function**, line 1296: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
-- **function**, line 820: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
-- **function**, line 592: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
-- **function**, line 940: `charge_symbol_clearance(root: ET.Element) -> list[tuple[str, float]]` - (symbol id, its clearance in pt) for every charge symbol of a page: the least distance from its circle to any text box (its own atom's label included), bond or other symbol.
-- **function**, line 955: `clear_charge_symbols(cdxml: Any) -> tuple[Any, int, list[str]]` - Move every charge symbol that sits under 3 pt from a text, bond or other symbol to the nearest spot round its atom that clears them all, at most CHARGE_MOVE beyond where it was. Returns (page, how many moved, ids of symbols that could not be cleared).
-- **function**, line 513: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
-- **function**, line 532: `condition_text(line: Any) -> str` - The plain text of a condition line.
+- **function**, line 783: `apply_captions_and_title(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Captions under species, then the panel label and title above the whole figure.
+- **function**, line 279: `apply_figure_type_conventions(cdxml: Any, house: HouseStyle, figure_type: str, slug: str) -> tuple[Any, list[str], list[str]]` - Apply a card's ``figure_types`` section to a styled drawing; (cdxml, applied, skipped).
+- **function**, line 1084: `apply_fragment_overlays(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - A dashed outline around one fragment in every structure that carries it.
+- **function**, line 1198: `apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str], list[str]]` - Draw each species' generic rings: a dashed open arc through two bonded atoms that stands for an unspecified ring fused there (BJOC 22-125 scheme 4), on every drawing of it.
+- **function**, line 331: `apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle) -> tuple[Any, list[str], list[str], list[str]]` - Edit the drawn scheme; returns (cdxml, applied, skipped reasons, warnings).
+- **function**, line 224: `apply_measured_geometry(cdxml: Any, house: HouseStyle, slug: str) -> tuple[Any, list[str], list[str]]` - Line width, bold width and atom-label size from the card's ``measured`` ratios.
+- **function**, line 1300: `apply_scope_conventions(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None, slug: str) -> tuple[Any, list[str], list[str], list[str]]` - A scope page already in its preset: compound-number face and colour, the brief's species colours and abbreviations (the card's abbreviate_groups too), then the measured geometry.
+- **function**, line 824: `apply_species_boxes(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tuple[Any, list[str]]` - A frame (solid, dashed or rounded) and/or a fill behind each species that asks for one.
+- **function**, line 596: `apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict], house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]` - The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
+- **function**, line 944: `charge_symbol_clearance(root: ET.Element) -> list[tuple[str, float]]` - (symbol id, its clearance in pt) for every charge symbol of a page: the least distance from its circle to any text box (its own atom's label included), bond or other symbol.
+- **function**, line 959: `clear_charge_symbols(cdxml: Any) -> tuple[Any, int, list[str]]` - Move every charge symbol that sits under 3 pt from a text, bond or other symbol to the nearest spot round its atom that clears them all, at most CHARGE_MOVE beyond where it was. Returns (page, how many moved, ids of symbols that could not be cleared).
+- **function**, line 517: `condition_line_errors(line: Any, where: str) -> list[str]` - A condition line is text, a run {text, color?, bold?, italic?} or a list of runs.
+- **function**, line 536: `condition_text(line: Any) -> str` - The plain text of a condition line.
 - **function**, line 68: `final_products(brief: Mapping) -> list[str]` - No public docstring in the audited version.
 - **function**, line 39: `format_yield(text: str, template: str | None) -> str` - ``template`` filled with the number of a yield such as "85%"; other text is kept.
-- **function**, line 1130: `generic_ring_errors(entry: Mapping) -> list[str]` - Problems with a species' generic rings, for the brief check.
-- **function**, line 1174: `generic_ring_marks(entry: Mapping, smiles: str) -> list[dict]` - [{atoms, shape "ring", away, members}] for a species' generic rings, checked against its SMILES: both atoms exist and are bonded. ``away`` are the atoms beside them, which the ring is drawn away from.
-- **function**, line 212: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
-- **function**, line 1246: `merge_duplicate_fonts(page_text: str) -> tuple[str, int]` - Point every run at one declaration per face, so the page does not declare Arial twice.
-- **function**, line 1014: `overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]` - Problems with the brief's overlays, for the brief check.
-- **function**, line 1045: `overlay_matches(brief: Mapping, grounded: list[dict]) -> tuple[dict[str, list[dict]], list[str]]` - The atoms each overlay marks, by species: {id: [{atoms, shape, fragment}]}, and warnings.
-- **function**, line 1277: `paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]` - Colour the R marks of a scope's general reaction like what varies in the grid below (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents). Marks are generic nodes outside every compound group; the R and its raised number are both painted. Returns the page and how many marks were painted.
-- **function**, line 700: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
-- **function**, line 1006: `record_errors(brief: dict) -> list[str]` - provenance is free text (the article, its SI, how the structures were checked).
-- **function**, line 478: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
+- **function**, line 1134: `generic_ring_errors(entry: Mapping) -> list[str]` - Problems with a species' generic rings, for the brief check.
+- **function**, line 1178: `generic_ring_marks(entry: Mapping, smiles: str) -> list[dict]` - [{atoms, shape "ring", away, members}] for a species' generic rings, checked against its SMILES: both atoms exist and are bonded. ``away`` are the atoms beside them, which the ring is drawn away from.
+- **function**, line 216: `measured_arrow_bonds(house: HouseStyle | None) -> float | None` - The shortest arrow in bond lengths from the card's measurements, or None.
+- **function**, line 1250: `merge_duplicate_fonts(page_text: str) -> tuple[str, int]` - Point every run at one declaration per face, so the page does not declare Arial twice.
+- **function**, line 1018: `overlay_errors(brief: Mapping, species_ids: set[str]) -> list[str]` - Problems with the brief's overlays, for the brief check.
+- **function**, line 1049: `overlay_matches(brief: Mapping, grounded: list[dict]) -> tuple[dict[str, list[dict]], list[str]]` - The atoms each overlay marks, by species: {id: [{atoms, shape, fragment}]}, and warnings.
+- **function**, line 1281: `paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]` - Colour the R marks of a scope's general reaction like what varies in the grid below (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents). Marks are generic nodes outside every compound group; the R and its raised number are both painted. Returns the page and how many marks were painted.
+- **function**, line 704: `panel_errors(brief: Mapping) -> list[str]` - Problems with the title, panel label, captions and boxes of a brief.
+- **function**, line 1010: `record_errors(brief: dict) -> list[str]` - provenance is free text (the article, its SI, how the structures were checked).
+- **function**, line 482: `species_style_errors(entry: Mapping) -> list[str]` - Problems with a species' colour and abbreviation keys, for the brief check.
 - **function**, line 59: `split_conditions(above: list[str], below: list[str], house: HouseStyle | None) -> tuple[list, list]` - No public docstring in the audited version.
 - **function**, line 47: `step_yield(step: Mapping, house: HouseStyle | None) -> str | None` - The yield text drawn under the arrow, or None when the house style moves it.
 
@@ -415,7 +415,7 @@
 
 ## `mcp_runtime.figure_mechanism`
 
-- **function**, line 1107: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
+- **function**, line 984: `draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a mechanism; called by draw_figure for ``kind: mechanism``.
 
 ## `mcp_runtime.figure_panels`
 
@@ -772,12 +772,13 @@
 
 ## `templates.conformers`
 
-- **function**, line 951: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, str] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a 3D perspective bridged cage (norbornane, bicyclo_222, adamantane) with CrossingBonds.
-- **function**, line 1121: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
-- **function**, line 269: `chair_cyclohexane(*, flip: bool = False, substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 14.4) -> dict[str, Any]` - Generate a 6-membered chair cyclohexane (chair1 or ring-flipped chair2).
-- **function**, line 834: `fischer_projection(*, centers: Sequence[Mapping[str, str]] = ({'left': 'H', 'right': 'OH'},), top: str = 'CHO', bottom: str = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate an orthogonal Fischer projection cross backbone.
-- **function**, line 707: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, str]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a 6-membered Haworth perspective pyranose ring.
-- **function**, line 495: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[str] = ('Me', 'H', 'H'), rear: Sequence[str] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None, charges: Mapping[str, Sequence[int]] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
+- **function**, line 989: `bicyclic_cage(*, scaffold: str = 'norbornane', substituents: Mapping[int, Any] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 16.0) -> dict[str, Any]` - Generate a bridged cage with CrossingBonds; substituents accept strings or {label, display}.
+- **function**, line 1161: `build_conformer(spec: Mapping[str, Any]) -> dict[str, Any]` - Dispatch on ``spec['template']`` and return the generated fragment and document.
+- **function**, line 1219: `build_conformer_cdxml(spec: Mapping[str, Any], output_path: str | Path | None = None) -> str` - Dispatch on ``spec['template']`` and return a complete ACS 1996 CDXML document.
+- **function**, line 289: `chair_cyclohexane(*, flip: bool = False, substituents: Mapping[int, Mapping[str, Any]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 14.4) -> dict[str, Any]` - Generate a 6-membered chair cyclohexane (chair1 or ring-flipped chair2).
+- **function**, line 866: `fischer_projection(*, centers: Sequence[Mapping[str, Any]] = ({'left': 'H', 'right': 'OH'},), top: Any = 'CHO', bottom: Any = 'CH2OH', cx: float = 180.0, cy: float = 120.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a Fischer cross; every substituent accepts a string or {label, display} object.
+- **function**, line 737: `haworth_pyranose(*, anomer: str = 'beta', substituents: Mapping[int, Mapping[str, Any]] | None = None, cx: float = 180.0, cy: float = 160.0, bond_length: float = 18.0) -> dict[str, Any]` - Generate a Haworth ring; up/down labels accept strings or {label, display} objects.
+- **function**, line 516: `newman_projection(*, conformation: str = 'staggered', dihedral_offset: float | None = None, front: Sequence[Any] = ('Me', 'H', 'H'), rear: Sequence[Any] = ('Br', 'H', 'Me'), cx: float = 180.0, cy: float = 160.0, bond_length: float = 24.0, attach: Mapping[str, Any] | None = None, charges: Mapping[str, Sequence[int]] | None = None) -> dict[str, Any]` - Generate a Newman projection (staggered or eclipsed) with circle graphic and perimeter-clipped rear spokes.
 
 ## `vision.stereo_audit`
 

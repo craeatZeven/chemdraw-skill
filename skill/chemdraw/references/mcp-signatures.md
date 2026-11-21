@@ -209,8 +209,15 @@ Discover and classify files belonging to one experiment.
 Draw a reaction scheme from a brief and check it, in one call.
 
 brief is an object (or its JSON text) the caller writes from the user's request:
-species [{id, smiles or name, label?, ring_fills?, atom_halos?, ts_bracket?, color?,
-atom_colors?, bond_colors?, abbreviate?, orientation?, caption?, box?}],
+species [{id, smiles or name or conformer, label?, ring_fills?, atom_halos?, ts_bracket?, color?,
+atom_colors?, bond_colors?, abbreviate?, orientation?, caption?, box?}]. A conformer is
+{template: chair|newman|haworth|fischer|norbornane|bicyclo_222|adamantane, bond_length?,
+...template options}; it replaces smiles/name and skips atom-balance checking. Substituents
+accept a label string or {label, display: Bold|WedgeBegin|WedgedHash}. Chair substituents
+map positions 1..6 to {ax|eq: substituent}; Newman front/rear each list three; Haworth
+positions 1..5 map to {up|down: substituent}; Fischer centers list {left, right} and top/
+bottom are substituents; cages map their atom positions to substituents. Conformer
+fragments participate in layout, reaction arrows, ts_bracket and saved-file readback.
 steps [{substrates [ids], products [ids], above [lines], below [lines], yield,
 arrow solid|dashed|failed|reversible|resonance, ts_bracket? (a species id)}], optional layout
 (e.g. "catalytic-cycle"), max_width (points, default 504, the width of a double-column
@@ -305,7 +312,7 @@ dash and listed in the notes. output_path is then a new folder (page-001.cdxml, 
 PNGs in png/ with render=True) and the report lists the pages.
 
 kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
-lists: species [{id, smiles or name, label?, generic_rings?, clashes? [{between [atom, atom],
+lists: species [{id, smiles or name or conformer, label?, generic_rings?, clashes? [{between [atom, atom],
 color?}] (a red double zigzag between two crowding groups)}] (or {id, newman {front, rear,
 conformation?, dihedral_offset?, attach?}, label?} for a Newman projection placed among them,
 which arrows cannot point at and whose steps need no moves; the order of rear picks the

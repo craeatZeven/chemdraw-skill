@@ -327,3 +327,145 @@ def test_haworth_lower_up_labels_sit_outside_the_ring():
     for a in ups:
         assert not inside(a["x"], a["y"])
         assert a["y"] < haw["ring_coords"][a["ring_position"]][1]
+
+
+CONFORMER_SPECS = {
+    "chair": {"substituents": {"1": {"ax": {"label": "Br", "display": "Bold"}, "eq": "H"}}},
+    "newman": {"front": [{"label": "F", "display": "WedgeBegin"}, "H", "H"],
+               "rear": [{"label": "F", "display": "WedgedHash"}, "H", "H"]},
+    "haworth": {"substituents": {"1": {"up": {"label": "OMe", "display": "Bold"}}}},
+    "fischer": {"top": {"label": "CHO", "display": "Bold"},
+                "centers": [{"left": {"label": "H", "display": "WedgedHash"},
+                             "right": {"label": "OH", "display": "WedgeBegin"}}],
+                "bottom": "CH2OH"},
+    "norbornane": {"substituents": {"7": {"label": "Br", "display": "WedgeBegin"}}},
+    "bicyclo_222": {"substituents": {"1": {"label": "Br", "display": "WedgedHash"}}},
+    "adamantane": {"substituents": {"1": {"label": "Br", "display": "Bold"}}},
+}
+
+
+@pytest.mark.parametrize("template", list(CONFORMER_SPECS))
+def test_every_conformer_template_draws_and_reads_back_in_a_scheme(tmp_path, template):
+    spec = {"template": template, **CONFORMER_SPECS[template]}
+    brief = {
+        "species": [{"id": "a", "conformer": spec}, {"id": "b", "conformer": spec}],
+        "steps": [{"substrates": ["a"], "products": ["b"], "arrow": "reversible"}],
+    }
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / f"{template}.cdxml"))
+    assert report["ok"] is True, report.get("errors")
+    assert report["lint"]["issues"] == []
+    assert report["readback"]["status"] == "matched", report["readback"]
+    assert report["readback"]["fragment_roundtrip"] == "preserved"
+    assert report["checks_passed"] is True, report["warnings"]
+    root = ET.parse(report["output_path"]).getroot()
+    assert float(root.get("BondLength")) == pytest.approx(14.4)
+    assert len(root.findall(".//page/fragment")) == 2
+
+
+@pytest.mark.parametrize("template, expected", [
+    ("chair", {"Bold"}),
+    ("newman", {"WedgeBegin", "WedgedHash"}),
+    ("haworth", {"Bold", "WedgeBegin"}),
+    ("fischer", {"Bold", "WedgeBegin", "WedgedHash"}),
+    ("norbornane", {"WedgeBegin"}),
+    ("bicyclo_222", {"WedgedHash"}),
+    ("adamantane", {"Bold"}),
+])
+def test_structured_substituents_write_bond_displays(template, expected):
+    result = build_conformer_cdxml({"template": template, **CONFORMER_SPECS[template]})
+    root = ET.fromstring(result)
+    displays = {b.get("Display") for b in root.findall(".//fragment/b") if b.get("Display")}
+    assert expected <= displays
+
+
+@pytest.mark.parametrize("spec, message", [
+    ({"template": "twist-boat"}, "template"),
+    ({"template": "chair", "substituents": {"1": {"ax": {"label": "Br", "display": "Dash"}}}}, "display"),
+    ({"template": "chair", "substituents": {"9": {"ax": "Br"}}}, "1..6"),
+    ({"template": "newman", "front": [{"label": "F", "display": "Dash"}, "H", "H"]}, "display"),
+])
+def test_invalid_conformer_specs_are_refused_before_drawing(tmp_path, spec, message):
+    brief = {"species": [{"id": "bad", "conformer": spec}],
+             "steps": [{"substrates": ["bad"], "products": ["bad"]}]}
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "bad.cdxml"))
+    assert report["ok"] is False
+    assert message.lower() in " ".join(report["errors"]).lower()
+    assert not (tmp_path / "bad.cdxml").exists()
+
+
+def test_conformer_is_exclusive_with_smiles_and_name():
+    brief = {"species": [{"id": "bad", "smiles": "C", "conformer": {"template": "chair"}}],
+             "steps": [{"substrates": ["bad"], "products": ["bad"]}]}
+    errors = figure_draw._validate(brief)
+    assert any("exactly one" in error for error in errors)
+
+
+@pytest.mark.parametrize("template", ["norbornane", "bicyclo_222", "adamantane"])
+def test_drawn_cage_crossing_bond_ids_are_remapped_to_real_rear_bonds(tmp_path, template):
+    brief = {"species": [{"id": "cage", "conformer": {"template": template}},
+                          {"id": "copy", "conformer": {"template": template}}],
+             "steps": [{"substrates": ["cage"], "products": ["copy"], "arrow": "reversible"}]}
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / f"{template}-ids.cdxml"))
+    assert report["ok"] is True, report.get("errors")
+    root = ET.parse(report["output_path"]).getroot()
+    for fragment in root.findall(".//page/fragment"):
+        bonds = {b.get("id"): b for b in fragment.findall("b")}
+        crossing = [b for b in bonds.values() if b.get("CrossingBonds")]
+        assert crossing
+        for bond in crossing:
+            for crossed_id in bond.get("CrossingBonds").split():
+                assert crossed_id in bonds
+                assert crossed_id != bond.get("id")
+                assert bonds[crossed_id].get("B") in {n.get("id") for n in fragment.findall("n")}
+
+
+def test_conformer_supports_ts_brackets_and_panels(tmp_path):
+    chair = {"template": "chair", "substituents": {"1": {"ax": "Br"}}}
+    brief = {"species": [{"id": "ts", "conformer": chair, "ts_bracket": True},
+                          {"id": "copy", "conformer": chair}],
+             "steps": [{"substrates": ["ts"], "products": ["copy"], "arrow": "reversible"}]}
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "ts.cdxml"))
+    assert report["ok"] and report["checks_passed"], report
+    root = ET.parse(report["output_path"]).getroot()
+    assert root.find(".//bracketedgroup") is not None
+    bracketed = set(root.find(".//bracketedgroup").get("BracketedObjectIDs").split())
+    chair_nodes = {n.get("id") for n in root.findall(".//page/fragment")[0].findall("n")}
+    assert bracketed == chair_nodes
+
+    cage_brief = {"species": [{"id": "cage", "conformer": {"template": "norbornane"}},
+                               {"id": "copy", "conformer": {"template": "norbornane"}}],
+                  "steps": [{"substrates": ["cage"], "products": ["copy"], "arrow": "reversible"}]}
+    panels = {"kind": "panels", "panels": [{"title": "Conformer", "brief": cage_brief}]}
+    panel_report = figure_draw.draw_figure(panels, output_path=str(tmp_path / "panel.cdxml"))
+    assert panel_report["ok"] and panel_report["panels"][0]["checks_passed"], panel_report
+    panel_root = ET.parse(panel_report["output_path"]).getroot()
+    bond_ids = {b.get("id") for b in panel_root.iter("b")}
+    assert all(ref in bond_ids for b in panel_root.iter("b") if b.get("CrossingBonds")
+               for ref in b.get("CrossingBonds").split())
+
+
+def test_unified_conformer_newman_works_in_mechanism(tmp_path):
+    newman = {"template": "newman", "front": ["Me", "H", "H"], "rear": ["Br", "H", "Me"]}
+    brief = {"kind": "mechanism",
+             "species": [{"id": "anti", "conformer": newman}, {"id": "gauche", "conformer": newman}],
+             "steps": [{"substrates": ["anti"], "products": ["gauche"], "arrow": "reversible"}]}
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "mechanism.cdxml"))
+    assert report["ok"] and report["checks_passed"], report
+    root = ET.parse(report["output_path"]).getroot()
+    assert len([g for g in root.iter("graphic") if g.get("OvalType") == "Circle Filled"]) == 2
+
+
+def test_figure_2_10_brief_draws_axial_bromide_beta_hydrogens_and_products(tmp_path):
+    source = Path(__file__).resolve().parents[2] / "assets" / "parity" / "conformer-chair-fig2-10.json"
+    brief = json.loads(source.read_text(encoding="utf-8"))
+    report = figure_draw.draw_figure(brief, output_path=str(tmp_path / "fig2-10.cdxml"))
+    assert report["ok"] and report["checks_passed"], report
+    root = ET.parse(report["output_path"]).getroot()
+    displays = {b.get("Display") for b in root.iter("b") if b.get("Display")}
+    assert {"Bold", "WedgeBegin", "WedgedHash"} <= displays
+    for fragment in root.findall(".//page/fragment"):
+        nodes = {n.get("id") for n in fragment.findall("n")}
+        assert all(b.get("B") in nodes and b.get("E") in nodes for b in fragment.findall("b"))
+    text = " ".join("".join(t.itertext()) for t in root.iter("t"))
+    assert "cis (Br a, up)" in text
+    assert "1-methyl isomer" in text and "3-methyl isomer" in text

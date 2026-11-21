@@ -15,9 +15,7 @@ from __future__ import annotations
 import math
 import re
 import xml.etree.ElementTree as ET
-from types import SimpleNamespace
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 from rdkit import Chem
@@ -31,15 +29,16 @@ from ..constants import (
     LAYOUT_INTER_GAP_BONDS,
     LAYOUT_PLUS_GAP,
 )
+from ..render import conformer as conformer_runtime
 from ..render import renderer as R
 from ..render.schema import StructureRef
 from ..text_formatting import normalize_condition_text
 from . import artifact_safety, figure_draw, figure_house, figure_lint
 
 MECH_KEYS = {"kind", "species", "steps", "max_width", "title", "style", "show_atom_numbers", "charges"}
-SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "generic_rings", "clashes"}
+SPECIES_KEYS = {"id", "smiles", "name", "label", "newman", "conformer", "generic_rings", "clashes"}
 CLASH_KEYS = {"between", "color"}
-NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset", "attach", "charges"}
+NEWMAN_KEYS = {"front", "rear", "conformation", "dihedral_offset", "attach", "charges", "bond_length"}
 NEWMAN_SPOKE = 1.4 * ACS_BOND_LENGTH   # a projection's spokes, sized beside 14.4 pt bonds
 # Closest a rear spoke may come to a front one; ChemDraw-style eclipsed drawings use 14.
 NEWMAN_MIN_APART = 10.0
@@ -118,7 +117,7 @@ def _validate(brief: dict) -> list[str]:
 
     species = brief.get("species")
     ids: set[str] = set()
-    newman_ids: set[str] = set()
+    projection_ids: set[str] = set()
     if not isinstance(species, list) or not species:
         errors.append("species: list every structure that is drawn, each with an id and a smiles or a name.")
         species = []
@@ -133,11 +132,17 @@ def _validate(brief: dict) -> list[str]:
         extra = sorted(set(entry) - SPECIES_KEYS)
         if extra:
             errors.append(f"Species {ident}: unknown keys {extra}.")
+        given = [key for key in ("smiles", "name", "newman", "conformer") if entry.get(key)]
+        if len(given) != 1:
+            errors.append(f"Species {ident} needs exactly one source: smiles or a name, newman or conformer.")
         if "newman" in entry:
-            newman_ids.add(ident)
+            projection_ids.add(ident)
             errors += _newman_errors(ident, entry["newman"])
-        elif not entry.get("smiles") and not entry.get("name"):
-            errors.append(f"Species {ident} needs a smiles or a name (or a newman projection).")
+        elif "conformer" in entry:
+            projection_ids.add(ident)
+            errors += conformer_runtime.conformer_errors(ident, entry["conformer"])
+            if entry.get("clashes"):
+                errors.append(f"Species {ident}: clashes need numbered SMILES atoms or a legacy newman projection.")
         errors += figure_house.generic_ring_errors(entry)
         errors += _clash_errors(ident, entry)
 
@@ -169,7 +174,7 @@ def _validate(brief: dict) -> list[str]:
         if step.get("arrow", "solid") not in MECH_ARROWS:
             errors.append(f"Step {number}: arrow must be one of {list(MECH_ARROWS)}.")
         moves = step.get("moves")
-        conformers = bool(newman_ids & set(members["substrates"] + members["products"]))
+        conformers = bool(projection_ids & set(members["substrates"] + members["products"]))
         if conformers and moves in (None, []):
             continue  # a change of conformation, or a step drawn on projections, has no arrows to list
         if moves in (None, []) and step.get("arrow") in ("resonance", "reversible"):
@@ -182,8 +187,8 @@ def _validate(brief: dict) -> list[str]:
             errors += _move_errors(number, index, move, members["substrates"], ids)
             for side in ("from", "to"):
                 end = move.get(side) if isinstance(move, dict) else None
-                if isinstance(end, dict) and str(end.get("species")) in newman_ids:
-                    errors.append(f"Step {number} move {index} {side}: a Newman projection has no numbered "
+                if isinstance(end, dict) and str(end.get("species")) in projection_ids:
+                    errors.append(f"Step {number} move {index} {side}: a Newman projection or conformer template has no numbered "
                                   "atoms for an arrow; point it at a structure given by smiles or name.")
     return errors
 
@@ -240,7 +245,9 @@ def _clash_atom(frag: Any, ref: Any) -> dict:
                 return atom
         raise KeyError(ref)
     side, place = found.group(1), int(found.group(2))
-    labels = frag.newman[side]
+    from ..templates.conformers import _substituent
+
+    labels = [_substituent(entry)[0] for entry in frag.newman[side]]
     if labels[place] == "*":
         return next(a for a in frag.atoms if a.get("role") == "attached_root")
     drawn = [a for a in frag.atoms if a.get("role") == f"{side}_substituent"]
@@ -250,42 +257,27 @@ def _clash_atom(frag: Any, ref: Any) -> dict:
 def _newman_errors(ident: str, spec: Any) -> list[str]:
     if not isinstance(spec, dict):
         return [f"Species {ident}: newman must be an object with front and rear substituents."]
-    errors = []
-    extra = sorted(set(spec) - NEWMAN_KEYS)
-    if extra:
-        errors.append(f"Species {ident}: unknown newman keys {extra}.")
-    for side in ("front", "rear"):
-        group = spec.get(side)
-        if not (isinstance(group, list) and len(group) == 3 and all(isinstance(g, str) and g for g in group)):
-            errors.append(f"Species {ident}: newman {side} must list three substituents, e.g. [\"Me\", \"H\", \"H\"].")
+    errors = [error.replace("conformer", "newman")
+              for error in conformer_runtime.conformer_errors(ident, {"template": "newman", **spec})]
     errors += _attach_errors(ident, spec)
-    if spec.get("charges") is not None and all(isinstance(spec.get(k), list) and len(spec[k]) == 3
-                                               for k in ("front", "rear")):
-        from ..templates.conformers import _charge_errors
-        try:
-            _charge_errors(spec["charges"], spec["front"], spec["rear"])
-        except ValueError as error:
-            errors.append(f"Species {ident}: newman charges: {error}.")
-    if spec.get("conformation", "staggered") not in ("staggered", "eclipsed"):
-        errors.append(f"Species {ident}: newman conformation must be staggered or eclipsed.")
-    offset = spec.get("dihedral_offset")
-    if offset is not None and (isinstance(offset, bool) or not isinstance(offset, (int, float))):
-        errors.append(f"Species {ident}: newman dihedral_offset must be a number of degrees.")
-    elif offset is not None:
-        # The three front spokes are 120 degrees apart, so a rear set turned by a multiple of
-        # 120 lies on them, and each rear label is printed over a front one.
-        apart = abs((float(offset) + 60.0) % 120.0 - 60.0)
-        if apart < NEWMAN_MIN_APART:
-            errors.append(f"Species {ident}: newman dihedral_offset {offset:g} puts the rear spokes on top of the "
-                          f"front ones ({apart:g} degrees apart); it is the rear set's angle from the front set, "
-                          "60 for staggered, 14 for a visible eclipsed one. For another conformer, reorder rear.")
     return errors
 
 
 def _attach_errors(ident: str, spec: dict) -> list[str]:
     """attach bonds the front carbon to the rest of the molecule, in place of the front "*"."""
-    front = spec.get("front") if isinstance(spec.get("front"), list) else []
-    rear = spec.get("rear") if isinstance(spec.get("rear"), list) else []
+    from ..templates.conformers import _substituent
+
+    def labels(side):
+        values = spec.get(side) if isinstance(spec.get(side), list) else []
+        out = []
+        for entry in values:
+            try:
+                out.append(_substituent(entry)[0])
+            except (TypeError, ValueError):
+                pass
+        return out
+
+    front, rear = labels("front"), labels("rear")
     attach = spec.get("attach")
     where = f"Species {ident}: newman attach"
     if attach is None:
@@ -303,145 +295,28 @@ def _attach_errors(ident: str, spec: dict) -> list[str]:
     return errors
 
 
-_ATTACHED: dict[str, dict] = {}
-
-
 def _attach_group(smiles: str) -> dict:
-    """The attached group as drawn coordinates: root at the origin, the bond into it from -x,
-    bonds 14.4 pt, Kekulé bond orders; the [*] itself is left out."""
-    if smiles in _ATTACHED:
-        return _ATTACHED[smiles]
-    from rdkit.Chem import AllChem
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        raise ValueError(f"the attached group {smiles!r} is not valid SMILES")
-    stars = [a for a in mol.GetAtoms() if a.GetAtomicNum() == 0]
-    if len(stars) != 1 or stars[0].GetDegree() != 1:
-        raise ValueError(f"the attached group {smiles!r} needs one [*] bonded to one atom")
-    if any(a.GetNumRadicalElectrons() for a in mol.GetAtoms()):
-        raise ValueError(f"the attached group {smiles!r} carries a radical, which a projection cannot draw "
-                         "yet; draw that species as an ordinary structure")
-    if any(abs(a.GetFormalCharge()) > 1 for a in mol.GetAtoms()):
-        raise ValueError(f"the attached group {smiles!r} has a charge beyond plus or minus one; a projection "
-                         "draws each charge as one circled sign")
-    Chem.Kekulize(mol, clearAromaticFlags=True)
-    AllChem.Compute2DCoords(mol)
-    conf = mol.GetConformer()
-    xy = {a.GetIdx(): (conf.GetAtomPosition(a.GetIdx()).x, -conf.GetAtomPosition(a.GetIdx()).y)
-          for a in mol.GetAtoms()}   # y down, as on the page
-    lengths = [math.dist(xy[b.GetBeginAtomIdx()], xy[b.GetEndAtomIdx()]) for b in mol.GetBonds()]
-    scale = ACS_BOND_LENGTH / (sum(lengths) / len(lengths))
-    star = stars[0].GetIdx()
-    root = stars[0].GetNeighbors()[0].GetIdx()
-    angle = math.atan2(xy[root][1] - xy[star][1], xy[root][0] - xy[star][0])
-    cos, sin = math.cos(-angle), math.sin(-angle)
-    from ..templates.conformers import _HYDRIDE_LABELS, _SIMPLE_ELEMENTS
-    atoms = []
-    for atom in mol.GetAtoms():
-        if atom.GetIdx() == star:
-            continue
-        symbol, hydrogens = atom.GetSymbol(), atom.GetTotalNumHs()
-        label = symbol if symbol == "C" or not hydrogens else symbol + "H" + (str(hydrogens) if hydrogens > 1 else "")
-        if symbol not in _SIMPLE_ELEMENTS or (label != symbol and label not in _HYDRIDE_LABELS):
-            raise ValueError(f"the attached group {smiles!r} has an atom a projection cannot label ({label})")
-        dx, dy = (xy[atom.GetIdx()][0] - xy[root][0]) * scale, (xy[atom.GetIdx()][1] - xy[root][1]) * scale
-        atoms.append({"index": atom.GetIdx() + 1, "symbol": label, "charge": atom.GetFormalCharge(),
-                      "num_hydrogens": hydrogens, "show_label": symbol != "C",
-                      "x": dx * cos - dy * sin, "y": dx * sin + dy * cos})
-    bonds = [{"atom1": b.GetBeginAtomIdx() + 1, "atom2": b.GetEndAtomIdx() + 1,
-              "order": int(b.GetBondTypeAsDouble())}
-             for b in mol.GetBonds() if star not in (b.GetBeginAtomIdx(), b.GetEndAtomIdx())]
-    _ATTACHED[smiles] = {"root": root + 1, "atoms": atoms, "bonds": bonds}
-    return _ATTACHED[smiles]
+    return conformer_runtime.attach_group(smiles)
 
 
 def _projection(spec: dict, cx: float = 0.0, cy: float = 0.0) -> dict:
-    """The template drawn from a species' newman entry, its attached group included."""
-    from ..templates.conformers import newman_projection
-    attach = spec.get("attach")
-    return newman_projection(conformation=spec.get("conformation", "staggered"),
-                             dihedral_offset=spec.get("dihedral_offset"), front=tuple(spec["front"]),
-                             rear=tuple(spec["rear"]), cx=cx, cy=cy, bond_length=NEWMAN_SPOKE,
-                             attach=_attach_group(attach["smiles"]) if attach else None,
-                             charges=spec.get("charges"))
+    return conformer_runtime.drawing({"template": "newman", **spec}, cx, cy)
 
 
 def _newman_frag(ident: str, spec: dict, label: str | None) -> Any:
-    """A Newman projection as a structure the row layout can place: atoms, bonds, box, label."""
-    drawn = _projection(spec)
-    atoms = [dict(a) for a in drawn["atoms"]]
-    for atom in atoms:
-        # A circled charge reaches past its atom; the layout keeps that room clear too.
-        if atom.get("charge_box"):
-            x1, y1, x2, y2 = atom.pop("charge_box")
-            atom["reach"] = [(x1 - atom["x"], y1 - atom["y"]), (x2 - atom["x"], y2 - atom["y"])]
-    frag = SimpleNamespace(atoms=atoms, bonds=[dict(b) for b in drawn["bonds"]], newman=dict(spec),
-                           ref=StructureRef(id=ident, label=label))
-    frag.bbox = R._fragment_bbox(atoms)
-    frag.cx, frag.cy = R._bbox_center(frag.bbox)
-    return frag
+    return conformer_runtime.fragment(ident, {"template": "newman", **spec}, label)
 
 
 def _newman_receipt(frag: Any, fragment: ET.Element, renumber: dict[str, str]) -> None:
-    """Leave the page's round-trip receipt for a projection: what its fragment reads as must be
-    what the template's own drawing reads as. A projection with a generic label ([Rh], Ar)
-    cannot be read; it is recorded as not checkable rather than as preserved."""
-    collector = R._fragment_receipts.get()
-    if collector is None:
-        return
-    fid = renumber.get(fragment.get("id"), fragment.get("id"))
-    generic = [n.get("GenericNickname") for n in fragment.iter("n") if n.get("NodeType") == "GenericNickname"]
-    if generic:
-        collector.append({"fragment_id": fid, "status": "not_checkable",
-                          "reason": f"generic label {', '.join(sorted(set(generic)))} cannot be read back"})
-        return
-    from ..chemistry_semantics import semantic_key
-    from ..publication.layout import fragment_mol
-    try:
-        drawn = semantic_key(fragment_mol(fragment))
-    except Exception:  # an unreadable drawing is a failure, not a pass
-        collector.append({"fragment_id": fid, "status": "unreadable"})
-        return
-    expected = _newman_inventory(frag.newman)
-    collector.append({"fragment_id": fid, "status": "preserved" if drawn in expected else "changed",
-                      "method": "newman_template_readback"})
+    conformer_runtime._receipt(frag, fragment, renumber)
 
 
 def _newman_xml(frag: Any, next_id) -> list[str]:
-    """The projection drawn where the layout put it, with ids from the page's own sequence.
-
-    The template orders its parts by Z (rear spokes, then the filled disc, then the front
-    spokes); new Z values keep that order, so the disc still hides the rear spokes' roots.
-    """
-    centre = frag.atoms[0]  # the front carbon, at the centre of the projection
-    drawn = _projection(frag.newman, centre["x"], centre["y"])
-    elements = [ET.fromstring(drawn["fragment_xml"])] + [ET.fromstring(g) for g in drawn["graphics_xml"]]
-    every = [node for element in elements for node in element.iter()]
-    renumber = {node.get("id"): str(next_id()) for node in every if node.get("id")}
-    _newman_receipt(frag, elements[0], renumber)
-    for node in every:
-        if node.get("id"):
-            node.set("id", renumber[node.get("id")])
-        for key in ("B", "E", "object"):   # object: the atom a charge symbol represents
-            if node.get(key) in renumber:
-                node.set(key, renumber[node.get(key)])
-    for node in sorted((n for n in every if n.get("Z")), key=lambda n: int(n.get("Z"))):
-        node.set("Z", str(next_id()))
-    return [ET.tostring(element, encoding="unicode") for element in elements]
+    return conformer_runtime.xml(frag, next_id)
 
 
 def _newman_inventory(spec: dict) -> list[str]:
-    """What the readback finds for this projection: the template read the way pages are read."""
-    import tempfile
-    from ..chemistry_semantics import document_inventory
-    drawn = _projection(spec)
-    with tempfile.TemporaryDirectory(prefix="newman-") as scratch:
-        path = Path(scratch) / "newman.cdxml"
-        path.write_text(drawn["cdxml"], encoding="utf-8")
-        try:
-            return list(document_inventory(path).elements())
-        except ValueError:
-            return []
+    return conformer_runtime.inventory({"template": "newman", **spec})
 
 
 def _as_ids(value: Any) -> list[str]:
@@ -604,6 +479,8 @@ def _arrange(brief: dict, grounded: list[dict], width: float, gap_scale: float):
         item = by_id[species]
         if item.get("newman"):
             return _newman_frag(species, item["newman"], label)
+        if item.get("conformer"):
+            return conformer_runtime.fragment(species, item["conformer"], label)
         return R._resolve_structure(StructureRef(id=species, smiles=item["smiles"], label=label))
 
     def new(species: str) -> _Inst:
@@ -980,8 +857,8 @@ def _draw(brief: dict, grounded: list[dict], width: float, gap_scale: float, bul
                 for item in row:
                     if item["t"] == "frag":
                         frag = item["inst"].frag
-                        if getattr(frag, "newman", None):
-                            parts += _newman_xml(frag, ids.next)
+                        if getattr(frag, "conformer", None):
+                            parts += conformer_runtime.xml(frag, ids.next)
                         else:
                             xml, _, _ = R._build_fragment(frag.atoms, frag.bonds, ids)
                             parts.append(xml)
@@ -1109,21 +986,27 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
     errors = _validate(brief)
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
-    # A Newman projection is drawn from its substituents, not from a structure to ground.
-    projections = [e for e in brief["species"] if "newman" in e]
-    grounded, errors = figure_draw._ground([e for e in brief["species"] if "newman" not in e])
+    projections = [e for e in brief["species"] if "newman" in e or "conformer" in e]
+    grounded, errors = figure_draw._ground(
+        [e for e in brief["species"] if "newman" not in e and "conformer" not in e])
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
     for e in projections:
-        if e["newman"].get("attach"):
-            try:
-                _attach_group(e["newman"]["attach"]["smiles"])
-            except ValueError as error:
-                errors.append(f"Species {e['id']}: {error}.")
+        legacy = "newman" in e
+        spec = e["newman"] if legacy else e["conformer"]
+        normalized = {"template": "newman", **spec} if legacy else spec
+        try:
+            keys = conformer_runtime.inventory(normalized)
+        except ValueError as error:
+            errors.append(f"Species {e['id']}: {error}.")
+            continue
+        item = {"id": str(e["id"]), "label": e.get("label"), "name": None, "smiles": None,
+                "source": "newman" if legacy else "conformer", "conformer": normalized, "inventory": keys}
+        if legacy:
+            item["newman"] = spec
+        grounded.append(item)
     if errors:
         return figure_draw._failure(errors, kind="mechanism")
-    grounded += [{"id": str(e["id"]), "label": e.get("label"), "name": None, "smiles": None, "source": "newman",
-                  "newman": e["newman"], "inventory": _newman_inventory(e["newman"])} for e in projections]
     mols = {g["id"]: Chem.MolFromSmiles(g["smiles"]) for g in grounded if g.get("smiles")}
     errors = _index_errors(brief, mols)
     if errors:
@@ -1250,8 +1133,10 @@ def draw_mechanism(brief: dict, output_path: str | None, render: bool) -> dict:
         entry = {k: g[k] for k in ("id", "label", "name", "smiles", "source")}
         if g["id"] in mols:
             entry["atoms"] = ", ".join(f"{a.GetIdx()} {a.GetSymbol()}" for a in mols[g["id"]].GetAtoms())
+        elif g.get("newman"):
+            entry["newman"] = g["newman"]
         else:
-            entry["newman"] = g["newman"]  # drawn from its substituents; no atoms to number
+            entry["conformer"] = g["conformer"]
         species.append(entry)
     report = {
         "ok": True,

@@ -1,0 +1,51 @@
+{
+  "kind": "scheme",
+  "title": "E2 elimination of cis-1-bromo-2-methylcyclohexane",
+  "layout": "divergent",
+  "max_width": 640,
+  "species": [
+    {
+      "id": "cis-diaxial",
+      "label": "cis (Br a, up)",
+      "conformer": {
+        "template": "chair",
+        "flip": true,
+        "bond_length": 14.4,
+        "substituents": {
+          "1": {
+            "ax": {"label": "Br", "display": "Bold"}
+          },
+          "2": {
+            "ax": {"label": "H", "display": "WedgedHash"},
+            "eq": {"label": "Me", "display": "WedgeBegin"}
+          },
+          "6": {
+            "ax": {"label": "H", "display": "WedgedHash"}
+          }
+        }
+      }
+    },
+    {
+      "id": "alkene-1",
+      "label": "1-methyl isomer",
+      "smiles": "CC1=CCCCC1"
+    },
+    {
+      "id": "alkene-3",
+      "label": "3-methyl isomer",
+      "smiles": "CC1CC=CCC1"
+    }
+  ],
+  "steps": [
+    {
+      "substrates": ["cis-diaxial"],
+      "products": ["alkene-1"],
+      "above": ["E2 at C2"]
+    },
+    {
+      "substrates": ["cis-diaxial"],
+      "products": ["alkene-3"],
+      "above": ["E2 at C6"]
+    }
+  ]
+}

@@ -45,7 +45,7 @@ ARROWS = ("solid", "dashed", "failed", "reversible", "resonance", "retro")
 # outside this set used to be dropped in silence, so a typo ("annotation", "yields", "zzz") lost
 # data without a word; they are refused now.
 SPECIES_KEYS = {
-    "id", "smiles", "name", "label", "orientation", "generic_rings", "clashes",
+    "id", "smiles", "name", "conformer", "label", "orientation", "generic_rings", "clashes",
     "ring_fills", "atom_halos", "highlight_atoms", "highlight_bonds", "ts_bracket",
     "multi_attachments", "bond_displays", "cip_labels", "atom_numbers",
     "annotation_offsets", "coordinates", "rotation", "bond_length",
@@ -131,8 +131,18 @@ def _validate(brief: dict) -> list[str]:
         if ident in ids:
             errors.append(f"Species {ident}: duplicate id.")
         ids.add(ident)
-        if not entry.get("smiles") and not entry.get("name"):
-            errors.append(f"Species {ident} needs a smiles or a name.")
+        given = [key for key in ("smiles", "name", "conformer") if entry.get(key)]
+        if len(given) != 1:
+            errors.append(f"Species {ident} needs exactly one source: smiles or a name, or conformer.")
+        if entry.get("conformer") is not None:
+            from ..render.conformer import conformer_errors
+
+            errors += conformer_errors(ident, entry["conformer"])
+            if entry.get("orientation"):
+                errors.append(f"Species {ident}: orientation is not available for a conformer template.")
+            if any(entry.get(key) for key in ("ring_fills", "atom_halos", "generic_rings")):
+                errors.append(f"Species {ident}: ring_fills, atom_halos and generic_rings need a SMILES structure; "
+                              "ts_bracket is available for a conformer.")
         if entry.get("orientation") not in (None, *renderer.ORIENTATIONS):
             errors.append(f"Species {ident}: orientation must be one of {list(renderer.ORIENTATIONS)}.")
         unknown = sorted(set(entry) - SPECIES_KEYS)
@@ -180,6 +190,17 @@ def _ground(species: list[dict]) -> tuple[list[dict], list[str]]:
     for entry in species:
         ident = str(entry["id"])
         record = {"id": ident, "label": entry.get("label"), "name": entry.get("name")}
+        if entry.get("conformer"):
+            from ..render.conformer import inventory
+
+            try:
+                keys = inventory(entry["conformer"])
+            except ValueError as exc:
+                errors.append(f"Species {ident}: {exc}.")
+                continue
+            grounded.append({**record, "smiles": None, "source": "conformer",
+                             "conformer": copy.deepcopy(entry["conformer"]), "inventory": keys})
+            continue
         smiles = entry.get("smiles")
         if smiles:
             source = "user"
@@ -205,9 +226,8 @@ def _check_balance(brief: dict, smiles: dict[str, str]) -> tuple[list[dict], lis
     for number, step in enumerate(brief["steps"], 1):
         members = _as_list(step["substrates"]) + _as_list(step["products"])
         if any(i not in smiles for i in members):
-            # A Newman projection is a drawing of a conformer, with no formula to balance.
             reports.append({"step": number, "balanced": None, "missing": None,
-                            "error": "the step shows a Newman projection, so its balance is not checked"})
+                            "error": "the step shows a conformer template, so its balance is not checked"})
             continue
         reaction = {
             "reactants": [{"smiles": smiles[i], "label": i} for i in _as_list(step["substrates"])],
@@ -250,7 +270,8 @@ def _scheme(brief: dict, grounded: list[dict], max_width: float | None, gap_scal
             smiles = next((g["smiles"] for g in grounded if g["id"] == str(entry["id"])), None)
             marks.setdefault(str(entry["id"]), []).extend(figure_house.generic_ring_marks(entry, smiles))
     structures = {
-        g["id"]: StructureRef(id=g["id"], smiles=g["smiles"], label=(str(g["label"]) if g["label"] else None),
+        g["id"]: StructureRef(id=g["id"], smiles=g["smiles"], conformer=g.get("conformer"),
+                              label=(str(g["label"]) if g["label"] else None),
                               orientation=orientation.get(g["id"]),
                               overlays=tuple({k: m[k] for k in ("atoms", "shape", "away", "members") if k in m}
                                              for m in marks.get(g["id"], ())))
@@ -426,9 +447,13 @@ def _apply_decorations(cdxml: str, brief: dict, grounded: list[dict]) -> str:
     if not has_any:
         return cdxml
 
-    smiles_by_id = {g["id"]: g["smiles"] for g in grounded}
+    smiles_by_id = {g["id"]: g.get("smiles") for g in grounded}
     key_to_ids: dict[str, list[str]] = {}
     for g in grounded:
+        if g.get("conformer"):
+            for key in g.get("inventory") or []:
+                key_to_ids.setdefault(key, []).append(g["id"])
+            continue
         mol = Chem.MolFromSmiles(g["smiles"])
         if mol is not None:
             key_to_ids.setdefault(semantic_key(mol), []).append(g["id"])
@@ -491,7 +516,7 @@ def _apply_decorations(cdxml: str, brief: dict, grounded: list[dict]) -> str:
         key_seen[f_key] = seen + 1
         sp_id = cand_ids[min(seen, len(cand_ids) - 1)]
         sp_cfg = raw_species.get(sp_id, {})
-        src_mol = Chem.MolFromSmiles(smiles_by_id.get(sp_id, ""))
+        src_mol = Chem.MolFromSmiles(smiles_by_id.get(sp_id) or "")
 
         node_ids: list[str] = []
         top_pts: list[tuple[float, float]] = []
@@ -782,7 +807,7 @@ def _readback(target: Path, grounded: list[dict], used: set[str], fragments: dic
     wanted: dict[str, list[str]] = {}
     for item in grounded:
         if item["id"] in used:
-            # A drawing without a SMILES (a Newman projection) brings the keys its own drawing reads as.
+            # A conformer template brings the keys its own drawing reads as.
             keys = item["inventory"] if "inventory" in item else [semantic_key(Chem.MolFromSmiles(item["smiles"]))]
             for key in keys:
                 wanted.setdefault(key, []).append(item["id"])
@@ -821,8 +846,15 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     """Draw a reaction scheme from a brief and check it, in one call.
 
     brief is an object (or its JSON text) the caller writes from the user's request:
-    species [{id, smiles or name, label?, ring_fills?, atom_halos?, ts_bracket?, color?,
-    atom_colors?, bond_colors?, abbreviate?, orientation?, caption?, box?}],
+    species [{id, smiles or name or conformer, label?, ring_fills?, atom_halos?, ts_bracket?, color?,
+    atom_colors?, bond_colors?, abbreviate?, orientation?, caption?, box?}]. A conformer is
+    {template: chair|newman|haworth|fischer|norbornane|bicyclo_222|adamantane, bond_length?,
+    ...template options}; it replaces smiles/name and skips atom-balance checking. Substituents
+    accept a label string or {label, display: Bold|WedgeBegin|WedgedHash}. Chair substituents
+    map positions 1..6 to {ax|eq: substituent}; Newman front/rear each list three; Haworth
+    positions 1..5 map to {up|down: substituent}; Fischer centers list {left, right} and top/
+    bottom are substituents; cages map their atom positions to substituents. Conformer
+    fragments participate in layout, reaction arrows, ts_bracket and saved-file readback.
     steps [{substrates [ids], products [ids], above [lines], below [lines], yield,
     arrow solid|dashed|failed|reversible|resonance, ts_bracket? (a species id)}], optional layout
     (e.g. "catalytic-cycle"), max_width (points, default 504, the width of a double-column
@@ -917,7 +949,7 @@ def draw_figure(brief: dict | str, output_path: str | None = None, render: bool 
     PNGs in png/ with render=True) and the report lists the pages.
 
     kind "mechanism" draws the structures of a mechanism with the curved arrows the brief
-    lists: species [{id, smiles or name, label?, generic_rings?, clashes? [{between [atom, atom],
+    lists: species [{id, smiles or name or conformer, label?, generic_rings?, clashes? [{between [atom, atom],
     color?}] (a red double zigzag between two crowding groups)}] (or {id, newman {front, rear,
     conformation?, dihedral_offset?, attach?}, label?} for a Newman projection placed among them,
     which arrows cannot point at and whose steps need no moves; the order of rear picks the
@@ -968,7 +1000,7 @@ def _draw_figure(brief: dict | str, output_path: str | None, render: bool) -> di
     grounded, errors = _ground(brief["species"])
     if errors:
         return _failure(errors)
-    smiles = {g["id"]: g["smiles"] for g in grounded}
+    smiles = {g["id"]: g["smiles"] for g in grounded if g.get("smiles")}
 
     balance, warnings = _check_balance(brief, smiles)
     notes: list[str] = []
@@ -1038,7 +1070,8 @@ def _draw_figure(brief: dict | str, output_path: str | None, render: bool) -> di
         "operation": "draw_figure",
         "output_path": str(target),
         "layout": house_record.get("layout") or _route_layout(_step_descriptors(brief), brief.get("layout"))[0],
-        "species": [{k: g[k] for k in ("id", "label", "name", "smiles", "source")} for g in grounded],
+        "species": [{**{k: g[k] for k in ("id", "label", "name", "smiles", "source")},
+                     **({"conformer": g["conformer"]} if g.get("conformer") else {})} for g in grounded],
         "steps": balance,
         "style": style_report(brief_style(brief)[0], house,
                               house_record["applied"] + ([highlight] if highlight else []),
