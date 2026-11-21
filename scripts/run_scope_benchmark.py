@@ -112,6 +112,74 @@ def _pixel_metrics(baseline: Path, render: Path) -> dict:
     return out
 
 
+def _pixel_metrics_normalized(baseline: Path, render: Path, height: int = 900) -> dict:
+    """RMSE + differing-pixel ratio once both images sit on one canvas.
+
+    The journal corpus pairs a published crop with a fresh ChemDraw page, so the raw sizes
+    never match and ``_pixel_metrics`` reports nulls. Each image is scaled to a common height
+    with its aspect ratio kept and the narrower one padded with white. These numbers measure
+    how close the imitation comes to the original, NOT pixel parity: a published scheme and a
+    rebuilt one differ in layout, so a large value here is expected and is a similarity score,
+    not a defect count.
+    """
+    from PIL import Image, ImageChops
+
+    b = Image.open(baseline).convert("RGB")
+    r = Image.open(render).convert("RGB")
+
+    def _fit(im: Image.Image) -> Image.Image:
+        ratio = height / max(im.height, 1)
+        return im.resize((max(1, int(round(im.width * ratio))), height), Image.Resampling.LANCZOS)
+
+    b_fit, r_fit = _fit(b), _fit(r)
+    width = max(b_fit.width, r_fit.width)
+    canvas_b = Image.new("RGB", (width, height), "white")
+    canvas_r = Image.new("RGB", (width, height), "white")
+    canvas_b.paste(b_fit, (0, 0))
+    canvas_r.paste(r_fit, (0, 0))
+    hist = ImageChops.difference(canvas_b, canvas_r).convert("L").histogram()
+    total = float(sum(hist))
+    out = {
+        "normalized": True,
+        "canvas_size": [width, height],
+        "baseline_size": [b.width, b.height],
+        "render_size": [r.width, r.height],
+        "size_match": b.size == r.size,
+        "baseline_scaled_size": [b_fit.width, b_fit.height],
+        "render_scaled_size": [r_fit.width, r_fit.height],
+        "aspect_ratio_delta": round(abs((b.width / max(b.height, 1)) - (r.width / max(r.height, 1))), 4),
+        "rmse": None,
+        "diff_pixel_ratio": None,
+    }
+    if total:
+        out["rmse"] = round(math.sqrt(sum(v * d * d for d, v in enumerate(hist)) / total), 3)
+        out["diff_pixel_ratio"] = round(sum(hist[DIFF_THRESHOLD + 1:]) / total, 4)
+    return out
+
+
+def _aggregate_pixel_metrics(rows: list[dict], key: str) -> dict:
+    """Median and worst of one metric across the cases that produced it, and which case is worst."""
+    values = [(r["slug"], r[key]["rmse"], r[key]["diff_pixel_ratio"]) for r in rows
+              if isinstance(r.get(key), dict) and r[key].get("rmse") is not None]
+    if not values:
+        return {}
+    rmses = sorted(v[1] for v in values)
+    diffs = sorted(v[2] for v in values)
+    worst_rmse = max(values, key=lambda v: v[1])
+    worst_diff = max(values, key=lambda v: v[2])
+    return {
+        "cases_measured": len(values),
+        "rmse_median": rmses[len(rmses) // 2],
+        "rmse_worst": worst_rmse[1],
+        "rmse_worst_case": worst_rmse[0],
+        "rmse_best": rmses[0],
+        "diff_pixel_ratio_median": diffs[len(diffs) // 2],
+        "diff_pixel_ratio_worst": worst_diff[2],
+        "diff_pixel_ratio_worst_case": worst_diff[0],
+        "diff_pixel_ratio_best": diffs[0],
+    }
+
+
 def _collect_coverage_cases(only: list | None, limit: int | None, renders_dir: Path) -> list[dict]:
     cases = []
     for cdxml in sorted(COVERAGE_DIR.glob("*.cdxml")):
@@ -363,6 +431,8 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
             "check_errors": [],
             "check_warnings": [],
             "side_by_side": None,
+            "pixel_metrics": None,
+            "pixel_metrics_normalized": None,
         }
         if report.get("ok"):
             for page in report.get("pages") or []:
@@ -374,13 +444,19 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
                 )
                 entry["check_errors"].extend(chk.get("errors") or [])
                 entry["check_warnings"].extend(chk.get("warnings") or [])
-            if args.render and args.side_by_side:
+            if args.render:
                 pngs = (report.get("native") or {}).get("png_paths") or []
                 if pngs:
-                    comp = out_root / "comparisons" / f"{slug}.compare.png"
-                    if _stitch_side_by_side(ROOT / case["corpus_png"], Path(pngs[0]), comp,
-                                            f"[{case['journal']}] {slug}"):
-                        entry["side_by_side"] = str(comp)
+                    reference = ROOT / case["corpus_png"]
+                    # Same-source sizes first (almost always a mismatch here), then the
+                    # normalised comparison that still says something across the two sources.
+                    entry["pixel_metrics"] = _pixel_metrics(reference, Path(pngs[0]))
+                    entry["pixel_metrics_normalized"] = _pixel_metrics_normalized(reference, Path(pngs[0]))
+                    if args.side_by_side:
+                        comp = out_root / "comparisons" / f"{slug}.compare.png"
+                        if _stitch_side_by_side(reference, Path(pngs[0]), comp,
+                                                f"[{case['journal']}] {slug}"):
+                            entry["side_by_side"] = str(comp)
         case_ok = (
             entry["ok"]
             and entry["checks_passed"]
@@ -392,10 +468,13 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
         if case_ok:
             passed += 1
         status = "PASS" if case_ok else "FAIL"
+        metric = entry.get("pixel_metrics_normalized") or {}
+        extra = (f"  rmse={metric['rmse']}  diff%={metric['diff_pixel_ratio'] * 100:.2f}"
+                 if metric.get("rmse") is not None else "")
         print(
             f"[{idx:02d}/{len(cases):02d}] {status}  {slug:48s}  pages={entry['pages']}  "
             f"readback={entry['readback']}  chk_err={len(entry['check_errors'])}  "
-            f"warn={len(entry['warnings'])}"
+            f"warn={len(entry['warnings'])}{extra}"
         )
         if not case_ok:
             if entry["errors"]:
@@ -413,11 +492,28 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
         "failed": len(results) - passed,
         "rendered": bool(args.render),
         "output_dir": str(out_root),
+        "diff_threshold_grey": DIFF_THRESHOLD,
+        "pixel_metrics_normalized": _aggregate_pixel_metrics(results, "pixel_metrics_normalized"),
+        "pixel_metric_note": (
+            "pixel_metrics compares the published crop with the fresh page byte-for-byte, so "
+            "size_match is false and rmse/diff_pixel_ratio stay null whenever the two sources "
+            "differ in size. pixel_metrics_normalized rescales both to a 900 px canvas and is "
+            "the comparable number: it scores visual similarity of an imitation, not defects. "
+            "The pass/fail gate is unchanged (readback + checks + lint)."
+        ),
         "cases": results,
     }
     report_path = out_root / "benchmark-report.json"
     report_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"\nSUMMARY: {passed}/{len(results)} passed (rendered={bool(args.render)}) -> {report_path}")
+    aggregate = summary["pixel_metrics_normalized"]
+    if aggregate:
+        print(f"PIXELS (normalised 900px canvas, n={aggregate['cases_measured']}): "
+              f"rmse median={aggregate['rmse_median']} worst={aggregate['rmse_worst']} "
+              f"({aggregate['rmse_worst_case']}); "
+              f"diff% median={aggregate['diff_pixel_ratio_median'] * 100:.2f} "
+              f"worst={aggregate['diff_pixel_ratio_worst'] * 100:.2f} "
+              f"({aggregate['diff_pixel_ratio_worst_case']})")
     if cleanup:
         shutil.rmtree(out_root, ignore_errors=True)
     return 0 if passed == len(results) else 1

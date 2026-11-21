@@ -1,0 +1,850 @@
+{
+  "per_image": [
+    {
+      "slug": "bjoc-articles-22-103-scheme1",
+      "strong_chromatic_fraction": 0.0086,
+      "families": [
+        [
+          "blue",
+          4093
+        ],
+        [
+          "red/maroon",
+          259
+        ]
+      ],
+      "top_hex": [
+        [
+          "#4060A0",
+          1544
+        ],
+        [
+          "#6080A0",
+          929
+        ],
+        [
+          "#4080A0",
+          500
+        ]
+      ]
+    },
+    {
+      "slug": "bjoc-articles-22-125-scheme2",
+      "strong_chromatic_fraction": 0.011,
+      "families": [
+        [
+          "blue",
+          2449
+        ],
+        [
+          "magenta/pink",
+          636
+        ],
+        [
+          "orange",
+          497
+        ],
+        [
+          "green",
+          380
+        ],
+        [
+          "violet",
+          354
+        ]
+      ],
+      "top_hex": [
+        [
+          "#4040E0",
+          629
+        ],
+        [
+          "#8080E0",
+          451
+        ],
+        [
+          "#2020E0",
+          445
+        ]
+      ]
+    },
+    {
+      "slug": "bjoc-articles-22-127-scheme2",
+      "strong_chromatic_fraction": 0.0036,
+      "families": [
+        [
+          "red/maroon",
+          2161
+        ]
+      ],
+      "top_hex": [
+        [
+          "#E04040",
+          445
+        ],
+        [
+          "#E02020",
+          436
+        ],
+        [
+          "#E06060",
+          376
+        ]
+      ]
+    },
+    {
+      "slug": "bjoc-articles-22-128-scheme10",
+      "strong_chromatic_fraction": 0.0006,
+      "families": [
+        [
+          "blue",
+          269
+        ]
+      ],
+      "top_hex": [
+        [
+          "#2020E0",
+          75
+        ],
+        [
+          "#4040E0",
+          56
+        ],
+        [
+          "#A0A0E0",
+          47
+        ]
+      ]
+    },
+    {
+      "slug": "bjoc-articles-22-128-scheme17",
+      "strong_chromatic_fraction": 0.0,
+      "families": [],
+      "top_hex": []
+    },
+    {
+      "slug": "bjoc-articles-22-128-scheme6",
+      "strong_chromatic_fraction": 0.0,
+      "families": [],
+      "top_hex": []
+    },
+    {
+      "slug": "communications-chemistry-s42004-022-00692-6-fig2",
+      "strong_chromatic_fraction": 0.0068,
+      "families": [
+        [
+          "blue",
+          3065
+        ],
+        [
+          "red/maroon",
+          35
+        ],
+        [
+          "yellow/olive",
+          26
+        ],
+        [
+          "magenta/pink",
+          9
+        ],
+        [
+          "orange",
+          2
+        ]
+      ],
+      "top_hex": [
+        [
+          "#8080E0",
+          785
+        ],
+        [
+          "#A0A0E0",
+          684
+        ],
+        [
+          "#6060E0",
+          666
+        ]
+      ]
+    },
+    {
+      "slug": "communications-chemistry-s42004-022-00764-7-fig2",
+      "strong_chromatic_fraction": 0.0029,
+      "families": [
+        [
+          "red/maroon",
+          990
+        ]
+      ],
+      "top_hex": [
+        [
+          "#E04040",
+          241
+        ],
+        [
+          "#E06060",
+          180
+        ],
+        [
+          "#E08080",
+          167
+        ]
+      ]
+    },
+    {
+      "slug": "communications-chemistry-s42004-023-01030-0-fig2",
+      "strong_chromatic_fraction": 0.0278,
+      "families": [
+        [
+          "blue",
+          7038
+        ],
+        [
+          "red/maroon",
+          6578
+        ]
+      ],
+      "top_hex": [
+        [
+          "#6060C0",
+          2779
+        ],
+        [
+          "#A04040",
+          2545
+        ],
+        [
+          "#A06060",
+          2408
+        ]
+      ]
+    },
+    {
+      "slug": "nature-catalysis-s41929-023-01081-5-fig2",
+      "strong_chromatic_fraction": 0.0157,
+      "families": [
+        [
+          "red/maroon",
+          5245
+        ],
+        [
+          "blue",
+          3507
+        ]
+      ],
+      "top_hex": [
+        [
+          "#A02020",
+          1395
+        ],
+        [
+          "#C04040",
+          1335
+        ],
+        [
+          "#C06060",
+          1112
+        ]
+      ]
+    },
+    {
+      "slug": "nature-catalysis-s41929-024-01153-0-fig3",
+      "strong_chromatic_fraction": 0.0119,
+      "families": [
+        [
+          "blue",
+          5865
+        ],
+        [
+          "red/maroon",
+          36
+        ]
+      ],
+      "top_hex": [
+        [
+          "#4040A0",
+          2700
+        ],
+        [
+          "#6060A0",
+          1592
+        ],
+        [
+          "#202080",
+          1303
+        ]
+      ]
+    },
+    {
+      "slug": "nature-catalysis-s41929-025-01357-y-fig3",
+      "strong_chromatic_fraction": 0.0247,
+      "families": [
+        [
+          "teal/cyan",
+          4229
+        ],
+        [
+          "red/maroon",
+          4131
+        ],
+        [
+          "green",
+          2090
+        ],
+        [
+          "blue",
+          1519
+        ],
+        [
+          "magenta/pink",
+          1092
+        ],
+        [
+          "orange",
+          81
+        ],
+        [
+          "yellow/olive",
+          14
+        ],
+        [
+          "violet",
+          3
+        ]
+      ],
+      "top_hex": [
+        [
+          "#A04040",
+          1919
+        ],
+        [
+          "#208080",
+          1919
+        ],
+        [
+          "#408080",
+          1486
+        ]
+      ]
+    },
+    {
+      "slug": "nature-catalysis-s41929-025-01405-7-fig2",
+      "strong_chromatic_fraction": 0.0301,
+      "families": [
+        [
+          "red/maroon",
+          11268
+        ],
+        [
+          "blue",
+          2099
+        ],
+        [
+          "violet",
+          96
+        ],
+        [
+          "yellow/olive",
+          66
+        ],
+        [
+          "green",
+          20
+        ]
+      ],
+      "top_hex": [
+        [
+          "#A02040",
+          1774
+        ],
+        [
+          "#800000",
+          1500
+        ],
+        [
+          "#C06060",
+          1278
+        ]
+      ]
+    },
+    {
+      "slug": "nature-chemistry-s41557-023-01174-5-fig3",
+      "strong_chromatic_fraction": 0.003,
+      "families": [
+        [
+          "red/maroon",
+          1616
+        ],
+        [
+          "teal/cyan",
+          66
+        ],
+        [
+          "blue",
+          62
+        ]
+      ],
+      "top_hex": [
+        [
+          "#A00000",
+          484
+        ],
+        [
+          "#A02020",
+          253
+        ],
+        [
+          "#A00020",
+          178
+        ]
+      ]
+    },
+    {
+      "slug": "nature-chemistry-s41557-026-02231-5-fig3",
+      "strong_chromatic_fraction": 0.0,
+      "families": [],
+      "top_hex": []
+    },
+    {
+      "slug": "nature-communications-pmc13518986-fig4",
+      "strong_chromatic_fraction": 0.0089,
+      "families": [
+        [
+          "blue",
+          3984
+        ],
+        [
+          "red/maroon",
+          503
+        ],
+        [
+          "teal/cyan",
+          4
+        ]
+      ],
+      "top_hex": [
+        [
+          "#60A0C0",
+          902
+        ],
+        [
+          "#6080A0",
+          734
+        ],
+        [
+          "#4080A0",
+          458
+        ]
+      ]
+    },
+    {
+      "slug": "nature-communications-pmc13594109-fig4",
+      "strong_chromatic_fraction": 0.0217,
+      "families": [
+        [
+          "teal/cyan",
+          6734
+        ],
+        [
+          "orange",
+          3361
+        ],
+        [
+          "blue",
+          1161
+        ]
+      ],
+      "top_hex": [
+        [
+          "#60A0C0",
+          2646
+        ],
+        [
+          "#2080C0",
+          1883
+        ],
+        [
+          "#40A0C0",
+          1352
+        ]
+      ]
+    },
+    {
+      "slug": "nature-communications-s41467-022-29059-0-fig2",
+      "strong_chromatic_fraction": 0.0078,
+      "families": [
+        [
+          "orange",
+          1927
+        ],
+        [
+          "teal/cyan",
+          1819
+        ],
+        [
+          "blue",
+          595
+        ]
+      ],
+      "top_hex": [
+        [
+          "#00A0A0",
+          1020
+        ],
+        [
+          "#A04000",
+          994
+        ],
+        [
+          "#2020A0",
+          181
+        ]
+      ]
+    },
+    {
+      "slug": "nature-communications-s41467-022-32614-4-fig3",
+      "strong_chromatic_fraction": 0.0077,
+      "families": [
+        [
+          "red/maroon",
+          3472
+        ],
+        [
+          "blue",
+          517
+        ],
+        [
+          "green",
+          234
+        ],
+        [
+          "teal/cyan",
+          6
+        ]
+      ],
+      "top_hex": [
+        [
+          "#A04040",
+          1085
+        ],
+        [
+          "#A06060",
+          676
+        ],
+        [
+          "#802020",
+          597
+        ]
+      ]
+    },
+    {
+      "slug": "nature-communications-s41467-022-35062-2-fig2",
+      "strong_chromatic_fraction": 0.0366,
+      "families": [
+        [
+          "blue",
+          10619
+        ],
+        [
+          "red/maroon",
+          7554
+        ]
+      ],
+      "top_hex": [
+        [
+          "#2020E0",
+          3022
+        ],
+        [
+          "#4040E0",
+          2181
+        ],
+        [
+          "#6060E0",
+          1892
+        ]
+      ]
+    },
+    {
+      "slug": "nature-communications-s41467-023-40180-6-fig4",
+      "strong_chromatic_fraction": 0.0058,
+      "families": [
+        [
+          "red/maroon",
+          2257
+        ],
+        [
+          "blue",
+          122
+        ]
+      ],
+      "top_hex": [
+        [
+          "#E06060",
+          661
+        ],
+        [
+          "#E04040",
+          527
+        ],
+        [
+          "#E08080",
+          478
+        ]
+      ]
+    },
+    {
+      "slug": "nature-communications-s41467-025-62466-7-fig4",
+      "strong_chromatic_fraction": 0.0295,
+      "families": [
+        [
+          "blue",
+          9155
+        ],
+        [
+          "yellow/olive",
+          4077
+        ],
+        [
+          "red/maroon",
+          2008
+        ],
+        [
+          "violet",
+          63
+        ],
+        [
+          "magenta/pink",
+          31
+        ],
+        [
+          "orange",
+          27
+        ],
+        [
+          "green",
+          1
+        ]
+      ],
+      "top_hex": [
+        [
+          "#E0E000",
+          2671
+        ],
+        [
+          "#2020E0",
+          2078
+        ],
+        [
+          "#4040E0",
+          1734
+        ]
+      ]
+    },
+    {
+      "slug": "nature-synthesis-s44160-024-00566-w-fig4",
+      "strong_chromatic_fraction": 0.0057,
+      "families": [
+        [
+          "orange",
+          1624
+        ],
+        [
+          "red/maroon",
+          1621
+        ],
+        [
+          "teal/cyan",
+          57
+        ],
+        [
+          "yellow/olive",
+          12
+        ],
+        [
+          "blue",
+          3
+        ]
+      ],
+      "top_hex": [
+        [
+          "#C06040",
+          793
+        ],
+        [
+          "#C08060",
+          686
+        ],
+        [
+          "#C0A080",
+          468
+        ]
+      ]
+    },
+    {
+      "slug": "nature-synthesis-s44160-024-00631-4-fig4",
+      "strong_chromatic_fraction": 0.0135,
+      "families": [
+        [
+          "red/maroon",
+          6347
+        ],
+        [
+          "blue",
+          449
+        ]
+      ],
+      "top_hex": [
+        [
+          "#E08060",
+          1614
+        ],
+        [
+          "#E0A080",
+          1352
+        ],
+        [
+          "#E06040",
+          1055
+        ]
+      ]
+    },
+    {
+      "slug": "nature-synthesis-s44160-025-00771-1-fig4",
+      "strong_chromatic_fraction": 0.0219,
+      "families": [
+        [
+          "blue",
+          8361
+        ],
+        [
+          "red/maroon",
+          4872
+        ]
+      ],
+      "top_hex": [
+        [
+          "#002060",
+          2012
+        ],
+        [
+          "#802020",
+          1792
+        ],
+        [
+          "#204080",
+          1451
+        ]
+      ]
+    },
+    {
+      "slug": "nature-synthesis-s44160-025-00821-8-fig4",
+      "strong_chromatic_fraction": 0.0103,
+      "families": [
+        [
+          "blue",
+          5516
+        ]
+      ],
+      "top_hex": [
+        [
+          "#4060A0",
+          2069
+        ],
+        [
+          "#6080A0",
+          1432
+        ],
+        [
+          "#206080",
+          871
+        ]
+      ]
+    }
+  ],
+  "global_families": [
+    [
+      "blue",
+      70448
+    ],
+    [
+      "red/maroon",
+      60953
+    ],
+    [
+      "teal/cyan",
+      12915
+    ],
+    [
+      "orange",
+      7519
+    ],
+    [
+      "yellow/olive",
+      4195
+    ],
+    [
+      "green",
+      2725
+    ],
+    [
+      "magenta/pink",
+      1768
+    ],
+    [
+      "violet",
+      516
+    ]
+  ],
+  "global_hex": [
+    [
+      "#A04040",
+      8405
+    ],
+    [
+      "#4060A0",
+      6352
+    ],
+    [
+      "#2020E0",
+      5905
+    ],
+    [
+      "#A06060",
+      5667
+    ],
+    [
+      "#4040E0",
+      5215
+    ],
+    [
+      "#6080A0",
+      5058
+    ],
+    [
+      "#A0A0E0",
+      4675
+    ],
+    [
+      "#6060E0",
+      4512
+    ],
+    [
+      "#8080E0",
+      4484
+    ],
+    [
+      "#4040A0",
+      4401
+    ],
+    [
+      "#802020",
+      4018
+    ],
+    [
+      "#60A0C0",
+      3827
+    ]
+  ]
+}

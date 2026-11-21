@@ -585,23 +585,142 @@ def _resolve_crossing_bond_id(ref, fragment, atom_map):
     return ref_str
 
 
+def _ring_order(mol, ring):
+    """The ring's atom indices walked in order round the ring.
+
+    ``GetRingInfo().AtomRings()`` gives the members, not a dependable traversal order, and the
+    crossing bond has to be an edge of the ring rather than any pair of its atoms.
+    """
+    members = set(ring)
+    neighbours = {i: sorted(j.GetIdx() for j in mol.GetAtomWithIdx(i).GetNeighbors() if j.GetIdx() in members)
+                  for i in members}
+    if any(len(v) != 2 for v in neighbours.values()):
+        return None
+    start = min(members)
+    order, previous, current = [start], None, start
+    for _ in range(len(members)):
+        following = [j for j in neighbours[current] if j != previous]
+        if not following:
+            return None
+        previous, current = current, following[0]
+        if current == start:
+            return order
+        order.append(current)
+    return None
+
+
+def _rewrite_ring_attachments(fragment, mol, atoms, atom_map, next_id):
+    """Draw an R whose position on a ring is unspecified from the ring's centre.
+
+    ChemDraw's own shape for that is a MultiAttachment node on the ring centroid, bonded to
+    the R label, so the short bond leaves through the middle of a ring bond
+    (assets/readme/markush/markush.cdxml). The bond that ran from the ring atom to the R is
+    repointed at the centroid node, and the R label moves out along the crossed bond's normal.
+    Returns (nodes added, warnings, next free id); ``atoms`` is updated so the object's box
+    holds the moved label.
+    """
+    from ..overlay_geometry import ring_attachment_placement
+
+    info = mol.GetRingInfo()
+    if not info.NumRings():
+        return 0, [], next_id
+    added, warnings = 0, []
+    points = {a["index"]: (a["x"], a["y"]) for a in atoms}
+    mean_bond = 14.4
+    spans = []
+    for b in mol.GetBonds():
+        i, j = b.GetBeginAtomIdx(), b.GetEndAtomIdx()
+        spans.append(math.dist(points[i + 1], points[j + 1]))
+    if spans:
+        mean_bond = sum(spans) / len(spans)
+
+    nodes = {n.get("id"): n for n in fragment.findall("n")}
+    for atom in mol.GetAtoms():
+        if atom.GetAtomicNum() != 0 or atom.GetDegree() != 1:
+            continue
+        neighbour = atom.GetNeighbors()[0]
+        if not neighbour.IsInRing():
+            continue
+        rings = sorted((r for r in info.AtomRings() if neighbour.GetIdx() in r), key=len)
+        for candidate in rings:
+            ring = _ring_order(mol, candidate)
+            if ring is None:
+                continue
+            members = set(ring)
+            xy = {k: points[k + 1] for k in ring}
+            orders = {frozenset((b.GetBeginAtomIdx(), b.GetEndAtomIdx())): b.GetBondTypeAsDouble()
+                      for b in mol.GetBonds()
+                      if b.GetBeginAtomIdx() in members and b.GetEndAtomIdx() in members}
+            # An atom carrying anything else outside the ring is not a free position for this R.
+            blocked = {k for k in ring
+                       if any(n.GetIdx() != atom.GetIdx() and n.GetIdx() not in members
+                              for n in mol.GetAtomWithIdx(k).GetNeighbors())}
+            placement = ring_attachment_placement(ring, xy, orders, neighbour.GetIdx(), blocked,
+                                                  bond_length=mean_bond)
+            if placement is not None:
+                break
+        else:
+            warnings.append("An R on a ring had no free ring bond to cross; it stays on the ring atom.")
+            continue
+        variable_id = str(atom_map[atom.GetIdx() + 1])
+        anchor_id = str(atom_map[neighbour.GetIdx() + 1])
+        label_node = nodes.get(variable_id)
+        link = next((b for b in fragment.findall("b")
+                     if {b.get("B"), b.get("E")} == {variable_id, anchor_id}), None)
+        if label_node is None or link is None:
+            continue
+        old = points[atom.GetIdx() + 1]
+        lx, ly = placement["label"]
+        _move(label_node, lx - old[0], ly - old[1])
+        atoms[atom.GetIdx()]["x"], atoms[atom.GetIdx()]["y"] = lx, ly
+        ma_id = str(next_id)
+        next_id += 1
+        cx, cy = placement["centre"]
+        ma = ET.Element("n", {"id": ma_id, "p": f"{cx:.2f} {cy:.2f}",
+                              "NodeType": "MultiAttachment",
+                              "Attachments": " ".join(str(atom_map[k + 1]) for k in placement["attachments"])})
+        # Keep the nodes before the bonds, as the rest of the builder writes them.
+        last_node = max(i for i, child in enumerate(fragment) if child.tag == "n")
+        fragment.insert(last_node + 1, ma)
+        link.set("B", ma_id)
+        link.set("E", variable_id)
+        added += 1
+    return added, warnings, next_id
+
+
 def _strip_multi_attachments_for_inventory(root_el: ET.Element) -> ET.Element:
-    """Return a deep copy of root_el with MultiAttachment nodes and their coordination bonds removed."""
+    """Return a deep copy of root_el with MultiAttachment nodes and their coordination bonds removed.
+
+    An R label bonded to a MultiAttachment is the exception: that node *is* the attachment,
+    drawn on a ring's centroid so the bond to R crosses a ring bond. Its bond is re-pointed at
+    the first listed ring atom rather than deleted, so stripping leaves the brief's structure
+    instead of an orphaned R. The metal-ligand contacts keep the old behaviour.
+    """
     cleaned = deepcopy(root_el)
     for frag in cleaned.iter('fragment'):
-        ma_ids = {
-            n.get('id')
+        nodes = {n.get('id'): n for n in frag.findall('n')}
+        attachments = {
+            n.get('id'): (n.get('Attachments') or '').split()
             for n in list(frag.findall('n'))
             if n.get('NodeType') == 'MultiAttachment'
         }
-        if not ma_ids:
+        if not attachments:
             continue
         for n in list(frag.findall('n')):
-            if n.get('id') in ma_ids:
+            if n.get('id') in attachments:
                 frag.remove(n)
         for b in list(frag.findall('b')):
-            if b.get('B') in ma_ids or b.get('E') in ma_ids:
+            for end, other in (('B', 'E'), ('E', 'B')):
+                if b.get(end) not in attachments:
+                    continue
+                listed = attachments[b.get(end)]
+                is_mark = (nodes.get(b.get(other)) is not None
+                           and nodes[b.get(other)].get('NodeType') == 'GenericNickname')
+                if is_mark and listed:
+                    b.set(end, listed[0])
+                    break
                 frag.remove(b)
+                break
     return cleaned
 
 
@@ -803,6 +922,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
         return str(len(colors) + 1)
 
     named, validations, boxes = {}, [], []
+    ring_notes = []
     frag_meta = []
     bg_z_elements = []
     pending_crossings = []
@@ -931,7 +1051,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 'smiles', 'molblock', 'file', 'fragment_index', 'position', 'coordinates', 'rotation', 'label',
                 'preserve_coordinates', 'align_to', 'alignment_mode', 'bond_length', 'cip_labels', 'atom_numbers',
                 'annotation_offsets', 'highlight_atoms', 'highlight_bonds', 'highlight_color', 'color', 'bond_displays',
-                'ring_fills', 'atom_halos', 'multi_attachments', 'crossings', 'ts_bracket',
+                'ring_fills', 'atom_halos', 'multi_attachments', 'crossings', 'ts_bracket', 'r_attachment',
             },
             'text': {'position', 'text', 'runs', 'size', 'align', 'color'},
             'arrow': {'start', 'end', 'style', 'color'},
@@ -1043,6 +1163,12 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
 
             # Validate fragment BEFORE appending MultiAttachment nodes and coordination bonds
             validations.append(validate_fragment(source, ET.tostring(fragment, encoding='unicode')))
+
+            if item.get('r_attachment') == 'centre':
+                # Applied after the round-trip check: the drawn MultiAttachment is a reading
+                # aid, and the chemistry it collapses back to is the brief's own.
+                _added, notes, next_id = _rewrite_ring_attachments(fragment, mol, atoms, atom_map, next_id)
+                ring_notes.extend(notes)
 
             for ma in item.get('multi_attachments', []):
                 metal_idx = int(ma['metal_atom'])
@@ -1503,7 +1629,8 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             'component_overlap_candidates': collisions,
             'object_ids': named,
         },
-        'warnings': ['Inspect overlap candidates and native rendering before acceptance.'] if collisions else [],
+        'warnings': (['Inspect overlap candidates and native rendering before acceptance.'] if collisions else [])
+                    + ring_notes,
     }, [target])
 
 

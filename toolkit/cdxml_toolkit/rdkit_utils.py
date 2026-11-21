@@ -63,6 +63,57 @@ def _get_shared_chemscript_bridge() -> Any:
 # Core: CDXML <fragment> → RDKit Mol
 # ---------------------------------------------------------------------------
 
+def collapse_multi_attachments(frag_elem: ET.Element) -> ET.Element:
+    """A copy of the fragment with an R mark's MultiAttachment node folded back into one bond.
+
+    An R whose position on a ring is left unspecified is drawn as a MultiAttachment node on the
+    ring's centroid, bonded to the R label, so the short bond crosses a ring bond on its way out
+    (assets/readme/markush/markush.cdxml). RDKit's own CDXML reader treats that node as a
+    carbon, which would turn one R into a stray methyl and a bare ring. Folding the node onto
+    the first ring atom it lists — the position the writer took from the brief — restores the
+    structure the brief declared.
+
+    Only a MultiAttachment bonded to a ``GenericNickname`` is folded: the metal-ligand contacts
+    the node type also serves are a real atom's coordination, and keep their old reading.
+    """
+    from copy import deepcopy
+
+    # Nothing to fold: hand back the *same* element, not a copy. Reading a document must leave
+    # the caller's tree and the nodes it holds alone, and most fragments have no such node.
+    if not any(n.get("NodeType") == "MultiAttachment" for n in frag_elem.findall("n")):
+        return frag_elem
+
+    frag = deepcopy(frag_elem)
+    nodes = {n.get("id"): n for n in frag.findall("n")}
+    attachments = {n.get("id"): (n.get("Attachments") or "").split()
+                   for n in frag.findall("n") if n.get("NodeType") == "MultiAttachment"}
+    if not attachments:
+        return frag_elem
+    marked = set()
+    for b in frag.findall("b"):
+        for end, other in (("B", "E"), ("E", "B")):
+            neighbour = nodes.get(b.get(other))
+            if b.get(end) in attachments and neighbour is not None \
+                    and neighbour.get("NodeType") == "GenericNickname":
+                marked.add(b.get(end))
+    if not marked:
+        return frag
+    for n in list(frag.findall("n")):
+        if n.get("id") in marked:
+            frag.remove(n)
+    for b in list(frag.findall("b")):
+        for end in ("B", "E"):
+            if b.get(end) not in marked:
+                continue
+            listed = [a for a in attachments[b.get(end)] if a in nodes and a not in marked]
+            if listed:
+                b.set(end, listed[0])
+            else:
+                frag.remove(b)
+                break
+    return frag
+
+
 def frag_to_mol(frag_elem: ET.Element):
     """Convert a CDXML <fragment> to an RDKit Mol with atom metadata.
 
@@ -77,6 +128,9 @@ def frag_to_mol(frag_elem: ET.Element):
     """
     from rdkit import Chem
 
+    # An R mark's centroid node folds back onto the ring atom the brief declared.
+    frag_elem = collapse_multi_attachments(frag_elem)
+
     atoms: List[dict] = []
     id_map: Dict[int, int] = {}
 
@@ -89,6 +143,11 @@ def frag_to_mol(frag_elem: ET.Element):
         "Nickname",          # Alternative label form (may or may not be real)
         "Unspecified",       # Uninterpretable text labels
     }
+
+    # A MultiAttachment is a drawing of "this R may sit at any of these ring atoms", not an
+    # atom: it is the node ChemDraw puts on a ring's centroid so the bond to R crosses a ring
+    # bond. ``collapse_multi_attachments`` above has already folded it onto the ring atom the
+    # writer listed first, which is the position the brief declared.
 
     for n in frag_elem.findall("n"):
         nid = int(n.get("id"))

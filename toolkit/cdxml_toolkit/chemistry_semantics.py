@@ -133,6 +133,10 @@ def read_fragments(value):
             parent = parents.get(parent)
         if nested:
             continue
+        # An R mark's centroid node is a drawing convention, not an atom: fold it back before
+        # RDKit's reader would otherwise read it as a carbon and report a stray methyl.
+        from .rdkit_utils import collapse_multi_attachments
+        fragment = collapse_multi_attachments(fragment)
         block = '<CDXML><page id="90000000">' + ET.tostring(fragment, encoding='unicode') + '</page></CDXML>'
         parsed = Chem.MolsFromCDXML(block)
         if not parsed:

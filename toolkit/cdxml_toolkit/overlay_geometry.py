@@ -201,6 +201,70 @@ def arc_clearance(points: str, bonds, ends) -> float:
     return min(_segment_distance(p, a, b) for p in samples for a, b in bonds)
 
 
+# An R whose position on a ring is left unspecified hangs off the ring's centre, not off one
+# of its vertices: a short bond runs out through the middle of a ring bond, which is what
+# ChemDraw's own MultiAttachment node draws. Measured from assets/readme/markush/markush.cdxml,
+# where the MultiAttachment sits 1.61 bond lengths from the R label it carries.
+R_ATTACHMENT_BOND_RATIO = 1.61
+
+
+def ring_attachment_placement(ring, xy, orders, attach, blocked=(), bond_length=ACS_BOND_LENGTH):
+    """Where an R goes when its position on a ring is not meant to be read as fixed.
+
+    ``ring`` is the ring's atom keys in order round the ring; ``xy`` maps a key to its point;
+    ``orders`` maps a ring bond (as a frozenset of its two keys) to its bond order; ``attach``
+    is the ring atom the brief puts the R on; ``blocked`` names the ring atoms that already
+    carry a substituent, so an unspecified R cannot claim them.
+
+    Returns ``None`` when no ring bond is open for the R to cross, otherwise a dict with:
+    ``centre`` the point the MultiAttachment node sits on (the ring's centroid);
+    ``crossed`` the ring bond the bond to the R runs through; ``label`` where the R label
+    goes, ``R_ATTACHMENT_BOND_RATIO`` bond lengths out from the centroid along that bond's
+    outward normal; and ``attachments`` the candidate atoms, ``attach`` first so a reader that
+    collapses the node back to one bond restores the position the brief declared.
+    """
+    keys = list(ring)
+    if len(keys) < 3 or attach not in keys:
+        return None
+    n = len(keys)
+    cx = sum(xy[k][0] for k in keys) / n
+    cy = sum(xy[k][1] for k in keys) / n
+    centre = (cx, cy)
+    free = [k for k in keys if k not in set(blocked) or k == attach]
+    edges = [(keys[i], keys[(i + 1) % n]) for i in range(n)]
+    # A bond the R can cross has both its atoms free; that is the markush witness's shape.
+    open_edges = [e for e in edges if e[0] in free and e[1] in free]
+    if not open_edges:
+        return None
+    # The convention crosses a double bond where the ring offers one (markush: bond 108-116).
+    pool = [e for e in open_edges if orders.get(frozenset(e)) == 2] or open_edges
+    ax, ay = xy[attach]
+    dx, dy = ax - cx, ay - cy
+    span = math.hypot(dx, dy)
+    best = None
+    for e in pool:
+        mx, my = (xy[e[0]][0] + xy[e[1]][0]) / 2.0, (xy[e[0]][1] + xy[e[1]][1]) / 2.0
+        ex, ey = mx - cx, my - cy
+        el = math.hypot(ex, ey)
+        if el < 1e-6:
+            continue
+        # Leave by the side the brief's declared atom is on, so the R stays where the
+        # reader expects it; a degenerate centre just takes the first open bond.
+        score = (ex / el) * (dx / span) + (ey / el) * (dy / span) if span > 1e-6 else 0.0
+        if best is None or score > best[0]:
+            best = (score, e, (ex / el, ey / el))
+    if best is None:
+        return None
+    _, crossed, (nx, ny) = best
+    reach = R_ATTACHMENT_BOND_RATIO * float(bond_length)
+    return {
+        "centre": centre,
+        "crossed": crossed,
+        "label": (cx + nx * reach, cy + ny * reach),
+        "attachments": [attach] + [k for k in free if k != attach],
+    }
+
+
 def choose_generic_ring(a, b, away=None, members: int = 6, bonds=(), clear_a: float = 0.0,
                         clear_b: float = 0.0) -> tuple[str, float, int]:
     """The generic-ring arc through a and b that keeps clear of the molecule's other bonds.

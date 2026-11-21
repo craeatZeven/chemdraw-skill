@@ -371,6 +371,8 @@ def header_objects(spec, style, left, top):
                    'coordinates': [[px + dx, py + dy] for px, py in s['xy']]}
         if s['item'].get('color'):
             mol_obj['color'] = s['item']['color']
+        if spec.get('r_attachment') == 'centre':
+            mol_obj['r_attachment'] = 'centre'
         objects.append(mol_obj)
         bottom = max(bottom, mid + s['h'] / 2 + gap)
         if s['item'].get('label'):
@@ -584,7 +586,8 @@ def create_pages(records,spec,stage,start_index=0):
         text_only=ty is not None   # a compound drawn with another's structure: its caption alone
         dy_mol=(row_mol_bottom-p['molecule_bottom'])/2.0 if (row_mol_bottom is not None and not text_only) else 0.0
         objects=[] if text_only else [{'type':'molecule','id':key+'_mol','smiles':p['input']['smiles'],
-                  'coordinates':[[a+x,b+y+dy_mol] for a,b in p['coords']],**({'color':color} if color else {})}]
+                  'coordinates':[[a+x,b+y+dy_mol] for a,b in p['coords']],**({'color':color} if color else {}),
+                  **({'r_attachment':'centre'} if spec.get('r_attachment')=='centre' else {})}]
         top=ty
         if ty is None:
             mol_bot=row_mol_bottom if row_mol_bottom is not None else p['molecule_bottom']

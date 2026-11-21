@@ -28,11 +28,15 @@ from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manif
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
               "highlight_varying", "header", "group_colors", "columns", "row_align", "band_style", "border",
-              "fragment_colors"}
+              "fragment_colors", "r_attachment"}
 HEADER_KEYS = {"substrates", "products", "above", "below"}
 HEADER_ITEM_KEYS = {"smiles", "name", "label", "color"}
 ROW_ALIGNS = ("left", "center", "justify")
 BAND_STYLES = ("rule", "pill")
+# 'vertex' keeps the R on the atom the SMILES names (the default, and what a scope whose
+# position is fixed means). 'centre' is the "position not fixed on this ring" convention: the
+# bond leaves the ring's centroid and crosses a ring bond on its way to the label.
+R_ATTACHMENTS = ("vertex", "centre")
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
 SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", "definition", "secondary_of",
@@ -132,6 +136,11 @@ def _validate(brief: dict) -> list[str]:
     band_style = brief.get("band_style")
     if band_style is not None and band_style not in BAND_STYLES:
         errors.append(f"band_style must be one of {list(BAND_STYLES)}.")
+    r_attachment = brief.get("r_attachment")
+    if r_attachment is not None and r_attachment not in R_ATTACHMENTS:
+        errors.append(f"r_attachment must be one of {list(R_ATTACHMENTS)}: 'vertex' draws every R on the "
+                      "atom the SMILES names; 'centre' draws an R whose position on a ring is left "
+                      "unspecified from the ring's centre, through a ring bond.")
     border = brief.get("border")
     if border is not None and not (
         isinstance(border, bool) or (isinstance(border, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", border))
@@ -463,6 +472,7 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         **({"columns": brief["columns"]} if brief.get("columns") is not None else {}),
         **({"row_align": brief["row_align"]} if brief.get("row_align") is not None else {}),
         **({"band_style": brief["band_style"]} if brief.get("band_style") is not None else {}),
+        **({"r_attachment": brief["r_attachment"]} if brief.get("r_attachment") is not None else {}),
         **({"border": brief["border"]} if brief.get("border") else {}),
     }
     path = work / "spec.json"

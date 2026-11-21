@@ -1,0 +1,1473 @@
+{
+  "abbreviations": {
+    "known_shorthand_labels": [
+      "Ac",
+      "Bn",
+      "Boc",
+      "Bpin",
+      "Bz",
+      "CF3",
+      "CN",
+      "CO2Et",
+      "CO2Me",
+      "Cbz",
+      "Et",
+      "Me",
+      "Ms",
+      "N3",
+      "NHBoc",
+      "NMe2",
+      "NO2",
+      "OAc",
+      "OBn",
+      "OBz",
+      "OCF3",
+      "OMe",
+      "OMs",
+      "OTBS",
+      "OTIPS",
+      "OTMS",
+      "OTf",
+      "OTs",
+      "Ph",
+      "PhthN",
+      "Piv",
+      "TIPS",
+      "TMS",
+      "Tf",
+      "Ts",
+      "iPr",
+      "nBu",
+      "tBu"
+    ],
+    "per_brief": [
+      {
+        "slug": "bjoc-articles-22-103-scheme1",
+        "species": 10,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": true,
+        "groups": {
+          "OMe": 2,
+          "Ph": 2,
+          "CF3": 8
+        }
+      },
+      {
+        "slug": "bjoc-articles-22-125-scheme2",
+        "species": 7,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": false,
+        "groups": {
+          "Ac": 7
+        }
+      },
+      {
+        "slug": "bjoc-articles-22-127-scheme2",
+        "species": 15,
+        "abbreviate_set": 0,
+        "definition_set": 2,
+        "has_stereo": false,
+        "header_has_r": true,
+        "groups": {
+          "OMe": 1,
+          "Ph": 2,
+          "Bn": 2
+        }
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme10",
+        "species": 4,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": false,
+        "groups": {
+          "OMe": 4
+        }
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme17",
+        "species": 5,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": false,
+        "groups": {
+          "Ac": 5
+        }
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme6",
+        "species": 4,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": true,
+        "groups": {
+          "Ac": 3
+        }
+      },
+      {
+        "slug": "communications-chemistry-s42004-022-00692-6-fig2",
+        "species": 13,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": false,
+        "groups": {}
+      },
+      {
+        "slug": "communications-chemistry-s42004-022-00764-7-fig2",
+        "species": 10,
+        "abbreviate_set": 0,
+        "definition_set": 4,
+        "has_stereo": false,
+        "header_has_r": false,
+        "groups": {
+          "OMe": 9
+        }
+      },
+      {
+        "slug": "communications-chemistry-s42004-023-01030-0-fig2",
+        "species": 9,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": true,
+        "groups": {
+          "Ph": 9,
+          "Bn": 9,
+          "Ac": 1
+        }
+      },
+      {
+        "slug": "nature-catalysis-s41929-023-01081-5-fig2",
+        "species": 12,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": false,
+        "groups": {
+          "OMe": 2,
+          "Ph": 8,
+          "CF3": 1
+        }
+      },
+      {
+        "slug": "nature-catalysis-s41929-024-01153-0-fig3",
+        "species": 11,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": false,
+        "groups": {
+          "Ph": 1
+        }
+      },
+      {
+        "slug": "nature-catalysis-s41929-025-01357-y-fig3",
+        "species": 16,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": false,
+        "groups": {
+          "OMe": 1,
+          "Ph": 13,
+          "CF3": 1,
+          "Bn": 2,
+          "Ac": 5
+        }
+      },
+      {
+        "slug": "nature-catalysis-s41929-025-01405-7-fig2",
+        "species": 15,
+        "abbreviate_set": 0,
+        "definition_set": 4,
+        "has_stereo": false,
+        "header_has_r": true,
+        "groups": {
+          "Ph": 3,
+          "CF3": 1,
+          "F": 1,
+          "Cl": 1
+        }
+      },
+      {
+        "slug": "nature-chemistry-s41557-023-01174-5-fig3",
+        "species": 10,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": false,
+        "groups": {
+          "OMe": 7,
+          "Ph": 1
+        }
+      },
+      {
+        "slug": "nature-chemistry-s41557-026-02231-5-fig3",
+        "species": 15,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": false,
+        "groups": {
+          "OMe": 1,
+          "CF3": 1,
+          "Ac": 1
+        }
+      },
+      {
+        "slug": "nature-communications-pmc13518986-fig4",
+        "species": 10,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": false,
+        "groups": {
+          "F": 1,
+          "Cl": 1
+        }
+      },
+      {
+        "slug": "nature-communications-pmc13594109-fig4",
+        "species": 11,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": false,
+        "groups": {
+          "Ac": 1
+        }
+      },
+      {
+        "slug": "nature-communications-s41467-022-29059-0-fig2",
+        "species": 12,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": true,
+        "groups": {
+          "Ph": 12,
+          "Ac": 12
+        }
+      },
+      {
+        "slug": "nature-communications-s41467-022-32614-4-fig3",
+        "species": 10,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": true,
+        "groups": {
+          "OMe": 1,
+          "Ph": 4,
+          "iPr": 10,
+          "Boc": 2,
+          "Bn": 1
+        }
+      },
+      {
+        "slug": "nature-communications-s41467-022-35062-2-fig2",
+        "species": 14,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": true,
+        "groups": {
+          "Ph": 5,
+          "CF3": 1,
+          "Bn": 5
+        }
+      },
+      {
+        "slug": "nature-communications-s41467-023-40180-6-fig4",
+        "species": 15,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": true,
+        "groups": {
+          "OMe": 2,
+          "Ph": 1,
+          "Bn": 1,
+          "Ac": 1,
+          "F": 1,
+          "Cl": 1
+        }
+      },
+      {
+        "slug": "nature-communications-s41467-025-62466-7-fig4",
+        "species": 13,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": true,
+        "groups": {
+          "OMe": 1,
+          "Ph": 1,
+          "Bn": 1
+        }
+      },
+      {
+        "slug": "nature-synthesis-s44160-024-00566-w-fig4",
+        "species": 12,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": false,
+        "groups": {
+          "Ph": 1,
+          "tBu": 4
+        }
+      },
+      {
+        "slug": "nature-synthesis-s44160-024-00631-4-fig4",
+        "species": 12,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": true,
+        "groups": {
+          "OMe": 3,
+          "Ac": 1
+        }
+      },
+      {
+        "slug": "nature-synthesis-s44160-025-00771-1-fig4",
+        "species": 17,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": false,
+        "header_has_r": false,
+        "groups": {
+          "OMe": 1,
+          "Ph": 1,
+          "iPr": 1
+        }
+      },
+      {
+        "slug": "nature-synthesis-s44160-025-00821-8-fig4",
+        "species": 12,
+        "abbreviate_set": 0,
+        "definition_set": 0,
+        "has_stereo": true,
+        "header_has_r": true,
+        "groups": {
+          "OMe": 1,
+          "Ph": 2,
+          "Bn": 1,
+          "Ac": 1,
+          "Cl": 1
+        }
+      }
+    ],
+    "top_fragments": [
+      [
+        "Ph",
+        66,
+        16
+      ],
+      [
+        "Ac",
+        38,
+        11
+      ],
+      [
+        "OMe",
+        36,
+        14
+      ],
+      [
+        "Bn",
+        22,
+        8
+      ],
+      [
+        "CF3",
+        13,
+        6
+      ],
+      [
+        "iPr",
+        11,
+        2
+      ],
+      [
+        "Cl",
+        4,
+        4
+      ],
+      [
+        "tBu",
+        4,
+        1
+      ],
+      [
+        "F",
+        3,
+        3
+      ],
+      [
+        "Boc",
+        2,
+        1
+      ]
+    ],
+    "big_grids_over_12": [
+      "bjoc-articles-22-127-scheme2",
+      "communications-chemistry-s42004-022-00692-6-fig2",
+      "nature-catalysis-s41929-025-01357-y-fig3",
+      "nature-catalysis-s41929-025-01405-7-fig2",
+      "nature-chemistry-s41557-026-02231-5-fig3",
+      "nature-communications-s41467-022-35062-2-fig2",
+      "nature-communications-s41467-023-40180-6-fig4",
+      "nature-communications-s41467-025-62466-7-fig4",
+      "nature-synthesis-s44160-025-00771-1-fig4"
+    ],
+    "briefs_using_abbreviate": [],
+    "briefs_using_definition": [
+      "bjoc-articles-22-127-scheme2",
+      "communications-chemistry-s42004-022-00764-7-fig2",
+      "nature-catalysis-s41929-025-01405-7-fig2"
+    ],
+    "briefs_with_stereo": [
+      "bjoc-articles-22-128-scheme10",
+      "bjoc-articles-22-128-scheme17",
+      "bjoc-articles-22-128-scheme6",
+      "communications-chemistry-s42004-022-00692-6-fig2",
+      "communications-chemistry-s42004-023-01030-0-fig2",
+      "nature-catalysis-s41929-023-01081-5-fig2",
+      "nature-catalysis-s41929-024-01153-0-fig3",
+      "nature-chemistry-s41557-026-02231-5-fig3",
+      "nature-communications-pmc13594109-fig4",
+      "nature-communications-s41467-022-29059-0-fig2",
+      "nature-communications-s41467-022-32614-4-fig3",
+      "nature-communications-s41467-022-35062-2-fig2",
+      "nature-synthesis-s44160-025-00821-8-fig4"
+    ],
+    "total_species": 294
+  },
+  "colours": {
+    "per_brief": [
+      {
+        "slug": "bjoc-articles-22-103-scheme1",
+        "fragment_colors": 3,
+        "fragment_smarts": [
+          "C(F)(F)F",
+          "C(F)(F)C(F)F",
+          "c1cc[nH]c1"
+        ],
+        "group_colors": null,
+        "highlight_varying": null,
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "bjoc-articles-22-125-scheme2",
+        "fragment_colors": 2,
+        "fragment_smarts": [
+          "C1CC1",
+          "C(=O)O"
+        ],
+        "group_colors": null,
+        "highlight_varying": null,
+        "header_colors": 2,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "bjoc-articles-22-127-scheme2",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": null,
+        "highlight_varying": "#C81E1E",
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme10",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": null,
+        "highlight_varying": "#1B4D89",
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme17",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": null,
+        "highlight_varying": "#0072B2",
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme6",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": null,
+        "highlight_varying": null,
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "communications-chemistry-s42004-022-00692-6-fig2",
+        "fragment_colors": 1,
+        "fragment_smarts": [
+          "NS(=O)(=O)c1ccc(C)cc1"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": null,
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "communications-chemistry-s42004-022-00764-7-fig2",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": null,
+        "highlight_varying": null,
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "communications-chemistry-s42004-023-01030-0-fig2",
+        "fragment_colors": 2,
+        "fragment_smarts": [
+          "O=C(O)C(N)",
+          "O=C(OCc1ccccc1)N"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": null,
+        "header_colors": 2,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-catalysis-s41929-023-01081-5-fig2",
+        "fragment_colors": 2,
+        "fragment_smarts": [
+          "O[Si](C)(C)C",
+          "C(=O)N1CCC1"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": null,
+        "header_colors": 2,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-catalysis-s41929-024-01153-0-fig3",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": "dict",
+        "highlight_varying": "#2B4C8C",
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-catalysis-s41929-025-01357-y-fig3",
+        "fragment_colors": 2,
+        "fragment_smarts": [
+          "C(=O)c1ccccc1",
+          "[Cl]"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": null,
+        "header_colors": 2,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-catalysis-s41929-025-01405-7-fig2",
+        "fragment_colors": 2,
+        "fragment_smarts": [
+          "N1CC(CC)(CC)C1",
+          "S(=O)(=O)F"
+        ],
+        "group_colors": null,
+        "highlight_varying": "#8B1E24",
+        "header_colors": 2,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-chemistry-s41557-023-01174-5-fig3",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": "dict",
+        "highlight_varying": "#008080",
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-chemistry-s41557-026-02231-5-fig3",
+        "fragment_colors": 1,
+        "fragment_smarts": [
+          "Cc1ccc([!#1])cc1"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": null,
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-communications-pmc13518986-fig4",
+        "fragment_colors": 1,
+        "fragment_smarts": [
+          "CC(C)=CC"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": null,
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-communications-pmc13594109-fig4",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": "dict",
+        "highlight_varying": true,
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-communications-s41467-022-29059-0-fig2",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": null,
+        "highlight_varying": "#1B4D89",
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-communications-s41467-022-32614-4-fig3",
+        "fragment_colors": 2,
+        "fragment_smarts": [
+          "C=C=C",
+          "[CH](C)C"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": "#8B1E24",
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-communications-s41467-022-35062-2-fig2",
+        "fragment_colors": 2,
+        "fragment_smarts": [
+          "N[C](C)C(=O)OC(C)(C)C",
+          "C#CC"
+        ],
+        "group_colors": null,
+        "highlight_varying": "#1B4D89",
+        "header_colors": 2,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-communications-s41467-023-40180-6-fig4",
+        "fragment_colors": 1,
+        "fragment_smarts": [
+          "C(=O)F"
+        ],
+        "group_colors": null,
+        "highlight_varying": null,
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-communications-s41467-025-62466-7-fig4",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": null,
+        "highlight_varying": "#1A47B8",
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-synthesis-s44160-024-00566-w-fig4",
+        "fragment_colors": 2,
+        "fragment_smarts": [
+          "NS(=O)=O",
+          "C(=O)O"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": null,
+        "header_colors": 0,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-synthesis-s44160-024-00631-4-fig4",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": "dict",
+        "highlight_varying": "#D95F02",
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-synthesis-s44160-025-00771-1-fig4",
+        "fragment_colors": 1,
+        "fragment_smarts": [
+          "c1ccccc1"
+        ],
+        "group_colors": "dict",
+        "highlight_varying": "#8B1E24",
+        "header_colors": 2,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      },
+      {
+        "slug": "nature-synthesis-s44160-025-00821-8-fig4",
+        "fragment_colors": 0,
+        "fragment_smarts": [],
+        "group_colors": "dict",
+        "highlight_varying": "#2B7BBA",
+        "header_colors": 1,
+        "species_colors": 0,
+        "species_atom_or_bond_colors": 0
+      }
+    ],
+    "hex_frequency": [
+      [
+        "#8B1E24",
+        20
+      ],
+      [
+        "#1B4D89",
+        15
+      ],
+      [
+        "#1A47B8",
+        9
+      ],
+      [
+        "#0B4F8A",
+        7
+      ],
+      [
+        "#2B7BBA",
+        7
+      ],
+      [
+        "#008080",
+        6
+      ],
+      [
+        "#D95F02",
+        6
+      ],
+      [
+        "#2B4C8C",
+        6
+      ],
+      [
+        "#C2591A",
+        3
+      ],
+      [
+        "#0072B2",
+        2
+      ],
+      [
+        "#7F7F7F",
+        2
+      ],
+      [
+        "#6E6E6E",
+        2
+      ],
+      [
+        "#2E7D32",
+        2
+      ],
+      [
+        "#C00000",
+        2
+      ],
+      [
+        "#DC3220",
+        2
+      ],
+      [
+        "#C2185B",
+        1
+      ],
+      [
+        "#C81E1E",
+        1
+      ],
+      [
+        "#6B4C9A",
+        1
+      ],
+      [
+        "#333333",
+        1
+      ],
+      [
+        "#800000",
+        1
+      ],
+      [
+        "#000000",
+        1
+      ],
+      [
+        "#5B3B8C",
+        1
+      ]
+    ],
+    "briefs_with_no_colour": [
+      "bjoc-articles-22-128-scheme6",
+      "communications-chemistry-s42004-022-00764-7-fig2"
+    ],
+    "briefs_with_highlight_varying": [
+      "bjoc-articles-22-127-scheme2",
+      "bjoc-articles-22-128-scheme10",
+      "bjoc-articles-22-128-scheme17",
+      "nature-catalysis-s41929-024-01153-0-fig3",
+      "nature-catalysis-s41929-025-01405-7-fig2",
+      "nature-chemistry-s41557-023-01174-5-fig3",
+      "nature-communications-pmc13594109-fig4",
+      "nature-communications-s41467-022-29059-0-fig2",
+      "nature-communications-s41467-022-32614-4-fig3",
+      "nature-communications-s41467-022-35062-2-fig2",
+      "nature-communications-s41467-025-62466-7-fig4",
+      "nature-synthesis-s44160-024-00631-4-fig4",
+      "nature-synthesis-s44160-025-00771-1-fig4",
+      "nature-synthesis-s44160-025-00821-8-fig4"
+    ],
+    "briefs_with_group_colors": [
+      "communications-chemistry-s42004-022-00692-6-fig2",
+      "communications-chemistry-s42004-023-01030-0-fig2",
+      "nature-catalysis-s41929-023-01081-5-fig2",
+      "nature-catalysis-s41929-024-01153-0-fig3",
+      "nature-catalysis-s41929-025-01357-y-fig3",
+      "nature-chemistry-s41557-023-01174-5-fig3",
+      "nature-chemistry-s41557-026-02231-5-fig3",
+      "nature-communications-pmc13518986-fig4",
+      "nature-communications-pmc13594109-fig4",
+      "nature-communications-s41467-022-32614-4-fig3",
+      "nature-synthesis-s44160-024-00566-w-fig4",
+      "nature-synthesis-s44160-024-00631-4-fig4",
+      "nature-synthesis-s44160-025-00771-1-fig4",
+      "nature-synthesis-s44160-025-00821-8-fig4"
+    ],
+    "briefs_with_fragment_colors": [
+      "bjoc-articles-22-103-scheme1",
+      "bjoc-articles-22-125-scheme2",
+      "communications-chemistry-s42004-022-00692-6-fig2",
+      "communications-chemistry-s42004-023-01030-0-fig2",
+      "nature-catalysis-s41929-023-01081-5-fig2",
+      "nature-catalysis-s41929-025-01357-y-fig3",
+      "nature-catalysis-s41929-025-01405-7-fig2",
+      "nature-chemistry-s41557-026-02231-5-fig3",
+      "nature-communications-pmc13518986-fig4",
+      "nature-communications-s41467-022-32614-4-fig3",
+      "nature-communications-s41467-022-35062-2-fig2",
+      "nature-communications-s41467-023-40180-6-fig4",
+      "nature-synthesis-s44160-024-00566-w-fig4",
+      "nature-synthesis-s44160-025-00771-1-fig4"
+    ],
+    "images": [
+      {
+        "slug": "bjoc-articles-22-103-scheme1",
+        "chromatic_fraction": 0.0209,
+        "top_hex": [
+          [
+            "#7090B0",
+            849
+          ],
+          [
+            "#B0C0D0",
+            739
+          ],
+          [
+            "#6080B0",
+            698
+          ],
+          [
+            "#80A0C0",
+            535
+          ]
+        ]
+      },
+      {
+        "slug": "bjoc-articles-22-125-scheme2",
+        "chromatic_fraction": 0.0147,
+        "top_hex": [
+          [
+            "#5050F0",
+            299
+          ],
+          [
+            "#4040F0",
+            287
+          ],
+          [
+            "#D0D0F0",
+            259
+          ],
+          [
+            "#B0B0F0",
+            239
+          ]
+        ]
+      },
+      {
+        "slug": "bjoc-articles-22-127-scheme2",
+        "chromatic_fraction": 0.0047,
+        "top_hex": [
+          [
+            "#F05050",
+            225
+          ],
+          [
+            "#F0D0D0",
+            214
+          ],
+          [
+            "#F0B0B0",
+            185
+          ],
+          [
+            "#F03030",
+            185
+          ]
+        ]
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme10",
+        "chromatic_fraction": 0.0009,
+        "top_hex": [
+          [
+            "#4040F0",
+            38
+          ],
+          [
+            "#D0D0F0",
+            29
+          ],
+          [
+            "#8080F0",
+            28
+          ],
+          [
+            "#9090F0",
+            23
+          ]
+        ]
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme17",
+        "chromatic_fraction": 0.0,
+        "top_hex": []
+      },
+      {
+        "slug": "bjoc-articles-22-128-scheme6",
+        "chromatic_fraction": 0.0,
+        "top_hex": []
+      },
+      {
+        "slug": "communications-chemistry-s42004-022-00692-6-fig2",
+        "chromatic_fraction": 0.01,
+        "top_hex": [
+          [
+            "#C0C0F0",
+            434
+          ],
+          [
+            "#B0B0F0",
+            422
+          ],
+          [
+            "#A0A0F0",
+            410
+          ],
+          [
+            "#D0D0F0",
+            401
+          ]
+        ]
+      },
+      {
+        "slug": "communications-chemistry-s42004-022-00764-7-fig2",
+        "chromatic_fraction": 0.0039,
+        "top_hex": [
+          [
+            "#F05050",
+            118
+          ],
+          [
+            "#F0D0D0",
+            111
+          ],
+          [
+            "#F0C0C0",
+            103
+          ],
+          [
+            "#F08080",
+            84
+          ]
+        ]
+      },
+      {
+        "slug": "communications-chemistry-s42004-023-01030-0-fig2",
+        "chromatic_fraction": 0.0574,
+        "top_hex": [
+          [
+            "#B07070",
+            1791
+          ],
+          [
+            "#C08080",
+            1740
+          ],
+          [
+            "#D0B0B0",
+            1578
+          ],
+          [
+            "#D0A0A0",
+            1547
+          ]
+        ]
+      },
+      {
+        "slug": "nature-catalysis-s41929-023-01081-5-fig2",
+        "chromatic_fraction": 0.0259,
+        "top_hex": [
+          [
+            "#C04040",
+            641
+          ],
+          [
+            "#C06060",
+            639
+          ],
+          [
+            "#C05050",
+            572
+          ],
+          [
+            "#E0C0C0",
+            561
+          ]
+        ]
+      },
+      {
+        "slug": "nature-catalysis-s41929-024-01153-0-fig3",
+        "chromatic_fraction": 0.0237,
+        "top_hex": [
+          [
+            "#5050A0",
+            1247
+          ],
+          [
+            "#6060B0",
+            1246
+          ],
+          [
+            "#8080C0",
+            1059
+          ],
+          [
+            "#7070B0",
+            1019
+          ]
+        ]
+      },
+      {
+        "slug": "nature-catalysis-s41929-025-01357-y-fig3",
+        "chromatic_fraction": 0.0576,
+        "top_hex": [
+          [
+            "#509090",
+            1423
+          ],
+          [
+            "#60A0A0",
+            1099
+          ],
+          [
+            "#B06060",
+            1089
+          ],
+          [
+            "#80B0B0",
+            1032
+          ]
+        ]
+      },
+      {
+        "slug": "nature-catalysis-s41929-025-01405-7-fig2",
+        "chromatic_fraction": 0.0459,
+        "top_hex": [
+          [
+            "#C05060",
+            1056
+          ],
+          [
+            "#B04050",
+            1000
+          ],
+          [
+            "#C06070",
+            986
+          ],
+          [
+            "#E0C0C0",
+            856
+          ]
+        ]
+      },
+      {
+        "slug": "nature-chemistry-s41557-023-01174-5-fig3",
+        "chromatic_fraction": 0.0058,
+        "top_hex": [
+          [
+            "#B01010",
+            343
+          ],
+          [
+            "#90B0B0",
+            167
+          ],
+          [
+            "#70A0A0",
+            155
+          ],
+          [
+            "#80B0B0",
+            138
+          ]
+        ]
+      },
+      {
+        "slug": "nature-chemistry-s41557-026-02231-5-fig3",
+        "chromatic_fraction": 0.0,
+        "top_hex": []
+      },
+      {
+        "slug": "nature-communications-pmc13518986-fig4",
+        "chromatic_fraction": 0.0201,
+        "top_hex": [
+          [
+            "#70A0C0",
+            882
+          ],
+          [
+            "#A0C0D0",
+            602
+          ],
+          [
+            "#C0D0E0",
+            580
+          ],
+          [
+            "#80B0C0",
+            558
+          ]
+        ]
+      },
+      {
+        "slug": "nature-communications-pmc13594109-fig4",
+        "chromatic_fraction": 0.0289,
+        "top_hex": [
+          [
+            "#90C0E0",
+            859
+          ],
+          [
+            "#70B0D0",
+            846
+          ],
+          [
+            "#40A0D0",
+            842
+          ],
+          [
+            "#F0A050",
+            770
+          ]
+        ]
+      },
+      {
+        "slug": "nature-communications-s41467-022-29059-0-fig2",
+        "chromatic_fraction": 0.0102,
+        "top_hex": [
+          [
+            "#B05000",
+            595
+          ],
+          [
+            "#00B0B0",
+            380
+          ],
+          [
+            "#00A0A0",
+            283
+          ],
+          [
+            "#B0E0E0",
+            104
+          ]
+        ]
+      },
+      {
+        "slug": "nature-communications-s41467-022-32614-4-fig3",
+        "chromatic_fraction": 0.0199,
+        "top_hex": [
+          [
+            "#A05050",
+            861
+          ],
+          [
+            "#B07070",
+            763
+          ],
+          [
+            "#D0B0B0",
+            703
+          ],
+          [
+            "#C09090",
+            672
+          ]
+        ]
+      },
+      {
+        "slug": "nature-communications-s41467-022-35062-2-fig2",
+        "chromatic_fraction": 0.0499,
+        "top_hex": [
+          [
+            "#4040F0",
+            1287
+          ],
+          [
+            "#3030F0",
+            1237
+          ],
+          [
+            "#5050F0",
+            1071
+          ],
+          [
+            "#D0D0F0",
+            1000
+          ]
+        ]
+      },
+      {
+        "slug": "nature-communications-s41467-023-40180-6-fig4",
+        "chromatic_fraction": 0.0081,
+        "top_hex": [
+          [
+            "#F06060",
+            371
+          ],
+          [
+            "#F08080",
+            272
+          ],
+          [
+            "#F0D0D0",
+            269
+          ],
+          [
+            "#F07070",
+            247
+          ]
+        ]
+      },
+      {
+        "slug": "nature-communications-s41467-025-62466-7-fig4",
+        "chromatic_fraction": 0.0516,
+        "top_hex": [
+          [
+            "#C0F0C0",
+            3433
+          ],
+          [
+            "#F0F000",
+            1602
+          ],
+          [
+            "#4040F0",
+            841
+          ],
+          [
+            "#D0D0F0",
+            781
+          ]
+        ]
+      },
+      {
+        "slug": "nature-synthesis-s44160-024-00566-w-fig4",
+        "chromatic_fraction": 0.0092,
+        "top_hex": [
+          [
+            "#D09070",
+            338
+          ],
+          [
+            "#E0C0B0",
+            313
+          ],
+          [
+            "#E0D0C0",
+            310
+          ],
+          [
+            "#E0B0A0",
+            281
+          ]
+        ]
+      },
+      {
+        "slug": "nature-synthesis-s44160-024-00631-4-fig4",
+        "chromatic_fraction": 0.0203,
+        "top_hex": [
+          [
+            "#F0A080",
+            695
+          ],
+          [
+            "#F0D0C0",
+            677
+          ],
+          [
+            "#F0C0B0",
+            675
+          ],
+          [
+            "#F09070",
+            655
+          ]
+        ]
+      },
+      {
+        "slug": "nature-synthesis-s44160-025-00771-1-fig4",
+        "chromatic_fraction": 0.0348,
+        "top_hex": [
+          [
+            "#003070",
+            1342
+          ],
+          [
+            "#306090",
+            915
+          ],
+          [
+            "#903030",
+            762
+          ],
+          [
+            "#B0C0D0",
+            740
+          ]
+        ]
+      },
+      {
+        "slug": "nature-synthesis-s44160-025-00821-8-fig4",
+        "chromatic_fraction": 0.0193,
+        "top_hex": [
+          [
+            "#6080B0",
+            937
+          ],
+          [
+            "#5070A0",
+            862
+          ],
+          [
+            "#B0C0D0",
+            802
+          ],
+          [
+            "#7090B0",
+            789
+          ]
+        ]
+      }
+    ],
+    "dominant_hex_by_pixels": [
+      [
+        "#B07070",
+        4152
+      ],
+      [
+        "#D0A0A0",
+        3864
+      ],
+      [
+        "#D0B0B0",
+        3790
+      ],
+      [
+        "#C08080",
+        3609
+      ],
+      [
+        "#B06060",
+        3599
+      ],
+      [
+        "#C09090",
+        3562
+      ],
+      [
+        "#C0F0C0",
+        3433
+      ],
+      [
+        "#B0C0D0",
+        3428
+      ],
+      [
+        "#D0D0F0",
+        3413
+      ],
+      [
+        "#7090B0",
+        3132
+      ],
+      [
+        "#A05050",
+        3039
+      ],
+      [
+        "#B0B0F0",
+        2714
+      ]
+    ]
+  }
+}
