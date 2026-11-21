@@ -93,16 +93,16 @@
 
 ## `chemistry_semantics`
 
-- **function**, line 189: `document_inventory(path, like = None)` - Counter of the semantic keys of a document's molecules (see ``inventory_keys`` for ``like``).
+- **function**, line 193: `document_inventory(path, like = None)` - Counter of the semantic keys of a document's molecules (see ``inventory_keys`` for ``like``).
 - **function**, line 103: `inventory_keys(mols, like = None)` - Semantic keys of drawn molecules; with ``like`` (the keys expected), a molecule that is one of them drawn with a geometry its source left open counts as that key.
 - **function**, line 77: `loose_key(mol)` - The semantic key without double-bond geometry (E/Z).
 - **function**, line 120: `read_fragments(value)` - Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order.
-- **function**, line 166: `read_molecules(value)` - No public docstring in the audited version.
+- **function**, line 170: `read_molecules(value)` - No public docstring in the audited version.
 - **function**, line 36: `require_supported(mol, *, allow_radicals: bool = False, allow_dative: bool = True, allow_atropisomers: bool = True)` - No public docstring in the audited version.
 - **function**, line 87: `same_compound(source, drawn)` - "exact", "drawn_geometry" or None: whether a drawn molecule is the source compound.
 - **function**, line 10: `semantic_key(mol)` - No public docstring in the audited version.
-- **function**, line 195: `validate_document_preserved(source, output)` - No public docstring in the audited version.
-- **function**, line 170: `validate_fragment(smiles, xml, *, allow_radicals: bool = True)` - No public docstring in the audited version.
+- **function**, line 199: `validate_document_preserved(source, output)` - No public docstring in the audited version.
+- **function**, line 174: `validate_fragment(smiles, xml, *, allow_radicals: bool = True)` - No public docstring in the audited version.
 
 ## `engines.accel`
 
@@ -408,7 +408,7 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 496: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 506: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_table`
 
@@ -416,8 +416,8 @@
 
 ## `mcp_runtime.figure_tools`
 
-- **function**, line 1510: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
-- **function**, line 632: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
+- **function**, line 1637: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
+- **function**, line 751: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
 - **function**, line 165: `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict` - Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs, r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like, enumerate_markush.
 
 ## `mcp_runtime.figure_validation`
@@ -636,11 +636,12 @@
 ## `overlay_geometry`
 
 - **function**, line 196: `arc_clearance(points: str, bonds, ends) -> float` - How close the arc comes to any bond, leaving out the stretch next to its two end atoms.
-- **function**, line 204: `choose_generic_ring(a, b, away = None, members: int = 6, bonds = (), clear_a: float = 0.0, clear_b: float = 0.0) -> tuple[str, float, int]` - The generic-ring arc through a and b that keeps clear of the molecule's other bonds.
+- **function**, line 268: `choose_generic_ring(a, b, away = None, members: int = 6, bonds = (), clear_a: float = 0.0, clear_b: float = 0.0) -> tuple[str, float, int]` - The generic-ring arc through a and b that keeps clear of the molecule's other bonds.
 - **function**, line 163: `generic_ring_box(a, b, away = None, members: int = 6) -> tuple[float, float, float, float]` - Box that holds a generic ring's arc, its line included.
 - **function**, line 133: `generic_ring_points(a, b, away = None, members: int = 6, clear_a: float = 0.0, clear_b: float = 0.0) -> str` - CurvePoints of the dashed arc that stands for an unspecified ring fused at the bond a-b.
 - **function**, line 108: `overlay_box(points: list[tuple[float, float]], shape: str = 'circle') -> tuple[float, float, float, float]` - Box that holds the outline drawn around ``points``, its line included.
 - **function**, line 64: `overlay_curve_points(points: list[tuple[float, float]], shape: str = 'circle', radius: float | None = None) -> str` - CurvePoints of a closed outline around ``points``.
+- **function**, line 211: `ring_attachment_placement(ring, xy, orders, attach, blocked = (), bond_length = ACS_BOND_LENGTH)` - Where an R goes when its position on a ring is not meant to be read as fixed.
 - **function**, line 170: `sample_curve(points: str, per_segment: int = 8) -> list[tuple[float, float]]` - Points along an open (in, anchor, out) curve, as ChemDraw draws it.
 
 ## `publication.data`
@@ -668,11 +669,11 @@
 
 ## `publication.layout`
 
-- **function**, line 792: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 795: `bounds(node, style)` - No public docstring in the audited version.
 - **function**, line 146: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 822: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 825: `check_pages(project, roots, spec)` - No public docstring in the audited version.
 - **function**, line 246: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
-- **function**, line 478: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 480: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 190: `footnote_runs(footer)` - Format multi-line footnotes with italic superscript leading markers and chemical subscripts.
 - **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
@@ -682,9 +683,9 @@
 - **function**, line 284: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 818: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 821: `overlap(a, b)` - No public docstring in the audited version.
 - **function**, line 271: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
-- **function**, line 408: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 410: `prepare(records, spec)` - No public docstring in the audited version.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
 - **function**, line 42: `text_width(value, style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 47: `wrap(value, width, style)` - No public docstring in the audited version.

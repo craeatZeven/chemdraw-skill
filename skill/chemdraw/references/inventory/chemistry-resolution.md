@@ -64,16 +64,17 @@
 
 ## `rdkit_utils`
 
-- **function**, line 591: `avg_bond_length_from_atoms(atoms_data: List[dict], mol) -> float` - Average bond length computed from CDXML atom coordinates.
-- **function**, line 415: `cleanup_fragment_rdkit(frag_elem: ET.Element, verbose: bool = False) -> bool` - Clean up a single fragment's 2D geometry using RDKit.
-- **function**, line 66: `frag_to_mol(frag_elem: ET.Element)` - Convert a CDXML <fragment> to an RDKit Mol with atom metadata.
-- **function**, line 389: `frag_to_molblock(frag_elem: ET.Element) -> Optional[str]` - Convert a CDXML <fragment> to a MOL block string (with CDXML coords).
-- **function**, line 333: `frag_to_mw(frag_elem: ET.Element) -> Optional[float]` - Compute molecular weight from a CDXML <fragment>.
-- **function**, line 154: `frag_to_smiles(frag_elem: ET.Element) -> Optional[str]` - Convert a CDXML <fragment> to a canonical SMILES string.
-- **function**, line 274: `frag_to_smiles_chemscript(frag_elem: ET.Element) -> Optional[str]` - Convert a CDXML ``<fragment>`` to SMILES using ChemScript.
-- **function**, line 171: `frag_to_smiles_resolved(frag_elem: ET.Element) -> Optional[str]` - Convert a CDXML <fragment> to SMILES, resolving abbreviation groups.
-- **function**, line 576: `rdkit_default_bond_length() -> float` - RDKit's default 2D depiction bond length (cached).
-- **function**, line 596: `set_cdxml_conformer(mol, atoms_data: List[dict], scale: float = 1.0)` - Set conformer from CDXML coordinates (y-flipped, scaled to RDKit space).
+- **function**, line 650: `avg_bond_length_from_atoms(atoms_data: List[dict], mol) -> float` - Average bond length computed from CDXML atom coordinates.
+- **function**, line 474: `cleanup_fragment_rdkit(frag_elem: ET.Element, verbose: bool = False) -> bool` - Clean up a single fragment's 2D geometry using RDKit.
+- **function**, line 66: `collapse_multi_attachments(frag_elem: ET.Element) -> ET.Element` - A copy of the fragment with an R mark's MultiAttachment node folded back into one bond.
+- **function**, line 117: `frag_to_mol(frag_elem: ET.Element)` - Convert a CDXML <fragment> to an RDKit Mol with atom metadata.
+- **function**, line 448: `frag_to_molblock(frag_elem: ET.Element) -> Optional[str]` - Convert a CDXML <fragment> to a MOL block string (with CDXML coords).
+- **function**, line 392: `frag_to_mw(frag_elem: ET.Element) -> Optional[float]` - Compute molecular weight from a CDXML <fragment>.
+- **function**, line 213: `frag_to_smiles(frag_elem: ET.Element) -> Optional[str]` - Convert a CDXML <fragment> to a canonical SMILES string.
+- **function**, line 333: `frag_to_smiles_chemscript(frag_elem: ET.Element) -> Optional[str]` - Convert a CDXML ``<fragment>`` to SMILES using ChemScript.
+- **function**, line 230: `frag_to_smiles_resolved(frag_elem: ET.Element) -> Optional[str]` - Convert a CDXML <fragment> to SMILES, resolving abbreviation groups.
+- **function**, line 635: `rdkit_default_bond_length() -> float` - RDKit's default 2D depiction bond length (cached).
+- **function**, line 655: `set_cdxml_conformer(mol, atoms_data: List[dict], scale: float = 1.0)` - Set conformer from CDXML coordinates (y-flipped, scaled to RDKit space).
 
 ## `resolve.cas_resolver`
 
