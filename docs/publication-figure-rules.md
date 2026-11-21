@@ -100,11 +100,15 @@ python skill/chemdraw/scripts/cdx.py check out.cdxml --profile nature_portfolio 
 # 4. Validate structural integrity (add --native --cross-reader on machines with ChemDraw)
 python skill/chemdraw/scripts/cdx.py validate out.cdxml
 
-# 5. Run the 26-case cross-journal substrate_scope imitation benchmark
-#    Portable (no ChemDraw):
-python scripts/run_scope_benchmark.py --no-render
-#    With local ChemDraw + side-by-side comparison PNGs:
+# 5. Run the scope rendering benchmarks
+#    coverage (default): render every assets/coverage/*.cdxml, diff against the
+#    committed baseline PNGs (RMSE + differing-pixel ratio), report per case:
 python scripts/run_scope_benchmark.py --render --side-by-side --output-dir output/scope-benchmark
+#    coverage audit only (no ChemDraw):
+python scripts/run_scope_benchmark.py --no-render
+#    26-case cross-journal substrate_scope imitation benchmark (toolkit runtime):
+python scripts/run_scope_benchmark.py --corpus journal --no-render
+python scripts/run_scope_benchmark.py --corpus journal --render --side-by-side
 
 # 6. Audit corpus licence discipline and coverage across all 23 types
 python scripts/audit_corpus.py --markdown
