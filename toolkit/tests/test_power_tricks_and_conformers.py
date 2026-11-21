@@ -563,9 +563,34 @@ def test_figure_2_10_brief_draws_axial_bromide_beta_hydrogens_and_products(tmp_p
     for fragment in root.findall(".//page/fragment"):
         nodes = {n.get("id") for n in fragment.findall("n")}
         assert all(b.get("B") in nodes and b.get("E") in nodes for b in fragment.findall("b"))
+    from rdkit import Chem
+    from cdxml_toolkit.publication.layout import fragment_mol
+
+    children = list(root.find("page"))
+    schemes = root.findall(".//page/scheme")
+    assert len(schemes) == len(brief["panels"])
+    for panel, scheme in zip(brief["panels"], schemes):
+        label = panel["brief"]["species"][0]["label"]
+        substrate_id = scheme.find("step").get("ReactionStepReactants")
+        fragment = root.find(f'.//page/fragment[@id="{substrate_id}"]')
+        caption = children[children.index(fragment) + 1]
+        assert caption.tag == "t"
+        assert "".join(caption.itertext()).strip() == label
+
+        mol = fragment_mol(fragment)
+        centres = dict(Chem.FindMolChiralCenters(mol, includeUnassigned=True, useLegacyImplementation=False))
+        br = next(a for a in mol.GetAtoms() if a.GetSymbol() == "Br").GetNeighbors()[0].GetIdx()
+        methyl = next(a for a in mol.GetAtoms() if a.GetSymbol() == "C" and a.GetDegree() == 1)
+        me = methyl.GetNeighbors()[0].GetIdx()
+        configuration = (centres[br], centres[me])
+        if label.startswith("cis "):
+            assert configuration == ("R", "S")
+        elif label.startswith("trans "):
+            assert configuration == ("R", "R")
+        else:
+            pytest.fail(f"unknown substrate relationship in {label!r}")
+
     text = " ".join("".join(t.itertext()) for t in root.iter("t"))
-    assert "cis (Br a, up)" in text
-    assert "trans (Br a, up; Me a, down)" in text
     assert "1-methyl isomer" in text and "3-methyl isomer" in text
 
 
