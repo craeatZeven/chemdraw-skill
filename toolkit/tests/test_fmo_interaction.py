@@ -63,10 +63,9 @@ def _assert_occupations(root, levels, expected):
         assert sorted(spins[level_id]) == sorted(occupation), f'occupation at {level_id}: {spins[level_id]}'
 
 
-def _assert_links(root, result, levels):
-    expected = {(source['id'], mixed['id'])
-                for source in _ONE_DONOR_ONE_ACCEPTOR['donor'] + _ONE_DONOR_ONE_ACCEPTOR['acceptor']
-                for mixed in _ONE_DONOR_ONE_ACCEPTOR['mixing']}
+def _assert_links(root, result, levels, spec=None):
+    spec = spec or _ONE_DONOR_ONE_ACCEPTOR
+    expected = {(source, mixed['id']) for mixed in spec['mixing'] for source in mixed['from']}
     assert len(result['links']) == len(_dashed_lines(root)) == len(expected)
     assert {(link['from'], link['to']) for link in result['links']} == expected
     assert {link['node_id'] for link in result['links']} == {node.get('id') for node in _dashed_lines(root)}
@@ -196,29 +195,46 @@ def test_mixing_from_names_an_unknown_level():
         fmo_interaction(spec)
 
 
+def _assert_coefficients(root, result, spec):
+    sources = spec['donor'] + spec['acceptor']
+    lobes = [level for level in sources if 'coefficient' in level or spec.get('coefficients')]
+    ovals = [node for node in root.iter('graphic') if node.get('GraphicType') == 'Oval']
+    assert len(ovals) == len(lobes)
+    colors = _colors(root)
+    for node, level in zip(ovals, lobes):
+        phase_color = '#C0392B' if level.get('phase', 1) == 1 else '#0072B2'
+        assert colors[int(node.get('color'))] == phase_color
+        center = _coords(node, 'Center3D')[:2]
+        major = _coords(node, 'MajorAxisEnd3D')[:2]
+        length = 2 * ((major[0] - center[0]) ** 2 + (major[1] - center[1]) ** 2) ** 0.5
+        assert length == pytest.approx(26.0 * abs(level.get('coefficient', 1.0)), abs=0.05)
+    expected_pairs = {(donor['id'], acceptor['id'])
+                      for mixed in spec['mixing']
+                      for donor in spec['donor'] for acceptor in spec['acceptor']
+                      if donor['id'] in mixed['from'] and acceptor['id'] in mixed['from']
+                      and (spec.get('coefficients') or 'coefficient' in donor or 'coefficient' in acceptor)}
+    assert len(result['coefficient_pairs']) == len(expected_pairs)
+    assert {(pair['donor'], pair['acceptor']) for pair in result['coefficient_pairs']} == expected_pairs
+    by_id = {level['id']: level for level in sources}
+    for pair in result['coefficient_pairs']:
+        ci = by_id[pair['donor']].get('coefficient', 1.0)
+        cj = by_id[pair['acceptor']].get('coefficient', 1.0)
+        product = abs(ci * cj)
+        assert pair['magnitude_product'] == pytest.approx(product)
+        label = _node(root, pair['label_node_id'])
+        assert label.tag == 't'
+        assert ''.join(label.itertext()) == f'|c({pair["donor"]})c({pair["acceptor"]})| = {product:.2f}'
+
+
 @pytest.mark.parametrize('ci,cj,product', [(0.5, 0.4, 0.20), (0.6, 0.3, 0.18)])
 def test_coefficient_lobes_reuse_the_s2_colors_and_scale_with_magnitude(ci, cj, product):
     spec = deepcopy(_ONE_DONOR_ONE_ACCEPTOR)
     spec['donor'][0]['coefficient'] = ci
     spec['acceptor'][0].update(coefficient=cj, phase=-1)
     result = fmo_interaction(spec)
-    root = _root(result)
-    ovals = [node for node in root.iter('graphic') if node.get('GraphicType') == 'Oval']
-    assert len(ovals) == 2
-    colors = _colors(root)
-    assert {colors[int(node.get('color'))] for node in ovals} == {'#C0392B', '#0072B2'}
-    lengths = []
-    for node in ovals:
-        center = _coords(node, 'Center3D')[:2]
-        major = _coords(node, 'MajorAxisEnd3D')[:2]
-        lengths.append(2 * ((major[0] - center[0]) ** 2 + (major[1] - center[1]) ** 2) ** 0.5)
-    assert lengths == pytest.approx([26.0 * ci, 26.0 * cj], abs=0.05)
+    _assert_coefficients(_root(result), result, spec)
     pair, = result['coefficient_pairs']
-    assert (pair['donor'], pair['acceptor']) == ('nCl', 'pi*')
     assert pair['magnitude_product'] == pytest.approx(product)
-    label = _node(root, pair['label_node_id'])
-    assert label.tag == 't'
-    assert ''.join(label.itertext()) == f'|c(nCl)c(pi*)| = {product:.2f}'
     assert check_cdxml(result['cdxml'], palette=ORBITAL_PALETTE)['ok']
 
 
@@ -306,14 +322,44 @@ def test_operation_is_registered_in_the_diagram_builders():
     assert result['diagram'] == 'fmo_interaction'
 
 
-@pytest.mark.parametrize('name,palette', [
-    ('fmo-interaction', None),
-    ('fmo-coefficients', ORBITAL_PALETTE),
-])
-def test_bundled_examples_build_and_meet_the_house_rules(name, palette):
-    spec_path = EXAMPLES / f'{name}.json'
-    if not spec_path.exists():
-        pytest.skip('the fmo examples are not beside this toolkit checkout')
-    result = build('fmo_interaction', json.loads(spec_path.read_text(encoding='utf-8')))
+EXAMPLE_CASES = [('fmo-interaction', None), ('fmo-coefficients', ORBITAL_PALETTE)]
+
+
+def _assert_example_structure(result, spec, palette):
+    root = _root(result)
+    assert len(_solid_lines(root)) == 4
+    levels = {level['id']: _node(root, level['line_node_id']) for level in result['occupation']}
+    _assert_occupations(root, levels, {'nCl': 'ud', 'pi*': '', 'psi1': 'ud', 'psi2': ''})
+    y = {level_id: _coords(line, 'BoundingBox')[1] for level_id, line in levels.items()}
+    assert y['psi1'] > y['nCl'] > y['pi*'] > y['psi2']
+    _assert_links(root, result, levels, spec)
+    homo = max((level for level in spec['donor'] if level['electrons']), key=lambda level: level['energy'])
+    lumo = min((level for level in spec['acceptor'] if level['electrons'] == 0), key=lambda level: level['energy'])
+    assert result['donor_homo']['id'] == homo['id']
+    assert result['acceptor_lumo']['id'] == lumo['id']
+    assert result['gap'] == pytest.approx(lumo['energy'] - homo['energy'])
     _assert_gap(result)
+    _assert_coefficients(root, result, spec)
     assert check_cdxml(result['cdxml'], palette=palette)['ok']
+
+
+@pytest.mark.parametrize('name,palette', EXAMPLE_CASES)
+def test_bundled_examples_build_and_meet_the_house_rules(name, palette):
+    spec = json.loads((EXAMPLES / f'{name}.json').read_text(encoding='utf-8'))
+    _assert_example_structure(build('fmo_interaction', spec), spec, palette)
+
+
+@pytest.mark.parametrize('name,palette', EXAMPLE_CASES)
+def test_committed_examples_meet_the_same_structure_contracts(name, palette):
+    spec = json.loads((EXAMPLES / f'{name}.json').read_text(encoding='utf-8'))
+    result = build('fmo_interaction', spec)
+    saved = (EXAMPLES / f'{name}.cdxml').read_text(encoding='utf-8')
+    _assert_example_structure({**result, 'cdxml': saved}, spec, palette)
+
+
+@pytest.mark.parametrize('name', [name for name, _ in EXAMPLE_CASES])
+def test_committed_examples_match_current_generator(name):
+    spec = json.loads((EXAMPLES / f'{name}.json').read_text(encoding='utf-8'))
+    generated = build('fmo_interaction', spec)['cdxml']
+    saved = (EXAMPLES / f'{name}.cdxml').read_text(encoding='utf-8')
+    assert saved == generated
