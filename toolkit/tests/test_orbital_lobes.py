@@ -269,6 +269,32 @@ def test_pi_overlap_regions_equal_same_phase_bbox_intersections(size, width, sep
     _assert_nonempty_intersection(*lower, overlaps[1])
 
 
+@pytest.mark.parametrize("separation", [63.99, 63.99999])
+def test_sigma_near_coincident_overlap_is_nondegenerate(separation):
+    root = _root(orbital_overlap({"kind": "sigma", "separation": separation}))
+    ellipses = _lobes(root)
+    overlap = _overlaps(root)[0]
+    assert min(math.hypot(*_axis_vector(overlap)), math.hypot(*_minor_vector(overlap))) >= 0.6
+    _assert_nonempty_intersection(*ellipses, overlap)
+
+
+@pytest.mark.parametrize("separation", [0.01, 0.00001])
+def test_pi_near_coincident_overlap_is_nondegenerate(separation):
+    result = orbital_overlap({"kind": "pi", "separation": separation})
+    root = _root(result)
+    axis = next(node for node in root.iter("graphic")
+                if node.get("GraphicType") == "Line" and node.get("LineType") == "Dashed")
+    axis_y = _box(axis)[1]
+    upper = sorted((node for node in _lobes(root) if _point(node, "Center3D")[1] < axis_y),
+                   key=lambda node: _point(node, "Center3D")[0])
+    lower = sorted((node for node in _lobes(root) if _point(node, "Center3D")[1] > axis_y),
+                   key=lambda node: _point(node, "Center3D")[0])
+    overlaps = sorted(_overlaps(root), key=lambda node: _point(node, "Center3D")[1])
+    for sources, overlap in ((upper, overlaps[0]), (lower, overlaps[1])):
+        assert min(math.hypot(*_axis_vector(overlap)), math.hypot(*_minor_vector(overlap))) >= 0.6
+        _assert_nonempty_intersection(*sources, overlap)
+
+
 def test_impossible_overlap_separations_are_rejected():
     with pytest.raises(ValueError, match="separation"):
         orbital_overlap({"kind": "sigma", "size": 64, "separation": 64})

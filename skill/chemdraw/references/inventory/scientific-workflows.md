@@ -125,10 +125,10 @@
 
 ## `scientific.orbital_lobes`
 
-- **function**, line 288: `draw_orbital_overlap(canvas, spec: Mapping[str, Any]) -> dict[str, Any]` - Draw sigma, pi, or both overlap panels on an existing canvas.
+- **function**, line 290: `draw_orbital_overlap(canvas, spec: Mapping[str, Any]) -> dict[str, Any]` - Draw sigma, pi, or both overlap panels on an existing canvas.
 - **function**, line 161: `draw_orbital_shapes(canvas, spec: Mapping[str, Any]) -> dict[str, Any]` - Draw one hybridisation panel on an existing canvas.
 - **function**, line 95: `lobe(canvas, at, angle_deg = -90.0, size = 36.0, width = 16.0, coefficient = 1.0, phase = 1, fill = 'filled', color = None, parent = None)` - Place one ellipse lobe, with its narrow end at ``at`` and axis at ``angle_deg``.
-- **function**, line 303: `orbital_overlap(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Draw head-on sigma and side-by-side pi overlap with phase-coloured lobes.
+- **function**, line 305: `orbital_overlap(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Draw head-on sigma and side-by-side pi overlap with phase-coloured lobes.
 - **function**, line 224: `orbital_shapes(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Draw sp3, sp2, sp or unequal hybrid lobes with axes and angle annotations.
 - **function**, line 106: `p_orbital(canvas, at, angle_deg = -90.0, size = 36.0, width = 16.0, coefficient = 1.0, phase = 1, fill = 'filled', color = None, parent = None, negative_color = None, axis = 'xy')` - Two opposite lobes with opposite phases; ``axis='z'`` is normal to the page.
 

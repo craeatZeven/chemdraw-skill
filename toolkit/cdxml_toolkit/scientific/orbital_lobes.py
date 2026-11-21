@@ -231,12 +231,14 @@ def orbital_shapes(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
 def _overlap_options(spec):
     size = number(spec.get('size', 64), 'size', 0.01, 1000)
     width = number(spec.get('width', 22), 'width', 0.01, 1000)
-    separation = number(spec.get('separation', 16), 'separation', 0.01, 1000)
+    separation = number(spec.get('separation', 16), 'separation', 0.0, 1000)
     fill = str(spec.get('fill', 'filled')).lower()
     return size, width, separation, fill
 
 
 def _inner_radii(x_full, y_full, center_distance):
+    if center_distance <= 0.5:
+        return 0.8 * x_full / 2, 0.8 * y_full / 2
     ratio = center_distance / x_full
     x_radius = (x_full - center_distance) / 2
     y_radius = y_full / 2 * math.sqrt(1 - ratio * ratio)
