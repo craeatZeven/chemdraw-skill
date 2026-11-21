@@ -23,6 +23,24 @@ _TETRAHEDRON = (
 )
 
 
+def _unequal_directions():
+    h_h = math.radians(110.3)
+    x = -math.sqrt((2 * math.cos(h_h) + 1) / 3)
+    radius = math.sqrt(1 - x * x)
+    return ((1.0, 0.0, 0.0),) + tuple(
+        (x, radius * math.cos(math.radians(phi)), radius * math.sin(math.radians(phi)))
+        for phi in (90, 210, 330)
+    )
+
+
+def _vector_angle(first, second, dimensions=3):
+    a, b = first[:dimensions], second[:dimensions]
+    norm_a = math.sqrt(sum(value * value for value in a))
+    norm_b = math.sqrt(sum(value * value for value in b))
+    cosine = sum(x * y for x, y in zip(a, b)) / (norm_a * norm_b)
+    return math.degrees(math.acos(max(-1.0, min(1.0, cosine))))
+
+
 def _phase_color(phase, color):
     if phase not in (-1, 1):
         raise ValueError('phase must be 1 or -1')
@@ -37,7 +55,7 @@ def _ellipse(canvas, origin, direction, size, width, color, oval_type, parent=No
     center = tuple(origin[i] + unit[i] * size / 2 for i in range(3))
     major = tuple(center[i] + unit[i] * size / 2 for i in range(3))
     planar = math.hypot(unit[0], unit[1])
-    perpendicular = (-unit[1] / planar, unit[0] / planar, 0.0)
+    perpendicular = ((-unit[1] / planar, unit[0] / planar, 0.0) if planar > 1e-9 else (1.0, 0.0, 0.0))
     minor = tuple(center[i] + perpendicular[i] * width / 2 for i in range(3))
     a, b = size / 2, width / 2
     ex = math.sqrt((a * unit[0]) ** 2 + (b * perpendicular[0]) ** 2)
@@ -68,31 +86,48 @@ def _lobe_vector(canvas, at, direction, size, width, phase, fill, color, parent=
     return _ellipse(canvas, origin3, direction, size, width, _phase_color(phase, color), oval_type, parent)
 
 
+def _dimensions(size, width, coefficient):
+    scale = abs(number(coefficient, 'coefficient', 0.0, 1000.0))
+    return (number(size, 'size', 0.01, 1000.0) * scale,
+            number(width, 'width', 0.01, 1000.0) * scale)
+
+
 def lobe(canvas, at, angle_deg=-90.0, size=36.0, width=16.0, coefficient=1.0,
          phase=1, fill='filled', color=None, parent=None):
     """Place one ellipse lobe, with its narrow end at ``at`` and axis at ``angle_deg``."""
     origin = point(at)
     angle = number(angle_deg, 'angle_deg', -36000, 36000)
-    scale = abs(number(coefficient, 'coefficient', 0.0, 1000.0))
-    major = number(size, 'size', 0.01, 1000.0) * scale
-    minor = number(width, 'width', 0.01, 1000.0) * scale
+    major, minor = _dimensions(size, width, coefficient)
     radians = math.radians(angle)
     return _lobe_vector(canvas, origin, (math.cos(radians), math.sin(radians), 0.0),
                         major, minor, phase, fill, color, parent)
 
 
 def p_orbital(canvas, at, angle_deg=-90.0, size=36.0, width=16.0, coefficient=1.0,
-              phase=1, fill='filled', color=None, parent=None, negative_color=None):
-    """Two opposite lobes with opposite phases; ``phase`` is the lobe at ``angle_deg``."""
+              phase=1, fill='filled', color=None, parent=None, negative_color=None, axis='xy'):
+    """Two opposite lobes with opposite phases; ``axis='z'`` is normal to the page."""
+    if axis not in ('xy', 'z'):
+        raise ValueError('p orbital axis must be "xy" or "z"')
+    origin = point(at)
+    major, minor = _dimensions(size, width, coefficient)
+    if axis == 'z':
+        return [
+            _lobe_vector(canvas, origin, (0.0, 0.0, 1.0), major, minor, phase, fill, color, parent),
+            _lobe_vector(canvas, origin, (0.0, 0.0, -1.0), major, minor, -phase, fill, negative_color, parent),
+        ]
+    angle = number(angle_deg, 'angle_deg', -36000, 36000)
+    radians = math.radians(angle)
     return [
-        lobe(canvas, at, angle_deg, size, width, coefficient, phase, fill, color, parent),
-        lobe(canvas, at, number(angle_deg, 'angle_deg') + 180.0, size, width,
-             coefficient, -phase, fill, negative_color, parent),
+        _lobe_vector(canvas, origin, (math.cos(radians), math.sin(radians), 0.0),
+                     major, minor, phase, fill, color, parent),
+        _lobe_vector(canvas, origin, (-math.cos(radians), -math.sin(radians), 0.0),
+                     major, minor, -phase, fill, negative_color, parent),
     ]
 
 
-def _angle_arc(canvas, center, vectors, radius, angle, label):
+def _angle_arc(canvas, center, vectors, radius, label, label_level=0):
     first, second = vectors
+    projected = _vector_angle(first, second, dimensions=2)
     a0 = math.atan2(first[1], first[0])
     a1 = math.atan2(second[1], second[0])
     start = (center[0] + radius * math.cos(a0), center[1] + radius * math.sin(a0))
@@ -101,18 +136,12 @@ def _angle_arc(canvas, center, vectors, radius, angle, label):
         'Tail3D': f'{start[0]:.2f} {start[1]:.2f} 0',
         'Head3D': f'{end[0]:.2f} {end[1]:.2f} 0',
         'Center3D': f'{center[0]:.2f} {center[1]:.2f} 0',
-        'AngularSize': f'{angle:.2f}',
+        'AngularSize': f'{projected:.2f}',
         'ArrowheadHead': 'None', 'ArrowheadTail': 'None', 'FillType': 'None',
     })
     canvas.see(*start); canvas.see(*end)
-    bisector = (first[0] + second[0], first[1] + second[1])
-    norm = math.hypot(*bisector)
-    if norm < 1e-8:
-        bisector = (-first[1], first[0])
-        norm = math.hypot(*bisector)
-    xy = (center[0] + (radius + 8) * bisector[0] / norm,
-          center[1] + (radius + 8) * bisector[1] / norm)
-    canvas.label(xy, label, align='Center', valign='middle')
+    canvas.label((center[0], center[1] - radius * 2.5 - 20 - 14 * label_level),
+                 label, align='Center', valign='middle')
 
 
 def _shape_spec(spec):
@@ -132,8 +161,8 @@ def draw_orbital_shapes(canvas, spec: Mapping[str, Any]) -> dict[str, Any]:
     """Draw one hybridisation panel on an existing canvas."""
     kind, origin, size, width, fill, positive, negative = _shape_spec(spec)
     if kind in ('sp3', 'unequal'):
-        directions = _TETRAHEDRON
-        angle = math.degrees(math.acos(-1 / 3))
+        directions = _TETRAHEDRON if kind == 'sp3' else _unequal_directions()
+        angle = math.degrees(math.acos(-1 / 3)) if kind == 'sp3' else _vector_angle(directions[0], directions[1])
         default_title = 'unequal hybridisation (CH{sub:3}Cl)' if kind == 'unequal' else 'sp{sup:3}'
     elif kind == 'sp2':
         directions = tuple((math.cos(math.radians(a)), math.sin(math.radians(a)), 0.0) for a in (0, 120, 240))
@@ -141,7 +170,6 @@ def draw_orbital_shapes(canvas, spec: Mapping[str, Any]) -> dict[str, Any]:
     else:
         directions = ((1.0, 0.0, 0.0), (-1.0, 0.0, 0.0))
         angle, default_title = 180.0, 'sp'
-    label = f'{angle:.1f}°'
 
     if kind == 'unequal':
         sizes = spec.get('lobe_sizes', [size * 1.3, size, size, size])
@@ -158,28 +186,42 @@ def draw_orbital_shapes(canvas, spec: Mapping[str, Any]) -> dict[str, Any]:
         _lobe_vector(canvas, origin, direction, lobe_size, width, 1, fill, positive)
     p_count = 0
     if kind == 'sp2':
-        p_orbital(canvas, origin, -90, size * 0.8, width * 0.8, phase=1, fill=fill,
-                  color=positive, negative_color=negative)
+        p_orbital(canvas, origin, size=size * 0.8, width=width * 0.8, phase=1, fill=fill,
+                  color=positive, negative_color=negative, axis='z')
         p_count = 2
     elif kind == 'sp':
         p_orbital(canvas, origin, -90, size * 0.75, width * 0.75, phase=1, fill=fill,
                   color=positive, negative_color=negative)
-        p_orbital(canvas, origin, 45, size * 0.65, width * 0.65, phase=1, fill=fill,
-                  color=positive, negative_color=negative)
+        p_orbital(canvas, origin, size=size * 0.65, width=width * 0.65, phase=1, fill=fill,
+                  color=positive, negative_color=negative, axis='z')
         p_count = 4
     if spec.get('show_angle', True):
-        _angle_arc(canvas, origin, directions[:2], min(sizes) * 0.42, angle, label)
+        if kind == 'unequal':
+            arc_specs = (((directions[0], directions[1]), angle, 'H-C-Cl 3D'),
+                         ((directions[1], directions[2]), 110.3, 'H-C-H 3D'))
+        else:
+            arc_specs = ((directions[:2], angle, '3D angle' if kind == 'sp3' else ''),)
+        for label_level, (vectors, spatial, prefix) in enumerate(arc_specs):
+            projected = _vector_angle(*vectors, dimensions=2)
+            label = (f'{prefix + " " if prefix else ""}{spatial:.1f}°' if kind != 'sp3'
+                     else f'3D angle {spatial:.1f}° (projection {projected:.1f}°)')
+            if kind == 'unequal':
+                label += f' (projection {projected:.1f}°)'
+            _angle_arc(canvas, origin, vectors, min(sizes) * 0.42, label, label_level)
     title = spec.get('title', default_title)
     if title:
         canvas.label((origin[0], origin[1] + size + 30), str(title), align='Center')
-    return {'diagram': 'orbital_shapes', 'hybridisation': kind,
-            'hybrid_lobes': len(directions), 'p_lobes': p_count,
-            'lobe_count': len(directions) + p_count, 'angle_deg': round(angle, 4),
-            'lobe_sizes': sizes, 'warnings': []}
+    report = {'diagram': 'orbital_shapes', 'hybridisation': kind,
+              'hybrid_lobes': len(directions), 'p_lobes': p_count,
+              'lobe_count': len(directions) + p_count, 'angle_deg': round(angle, 4),
+              'lobe_sizes': sizes, 'warnings': []}
+    if kind == 'unequal':
+        report['angles_deg'] = {'H-C-Cl': round(angle, 4), 'H-C-H': 110.3}
+    return report
 
 
 def orbital_shapes(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
-    """Draw sp3, sp2, sp or unequal hybrid lobes with axes and an angle annotation."""
+    """Draw sp3, sp2, sp or unequal hybrid lobes with axes and angle annotations."""
     canvas = Canvas()
     report = draw_orbital_shapes(canvas, spec)
     return _result(canvas, output, report)
@@ -188,19 +230,20 @@ def orbital_shapes(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
 def _overlap_options(spec):
     size = number(spec.get('size', 64), 'size', 0.01, 1000)
     width = number(spec.get('width', 22), 'width', 0.01, 1000)
-    separation = number(spec.get('separation', 64), 'separation', 0.01, 1000)
+    separation = number(spec.get('separation', 16), 'separation', 0.01, 1000)
     fill = str(spec.get('fill', 'filled')).lower()
     return size, width, separation, fill
 
 
 def _draw_sigma(canvas, origin, spec):
     size, width, separation, fill = _overlap_options(spec)
+    if separation >= size:
+        raise ValueError('sigma overlap needs separation smaller than size so the lobe boxes intersect')
     left = (origin[0] - separation / 2, origin[1])
     right = (origin[0] + separation / 2, origin[1])
     positive = spec.get('positive_color')
     canvas.segment((left[0] - 12, origin[1]), (right[0] + 12, origin[1]), dashed=True)
-    lobe(canvas, (origin[0] - 12, origin[1]), 0, 24, width * 0.65,
-         phase=1, fill='solid', color=positive)
+    lobe(canvas, left, 0, separation, width, phase=1, fill='solid', color=positive)
     lobe(canvas, left, 0, size, width, phase=1, fill=fill, color=positive)
     lobe(canvas, right, 180, size, width, phase=1, fill=fill, color=positive)
     canvas.label((origin[0], origin[1] + 48), 'σ overlap', align='Center')
@@ -211,14 +254,17 @@ def _draw_sigma(canvas, origin, spec):
 
 def _draw_pi(canvas, origin, spec):
     size, width, separation, fill = _overlap_options(spec)
+    if separation >= width:
+        raise ValueError('pi overlap needs separation smaller than width so same-phase lobe boxes intersect')
     left = (origin[0] - separation / 2, origin[1])
     right = (origin[0] + separation / 2, origin[1])
     positive, negative = spec.get('positive_color'), spec.get('negative_color')
     canvas.segment((left[0] - 12, origin[1]), (right[0] + 12, origin[1]), dashed=True)
-    for y, phase, color in ((origin[1] - size * 0.38, 1, positive),
-                            (origin[1] + size * 0.38, -1, negative)):
-        lobe(canvas, (origin[0] - 12, y), 0, 24, width * 0.65,
-             phase=phase, fill='solid', color=color)
+    overlap_width = width - separation
+    lobe(canvas, origin, -90, size, overlap_width,
+         phase=1, fill='solid', color=positive)
+    lobe(canvas, origin, 90, size, overlap_width,
+         phase=-1, fill='solid', color=negative)
     for nucleus in (left, right):
         p_orbital(canvas, nucleus, -90, size, width, phase=1, fill=fill,
                   color=positive, negative_color=negative)

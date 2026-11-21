@@ -54,7 +54,7 @@ def build_acs_figure(
 
     Supports molecule, conformer (chair, newman, haworth, fischer, norbornane), text,
     arrow, box, and label_box objects, plus ring_fills, atom_halos, multi_attachments,
-    ts_bracket, orbital, ellipse lobe, orbital_shapes, orbital_overlap, and interaction styling.
+    ts_bracket, orbital, and interaction styling.
 
     Args:
         spec: Spec dict, JSON string, or path to a .json spec file.

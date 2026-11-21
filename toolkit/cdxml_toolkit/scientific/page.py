@@ -22,14 +22,20 @@ def _bbox(page):
     xs, ys = [], []
     for element in page.iter():
         box = element.get("BoundingBox")
-        if box and len(box.split()) == 4:
+        if element is not page and box and len(box.split()) == 4:
             v = [float(t) for t in box.split()]
             xs += [v[0], v[2]]
             ys += [v[1], v[3]]
-        point = element.get("p")
-        if point:
-            xs.append(float(point.split()[0]))
-            ys.append(float(point.split()[1]))
+        for attr in ("p", "Head3D", "Tail3D", "Center3D", "MajorAxisEnd3D", "MinorAxisEnd3D"):
+            point = element.get(attr)
+            if point:
+                xs.append(float(point.split()[0]))
+                ys.append(float(point.split()[1]))
+        curve = element.get("CurvePoints")
+        if curve:
+            values = [float(value) for value in curve.split()]
+            xs += values[0::2]
+            ys += values[1::2]
     if not xs:
         return (0.0, 0.0, 0.0, 0.0)
     return (min(xs), min(ys), max(xs), max(ys))
@@ -60,7 +66,7 @@ class _Ids:
         return self.n
 
 
-def _shift(element, dx, dy, ids):
+def _shift(element, dx, dy, ids=None, colors=None):
     for node in element.iter():
         for key in ("p", "Tail3D", "Head3D", "Center3D", "MajorAxisEnd3D", "MinorAxisEnd3D"):
             value = node.get(key)
@@ -73,10 +79,34 @@ def _shift(element, dx, dy, ids):
         if box and len(box.split()) == 4:
             v = [float(t) for t in box.split()]
             node.set("BoundingBox", "%s %s %s %s" % (v[0] + dx, v[1] + dy, v[2] + dx, v[3] + dy))
-        for key in ("id", "Z"):
-            value = node.get(key)
-            if value and value.isdigit():
-                node.set(key, str(ids.next()))
+        if ids is not None:
+            for key in ("id", "Z"):
+                value = node.get(key)
+                if value and value.isdigit():
+                    node.set(key, str(ids.next()))
+        if colors is not None:
+            for key in ("color", "bgcolor", "fgcolor"):
+                value = node.get(key)
+                if value in colors:
+                    node.set(key, colors[value])
+
+
+def _color_remap(source, root):
+    table = root.find("colortable")
+    if table is None:
+        table = ET.SubElement(root, "colortable")
+    existing = {}
+    for index, color in enumerate(table.findall("color"), start=2):
+        key = tuple(float(color.get(channel, "0")) for channel in "rgb")
+        existing[key] = str(index)
+    mapping = {"0": "0", "1": "1"}
+    for index, color in enumerate(source.findall("./colortable/color"), start=2):
+        key = tuple(float(color.get(channel, "0")) for channel in "rgb")
+        if key not in existing:
+            table.append(copy.deepcopy(color))
+            existing[key] = str(len(table.findall("color")) + 1)
+        mapping[str(index)] = existing[key]
+    return mapping
 
 
 def runs(text):
@@ -145,12 +175,14 @@ def compose_page(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         gap = float(row.get("gap", 46.0))
         boxes, spines, x = [], [], 56.0 if row.get("margin_label") else 14.0
         for path in parts:
-            source = ET.parse(path).getroot().find("page")
+            source_root = ET.parse(path).getroot()
+            source = source_root.find("page")
+            colors = _color_remap(source_root, root)
             box = _bbox(source)
             dx, dy = x - box[0], y_cursor - box[1]
             for child in list(source):
                 clone = copy.deepcopy(child)
-                _shift(clone, dx, dy, ids)
+                _shift(clone, dx, dy, ids, colors)
                 page.append(clone)
             boxes.append((box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy))
             spines.append(_spine_y(source) + dy)
@@ -206,6 +238,25 @@ def compose_page(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                 "FillType": "None", "LineWidth": "0.6"})
         report.append({"panels": [list(map(float, b)) for b in boxes], "baseline": baseline})
         y_cursor = baseline + row_gap
+    page_margin = float(spec.get("margin", 12.0))
+    x0, y0, x1, y1 = _bbox(page)
+    final_dx, final_dy = page_margin - x0, page_margin - y0
+    for child in list(page):
+        _shift(child, final_dx, final_dy)
+    for row in report:
+        row["panels"] = [[b[0] + final_dx, b[1] + final_dy, b[2] + final_dx, b[3] + final_dy]
+                         for b in row["panels"]]
+        row["baseline"] += final_dy
+    width, height = x1 - x0 + 2 * page_margin, y1 - y0 + 2 * page_margin
+    box = f"0 0 {width:.2f} {height:.2f}"
+    root.set("BoundingBox", box)
+    page.set("BoundingBox", box)
+    page.set("Width", f"{width:.2f}")
+    page.set("Height", f"{height:.2f}")
+    from ..cdxml_check import pages_needed
+    wide, tall = pages_needed(width, height)
+    page.set("WidthPages", str(wide))
+    page.set("HeightPages", str(tall))
     from .energy import _save_text
     text = ET.tostring(root, encoding="unicode")
     out = {"diagram": "compose_page", "rows": report, "warnings": warnings, "cdxml": text}

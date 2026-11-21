@@ -1,0 +1,13 @@
+{
+  "rows": [
+    {
+      "parts": [
+        "toolkit/examples/orbital/orbital-shapes.cdxml",
+        "toolkit/examples/orbital/orbital-overlap.cdxml"
+      ],
+      "gap": 46,
+      "labels": ["unequal hybridisation", "sigma and pi overlap"]
+    }
+  ],
+  "margin": 12
+}

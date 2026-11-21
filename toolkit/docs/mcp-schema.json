@@ -43,7 +43,7 @@
       "group": "extended",
       "resource_class": null,
       "timeout_seconds": null,
-      "description": "Build an ACS Document 1996 CDXML figure from an acs_builder JSON spec.\n\nSupports molecule, conformer (chair, newman, haworth, fischer, norbornane), text,\narrow, box, and label_box objects, plus ring_fills, atom_halos, multi_attachments,\nts_bracket, orbital, ellipse lobe, orbital_shapes, orbital_overlap, and interaction styling.\n\nArgs:\n    spec: Spec dict, JSON string, or path to a .json spec file.\n    output_path: Optional destination .cdxml path (never overwrites an existing file).\n    render: If True, also render a native 300 dpi PNG beside the CDXML when ChemDraw is available."
+      "description": "Build an ACS Document 1996 CDXML figure from an acs_builder JSON spec.\n\nSupports molecule, conformer (chair, newman, haworth, fischer, norbornane), text,\narrow, box, and label_box objects, plus ring_fills, atom_halos, multi_attachments,\nts_bracket, orbital, and interaction styling.\n\nArgs:\n    spec: Spec dict, JSON string, or path to a .json spec file.\n    output_path: Optional destination .cdxml path (never overwrites an existing file).\n    render: If True, also render a native 300 dpi PNG beside the CDXML when ChemDraw is available."
     },
     {
       "name": "characterization_text",

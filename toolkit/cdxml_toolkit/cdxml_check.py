@@ -22,8 +22,8 @@ PROFILES: dict[str, dict[str, Any]] = {
         'settings': {'BondLength': 14.4, 'LineWidth': 0.6, 'BoldWidth': 2.0, 'HashSpacing': 2.5,
                      'MarginWidth': 1.6, 'LabelSize': 10.0, 'CaptionSize': 10.0, 'ChainAngle': 120.0},
         'latin_fonts': ('Arial',), 'cjk_fonts': ('SimSun',), 'text_size': 10.0, 'min_text_size': 6.0,
-        # Grey marks subordinate structures; red/blue mark opposite orbital phases.
-        'palette': ('#000000', '#FFFFFF', '#FF6600', '#336699', '#808080', '#C0392B', '#0072B2'),
+        # Grey marks a subordinate structure: a secondary product beside the main one in a scope.
+        'palette': ('#000000', '#FFFFFF', '#FF6600', '#336699', '#808080'),
     },
 }
 _CJK = re.compile(r'[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]')
