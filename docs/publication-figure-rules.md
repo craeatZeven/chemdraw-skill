@@ -11,7 +11,7 @@ Every automated figure rule should originate from **comparing multiple published
    - **Geometry & proportion**: bond length, cap height, arrow length / bond length, margins, page cropping, multi-row wrapping or grid density.
    - **Typography & formatting**: bold compound numbers vs plain formulas, italic locants/stereochemical descriptors (`cis`, `trans`, `o`/`m`/`p`, `N`-), subscript rules, superscript footnote letters (`^a`), yield placement.
    - **Semantic colour system**: how colour encodes chemical meaning (synthon provenance, newly formed bonds, varying substituent, per-band theme, subordinate by-product in grey) — never decorative rainbow colouring.
-   - **Structural conventions**: abbreviation contractions, generic rings, equilibrium/retrosynthesis arrows, Newman/chair insets, brackets, section bands.
+   - **Structural conventions**: [group abbreviations](#group-abbreviations), generic rings, equilibrium/retrosynthesis arrows, Newman/chair insets, brackets, section bands.
    - **Failure & edge-case display**: `0%` / `trace` / `not formed` entries, secondary by-products, shared structures for homologous families (`Alk = C7H15, C18H37`).
 3. **Encode measurable rules in three places at once**:
    - **Generator** (`draw_figure` brief kinds: `scheme`, `scope`, `mechanism`, `panels`, `table`; `scientific` diagram generators; `acs_builder`).
@@ -51,6 +51,20 @@ Built-in semantic palettes (`toolkit/cdxml_toolkit/publication/palettes.py`, acc
 3. **Italic locants & footnotes**: locants and stereochemical prefixes (`ortho`, `meta`, `para`, `cis`, `trans`, `N-`, `O-`, `C-`) are italic; footnote markers (`^a`, `^b`) are italic superscripts.
 4. **Native-save phantom-fragment guard**: every non-atom `<t>` caption (conditions, labels, table cells, footnotes) must carry `InterpretChemically="no"` so ChemDraw's SaveAs never turns a condition label such as `H2O` or `MeOH` into a hidden molecule fragment. Verify with `cdx.py validate FILE.cdxml --native` (`molecule_count_delta == 0`).
 5. **Zero text-over-ink**: rules, arrows, curves, and bounding boxes must keep measurable clearance from every caption box (`cdx.py check --profile <style>` reports `text_over_ink` warnings).
+
+### Group abbreviations
+
+Use a catalogue abbreviation when it makes a crowded figure easier to scan. Keep the full structure in the brief and verify that the saved figure's `readback` is `matched`.
+
+- Start with auxiliary groups that recur in at least three species or at least twice in one structure. Check the native render at publication size. An abbreviation is most useful when a group sets the width of its cell or the panel contains more than a dozen compounds.
+- Introduce the group with an expanded structure or a clear caption or footnote. A scope header can show the first expanded occurrence. Use the same label on the remaining structures.
+- Draw out the group under study, the defining instance of an R group, groups involved in stereochemistry or bond changes, and groups whose individual atoms are highlighted. Use `abbreviate: []` to disable catalogue abbreviations on a species, or list the unrelated groups that can still be contracted.
+
+Scope briefs can also use a `definition` such as `Alk = C7H15` when a family shares a drawing. The panel shows the named group and spells out the formula under each compound. Use `abbreviate` for standard catalogue labels such as `Boc` and `OMe`. See the [substrate-scope corpus](../assets/scope-benchmark/) for illustrated briefs.
+
+The renderer compares the matched substituent to the catalogue expansion at the attachment bond. A change of isotope, charge or connectivity keeps the group expanded. The same protection applies to groups that participate in specified stereochemistry, touch an explicitly atom-mapped bond change, or carry a local colour or disconnection mark. The report explains why such matches remain expanded. An overall species colour can still be used with an abbreviation.
+
+The species' `abbreviate` list overrides the house style's list. Choose the candidates based on what the figure needs to explain. For unmapped steps, keep groups at the reaction centre expanded when writing the brief. In a scope, the header and the species cells are styled separately, even when they show the same molecule. See [Group abbreviations in the drawing guide](../skill/chemdraw/references/scheme-drawing.md#group-abbreviations) for the brief controls.
 
 ---
 
