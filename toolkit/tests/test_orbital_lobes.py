@@ -252,7 +252,7 @@ def test_sigma_overlap_region_equals_the_lobe_bbox_intersection(size, width, sep
     assert any(node.get("GraphicType") == "Line" and node.get("LineType") == "Dashed" for node in root.iter("graphic"))
 
 
-@pytest.mark.parametrize("size,width,separation", [(64, 22, 16), (80, 30, 24), (50, 28, 14)])
+@pytest.mark.parametrize("size,width,separation", [(64, 22, 16), (80, 30, 24), (50, 28, 14), (64, 2, 0.5)])
 def test_pi_overlap_regions_equal_same_phase_bbox_intersections(size, width, separation):
     result = orbital_overlap({"kind": "pi", "size": size, "width": width, "separation": separation})
     root = _root(result)

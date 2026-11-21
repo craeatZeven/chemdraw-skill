@@ -237,7 +237,7 @@ def _overlap_options(spec):
 
 
 def _inner_radii(x_full, y_full, center_distance):
-    if center_distance <= 0.5:
+    if center_distance <= min(0.5, 0.1 * x_full):
         return 0.8 * x_full / 2, 0.8 * y_full / 2
     ratio = center_distance / x_full
     x_radius = (x_full - center_distance) / 2
