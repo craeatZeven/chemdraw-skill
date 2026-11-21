@@ -62,6 +62,15 @@ cdx.py scientific lcms_plate plate.json plate.cdxml
 
 The [NMR JSON example](../assets/scientific/nmr.json) uses integration ranges from the real [nmrglue integration example](https://nmrglue.readthedocs.io/en/latest/examples/integrate_1d.html). Its spectrum is not bundled: download `1d_data.ft` from that page (network access; skip this example for offline work) and set the input path to it. For another spectrum, replace the ranges or use the example runner, which omits those preset intervals.
 
+## Orbital shape and overlap diagrams
+
+```console
+cdx.py py -m cdxml_toolkit.scientific orbital_shapes --spec orbital-shapes.json --output orbital-shapes.cdxml
+cdx.py py -m cdxml_toolkit.scientific orbital_overlap --spec orbital-overlap.json --output orbital-overlap.cdxml
+```
+
+`orbital_shapes` takes `{"hybridisation": "sp3"}` (also `sp2`, `sp`, or `unequal`), with optional `at`, `size`, `width`, and per-lobe `lobe_sizes`. `orbital_overlap` takes `{"kind": "sigma"}` or `{"kind": "pi"}`; omitting `kind` draws both panels. Ellipse lobes use red `#C0392B` and blue `#0072B2` for opposite phases. The resulting CDXML files can be combined with the `page` operation. These are schematic graphics, not molecular connectivity.
+
 ## Scientific plots
 
 ```console

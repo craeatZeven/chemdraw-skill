@@ -20,6 +20,7 @@ import math
 import re
 import sys
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 from rdkit import Chem
 from rdkit.Chem import rdDepictor, AllChem
@@ -869,6 +870,41 @@ class Fig:
 Doc = Fig
 
 
+class _ScientificCanvas:
+    """Adapter letting the toolkit's orbital primitives write through :class:`Fig`."""
+    def __init__(self, fig):
+        self.fig = fig
+
+    def _resolve_color(self, color):
+        return self.fig.resolve_color(color)
+
+    def add(self, kind, attrs, parent=None):
+        if parent is not None:
+            raise ValueError('ACS orbital panels do not use nested parents')
+        oid = self.fig._id()
+        node = ET.Element(kind, {'id': str(oid), 'Z': str(oid),
+                                 **{key: str(value) for key, value in attrs.items()}})
+        self.fig.items.append(ET.tostring(node, encoding='unicode'))
+        return node
+
+    def see(self, x, y, pad=0.0):
+        self.fig._bb(x, y, pad)
+
+    def segment(self, a, b, color=None, dashed=False, parent=None):
+        return self.fig.line(*a, *b, dashed=dashed, color=color)
+
+    def label(self, xy, markup, size=None, align='Left', valign='baseline', color=None, bold=False, parent=None):
+        size = float(size or 10)
+        x, y = xy
+        if valign == 'middle':
+            y += size * 0.36
+        elif valign == 'top':
+            y += size * 0.8
+        elif valign != 'baseline':
+            raise ValueError("valign must be 'baseline', 'middle' or 'top'")
+        return self.fig.text(x, y, str(markup), size=size, align=align, bold=bold, color=color)
+
+
 _COMMON_KEYS = {'type', 'id', 'note', '_note'}
 _CONFORMER_KEYS = {'template', 'scaffold', 'at', 'center', 'cx', 'cy', 'flip', 'substituents', 'bond_length',
                    'conformation', 'dihedral_offset', 'front', 'rear', 'anomer', 'centers', 'top', 'bottom'}
@@ -890,6 +926,10 @@ SPEC_KEYS = {
     'ts_bracket': {'box', 'from', 'to', 'superscript', 'bracket_type', 'lip_size', 'object_ids'},
     'polymer_bracket': {'box', 'from', 'to', 'label', 'bracket_type', 'lip_size'},
     'orbital': {'at', 'cx', 'cy', 'orbital_type', 'kind', 'shaded', 'angle_deg', 'length', 'width', 'color'},
+    'lobe': {'at', 'angle_deg', 'size', 'width', 'coefficient', 'phase', 'fill', 'color'},
+    'orbital_shapes': {'at', 'hybridisation', 'size', 'width', 'lobe_sizes', 'fill',
+                       'positive_color', 'negative_color', 'show_axes', 'show_angle', 'title'},
+    'orbital_overlap': {'at', 'kind', 'size', 'width', 'separation', 'fill', 'positive_color', 'negative_color'},
     'interaction': {'from', 'to', 'p1', 'p2', 'style', 'color', 'label', 'clip_margin'},
     'conformer': _CONFORMER_KEYS,
 }
@@ -898,6 +938,9 @@ for _name in ('chair', 'newman', 'haworth', 'fischer', 'norbornane', 'bicyclo_22
 # Names people reach for -> the key the builder reads.
 SPEC_ALIASES = {
     'orbital': {'angle': 'angle_deg', 'center': 'at', 'position': 'at', 'size': 'length'},
+    'lobe': {'angle': 'angle_deg', 'center': 'at', 'position': 'at', 'length': 'size'},
+    'orbital_shapes': {'center': 'at', 'position': 'at', 'kind': 'hybridisation', 'sizes': 'lobe_sizes'},
+    'orbital_overlap': {'center': 'at', 'position': 'at', 'overlap': 'kind'},
     'conformer': {'kind': 'template', 'name': 'template', 'back': 'rear', 'dihedral_deg': 'dihedral_offset',
                   'anomeric': 'anomer', 'chiral_centers': 'centers'},
     'ts_bracket': {'bbox': 'box', 'label': 'superscript'},
@@ -1043,6 +1086,18 @@ def build_from_spec(spec_path, output_path=None):
                 width=o.get('width', 7.5),
                 color=o.get('color', HOUSE_BLUE),
             )
+        elif kind == 'lobe':
+            from cdxml_toolkit.scientific.orbital_lobes import lobe
+            lobe(_ScientificCanvas(fig), o.get('at', (100.0, 100.0)),
+                 angle_deg=o.get('angle_deg', -90.0), size=o.get('size', 36.0),
+                 width=o.get('width', 16.0), coefficient=o.get('coefficient', 1.0),
+                 phase=o.get('phase', 1), fill=o.get('fill', 'filled'), color=o.get('color'))
+        elif kind == 'orbital_shapes':
+            from cdxml_toolkit.scientific.orbital_lobes import draw_orbital_shapes
+            draw_orbital_shapes(_ScientificCanvas(fig), o)
+        elif kind == 'orbital_overlap':
+            from cdxml_toolkit.scientific.orbital_lobes import draw_orbital_overlap
+            draw_orbital_overlap(_ScientificCanvas(fig), o)
         elif kind == 'interaction':
             p1 = o.get('from') or o['p1']
             p2 = o.get('to') or o['p2']

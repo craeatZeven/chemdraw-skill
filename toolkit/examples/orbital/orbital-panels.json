@@ -1,0 +1,9 @@
+{
+  "objects": [
+    {"type": "orbital_shapes", "hybridisation": "sp3", "at": [80, 80]},
+    {"type": "orbital_shapes", "hybridisation": "sp2", "at": [240, 80]},
+    {"type": "orbital_shapes", "hybridisation": "sp", "at": [80, 240]},
+    {"type": "orbital_shapes", "hybridisation": "unequal", "at": [240, 240], "lobe_sizes": [48, 32, 34, 36]},
+    {"type": "orbital_overlap", "kind": "both", "at": [430, 100]}
+  ]
+}

@@ -29,6 +29,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
     from .huckel import huckel_mo
     from .lewis import lewis_structure
     from .orbitals import crystal_field, electron_configuration_diagram, mo_diagram
+    from .orbital_lobes import orbital_overlap, orbital_shapes
     from .periodic import periodic_table
     from .phase import phase_diagram
     from .page import compose_page
@@ -46,6 +47,8 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
         'electrochemical_cell': electrochemical_cell,
         'periodic_table': periodic_table,
         'huckel_mo': huckel_mo,
+        'orbital_shapes': orbital_shapes,
+        'orbital_overlap': orbital_overlap,
         'phase_diagram': phase_diagram,
         'binary_phase_diagram': binary_phase_diagram,
         'pourbaix': pourbaix,
@@ -64,7 +67,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
 # Names only, so that importing this module stays cheap; ``build`` imports the builder.
 DIAGRAM_OPERATIONS = ('energy_profile', 'energy_cycle', 'jablonski', 'mo_diagram', 'electron_configuration',
                       'crystal_field', 'lewis', 'unit_cell', 'flowchart', 'electrochemical_cell', 'periodic_table',
-                      'huckel_mo', 'phase_diagram', 'binary_phase_diagram',
+                      'huckel_mo', 'orbital_shapes', 'orbital_overlap', 'phase_diagram', 'binary_phase_diagram',
                       'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'tanabe_sugano', 'compose', 'page')
 
 def build(operation: str, spec: Mapping[str, Any], output=None) -> dict[str, Any]:
