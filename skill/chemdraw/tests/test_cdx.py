@@ -1,5 +1,6 @@
 """Unified CLI, ACS-1996 builder and installation-manifest contracts."""
 import argparse
+import contextlib
 import json
 import re
 import os
@@ -456,6 +457,9 @@ def test_doctor_paths_name_the_current_worker_log_folder(tmp_path, monkeypatch):
 def _doctor(monkeypatch, capsys, fingerprint):
     monkeypatch.setattr(cdx, 'runtime_fingerprint', lambda: fingerprint)
     monkeypatch.setattr(cdx, '_signatures_current', lambda: True)
+    monkeypatch.setattr(cdx, '_windows_com_status', lambda: {
+        'registry': {'status': 'available'}, 'render': {'status': 'available'},
+    })
     with mock.patch.object(cdx, '_worker', return_value={'ok': True, 'result': {'ok': True, 'outputs': {}}}):
         code = cdx.main(['doctor'])
     return code, json.loads(capsys.readouterr().out)
@@ -829,6 +833,10 @@ def test_doctor_returns_nonzero_when_requested_probe_fails_without_breaking_defa
     monkeypatch.setattr(cdx, 'runtime_fingerprint', lambda: 'a' * 64)
     monkeypatch.setattr(cdx, '_signatures_current', lambda: True)
     monkeypatch.setattr(cdx, 'catalog_stale', lambda: [])
+    registry = {'status': 'available'}
+    monkeypatch.setattr(cdx, '_windows_com_status', lambda: {
+        'registry': registry, 'render': {'status': 'missing', 'detail': 'Render failed'},
+    })
     unverified_caps = {
         'chemdraw': {'status': 'missing'},
         'office': {'status': 'unverified'},
@@ -852,6 +860,9 @@ def test_doctor_returns_nonzero_when_requested_probe_fails_without_breaking_defa
         assert cdx.main(['doctor', '--native']) == 1
     capsys.readouterr()
 
+    monkeypatch.setattr(cdx, '_windows_com_status', lambda: {
+        'registry': registry, 'render': {'status': 'available'},
+    })
     with mock.patch.object(cdx, '_worker', return_value={'ok': True, 'result': {'ok': True, 'outputs': {'capabilities': {'chemdraw': {'status': 'available'}, 'office': {'status': 'unverified'}}}}}):
         assert cdx.main(['doctor', '--native']) == 0
     capsys.readouterr()
@@ -910,6 +921,9 @@ def test_doctor_reports_only_the_runtimes_own_passive_capabilities(monkeypatch, 
     monkeypatch.setattr(cdx, 'runtime_fingerprint', lambda: 'a' * 64)
     monkeypatch.setattr(cdx, '_signatures_current', lambda: True)
     monkeypatch.setattr(cdx, 'catalog_stale', lambda: [])
+    monkeypatch.setattr(cdx, '_windows_com_status', lambda: {
+        'registry': {'status': 'available'}, 'render': {'status': 'available'},
+    })
     caps = {'chemdraw': {'status': 'available'}, 'office': {'status': 'unverified'},
             'chemscript': {'status': 'unverified'}, 'chemdraw_com': {'status': 'available'}}
     with mock.patch.object(cdx, '_worker', return_value={'ok': True, 'result': {'ok': True, 'outputs': {'capabilities': caps}}}):
@@ -917,6 +931,70 @@ def test_doctor_reports_only_the_runtimes_own_passive_capabilities(monkeypatch, 
     report = json.loads(capsys.readouterr().out)
     assert 'passive_capabilities' not in report  # unverified is never relabelled as available
     assert report['capabilities']['office'] == 'unverified'
+
+
+@pytest.mark.parametrize('render_status, png_bytes, exit_code', [
+    ('available', 321, 0), ('missing', 0, 1),
+])
+@pytest.mark.parametrize('native', [False, True])
+def test_windows_doctor_judges_com_by_rendering(monkeypatch, capsys, native, render_status, png_bytes, exit_code):
+    monkeypatch.setattr(cdx, 'expected_fingerprint', lambda: None)
+    monkeypatch.setattr(cdx, '_signatures_current', lambda: True)
+    monkeypatch.setattr(cdx, 'catalog_stale', lambda: [])
+    registry = ({'status': 'warning', 'detail': 'HKLM LocalServer32 executable is missing'} if png_bytes else
+                {'status': 'available', 'detail': 'The effective COM registry path exists'})
+    render = {'status': render_status, 'detail': 'Native PNG probe', 'png_bytes': png_bytes}
+    # The passive runtime verdict deliberately disagrees with the live result in both cases.
+    passive_com = 'missing' if png_bytes else 'available'
+    caps = {'chemdraw': {'status': 'missing'}, 'chemdraw_com': {'status': passive_com}}
+    diag = {'ok': True, 'outputs': {'capabilities': caps}, 'warnings': ['chemdraw_com: passive verdict']}
+    with mock.patch.object(cdx, '_windows_com_status', return_value={'registry': registry, 'render': render}) as probe, \
+            mock.patch.object(cdx, '_worker', return_value={'ok': True, 'result': diag}) as worker, \
+            mock.patch.object(cdx.sys, 'platform', 'win32'):
+        assert cdx.cmd_doctor(argparse.Namespace(paths=False, native=native, office=False, chemscript=False, full=True)) == (exit_code if native else 0)
+    probe.assert_called_once_with()
+    worker.assert_called_once_with('diagnose_runtime', {'run_native_probe': False, 'run_office_probe': False,
+                                                        'run_chemscript_probe': native})
+    report = json.loads(capsys.readouterr().out)
+    assert report['capabilities']['chemdraw_com'] == render_status
+    assert report['capabilities']['chemdraw_com_registry'] == registry['status']
+    assert report['chemdraw_com_registry'] == registry
+    assert report['chemdraw_com_render'] == render
+    assert 'chemdraw_com: passive verdict' not in report['warnings']
+    assert report['diagnose_runtime']['outputs']['capabilities']['chemdraw_com'] == render
+    assert report['diagnose_runtime']['ok'] == (not native or exit_code == 0)
+
+
+def test_windows_com_registry_reports_a_stale_machine_entry_shadowed_by_a_valid_user_entry(monkeypatch, tmp_path):
+    import ntpath
+    import types
+
+    installed = tmp_path / 'actual install' / 'ChemDraw.exe'
+    installed.parent.mkdir()
+    installed.touch()
+    machine = tmp_path / 'removed install' / 'ChemDraw.exe'
+    entries = {
+        ('HKCR', r'ChemDraw.Application\CLSID', 64): '{1}',
+        ('HKCR', r'CLSID\{1}\LocalServer32', 64): f'{installed} /Automation',
+        ('HKLM', r'Software\Classes\CLSID\{1}\LocalServer32', 64): f'"{machine}" /Automation',
+    }
+
+    def open_key(hive, path, reserved, access):
+        try:
+            return contextlib.nullcontext(entries[hive, path, access])
+        except KeyError:
+            raise FileNotFoundError(path) from None
+
+    monkeypatch.setenv('CHEMDRAW_PROGID', ' ChemDraw.Application ')
+    monkeypatch.setitem(sys.modules, 'winreg', types.SimpleNamespace(
+        HKEY_CLASSES_ROOT='HKCR', HKEY_LOCAL_MACHINE='HKLM', KEY_READ=0,
+        KEY_WOW64_64KEY=64, KEY_WOW64_32KEY=32, OpenKey=open_key,
+        QueryValueEx=lambda key, name: (key, None), ExpandEnvironmentStrings=ntpath.expandvars,
+    ))
+    registry = cdx._windows_com_registry()
+    assert registry['status'] == 'warning'
+    assert registry['executable'] == str(installed)
+    assert 'HKLM' in registry['detail'] and str(machine) in registry['detail']
 
 
 def test_styles_lists_the_journal_presets(capsys):

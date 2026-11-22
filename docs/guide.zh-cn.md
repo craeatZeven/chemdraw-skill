@@ -9,7 +9,7 @@
 ```bash
 git clone https://github.com/ZiChenWang114514/chemdraw-skill.git
 cd chemdraw-skill
-pwsh ./scripts/check_prerequisites.ps1 -Capabilities core,native     # 可选：只读的 Windows 主机环境报告
+pwsh ./scripts/check_prerequisites.ps1                              # 可选：Windows 主机环境报告
 python scripts/install.py --agent claude agents --runtime            # 预览
 python scripts/install.py --agent claude agents --runtime --apply    # 安装 Skill 副本 + 共享运行时
 ```
@@ -41,12 +41,14 @@ export CHEMDRAW_MCP_PYTHON=<venv>/bin/python      # 仅当 <venv> 不在 cdx.py 
 ## 检查安装
 
 ```bash
-python <skill>/scripts/cdx.py doctor              # 版本、可选依赖、漂移、能力矩阵
-python <skill>/scripts/cdx.py doctor --native     # 额外执行 ChemScript ping 和一次原生 PNG 渲染
+python <skill>/scripts/cdx.py doctor              # Windows 上包含一次 COM PNG 渲染
+python <skill>/scripts/cdx.py doctor --native     # 要求原生渲染成功，并检查 ChemScript 桥接
 python <skill>/scripts/cdx.py doctor --office     # 额外执行 PPTX/DOCX ChemDraw-OLE 探测
 ```
 
 任何 Python 都可以启动 `cdx.py`，它会自行切换到运行时解释器；无法启动的候选解释器会被跳过。被跳过的探测不算已验证的能力。位数、超时、DECIMER 和故障代码见[运维说明](../skill/chemdraw/references/operations.md)。
+
+在 Windows 上，`cdx.py doctor` 与 `check_prerequisites.ps1 -Capabilities core,native -Python <runtime-python>` 共用同一个探测。它们用桌面版 ChemDraw 将一个只含单键的临时 CDXML 渲染为 PNG。`chemdraw_com` 报告渲染结果，并在成功时给出 PNG 字节数。`chemdraw_com_registry` 将缺失或失效的 `LocalServer32` 路径单独报告为非阻塞警告。系统级路径失效时，用户级注册仍可能可用。渲染或 ChemScript 桥接检查失败时，`doctor --native` 返回失败。
 
 在 agent 的命令白名单中放行一次 `python <skill>/scripts/cdx.py` 前缀即可避免反复弹出权限确认；[agent 集成](../skill/chemdraw/references/agent-integration.md#command-permissions)中有示例。该前缀同时涵盖 `cdx.py py`，它能在运行时中执行任意 Python，如果觉得范围太大，请改为逐个放行子命令。
 

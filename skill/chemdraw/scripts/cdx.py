@@ -1179,6 +1179,92 @@ def cmd_regen_catalog(ns):
     return 0
 
 
+def _windows_com_registry():
+    """Inspect the effective registration and any shadowed machine server."""
+    import winreg
+
+    override = os.environ.get('CHEMDRAW_PROGID', '').strip()
+    progids = (override,) if override else ('ChemDraw.Application', 'ChemDraw_x64.Application')
+
+    def value(hive, key, view):
+        try:
+            with winreg.OpenKey(hive, key, 0, winreg.KEY_READ | view) as handle:
+                raw, _ = winreg.QueryValueEx(handle, '')
+        except OSError:
+            return ''
+        return raw.strip() if isinstance(raw, str) else ''
+
+    executable = None
+    stale = []
+    for bits, view in ((64, winreg.KEY_WOW64_64KEY), (32, winreg.KEY_WOW64_32KEY)):
+        for progid in progids:
+            effective = value(winreg.HKEY_CLASSES_ROOT, rf'{progid}\CLSID', view)
+            machine = value(winreg.HKEY_LOCAL_MACHINE, rf'Software\Classes\{progid}\CLSID', view)
+            for label, hive, prefix, clsid in (
+                ('HKCR', winreg.HKEY_CLASSES_ROOT, '', effective),
+                ('HKLM', winreg.HKEY_LOCAL_MACHINE, 'Software\\Classes\\', machine or effective),
+            ):
+                if not clsid:
+                    continue
+                command = value(hive, rf'{prefix}CLSID\{clsid}\LocalServer32', view)
+                if not command:
+                    continue
+                expanded = winreg.ExpandEnvironmentStrings(command).strip()
+                match = re.match(r'^(?:"([^"]+\.exe)"|([^"].*?\.exe))(?:\s|$)', expanded, re.IGNORECASE)
+                path = Path(match.group(1) or match.group(2)) if match else None
+                if path is not None and path.is_file():
+                    if label == 'HKCR' and executable is None:
+                        executable = str(path)
+                else:
+                    stale.append(f'{label} ({bits}-bit) LocalServer32 points to an invalid or missing executable: {command}')
+    detail = (f'Effective COM registry executable: {executable}.' if executable else
+              f'No usable LocalServer32 executable was found for {", ".join(progids)}.')
+    return {'status': 'available' if executable and not stale else 'warning',
+            'detail': ' '.join([detail, *dict.fromkeys(stale)]), 'executable': executable}
+
+
+def _windows_com_render():
+    """Render one bond through the same isolated native worker as render_to_png."""
+    try:
+        from cdxml_toolkit.mcp_runtime.mcp_server import _run_worker
+
+        with tempfile.TemporaryDirectory(prefix='chemdraw-com-probe-') as scratch:
+            source = Path(scratch) / 'probe.cdxml'
+            png = source.with_suffix('.png')
+            source.write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<CDXML><page><fragment id="1"><n id="2" p="40 40"/>'
+                '<n id="3" p="54.4 40"/><b id="4" B="2" E="3"/>'
+                '</fragment></page></CDXML>\n',
+                encoding='utf-8',
+            )
+            result = _run_worker('render_to_png', [], {'cdxml_path': str(source), 'output_path': str(png)},
+                                 timeout_seconds=45)
+            summary = _summary('render_to_png', result)
+            if not summary['ok']:
+                error = summary.get('error') or 'The native render worker failed.'
+                if isinstance(error, dict):
+                    error = error.get('message') or error
+                raise RuntimeError(error)
+            with png.open('rb') as stream:
+                if stream.read(8) != b'\x89PNG\r\n\x1a\n':
+                    raise RuntimeError('The native renderer did not write a PNG.')
+            size = png.stat().st_size
+    except Exception as exc:
+        progid = os.environ.get('CHEMDRAW_PROGID', '').strip()
+        target = f' for {progid}' if progid else ''
+        return {'status': 'missing', 'detail': f'Native PNG render failed{target}: {exc}', 'png_bytes': 0}
+    return {'status': 'available', 'detail': f'Native PNG render succeeded ({size} bytes).', 'png_bytes': size}
+
+
+def _windows_com_status():
+    try:
+        registry = _windows_com_registry()
+    except OSError as exc:
+        registry = {'status': 'warning', 'detail': f'COM registry inspection failed: {exc}', 'executable': None}
+    return {'registry': registry, 'render': _windows_com_render()}
+
+
 def _probe_healthy(ns, layers, inner, caps):
     if not (ns.native or ns.office or ns.chemscript):
         return True
@@ -1187,7 +1273,8 @@ def _probe_healthy(ns, layers, inner, caps):
     probes = (inner.get('outputs') or {}).get('probes') or {}
     checks = []
     if ns.native:
-        checks.append(('native', ('native_probe', 'native_render', 'chemdraw')))
+        native_keys = ('chemdraw_com',) if sys.platform == 'win32' else ('native_probe', 'native_render', 'chemdraw')
+        checks.append(('native', native_keys))
     if ns.office:
         checks.append(('office', ('office_probe', 'office')))
     if ns.chemscript:
@@ -1232,16 +1319,34 @@ def cmd_doctor(ns):
         report['installation'] = 'ok' if inst['ok'] else {k: inst[k] for k in ('missing', 'modified', 'extra')}
     else:
         report['installation'] = 'no manifest (source checkout, or installed without the installer)'
-    diag = _worker('diagnose_runtime', {'run_native_probe': ns.native, 'run_office_probe': ns.office,
-                                        'run_chemscript_probe': ns.chemscript})
+    windows_com = _windows_com_status() if sys.platform == 'win32' else None
+    diag = _worker('diagnose_runtime', {'run_native_probe': ns.native and windows_com is None,
+                                        'run_office_probe': ns.office,
+                                        'run_chemscript_probe': ns.chemscript or (ns.native and windows_com is not None)})
     layers = _layers(diag)
     inner = layers[-1] if layers else {}
     outputs = inner.get('outputs') or {}
     caps = outputs.get('capabilities') or {}
+    warnings = inner.get('warnings') or []
+    if windows_com is not None:
+        registry, render = windows_com['registry'], windows_com['render']
+        report['chemdraw_com_registry'] = registry
+        report['chemdraw_com_render'] = render
+        caps = {**caps, 'chemdraw_com': render, 'chemdraw_com_registry': registry}
+        if ns.native:
+            caps['native_probe'] = render
+        warnings = [warning for warning in warnings if not warning.startswith('chemdraw_com:')]
+        for name, check in (('chemdraw_com_registry', registry), ('chemdraw_com', render)):
+            if check['status'] != 'available':
+                warnings.append(f"{name}: {check['detail']}")
+        inner = {**inner, 'outputs': {**outputs, 'capabilities': caps}, 'warnings': warnings,
+                 'metadata': {**(inner.get('metadata') or {}), 'read_only': False}}
+        if ns.native and render['status'] != 'available':
+            inner['ok'] = False
     report['capabilities'] = {k: (v.get('status') if isinstance(v, dict) else v) for k, v in caps.items()}
     if isinstance(outputs.get('passive_capabilities'), dict):  # the runtime's own reading, never guessed here
         report['passive_capabilities'] = outputs['passive_capabilities']
-    report['warnings'] = inner.get('warnings') or []
+    report['warnings'] = warnings
     if ns.full:
         report['diagnose_runtime'] = inner
     print(json.dumps(report, ensure_ascii=False, indent=2))
@@ -1498,6 +1603,10 @@ def _tolerant_console():
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else list(argv)
     _tolerant_console()
+    if argv == ['doctor', '--com-only'] and sys.platform == 'win32':
+        # The prerequisite checker must probe the explicit interpreter it was given.
+        print(json.dumps(_windows_com_status()))
+        return 0
     # `sig` and `schema` are static: both work before a runtime exists.
     if argv[:1] not in (['sig'], ['schema'], ['-h'], ['--help'], []):
         _ensure_runtime(argv)
@@ -1676,7 +1785,7 @@ def main(argv=None):
     s.set_defaults(fn=cmd_markush)
     s = sub.add_parser('doctor', help='runtime, extras, signatures, installation and capability report')
     s.add_argument('--paths', action='store_true', help='also print log, lock and temp locations')
-    s.add_argument('--native', action='store_true', help='run the native ChemDraw render probe')
+    s.add_argument('--native', action='store_true', help='require native rendering and run the ChemScript bridge ping')
     s.add_argument('--office', action='store_true', help='run the Word/PowerPoint OLE probes')
     s.add_argument('--chemscript', action='store_true', help='run the ChemScript bridge ping')
     s.add_argument('--full', action='store_true', help='include the complete diagnose_runtime result')

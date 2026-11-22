@@ -137,6 +137,7 @@ class PrerequisiteCheckerTests(unittest.TestCase):
         self.assertNotEqual(completed.returncode, 0)
         self.assertIn("bogus", completed.stdout + completed.stderr)
 
+    @unittest.skipUnless(HOST_PYTHON_SUPPORTED, "the native probe needs a supported Python")
     def test_native_check_uses_the_explicit_prog_id(self) -> None:
         progid = "AbsentChemDrawForPrerequisiteTest.Application"
         completed = self._run(
@@ -147,6 +148,32 @@ class PrerequisiteCheckerTests(unittest.TestCase):
         com = checks["chemdraw_com"]
         self.assertEqual(com["status"], "fail", com["detail"])
         self.assertIn(progid, com["detail"])
+
+    @unittest.skipUnless(HOST_PYTHON_SUPPORTED, "the native probe needs a supported Python")
+    def test_native_check_passes_when_render_works_without_a_registry_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            package = Path(tmp) / "cdxml_toolkit" / "mcp_runtime"
+            package.mkdir(parents=True)
+            (package.parent / "__init__.py").touch()
+            (package / "__init__.py").touch()
+            (package / "mcp_server.py").write_text(
+                "from pathlib import Path\n"
+                "def _run_worker(name, args, kwargs, *, timeout_seconds):\n"
+                "    assert name == 'render_to_png'\n"
+                "    assert '<b ' in Path(kwargs['cdxml_path']).read_text()\n"
+                "    Path(kwargs['output_path']).write_bytes(b'\\x89PNG\\r\\n\\x1a\\n' + b'x' * 313)\n"
+                "    return {'ok': True}\n",
+                encoding="utf-8",
+            )
+            completed = self._run(
+                "-Capabilities", "native", "-Python", sys.executable, "-SkipPythonPackages",
+                env=dict(os.environ, PYTHONPATH=tmp, CHEMDRAW_PROGID="AbsentPrerequisiteTest.Application"),
+            )
+        checks = {item["name"]: item for item in json.loads(completed.stdout)["checks"]}
+        self.assertEqual(checks["chemdraw_com"]["status"], "pass")
+        self.assertIn("321 bytes", checks["chemdraw_com"]["detail"])
+        self.assertEqual(checks["chemdraw_com_registry"]["status"], "warning")
+        self.assertFalse(checks["chemdraw_com_registry"]["required"])
 
     def test_documented_command_lines_use_the_supported_capability_form(self) -> None:
         for name in ("docs/guide.md", "docs/guide.zh-cn.md"):

@@ -1,4 +1,4 @@
-<# Read-only host and runtime prerequisite report for the ChemDraw Skill. #>
+<# Host and runtime prerequisite report for the ChemDraw Skill. Native checks render a temporary file. #>
 [CmdletBinding()]
 param(
     [string]$Python,
@@ -131,17 +131,10 @@ function Invoke-PythonCode {
 }
 
 function Get-RegistryDefaultValue {
-    param(
-        [Parameter(Mandatory)][string]$LiteralPath,
-        [Microsoft.Win32.RegistryKey]$BaseKey
-    )
+    param([Parameter(Mandatory)][string]$LiteralPath)
 
     try {
-        $item = if ($null -ne $BaseKey) {
-            $BaseKey.OpenSubKey($LiteralPath)
-        } else {
-            Get-Item -LiteralPath $LiteralPath -ErrorAction Stop
-        }
+        $item = Get-Item -LiteralPath $LiteralPath -ErrorAction Stop
         if ($null -ne $item) {
             try {
                 return $item.GetValue('', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
@@ -154,44 +147,7 @@ function Get-RegistryDefaultValue {
     }
 }
 
-function Get-ExecutableFromCommandLine {
-    param([string]$CommandLine)
-
-    if (-not $CommandLine) { return $null }
-    $expanded = [Environment]::ExpandEnvironmentVariables($CommandLine).Trim()
-    if ($expanded -match '^"([^"]+\.exe)"(?:\s|$)') { return $matches[1] }
-    if ($expanded -match '^([^"].*?\.exe)(?:\s|$)') { return $matches[1] }
-    return $null
-}
-
-function Get-ChemDrawComRegistration {
-    param([string[]]$ProgIds)
-
-    $alternateView = if ([Environment]::Is64BitProcess) { 'Registry32' } else { 'Registry64' }
-    foreach ($view in @('Default', $alternateView)) {
-        try {
-            $classes = [Microsoft.Win32.RegistryKey]::OpenBaseKey('ClassesRoot', $view)
-        } catch {
-            continue
-        }
-        try {
-            foreach ($progId in $ProgIds) {
-                $clsid = Get-RegistryDefaultValue -BaseKey $classes -LiteralPath "$progId\CLSID"
-                if ($clsid -isnot [string] -or -not $clsid.Trim()) { continue }
-                $command = Get-RegistryDefaultValue -BaseKey $classes -LiteralPath "CLSID\$($clsid.Trim())\LocalServer32"
-                if ($command -isnot [string]) { continue }
-                $exe = Get-ExecutableFromCommandLine $command
-                if ($exe -and (Test-Path -LiteralPath $exe -PathType Leaf -ErrorAction SilentlyContinue)) {
-                    return [pscustomobject]@{ ProgId = $progId; Path = [IO.Path]::GetFullPath($exe) }
-                }
-            }
-        } finally {
-            $classes.Dispose()
-        }
-    }
-}
-
-$isWindowsHost = $env:OS -eq 'Windows_NT'
+$isWindowsHost = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
 $isSupportedWindows = $isWindowsHost -and `
     [Environment]::Is64BitOperatingSystem -and `
     [Environment]::OSVersion.Version.Major -ge 10
@@ -456,7 +412,8 @@ if ($SkipChemDraw -or -not $windowsNativeRequested) {
     Add-Check -Name 'dotnet_framework' -Status 'skipped' -Required $false `
         -Detail $(if ($SkipChemDraw) { '.NET and ChemDraw checks were skipped by request.' } else { '.NET is not needed for the selected portable capabilities.' })
     Add-Check -Name 'chemdraw_com' -Status 'skipped' -Required $false `
-        -Detail $(if ($SkipChemDraw) { 'ChemDraw COM discovery was skipped by request.' } else { 'ChemDraw COM is not needed for the selected portable capabilities.' })
+        -Detail $(if ($SkipChemDraw) { 'ChemDraw COM rendering was skipped by request.' } else { 'ChemDraw COM is not needed for the selected portable capabilities.' })
+    Add-Check -Name 'chemdraw_com_registry' -Status 'skipped' -Required $false -Detail 'No native ChemDraw check was selected.'
     Add-Check -Name 'chemdraw_activation' -Status 'skipped' -Required $false `
         -Detail $(if ($SkipChemDraw) { 'ChemDraw activation must be checked manually on a native workstation.' } else { 'ChemDraw activation is not needed for the selected portable capabilities.' })
     Add-Check -Name 'chemscript_files' -Status 'skipped' -Required $false `
@@ -480,25 +437,43 @@ if ($SkipChemDraw -or -not $windowsNativeRequested) {
         Add-NextStep 'Install all Windows updates and .NET Framework 4.8 before installing ChemDraw.'
     }
 
-    $override = ([string]$env:CHEMDRAW_PROGID).Trim()
-    $progIds = if ($override) { @($override) } else { @('ChemDraw.Application', 'ChemDraw_x64.Application') }
-    $registration = Get-ChemDrawComRegistration -ProgIds $progIds
-    if ($registration) {
-        $chemdrawExe = $registration.Path
-        Add-Check -Name 'chemdraw_com' -Status 'pass' -Required $true `
-            -Detail "$($registration.ProgId) is registered: $chemdrawExe" `
-            -Help 'The Windows desktop edition is required; the browser-only product cannot provide COM automation.'
-    } else {
-        Add-Check -Name 'chemdraw_com' -Status 'fail' -Required $true `
-            -Detail "No installed COM server was found for $($progIds -join ', ')." `
-            -Help 'Install and activate desktop ChemDraw, then repair or reinstall it if COM registration remains absent.'
-        Add-NextStep 'Install the licensed Windows desktop edition of ChemDraw and open it once.'
+    $registryStatus = 'skipped'
+    $registryDetail = 'Registry inspection requires a supported Windows Python.'
+    $renderStatus = 'skipped'
+    $renderDetail = 'Native PNG rendering requires a supported Windows Python with the ChemDraw Skill runtime.'
+    if ($pythonReady -and $isSupportedWindows) {
+        $probe = Invoke-Captured -FilePath $pythonPath -Arguments @((Join-Path $PSScriptRoot 'cdx.py'), 'doctor', '--com-only')
+        $renderStatus = 'fail'
+        $renderDetail = "Native COM diagnostic could not run: $($probe.Output)"
+        if ($probe.ExitCode -eq 0) {
+            try {
+                $com = $probe.Output | ConvertFrom-Json
+                $chemdrawExe = $com.registry.executable
+                $registryStatus = if ($com.registry.status -eq 'available') { 'pass' } else { 'warning' }
+                $registryDetail = $com.registry.detail
+                $renderDetail = $com.render.detail
+                if ($com.render.status -eq 'available') { $renderStatus = 'pass' }
+            } catch {
+                $renderDetail = "Native COM diagnostic returned an invalid report: $($_.Exception.Message)"
+            }
+        }
+    }
+    Add-Check -Name 'chemdraw_com_registry' -Status $registryStatus -Required $false -Detail $registryDetail
+    Add-Check -Name 'chemdraw_com' -Status $renderStatus -Required $true -Detail $renderDetail
+    if ($renderStatus -eq 'fail') {
+        Add-NextStep 'Check the render error and run cdx.py doctor in the installed runtime.'
+    }
+
+    if (-not $chemdrawExe -and $env:CHEMDRAW_EXE -and (Test-Path -LiteralPath $env:CHEMDRAW_EXE -PathType Leaf)) {
+        $chemdrawExe = $env:CHEMDRAW_EXE
     }
 
     Add-Check -Name 'chemdraw_activation' -Status 'warning' -Required $false `
-        -Detail 'Activation is intentionally not tested by this read-only script.' `
+        -Detail 'The native rendering probe does not inspect the activation or license status.' `
         -Help 'Open ChemDraw manually, sign in or activate, create and save one document, then close the application.'
-    Add-NextStep 'Confirm ChemDraw activation manually before running native probes.'
+    if ($renderStatus -eq 'fail') {
+        Add-NextStep 'If the render failed during startup, confirm that desktop ChemDraw opens and is activated.'
+    }
 
     if ($chemdrawExe) {
         $chemRoot = Split-Path -Parent $chemdrawExe
@@ -533,7 +508,7 @@ if ($SkipChemDraw -or -not $windowsNativeRequested) {
         Add-Check -Name 'chemscript_files' `
             -Status $(if ($chemScriptRequested) { 'fail' } else { 'warning' }) `
             -Required $chemScriptRequested `
-            -Detail 'ChemScript files could not be checked before ChemDraw COM discovery succeeds.' `
+            -Detail 'ChemScript file discovery requires the location of ChemDraw.exe.' `
             -Help 'Molecule comparison and full SDK tools require a configured ChemScript installation.'
     }
 }

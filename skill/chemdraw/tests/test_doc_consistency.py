@@ -93,11 +93,12 @@ class CoverageTableTests(unittest.TestCase):
 class NamedToolTests(unittest.TestCase):
     """A tool-like name in an agent-facing page is a real tool, command or function, never a guess."""
 
-    # Not tools: error codes, an image-review operation and a Python-only function. Each is checked below
+    # Report fields, error codes and other names that are not tools. Each is checked below
     # against the code that defines it, so a rename cannot leave a dead entry here.
     ALLOWED = frozenset({
         "recognize_batch", "map_reuse", "chemdraw_in_use", "chemdraw_not_found", "chemdraw_not_running",
         "chemdraw_license_unavailable", "chemdraw_automation_not_authorized",
+        "chemdraw_com_registry", "chemdraw_com_render",
         "build_lcms_plate_cdxml", "build_stacked_nmr_cdxml", "diagnose_smiles_error", "draw_tlc",
         "structure_panel",
     })

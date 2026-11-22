@@ -9,7 +9,7 @@ You need a 64-bit Python 3.10–3.13 to build the runtime (3.12 is the tested ve
 ```bash
 git clone https://github.com/ZiChenWang114514/chemdraw-skill.git
 cd chemdraw-skill
-pwsh ./scripts/check_prerequisites.ps1 -Capabilities core,native     # optional read-only Windows host report
+pwsh ./scripts/check_prerequisites.ps1                              # optional Windows host report
 python scripts/install.py --agent claude agents --runtime            # preview
 python scripts/install.py --agent claude agents --runtime --apply    # install Skill copies + shared runtime
 ```
@@ -41,12 +41,14 @@ export CHEMDRAW_MCP_PYTHON=<venv>/bin/python      # only if <venv> is not a loca
 ## Check the installation
 
 ```bash
-python <skill>/scripts/cdx.py doctor              # versions, extras, drift, capability matrix
-python <skill>/scripts/cdx.py doctor --native     # + ChemScript ping and a native PNG render
+python <skill>/scripts/cdx.py doctor              # includes a COM PNG render on Windows
+python <skill>/scripts/cdx.py doctor --native     # require native rendering and ping ChemScript
 python <skill>/scripts/cdx.py doctor --office     # + PPTX/DOCX ChemDraw-OLE probes
 ```
 
 Any Python can start `cdx.py`; it re-launches itself in the runtime and skips a candidate whose interpreter no longer starts. Skipped probes are not verified features. See [operations](../skill/chemdraw/references/operations.md) for bitness, timeouts, DECIMER and failure codes.
+
+On Windows, `cdx.py doctor` and `check_prerequisites.ps1 -Capabilities core,native -Python <runtime-python>` use the same probe. They render a temporary one-bond CDXML to PNG through desktop ChemDraw. `chemdraw_com` records whether the render succeeded and includes the PNG byte count on success. `chemdraw_com_registry` reports missing or stale `LocalServer32` paths as a separate, non-blocking warning. A stale machine-wide path can coexist with a working per-user registration. `doctor --native` returns a failure when the render or the ChemScript ping fails.
 
 Allow the `python <skill>/scripts/cdx.py` prefix once in your agent's command allowlist to avoid permission prompts; [agent integration](../skill/chemdraw/references/agent-integration.md#command-permissions) has an example. That prefix also covers `cdx.py py`, which runs arbitrary Python in the runtime, so allow individual subcommands instead if that is too broad.
 
