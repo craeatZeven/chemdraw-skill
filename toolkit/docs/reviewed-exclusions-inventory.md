@@ -568,11 +568,11 @@
 
 ## `mcp_runtime.runtime_discovery`
 
-- **class**, line 29: `Discovery` - No public docstring in the audited version.
-- **method**, line 33: `Discovery.to_dict() -> dict[str, str]` - No public docstring in the audited version.
-- **function**, line 300: `find_chemdraw(explicit: str | None = None) -> Discovery` - Find ChemDraw from explicit, environment, the macOS application, COM, then common paths.
-- **function**, line 145: `find_python(explicit: str | None = None) -> Discovery` - Find and probe Python using explicit, environment, then implicit paths.
-- **function**, line 186: `find_skill_root(explicit: str | None = None) -> Discovery` - No public docstring in the audited version.
+- **class**, line 24: `Discovery` - No public docstring in the audited version.
+- **method**, line 28: `Discovery.to_dict() -> dict[str, str]` - No public docstring in the audited version.
+- **function**, line 262: `find_chemdraw(explicit: str | None = None) -> Discovery` - Find ChemDraw from explicit, environment, the macOS application, COM, then common paths.
+- **function**, line 140: `find_python(explicit: str | None = None) -> Discovery` - Find and probe Python using explicit, environment, then implicit paths.
+- **function**, line 181: `find_skill_root(explicit: str | None = None) -> Discovery` - No public docstring in the audited version.
 
 ## `mcp_runtime.scientific_tool`
 
