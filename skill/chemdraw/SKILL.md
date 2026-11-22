@@ -58,7 +58,7 @@ Write `tool(arg=value)` calls as `cdx.py call tool --args args.json` (`--json '{
 | Atom indices, CIP, MCS or stereo enumeration | [RDKit workbench](references/rdkit-workbench.md) |
 | Formula, masses, logP, balance, stoichiometry grid, HRMS, SI tables, mapping, export, naming | [Chemistry reports](references/chemistry-reports.md) |
 | ChemDraw interfaces (ChemScript, COM, CDXML elements, menus) and verified recipes | [Interface catalog](references/interface-catalog.md) |
-| Read or edit other CDXML objects (text, shapes, tables, bioshapes, attributes) | [Inspect or edit CDXML objects](references/workflow-router.md#inspect-or-edit-cdxml-objects) |
+| Live drawings and CDXML objects (text, shapes, tables, bioshapes) | [Inspect or edit objects](references/workflow-router.md#inspect-or-edit-cdxml-objects) |
 | Installation, upgrade, missing tools or runtime failure | [Operations](references/operations.md) |
 
 Read only the matching workflow and needed signature (`cdx.py sig NAME`, [mcp-signatures.md](references/mcp-signatures.md)), not the whole catalog. Recurring pitfalls: [lessons](references/lessons.md); consult [interface catalog](references/interface-catalog.md) only when routing leaves no entry point.

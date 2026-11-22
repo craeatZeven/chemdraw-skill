@@ -26,18 +26,18 @@ All of them accept `output_path` (never overwritten) and return their data inlin
  "output_path": "work/properties.csv"}
 ```
 
-- Per structure: formula, average and monoisotopic mass, InChI/InChIKey, ESI adduct m/z (`[M+H]+`, `[M+Na]+`, `[M+NH4]+`, `[M+K]+`, `[M+2H]2+`, `[M-H]-`, `[M+Cl]-`, `[M+HCOO]-` and others, electron mass included), the isotope pattern scaled to the tallest peak (including diagnostic Cl/Br `M+2` and `M+4` isotopic envelopes), Crippen logP, TPSA, hydrogen-bond donors and acceptors, rotatable bonds, QED, stereocentre counts, Lipinski and Veber results, and (when `include_safety: true`) GHS hazard profiles from the 116-entry curated reagent safety database plus SMARTS structural alerts (azides, diazo/diazonium groups, peroxides/peroxyacids, acyl/sulfonyl halides, isocyanates, epoxides/aziridines, hydrazines, cyanides, and nitroaromatics).
+- Each structure has a formula, average and monoisotopic mass, InChI/InChIKey, calculated ESI adduct m/z including the electron mass correction, and a calculated isotope pattern scaled to the tallest peak. The result also includes Crippen logP, TPSA, hydrogen-bond donors and acceptors, rotatable bonds, QED, stereocentre counts, and Lipinski and Veber results. For reagent hazard reminders in a reaction table, use `reagent_safety` in `si_materials_tables`.
 - `markdown` is a ready-to-paste table; `output_path` ending in `.csv`, `.md` or `.json` writes that format.
 - logP, TPSA and QED are calculated estimates. State them as such; never present them as measured. A charged structure reports its intact ion; a salt reports the whole record (the result warns).
 - Compare an observed LCMS peak with the adduct list before concluding anything; one matching peak is not an identification.
 
 ## LCMS file parsing, Cl/Br `M+2` isotope verification, and internal standard (`IS`) normalization
 
-For experimental LCMS datasets (`parse_analysis_file`, `analyze_lcms_series`, `correlate_lcms_files`, and `format_lab_entry` with `lcms_files`), the parser supports:
+Use `parse_analysis_file` for a single LCMS input, `analyze_lcms_series` for timepoints, or `format_lab_entry` with `lcms_files` to include LCMS data in a lab entry.
 
 - **Supported LCMS formats:** Waters MassLynx PDF reports, Waters OpenLynx `.rpt` text reports, Waters `.raw` directories (`_HEADER.TXT` metadata, `_INLET.INF`, and `.rpt` / `.txt` sidecars), Shimadzu LabSolutions `.daml` XML files, Agilent ChemStation / OpenLab `Report.TXT` (and `.D` directories), and open `mzML` / `mzXML` spectra (zlib/base64 binary array decoding for TIC/BPC chromatograms and MS1 scans).
-- **Cl/Br `M+2` isotope verification:** when a target structure or formula contains chlorine or bromine, observed MS1 peak clusters are checked for the expected `[M+H]+` / `[M+2+H]+` (and `[M+4+H]+`) spacing ($\Delta m/z \approx 1.997\text{ Da}$) and intensity ratio ($32\%$ per Cl, $97.3\%$ per Br), returning `isotope_verification` (`matched`, `expected_m2_ratio`, `observed_m2_ratio`).
-- **Internal standard (`IS`) normalization:** multi-run tracking (`analyze_lcms_series`, `correlate_lcms_files`) accepts `internal_standard_rt` (retention time in min, $\pm 0.08\text{ min}$ window) or `internal_standard_mw` so target peak areas are reported both as raw UV area% and normalized `area / IS_area` ratios across timepoints or condition screens.
+- The toolkit's LCMS species-matching helpers can check an observed `M`/`M+2` cluster when a target formula contains chlorine or bromine and MS intensities are available. The match carries an `isotope_verified` note when the cluster passes. A `molecule_report` isotope pattern is calculated from the input structure.
+- `analyze_lcms_series` accepts `internal_standard_rt` in minutes, `internal_standard_mw` as an exact mass, or both. When it finds a standard peak, the output includes peak areas relative to that standard.
 
 ## Reaction balance
 

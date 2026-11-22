@@ -79,6 +79,10 @@ args = ["-m", "cdxml_toolkit.mcp_runtime"]
 
 Command-line registration, for example `claude mcp add --scope user cdxml-toolkit -- <runtime-python> -m cdxml_toolkit.mcp_runtime`. For a remote Windows host, see the HTTP section of [operations](operations.md).
 
+In MCP clients that support resources, `chemdraw://style-guide/{preset}` returns one style card (`all` lists the available styles). `chemdraw://templates/{slug}` returns a starter template such as `acs1996`, `chair`, `newman` or `catalytic-cycle`. `chemdraw://references/{slug}` reads a top-level reference by filename stem when the server runs from a checkout containing the Skill. An installed toolkit can use the local Skill files for workflow guidance.
+
+The MCP client's prompt list offers guided scheme drawing, figure reconstruction, NMR and LCMS analysis, and ACS 1996 drawings. Follow the corresponding Skill workflow and its validation rules when using a prompt.
+
 ## Command reference
 
 ```text

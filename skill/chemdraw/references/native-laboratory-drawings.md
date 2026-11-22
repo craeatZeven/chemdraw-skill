@@ -13,7 +13,7 @@ These commands require the toolkit's `cdxml_toolkit.scientific` module. Native c
 5. Assemble a JSON specification, preserving aspect ratio. Attach components through normalized ports. Place supporting components behind the glassware by listing them first. Port attachment describes drawing geometry, not an engineering compatibility assessment.
 6. Render the saved CDXML in native ChemDraw and actually inspect joints, overlap, hoses, clamp positions, missing lines and labels. Deliver the editable CDXML and preview together.
 
-Catalog a converted library:
+Catalog the converted library from step 3. The example uses `templates/glassware.cdxml` as the working copy of that conversion.
 
 ```python
 from cdxml_toolkit.scientific.apparatus import template_catalog

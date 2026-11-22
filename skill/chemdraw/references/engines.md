@@ -16,6 +16,8 @@ cdx.py stop-daemons                         # end the resident workers early
 
 Each engine installs into its own folder under `~/.local/share/chemdraw-skill/engines` (`%LOCALAPPDATA%\chemdraw-skill\engines` on Windows; `CHEMDRAW_ENGINE_HOME` moves it to a larger disk and must stay set afterwards, or the engines are not found), with its own Python, so the PyTorch, TensorFlow and numpy stacks never meet. The runtime never imports an engine. Weights are downloaded at install time, checked against a pinned sha256 and recorded in a receipt; nothing is stored in the repository. Installing needs a network; running an engine does not (`HF_HUB_OFFLINE` is set) and never uploads anything.
 
+Use `list_engines` to retrieve the engine inventory through the tool registry. It reports which engines are installed and their configuration. Use `cdx.py engines --recommend` for task-specific recommendations.
+
 ## Engines
 
 <!-- engines-table:start -->
@@ -128,6 +130,8 @@ Real-paper accuracy is low for every open model (a 2026 benchmark of 5,029 struc
 | `predict_conditions(reactants, products)` | `reacon` | ranked catalyst, solvent and reagent sets; the atom-mapped reaction is returned for checking |
 
 To check a measured spectrum against a prediction, give `predict_nmr` the measured peak lists (`experimental_1h=[...]`, `experimental_13c=[...]`, ppm; one engine). Each predicted group is matched to one measured peak by optimal assignment, and `experimental_comparison` returns `kind: "model_assisted_candidate_assignment"`, `matches_1h` and `matches_13c` (atoms, `predicted_shift`, `experimental_shift`, signed `error`, `abs_error`, `is_outlier`), `mae_1h`, `mae_13c`, `max_error_1h`, `max_error_13c`, `outliers` (over 0.5 ppm for 1H, 5 ppm for 13C) and `prediction_source`. It is a candidate assignment, not a measured one: confirm it with 2D NMR.
+
+Use `compare_nmr_shifts` for a standalone comparison. It accepts measured ppm lists and can reuse a `predicted_result` from a previous run. It reports the matches, errors, outliers and `prediction_source`. When the source is `heuristic`, the candidate groups and shift estimates come from RDKit topology. Confirm candidate assignments with experimental evidence before using them in a report.
 
 Limits to state when reporting:
 

@@ -27,7 +27,7 @@ Names may be ambiguous, network resolvers may disagree, and abbreviations may be
 ## Supporting APIs
 
 - `rdkit_utils`: canonicalization, formula/MW, molecule validation, and graph helpers.
-- `naming.reagent_database`: known labels and display names.
+- `resolve.reagent_db`: known labels and display names through `get_reagent_db`.
 - `naming.name_decomposer`: R-group decomposition and aligned naming support.
 - `resolve.cas_resolver`: optional network-backed CAS/name lookups.
 

@@ -41,10 +41,12 @@ For multi-structure images or publication reconstruction, follow [image-visual-r
 ## Convert Or Render
 
 1. Convert CDX with `convert_cdx_cdxml`; edit CDXML, not binary CDX.
-2. Render with `cdx.py render A.cdxml [B.cdxml ...]` (PNG next to each file; `--out-dir` and `--replace` are described in [agent integration](agent-integration.md#command-reference)); use the `render_cdxml_files` tool for SVG or a collection. Batch rendering reuses one ChemDraw application session and stops on the first failed export.
+2. Render with `cdx.py render A.cdxml [B.cdxml ...]`. It calls `render_to_png` for each input and continues after a failed export. Use `render_cdxml_files` for SVG or to reuse one ChemDraw application session for a collection. That tool stops on the first failed export. See [agent integration](agent-integration.md#command-reference) for CLI destinations.
 3. Require native ChemDraw output for reaction and Office fidelity checks.
 
 ## Inspect Or Edit CDXML Objects
+
+For an open document, see [Work with an open ChemDraw window](#work-with-an-open-chemdraw-window).
 
 For any object other than the molecules and schemes the drawing tools produce (text, shapes, tables, bioshapes, plasmid maps, annotations, chemical properties), or to change one attribute of an existing file:
 
@@ -52,6 +54,12 @@ For any object other than the molecules and schemes the drawing tools produce (t
 2. `chemdraw_object(op="list", input_path=...)` counts elements by tag; add a `selector` such as `fragment > n[Element=8]` to describe matches, and `get` for full attributes.
 3. `set`, `add` and `delete` write a new CDXML (never the input) and keep every element, attribute and comment they do not touch, in order. Use `dry_run` first on a large selector. An attribute the catalog does not list is refused unless `allow_unknown` is set; delete refuses an object that a bond, bracket or graphic still points at.
 4. The result is a structural edit. ChemDraw draws an atom's saved label text as it is, so changing `Charge`, `Element` or `NumHydrogens` on a labelled atom does not change what is drawn (the result warns about it); edit the label's `s` text as well. Render the result with `render_to_png`, look at the image, and compare molecules with `compare_molecules` when atoms or bonds changed.
+
+## Work With An Open ChemDraw Window
+
+Use `live_chemdraw_session` when the user is working in desktop ChemDraw. Start with `status` to identify the document and check for a chemical selection. On Windows, `read_selection` and `read_active` both prefer the selection and can fall back to the whole document. Check `scope` in the result before treating the CDXML as selection-only. Use `insert_cdxml` to open grounded CDXML or SMILES in a new visible document.
+
+On macOS, both read actions snapshot the whole document as CDXML and may return the selection's SMILES. They save a titled document back to its original path, including any pending changes. An untitled drawing stays attached to the snapshot reported as `snapshot_path`. Use `status` when the task calls for inspection without saving. Read a saved copy for file-based inspection.
 
 ## Drive ChemDraw Through COM
 
@@ -66,7 +74,7 @@ For a ChemDraw object or measurement no dedicated tool covers (document or selec
 
 1. Use `inspect_chemdraw_objects_in_office` when object identity, host location, geometry, or selective replacement matters. Use `extract_cdxml_from_office` for simple bulk extraction.
 2. Modify and native-render the extracted CDXML. Keep the inspection manifest; replacements refer to its object IDs.
-3. Use `replace_chemdraw_objects_in_office` to update selected objects in place. Replacement CDXML paths must remain relative to the replacement manifest; inspect the staged PDF preview when requested. Each object keeps its frame, so act on any warning that a replacement will be distorted. Pass `resize_frames=True` to size each replaced object's frame to its new drawing instead. To let the user edit one object by hand in ChemDraw (Office for macOS has no double-click editing), use `cdx.py office-edit DOCUMENT --object N`, then `cdx.py office-edit DOCUMENT --finish`.
+3. Use `replace_chemdraw_objects_in_office` to replace selected objects in a new copy of the document. Give CDXML paths relative to and inside the replacement manifest's directory. Inspect the staged PDF preview when requested. Each object keeps its frame by default. Pass `resize_frames=True` to size each replaced object's frame to its new drawing. To let the user edit one object by hand in ChemDraw (Office for macOS has no double-click editing), use `cdx.py office-edit DOCUMENT --object N`, then `cdx.py office-edit DOCUMENT --finish`.
 4. Create a new one-object file with `embed_cdxml_in_office`, create a new collection with `batch_embed_cdxml_in_office`, or preserve an existing template through `fill_office_template`. The single-object tool rejects an existing Office target because the upstream builder cannot preserve its content.
 5. Verify the OOXML package opens, keeps its OLE relationships and geometry, and contains editable ChemDraw objects rather than flat images.
 

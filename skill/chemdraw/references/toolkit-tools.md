@@ -18,7 +18,7 @@ Exact signatures are generated in [mcp-signatures.md](mcp-signatures.md). This f
 When two tools can do the job, take the first:
 
 - Reading a structure image: `recognize_structure` (`cdx.py ocsr`, or `cdx.py decimer` for the remote engine) over `extract_structures_via_decimer_api` (the raw upload call) and `extract_structures_from_image` (upstream DECIMER segmentation and OCR; use it only to look for structures in an uncropped image). A PDF or a whole page: `extract_structures_from_document`.
-- Rendering CDXML to PNG: `render_cdxml_files` (`cdx.py render`; one ChemDraw session for many files, SVG too) over `render_to_png` (one file).
+- Rendering CDXML: use `render_cdxml_files` for a collection in one ChemDraw session or for SVG. Use `render_to_png` for one file. The `cdx.py render` command calls `render_to_png` for each file.
 - Drawing a figure: `draw_figure` for a reaction, route, scope panel or mechanism from a brief; `publication_figure` for a substrate-scope or SAR project kept in a folder; `compose_chemical_figure` only for exact coordinates you supply; `render_scheme` for a compact text scheme or a row-width setting.
 - Comparing molecules: `compare_molecules` for one pair, `batch_compare_molecules` for many pairs.
 - Putting drawings into Office: `embed_cdxml_in_office` for one new file with one object, `batch_embed_cdxml_in_office` for several objects or pages.
@@ -42,4 +42,4 @@ When two tools can do the job, take the first:
 
 ## Compatibility
 
-The 15 upstream tool names and `extract_structures_via_decimer_api` remain registered. Official parameters and return types are preserved; the overridden Office tool publishes its stricter creation-only contract in its tool metadata. The low-level API keeps a no-upload default for direct callers; `cdx.py decimer` passes `confirm_upload=true` unless `--preflight` is given. Extended, comparison, and ChemScript SDK tools are additive. `reaction_image_to_cdxml` is documented but not registered because candidate ordering and reaction-role mapping are not reliably supported.
+The 15 upstream tool names and `extract_structures_via_decimer_api` remain registered. The overridden Office tool documents its creation-only contract in the generated reference. The low-level DECIMER API defaults to preflight for direct callers. `cdx.py decimer` requests recognition by default. Use `--preflight` to inspect the request without uploading. Extended, comparison, and ChemScript SDK tools are additive.

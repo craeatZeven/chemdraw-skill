@@ -16,6 +16,8 @@ cdx.py doctor --full          # include the complete diagnose_runtime() result
 
 The report is read-only. A skipped probe is not a verified capability. ChemScript is capped at 30 s, native rendering at 75 s and each Office stage at 60 s; timeout cleanup touches only automation processes started by the probe. Exit code 1 means signature drift, a stale interface catalog (`catalog_current` false), a runtime built from another toolkit revision (`runtime_matches_skill` false) or a mismatch against `manifest.json`. `--native` already includes the ChemScript ping; `--chemscript` runs that probe alone.
 
+For a structured inventory through the tool registry, call `get_toolkit_capabilities`. It reports the active profile, dependency versions, runtime and registry fingerprints, capability flags and tool metadata. Use `detail: "summary"` to omit the per-tool list. Use `cdx.py doctor` for Skill and installation consistency checks.
+
 `skill_version` is the release this Skill copy belongs to (compare it with the repository's Releases page); `toolkit` is the installed runtime package and `runtime_source` the release tag or commit an installed copy builds its runtime from. To upgrade, update the repository checkout (or download the newer release) and re-run `scripts/install.py` with the same `--agent` and `--runtime` options; it replaces the copies in place and moves the old ones to the backup folder.
 
 `cdx.py py <skill>/scripts/smoke_test.py --output-dir NEW_DIR` runs an end-to-end check: name resolution, editable aspirin CDXML, native PNG and raster validation.
@@ -73,7 +75,7 @@ On Windows the interpreter is `<venv>\Scripts\python.exe` (create the venv with 
 `install_runtime.py` builds from the repository's `toolkit/` folder when the Skill sits in a checkout, otherwise from the exact commit in `runtime.json`; `--toolkit-path` selects another toolkit source folder and `--print-requirement` only prints the requirement. Never upgrade the runtime unasked. After a toolkit change:
 
 ```bash
-cdx.py regen-signatures        # maintainer command, not in `--help`: rewrite generated references after a toolkit change
+cdx.py regen-signatures        # hidden maintainer command: rewrite generated signatures and the runtime fingerprint
 cdx.py regen-catalog --check   # maintainer command: report stale generated interface pages (without --check, rewrite them)
 cdx.py py -m pip install pytest
 cdx.py py -m pytest <skill>/tests -q

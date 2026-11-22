@@ -19,7 +19,7 @@ OCSR returns candidate SMILES plus validation metadata; segmentation and candida
 
 ## Failure Modes
 
-Local OCSR fails without model weights. Remote OCSR rejects undecodable images, oversized data, unconfirmed upload, invalid endpoint/limits, timeout, and unusable responses. Treat multiple candidates as unresolved. `reaction_image_to_cdxml` remains unregistered because candidate-to-role mapping is not reliably supported.
+Local OCSR fails without model weights. Remote OCSR rejects undecodable images, oversized data, unconfirmed upload, invalid endpoint/limits, timeout, and unusable responses. Treat multiple candidates as unresolved. Follow the [image reconstruction workflow](image-visual-review.md) to review candidates and assign reaction roles before drawing.
 
 ## Supporting APIs
 
