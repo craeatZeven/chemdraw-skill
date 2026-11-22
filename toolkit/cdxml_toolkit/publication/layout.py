@@ -9,6 +9,7 @@ from PIL import ImageFont
 from rdkit import Chem
 from rdkit.Chem import rdDepictor, rdFMCS
 from ..chemistry_semantics import inventory_keys, read_molecules, semantic_key, document_inventory
+from ..layout.ring_r_groups import ring_r_group_layout, ring_r_group_sites
 from ..mcp_runtime.figure_tools import compose_chemical_figure, _move
 from ..text_formatting import _ELEMENTS, is_formula_label, subscript_matches
 from .data import field_text, write_json
@@ -351,7 +352,10 @@ def header_objects(spec, style, left, top):
     header = spec['header']; size = style['font_size']; gap = size * 1.2
     def shape(item):
         mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), style['bond_length'])
-        xs, ys = [p[0] for p in xy], [p[1] for p in xy]
+        sites = ring_r_group_sites(mol, item.get('ring_r_groups', []))
+        placements = ring_r_group_layout(mol, xy, sites, style['bond_length'], size)
+        extent = list(xy) + [p.label for p in placements]
+        xs, ys = [p[0] for p in extent], [p[1] for p in extent]
         return {'item': item, 'xy': xy, 'w': max(xs) - min(xs), 'h': max(ys) - min(ys),
                 'x0': min(xs), 'y0': min(ys)}
     subs = [shape(i) for i in header.get('substrates', [])]
@@ -371,6 +375,8 @@ def header_objects(spec, style, left, top):
                    'coordinates': [[px + dx, py + dy] for px, py in s['xy']]}
         if s['item'].get('color'):
             mol_obj['color'] = s['item']['color']
+        if s['item'].get('ring_r_groups'):
+            mol_obj['ring_r_groups'] = s['item']['ring_r_groups']
         objects.append(mol_obj)
         bottom = max(bottom, mid + s['h'] / 2 + gap)
         if s['item'].get('label'):

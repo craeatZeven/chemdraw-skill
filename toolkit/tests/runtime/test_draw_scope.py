@@ -369,3 +369,75 @@ def test_header_r_marks_share_the_highlight_colour(tmp_path):
     orange = str(table.index((0xFF, 0x66, 0x00)) + 2)
     marks = [n for n in root.iter("n") if n.get("NodeType") == "GenericNickname"]
     assert marks and all(n.get("color") == orange for n in marks)
+
+
+def test_header_variable_r_group_uses_short_black_crossing_bond_and_red_label(tmp_path):
+    brief = _brief(highlight_varying="#C81E1E", header={
+        "substrates": [
+            {"smiles": "Nc1ccccc1I", "ring_r_groups": [{"number": 1, "atoms": [2, 3, 4, 5]}], "label": "1a\u2013d"},
+        ],
+        "products": [
+            {"smiles": "O=C(N[*:2])c1nc2ccccc2s1", "ring_r_groups": [{"number": 1, "atoms": [7, 8, 9, 10]}], "label": "3a\u2013t"},
+        ],
+    })
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] and report["checks_passed"], report
+    assert report["readback"]["status"] == "matched"
+    (root,) = _pages(report)
+    headers = root.findall("./page/fragment")
+    assert len(headers) == 2
+
+    import math
+
+    def pt(node):
+        return tuple(map(float, node.get("p").split()))
+
+    def side(a, b, p):
+        return (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+
+    for fragment, sites, ring in zip(headers, ([2, 3, 4, 5], [7, 8, 9, 10]),
+                                      ([1, 2, 3, 4, 5, 6], [6, 7, 8, 9, 10, 11])):
+        assert fragment.find('n[@NodeType="MultiAttachment"]') is None
+        anchor = fragment.find('n[@NodeType="VariableAttachment"]')
+        assert anchor is not None
+        nodes = fragment.findall("n")
+        assert anchor.get("Attachments").split() == [nodes[i].get("id") for i in sites]
+        bond = fragment.find(f'b[@B="{anchor.get("id")}"]')
+        assert bond is not None and bond.get("Order", "1") == "1"
+        label = next(n for n in nodes if n.get("id") == bond.get("E"))
+        # Red R label, black crossing bond (paper convention)
+        assert label.get("color") and label.get("color") != fragment.get("color")
+        assert bond.get("color") is None
+
+        points = [pt(nodes[i]) for i in ring]
+        center = (sum(p[0] for p in points) / len(points), sum(p[1] for p in points) / len(points))
+        radius = sum(math.dist(p, center) for p in points) / len(points)
+        start, end = pt(anchor), pt(label)
+        assert 0.30 <= math.dist(start, end) / radius <= 0.55
+        assert math.dist(start, center) / radius >= 0.45
+
+        crossed = fragment.find(f'b[@id="{bond.get("CrossingBonds")}"]')
+        assert crossed is not None and crossed.get("Order") == "2"
+        assert bond.get("id") in (crossed.get("CrossingBonds") or "").split()
+        p1, p2 = pt(next(n for n in nodes if n.get("id") == crossed.get("B"))), pt(next(n for n in nodes if n.get("id") == crossed.get("E")))
+        assert side(p1, p2, start) * side(p1, p2, end) < 0
+        assert side(start, end, p1) * side(start, end, p2) < 0
+
+    # Fixed R2 must stay left-to-right (never reversed to 2R)
+    fixed = headers[1].find('n[@GenericNickname="R2"]')
+    assert fixed is not None
+    assert fixed.get("LabelDisplay") == "Left"
+    assert fixed.find("t").get("InterpretChemically") == "no"
+
+
+@pytest.mark.parametrize("sites", ([0, 2], [2, 2], [2, 99], [2], [True, 2]))
+def test_header_variable_r_group_requires_distinct_sites_on_one_ring(tmp_path, sites):
+    brief = _brief(header={
+        "substrates": [{"smiles": "Nc1ccccc1I", "ring_r_groups": [{"number": 1, "atoms": sites}]}],
+        "products": [{"smiles": "c1ccccc1"}],
+    })
+    target = tmp_path / "scope"
+    report = draw_figure(brief, output_path=str(target))
+    assert not report["ok"]
+    assert any("ring_r_groups" in error and "atoms" in error for error in report["errors"])
+    assert not target.exists()

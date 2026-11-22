@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from collections import Counter
+from copy import copy
 from pathlib import Path
+import re
 from xml.etree import ElementTree as ET
 from rdkit import Chem
 
@@ -117,6 +119,50 @@ def inventory_keys(mols, like=None):
     return found
 
 
+_VARIABLE_R_TEXT_RE = re.compile(r'^R([0-9]+|[\u2070\u00b9\u00b2\u00b3\u2074-\u2079]+)?$')
+
+
+def _is_variable_r_label(label) -> bool:
+    node_type = label.get('NodeType', '')
+    if node_type == 'GenericNickname':
+        name = label.get('GenericNickname', '')
+        return bool(_VARIABLE_R_TEXT_RE.fullmatch(name))
+    if node_type == 'Unspecified':
+        t_el = label.find('t')
+        text = ''.join(s.text or '' for s in t_el.iter('s')).strip() if t_el is not None else ''
+        return bool(_VARIABLE_R_TEXT_RE.fullmatch(text))
+    return False
+
+
+def _variable_r_group_scaffold(fragment):
+    """Project terminal variable R labels to the scaffold for RDKit inventory checks."""
+    anchors = {n.get('id'): n for n in fragment.findall('n[@NodeType="VariableAttachment"]')}
+    if not anchors:
+        return fragment
+    nodes = {n.get('id'): n for n in fragment.findall('n')}
+    bonds = fragment.findall('b')
+    incident = Counter(endpoint for bond in bonds for endpoint in (bond.get('B'), bond.get('E')))
+    scaffold = copy(fragment)
+    for bond in bonds:
+        anchor_id, label_id = bond.get('B'), bond.get('E')
+        if anchor_id not in anchors:
+            anchor_id, label_id = label_id, anchor_id
+        if anchor_id not in anchors or label_id not in nodes:
+            continue
+        label = nodes[label_id]
+        if (not _is_variable_r_label(label)
+                or incident[anchor_id] != 1 or incident[label_id] != 1 or bond.get('Order', '1') != '1'):
+            continue
+        anchor = anchors[anchor_id]
+        sites = set(anchor.get('Attachments', '').split())
+        if len(sites) < 2 or not sites <= nodes.keys() - anchors.keys() - {label_id}:
+            raise ValueError(f'invalid_variable_attachment: {anchor_id}')
+        scaffold.remove(anchor)
+        scaffold.remove(label)
+        scaffold.remove(bond)
+    return scaffold
+
+
 def read_fragments(value):
     """Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order."""
     root = ET.parse(str(value)).getroot() if isinstance(value, Path) else ET.fromstring(value)
@@ -133,6 +179,7 @@ def read_fragments(value):
             parent = parents.get(parent)
         if nested:
             continue
+        fragment = _variable_r_group_scaffold(fragment)
         block = '<CDXML><page id="90000000">' + ET.tostring(fragment, encoding='unicode') + '</page></CDXML>'
         parsed = Chem.MolsFromCDXML(block)
         if not parsed:

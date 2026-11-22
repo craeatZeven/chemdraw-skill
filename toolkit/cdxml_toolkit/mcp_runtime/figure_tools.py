@@ -13,6 +13,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem, rdCIPLabeler, rdDepictor
 
 from ..chemistry_semantics import semantic_key, validate_fragment, document_inventory, read_molecules, inventory_keys
+from ..layout.ring_r_groups import build_variable_r_label_node, ring_r_group_layout, ring_r_group_sites
 from ..vision import stereo_audit
 from . import artifact_safety
 
@@ -931,7 +932,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 'smiles', 'molblock', 'file', 'fragment_index', 'position', 'coordinates', 'rotation', 'label',
                 'preserve_coordinates', 'align_to', 'alignment_mode', 'bond_length', 'cip_labels', 'atom_numbers',
                 'annotation_offsets', 'highlight_atoms', 'highlight_bonds', 'highlight_color', 'color', 'bond_displays',
-                'ring_fills', 'atom_halos', 'multi_attachments', 'crossings', 'ts_bracket',
+                'ring_fills', 'atom_halos', 'multi_attachments', 'ring_r_groups', 'crossings', 'ts_bracket',
             },
             'text': {'position', 'text', 'runs', 'size', 'align', 'color'},
             'arrow': {'start', 'end', 'style', 'color'},
@@ -957,6 +958,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             # A numbered R group ([*:1]) is drawn R1; the number is a label, not chemistry.
             r_numbers = {a.GetIdx(): a.GetAtomMapNum() for a in mol.GetAtoms()
                          if a.GetAtomicNum() == 0 and a.GetAtomMapNum()}
+            group_sites = ring_r_group_sites(mol, item['ring_r_groups']) if 'ring_r_groups' in item else []
             for index in r_numbers:
                 mol.GetAtomWithIdx(index).SetAtomMapNum(0)
             if item.get('multi_attachments'):
@@ -1020,6 +1022,8 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                     x, y = a['x'] - cx, a['y'] - cy
                     a['x'] = px + scale * (x * math.cos(angle) - y * math.sin(angle))
                     a['y'] = py - scale * (x * math.sin(angle) + y * math.cos(angle))
+            placements = ring_r_group_layout(mol, [(a['x'], a['y']) for a in atoms], group_sites,
+                                             local_bond_length, font_size)
             gen = _IDGen(start=next_id)
             fragment_xml, atom_map, fragment_id = _build_fragment(atoms, bonds, gen)
             fragment = ET.fromstring(fragment_xml)
@@ -1037,9 +1041,52 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                     bond.attrib.pop('Display', None)
                 else:
                     bond.set('Display', display)
-            fragment.set('color', color(item.get('color')))
+            frag_color = color(item.get('color'))
+            fragment.set('color', frag_color)
             for run in fragment.iter('s'):
-                run.set('color', color(item.get('color')))
+                run.set('color', frag_color)
+
+            scaffold_bonds = fragment.findall('b')
+            if placements:
+                insert_at = len(atoms)
+                for placement in placements:
+                    label_id = uid()
+                    label_color = color(placement.color) if placement.color else frag_color
+                    label_node = build_variable_r_label_node(
+                        node_id=label_id,
+                        z_id=uid(),
+                        text_id=uid(),
+                        label_xy=placement.label,
+                        number=placement.number,
+                        alignment=placement.alignment,
+                        font_id=font_id,
+                        font_size=font_size,
+                        color_idx=label_color,
+                    )
+                    anchor_id = uid()
+                    anchor_node = ET.Element('n', {
+                        'id': anchor_id,
+                        'p': f'{placement.anchor[0]:.2f} {placement.anchor[1]:.2f}',
+                        'NodeType': 'VariableAttachment',
+                        'Attachments': ' '.join(str(atom_map[i + 1]) for i in placement.sites),
+                    })
+                    fragment.insert(insert_at, label_node)
+                    insert_at += 1
+                    fragment.insert(insert_at, anchor_node)
+                    insert_at += 1
+                    crossed_bond = scaffold_bonds[placement.crossed]
+                    vbond_id = uid()
+                    ET.SubElement(fragment, 'b', {
+                        'id': vbond_id,
+                        'Z': uid(),
+                        'B': anchor_id,
+                        'E': label_id,
+                        'CrossingBonds': crossed_bond.get('id'),
+                    })
+                    existing_cb = crossed_bond.get('CrossingBonds', '').split()
+                    if vbond_id not in existing_cb:
+                        existing_cb.append(vbond_id)
+                        crossed_bond.set('CrossingBonds', ' '.join(existing_cb))
 
             # Validate fragment BEFORE appending MultiAttachment nodes and coordination bonds
             validations.append(validate_fragment(source, ET.tostring(fragment, encoding='unicode')))
@@ -1082,8 +1129,10 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                     'back': _resolve_crossing_bond_id(b_ref, fragment, atom_map),
                 })
 
-            xx = [a['x'] for a in atoms]
-            yy = [a['y'] for a in atoms]
+            xx = [a['x'] for a in atoms] + [p.label[0] for p in placements]
+            yy = [a['y'] for a in atoms] + [p.label[1] for p in placements]
+            if placements:
+                fragment.set('BoundingBox', f'{min(xx):.2f} {min(yy):.2f} {max(xx):.2f} {max(yy):.2f}')
             remember(item, fragment, (min(xx) - font_size / 2, min(yy) - font_size, max(xx) + font_size / 2, max(yy) + font_size / 2))
 
             if item.get('ring_fills'):
