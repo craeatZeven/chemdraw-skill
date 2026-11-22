@@ -18,6 +18,17 @@ import check_installation
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_scope_schema_exposes_variable_ring_r_groups(capsys):
+    assert cdx.main(['schema', 'scope']) == 0
+    header = json.loads(capsys.readouterr().out)['schema']['properties']['header']
+    for side in ('substrates', 'products'):
+        item = header['properties'][side]['items']
+        groups = item['properties']['ring_r_groups']['items']
+        assert item['dependentRequired']['ring_r_groups'] == ['smiles']
+        assert set(groups['required']) == {'number', 'atoms'}
+        assert groups['properties']['atoms']['minItems'] == 2
+
+
 def test_call_uses_registered_timeout(tmp_path):
     from cdxml_toolkit.mcp_runtime import mcp_server
     with mock.patch.object(mcp_server, '_execute_worker_process',

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 import pytest
 from rdkit import Chem
@@ -75,11 +76,18 @@ def test_enumeration_uses_definition_values():
     assert set(out['not_enumerated']) == {'RA', 'RC'}
 
 
-def test_cdxml_uses_generic_nicknames_and_multi_attachment():
+def test_cdxml_uses_generic_nicknames_and_native_variable_attachment():
     graph = build_graph(_example())
     xml = write_cdxml(graph)
-    assert 'NodeType="MultiAttachment"' in xml
-    assert 'GenericNickname="RB"' in xml
+    fragment = ET.fromstring(xml).find('./page/fragment')
+    anchor = fragment.find('n[@NodeType="VariableAttachment"]')
+    assert anchor is not None
+    assert fragment.find('n[@NodeType="MultiAttachment"]') is None
+    label = fragment.find('n[@GenericNickname="RB"]')
+    assert any(b.get('B') == anchor.get('id') and b.get('E') == label.get('id') for b in fragment.findall('b'))
+    node_ids = {node.get('id') for node in fragment.findall('n')}
+    sites = set(anchor.get('Attachments').split())
+    assert len(sites) == 3 and sites < node_ids - {anchor.get('id'), label.get('id')}
     assert 'GraphicType="Oval"' in xml
     assert '<curve' in xml  # drawn-member ring A is an arc
 

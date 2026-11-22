@@ -39,6 +39,75 @@ def _pages(report):
     return [ET.parse(page["path"]).getroot() for page in report["pages"]]
 
 
+def test_header_draws_native_variable_r_groups(tmp_path):
+    brief = _brief(highlight_varying=True, header={
+        "substrates": [{"smiles": "Nc1ccccc1I", "ring_r_groups": [{"number": 1, "atoms": [2, 3, 4, 5]}]}],
+        "products": [{"smiles": "O=C(N[*:2])c1nc2ccccc2s1",
+                      "ring_r_groups": [{"number": 1, "atoms": [7, 8, 9, 10]}]}],
+    })
+    report = draw_figure(brief, output_path=str(tmp_path / "scope"))
+    assert report["ok"] and report["checks_passed"], report
+    assert report["readback"]["status"] == "matched"
+    (root,) = _pages(report)
+    headers = root.findall("./page/fragment")
+    assert len(headers) == 2
+    for fragment, sites, ring in zip(headers, ([2, 3, 4, 5], [7, 8, 9, 10]),
+                                      ([1, 2, 3, 4, 5, 6], [6, 7, 8, 9, 10, 11])):
+        assert fragment.find('n[@NodeType="MultiAttachment"]') is None
+        anchor = fragment.find('n[@NodeType="VariableAttachment"]')
+        label = fragment.find('n[@GenericNickname="R1"]')
+        nodes = fragment.findall("n")
+        assert anchor.get("Attachments").split() == [nodes[i].get("id") for i in sites]
+        assert [(run.text, run.get("face")) for run in label.iter("s")] == [("R", "96"), ("1", "64")]
+        bond = fragment.find(f'b[@B="{anchor.get("id")}"]')
+        assert bond.get("E") == label.get("id")
+        assert bond.get("Order", "1") == "1"
+        assert label.get("color") and bond.get("color") == label.get("color")
+
+        def point(node):
+            return tuple(map(float, node.get("p").split()))
+
+        points = [point(nodes[i]) for i in ring]
+        start, end = point(anchor), point(label)
+        assert start == pytest.approx(tuple(sum(axis) / len(points) for axis in zip(*points)), abs=0.01)
+
+        def side(a, b, p):
+            return (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+
+        ring_nodes = [nodes[i] for i in ring]
+        ring_ids = [node.get("id") for node in ring_nodes]
+        crossings = [
+            {ring_ids[i - 1], ring_ids[i]} for i, (a, b) in enumerate(zip(points[-1:] + points[:-1], points))
+            if side(a, b, start) * side(a, b, end) < 0 and side(start, end, a) * side(start, end, b) < 0
+        ]
+        assert len(crossings) == 1
+        crossed_id = bond.get("CrossingBonds")
+        crossed = fragment.find(f'b[@id="{crossed_id}"]')
+        assert crossed is not None and {crossed.get("B"), crossed.get("E")} == crossings[0]
+        if end[0] < start[0] - abs(end[1] - start[1]):
+            # The raised number is to the right of R and needs space outside the edge.
+            edge_x = [point(node)[0] for node in ring_nodes if node.get("id") in crossings[0]]
+            assert sum(edge_x) / 2 - end[0] >= 10
+    fixed = headers[1].find('n[@GenericNickname="R2"]')
+    fixed_id = fixed.get("id")
+    variable_id = headers[1].find('n[@NodeType="VariableAttachment"]').get("id")
+    assert any(fixed_id in (b.get("B"), b.get("E")) and variable_id not in (b.get("B"), b.get("E"))
+               for b in headers[1].findall("b"))
+
+
+@pytest.mark.parametrize("sites", ([0, 2], [2, 2], [2, 99], [2], [True, 2]))
+def test_header_variable_r_group_requires_distinct_sites_on_one_ring(tmp_path, sites):
+    brief = _brief(header={
+        "substrates": [{"smiles": "Nc1ccccc1I", "ring_r_groups": [{"number": 1, "atoms": sites}]}],
+        "products": [{"smiles": "c1ccccc1"}],
+    })
+    target = tmp_path / "scope"
+    report = draw_figure(brief, output_path=str(target))
+    assert not report["ok"]
+    assert any("ring_r_groups" in error and "atoms" in error for error in report["errors"])
+    assert not target.exists()
+
+
 def _texts(report):
     return [" ".join("".join(t.itertext()).split()) for root in _pages(report) for t in root.iter("t")]
 

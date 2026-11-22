@@ -64,6 +64,11 @@
 - **function**, line 483: `approach_proportional(page, step, id_map, arrow, verbose = False)` - Proportional spacing: - Arrow length = 0.6× the average molecule width - Gaps scale with molecule size - Looks balanced for both small and large molecules
 - **function**, line 1051: `run_cleanup(input_path: str, output_path: str, approach: str = 'chemdraw_mimic', verbose: bool = False) -> dict` - Run one cleanup approach on a CDXML file.
 
+## `layout.ring_r_groups`
+
+- **function**, line 43: `ring_r_group_layout(mol, points, sites_by_ring, bond_length, font_size)` - Return the number, candidate sites, anchor, label and crossed RDKit bond index.
+- **function**, line 7: `ring_r_group_sites(mol, groups)` - Resolve each numbered R group to candidate atom indices and one perceived ring.
+
 ## `layout.scheme_merger`
 
 - **function**, line 1074: `adjacent_place(trees: List[ET.ElementTree], *, log = None) -> ET.ElementTree` - Place multiple independent schemes side by side on one page.

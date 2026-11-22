@@ -40,7 +40,7 @@ Observed failures and the fix that worked. Read only the relevant row.
 
 | Symptom | Fix |
 | --- | --- |
-| Read-back of a Markush CDXML shows carbon for R groups, or loses the variable attachment | Readers turn generic labels into carbon and ignore `MultiAttachment`. Take chemistry from `markush.json` or the CXSMILES, not from the CDXML. |
+| Read-back of a Markush CDXML shows carbon for R groups, or loses the variable attachment | Other readers may lose generic labels and `VariableAttachment` sites. Use `markush.json` or the CXSMILES for chemical readback. |
 | `m:` missing from CXSMILES | RDKit drops `m:` on write. Use `markush_compile`, which writes the CXSMILES itself. |
 | NH label shows as "HN" or the H lands on the wrong side | Use an `N` atom with `h: 1`; the writer adds the H as its own caption on the side of the drawing. |
 | Label flips to the other side of its bond | Set the label display (Left or Right) from the bond direction; the writer does this from the source layout. |

@@ -1215,6 +1215,12 @@ def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
     index = _Colors(root).index(color)
     for node in marks:
         _paint(node, index)
+    marked_ids = {node.get("id") for node in marks}
+    anchors = {node.get("id") for node in page.iter("n") if node.get("NodeType") == "VariableAttachment"}
+    for bond in page.iter("b"):
+        endpoints = {bond.get("B"), bond.get("E")}
+        if endpoints & anchors and endpoints & marked_ids:
+            _paint(bond, index)
     return _wrap(root, cdxml), len(marks)
 
 
