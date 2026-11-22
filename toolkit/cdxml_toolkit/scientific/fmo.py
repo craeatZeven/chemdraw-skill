@@ -172,8 +172,12 @@ def fmo_interaction(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         elif lv['column'] == 'acceptor':
             c.label((lv['x2'] + 5.0, lv['y']), lv['label'], align='Left', valign='middle')
         else:
-            rise = lv['y'] - caption_box(0.0, lv['y'], lv['label'])[1]
-            c.label((cx, lv['y'] + 6.5 + rise), lv['label'], align='Center')
+            box = caption_box(0.0, lv['y'], lv['label'])
+            if lv is lowest_empty and any(a.get('kind') == 'excitation' for a in spec.get('arrows') or []):
+                baseline = lv['y'] - 6.5 - (box[3] - lv['y'])
+            else:
+                baseline = lv['y'] + 6.5 + (lv['y'] - box[1])
+            c.label((cx, baseline), lv['label'], align='Center')
 
     gap_x = c.extent[2] + 18.0
     gap_arrow = c.arrow((gap_x, donor_homo['y']), (gap_x, acceptor_lumo['y']),
@@ -215,7 +219,7 @@ def fmo_interaction(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             tail = (BAR + 2.0, donor_homo['y'])
             head = (centers['mixing'] - BAR / 2 - 2.0, highest_filled['y'])
             c.arrow(tail, head, color=color or BLUE, head_style='Full')
-            mid = ((tail[0] + head[0]) / 2, (tail[1] + head[1]) / 2)
+            mid = ((tail[0] + head[0]) / 2, max(tail[1], head[1]) + 16.0)
             drawn_arrows.append({'kind': kind, 'from': donor_homo['id'], 'to': highest_filled['id']})
         else:
             tail = (centers['mixing'], highest_filled['y'])

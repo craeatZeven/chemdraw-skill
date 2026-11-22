@@ -340,7 +340,9 @@ def _assert_example_structure(result, spec, palette):
     assert result['gap'] == pytest.approx(lumo['energy'] - homo['energy'])
     _assert_gap(result)
     _assert_coefficients(root, result, spec)
-    assert check_cdxml(result['cdxml'], palette=palette)['ok']
+    check = check_cdxml(result['cdxml'], palette=palette)
+    assert check['ok'], check['errors']
+    assert [w for w in check['warnings'] if w['code'] == 'text_over_ink'] == []
 
 
 @pytest.mark.parametrize('name,palette', EXAMPLE_CASES)
