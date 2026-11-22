@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<CDXML BondLength="14.4" LineWidth="0.6" BoldWidth="2" HashSpacing="2.5" MarginWidth="1.6" BondSpacing="18" LabelFont="1001" CaptionFont="1001" LabelSize="10" CaptionSize="10" LabelFace="96">
+  <fonttable>
+    <font id="3" charset="iso-8859-1" name="Arial" />
+    <font id="1001" charset="iso-8859-1" name="Arial" />
+  </fonttable>
+  <page id="1" BoundingBox="0 0 1000 1000">
+    <fragment id="1002" BoundingBox="83.17 85.60 112.47 117.77" Z="1003" color="3">
+      <n id="1004" p="100.00 85.60" Z="1005" />
+      <n id="1006" p="87.53 92.80" Z="1007" />
+      <n id="1008" p="87.53 107.20" Z="1009" />
+      <n id="1010" p="100.00 114.40" Z="1011" />
+      <n id="1012" p="112.47 107.20" Z="1013" />
+      <n id="1014" p="112.47 92.80" Z="1015" />
+      <n id="1027" p="83.17 100.00" Z="1028" NodeType="Unspecified" LabelDisplay="Right" color="4">
+        <t id="1029" p="83.17 103.50" LabelAlignment="Right" LabelJustification="Right" InterpretChemically="no"><s font="1001" size="10" color="4">R¹</s></t>
+      </n>
+      <n id="1030" p="92.21 100.00" NodeType="VariableAttachment" Attachments="1004 1006 1008 1010 1012 1014" />
+      <n id="1033" p="110.26 117.77" Z="1034" NodeType="Unspecified" LabelDisplay="Left" color="4">
+        <t id="1035" p="110.26 121.27" LabelAlignment="Left" LabelJustification="Left" InterpretChemically="no"><s font="1001" size="10" color="4">R²</s></t>
+      </n>
+      <n id="1036" p="103.90 106.75" NodeType="VariableAttachment" Attachments="1004 1006 1008 1010 1012 1014" />
+      <b id="1016" Z="1017" B="1004" E="1006" />
+      <b id="1018" Z="1019" B="1006" E="1008" Order="2" DoublePosition="Right" CrossingBonds="1031" />
+      <b id="1020" Z="1021" B="1008" E="1010" />
+      <b id="1022" Z="1023" B="1010" E="1012" Order="2" DoublePosition="Right" MarginWidth="1.104" CrossingBonds="1037" />
+      <b id="1024" Z="1025" B="1012" E="1014" />
+      <b id="1026" Z="1027" B="1014" E="1004" Order="2" DoublePosition="Right" />
+      <b id="1031" Z="1032" B="1030" E="1027" CrossingBonds="1018" />
+      <b id="1037" Z="1038" B="1036" E="1033" CrossingBonds="1022" />
+    </fragment>
+  </page>
+  <colortable>
+    <color r="1" g="1" b="1" />
+    <color r="0" g="0" b="0" />
+    <color r="0.7843137254901961" g="0.11764705882352941" b="0.11764705882352941" />
+  </colortable>
+</CDXML>

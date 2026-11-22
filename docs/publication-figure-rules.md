@@ -52,6 +52,48 @@ Built-in semantic palettes (`toolkit/cdxml_toolkit/publication/palettes.py`, acc
 4. **Native-save phantom-fragment guard**: every non-atom `<t>` caption (conditions, labels, table cells, footnotes) must carry `InterpretChemically="no"` so ChemDraw's SaveAs never turns a condition label such as `H2O` or `MeOH` into a hidden molecule fragment. Verify with `cdx.py validate FILE.cdxml --native` (`molecule_count_delta == 0`).
 5. **Zero text-over-ink**: rules, arrows, curves, and bounding boxes must keep measurable clearance from every caption box (`cdx.py check --profile <style>` reports `text_over_ink` warnings).
 
+### Final typography pass for ring substituents
+
+Finish and review the figure set before applying a common scale. Apply these settings to selected
+structure panels in an editable copy, using the nominal bond length already set for the panel.
+Keep the stock ACS Document 1996 and journal presets available for figures that follow those styles.
+
+| Feature | With a 14.4 pt bond | With a 10.8 pt bond |
+| --- | --- | --- |
+| Ordinary solid bond stroke, including the ring attachment stroke | 0.50 pt | 0.375 pt (0.38 pt on native save) |
+| R labels and selected peripheral atom or group labels | 8 pt | 6 pt |
+| R label already designated as a red highlight | `#FF0000` | `#FF0000` |
+
+- Use the same ratios within a panel (stroke width `0.50 / 14.4` and peripheral type size
+  `8 / 14.4`, each multiplied by the nominal bond length). Set `LineWidth` on the selected bonds
+  so wedges, hashed bonds, dashed breaking bonds, arrows and separator rules retain their own
+  styling. Preserve the ring outline, bond order, labelled atom positions and variable attachment
+  references, including `Attachments` and `CrossingBonds`.
+- Set the size on each text run under the selected node's label. Keep subscripts and superscripts
+  and leave ring heteroatoms, condition text and captions at their assigned sizes. For two labels
+  that meet at a short bond, review both sizes together and verify that the connecting stroke is
+  visible at the final placement size. A correct connectivity readback cannot establish this.
+- Apply `#FF0000` to the node and its R-label runs together, including the superscript. Use
+  a separate colour-table entry when the old red is shared with other objects. Preserve colours
+  that encode other features, such as a highlighted isotope, a reaction pathway or synthon provenance.
+
+For a new manifest, use the [manifest style settings](../skill/chemdraw/references/publication-figures.md)
+when the entire figure shares the same ordinary bond width. For a completed figure, use
+[`chemdraw_object`](../skill/chemdraw/references/workflow-router.md#inspect-or-edit-cdxml-objects)
+on selected bonds and label runs and save a new CDXML. Render the two files in ChemDraw at equal
+magnification. Check the inner strokes of double bonds, the gaps at ring crossings and superscript
+legibility, then use [saved-file validation](../skill/chemdraw/references/figure-validation.md)
+to verify chemical readback. Recheck typesetting at the size the figure will occupy on the page.
+
+The [native comparison](../assets/substituent-scale/comparison.png) shows the settings on a ring
+with one R group, a ring with two R groups, and a pyridine ring. At equal magnification, the
+single-R sample's vertical ring stroke measures 5 to 4 dark pixels and the capital R measures
+59 to 48 pixels after the adjustment. The [editable original](../assets/substituent-scale/two-r-groups.cdxml)
+and [scaled copy](../assets/substituent-scale/two-r-groups-scaled.cdxml) show how the bond overrides
+and label runs are stored. The red is sampled from the R lettering in
+[Beilstein J. Org. Chem. Scheme 2](../assets/journal-corpus/bjoc-articles-22-127-scheme2.png)
+(DOI `10.3762/bjoc.22.127`, CC BY 4.0).
+
 ---
 
 ## 4. Figure-Type Coverage & Automation Matrix (All 23 Declared Types)
