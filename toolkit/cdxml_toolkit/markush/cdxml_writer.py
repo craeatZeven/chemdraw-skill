@@ -384,7 +384,7 @@ def write_cdxml(graph: Graph, layout: dict | None = None) -> str:
             lx, ly = ax_ + (ax_ - fc[0]) / d * 1.6 * bl, ay_ + (ay_ - fc[1]) / d * 1.6 * bl
         ma = doc.nid()
         ids = ' '.join(str(node_of[r]) for r in g['on'])
-        doc.nodes.append(f'<n id="{ma}" p="{ax_:.2f} {ay_:.2f}" NodeType="MultiAttachment" Attachments="{ids}"/>')
+        doc.nodes.append(f'<n id="{ma}" p="{ax_:.2f} {ay_:.2f}" NodeType="VariableAttachment" Attachments="{ids}"/>')
         lab = doc.node(lx, ly, runs=runs, generic=g['group'], toward=(ax_ - lx, ay_ - ly),
                        display='Right' if ax_ - lx > 0.8 * math.hypot(ax_ - lx, ay_ - ly) else 'Left')
         doc.bond(ma, lab)

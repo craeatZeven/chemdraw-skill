@@ -566,8 +566,12 @@ def _build_fragment(
             if charge or isotope:
                 raise ValueError('Charged or isotopically labelled variable atoms are unsupported')
             # A numbered R group ([*:2] in the SMILES) is R2, drawn R with a raised 2.
+            # Keep LabelDisplay="Left" and InterpretChemically="no" so ChemDraw never
+            # reverses left-side R2 into "2R".
             number = a.get('generic_number')
             attrs.extend(['NodeType="GenericNickname"', f'GenericNickname="R{number or ""}"'])
+            if number:
+                attrs.append('LabelDisplay="Left"')
         elif not is_carbon:
             attrs.append(f'Element="{elem_num}"')
             if nh is not None:
@@ -601,10 +605,11 @@ def _build_fragment(
             lbx2 = lbx1 + label_w
             lby2 = ay
             tid = ids.next()
+            t_extra = ' InterpretChemically="no"' if (is_variable and a.get('generic_number')) else ''
             lines.append(
                 f'<t id="{tid}" p="{lx:.2f} {ly:.2f}" '
                 f'BoundingBox="{lbx1:.2f} {lby1:.2f} {lbx2:.2f} {lby2:.2f}" '
-                f'LabelJustification="Left">'
+                f'LabelJustification="Left"{t_extra}>'
             )
             # Use isotope-specific symbol for display (e.g. D for deuterium)
             if is_variable:

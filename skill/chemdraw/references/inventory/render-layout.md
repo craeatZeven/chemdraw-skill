@@ -64,6 +64,13 @@
 - **function**, line 483: `approach_proportional(page, step, id_map, arrow, verbose = False)` - Proportional spacing: - Arrow length = 0.6× the average molecule width - Gaps scale with molecule size - Looks balanced for both small and large molecules
 - **function**, line 1051: `run_cleanup(input_path: str, output_path: str, approach: str = 'chemdraw_mimic', verbose: bool = False) -> dict` - Run one cleanup approach on a CDXML file.
 
+## `layout.ring_r_groups`
+
+- **function**, line 153: `build_variable_r_label_node(node_id: str, z_id: str, text_id: str, label_xy: tuple[float, float], number: int, alignment: str, font_id: str, font_size: float, color_idx: str) -> ET.Element` - Build a ChemDraw-safe variable R-group label node that preserves ``R^n`` order.
+- **function**, line 68: `ring_r_group_layout(mol, points, sites_by_ring, bond_length, font_size, *, bond_spacing = 0.18, margin_width = 1.6, line_width = 0.6)` - Draw a short connector normal to one ring edge, with room for native label clipping.
+- **function**, line 26: `ring_r_group_sites(mol, groups)` - Resolve each numbered R group to candidate atom indices, one perceived ring, and optional color.
+- **class**, line 13: `RingRGroupPlacement` - Resolved geometry for one variable-attachment R group crossing a ring edge.
+
 ## `layout.scheme_merger`
 
 - **function**, line 1074: `adjacent_place(trees: List[ET.ElementTree], *, log = None) -> ET.ElementTree` - Place multiple independent schemes side by side on one page.
@@ -99,9 +106,9 @@
 
 ## `render.renderer`
 
-- **function**, line 3720: `render(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> str` - Render a scheme and retain per-fragment output-derived validation receipts.
-- **function**, line 3742: `render_to_file(scheme: SchemeDescriptor, output_path: str, yaml_dir: Optional[str] = None) -> None` - Render and write to a file.
-- **function**, line 3708: `render_with(build) -> str` - Build page content with ``build(ids) -> inner_xml`` and wrap it like a rendered scheme.
+- **function**, line 3725: `render(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> str` - Render a scheme and retain per-fragment output-derived validation receipts.
+- **function**, line 3747: `render_to_file(scheme: SchemeDescriptor, output_path: str, yaml_dir: Optional[str] = None) -> None` - Render and write to a file.
+- **function**, line 3713: `render_with(build) -> str` - Build page content with ``build(ids) -> inner_xml`` and wrap it like a rendered scheme.
 - **class**, line 150: `ResolvedFragment` - A structure that has been resolved to atom/bond data + XML.
 - **class**, line 165: `ResolvedStep` - A step with all structures resolved and laid out.
 

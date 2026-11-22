@@ -75,7 +75,7 @@ Built-in semantic palettes (`toolkit/cdxml_toolkit/publication/palettes.py`, acc
 | `stereo_model` | `cdx.py build` (`conformer`) / `draw` (`newman`) | Chair, Newman, Haworth, Fischer, norbornane templates at requested `bond_length` (14.4 pt ACS baseline) | **0 corpus witnesses** — collect open-access stereochemical model figures |
 | `coordination_complex` | `cdx.py draw` (`dative_bonds`) / `build` (`multi_attachments`) | Native `Order="dative"` bonds, $\eta^n$ `MultiAttachment`, metal colour | 2 witnesses; wire `coordination_complex.metal_color` from house styles |
 | `polymer` | `cdx.py build` (`polymer_bracket`) | Visual square/round repeat brackets with subscript `n` | 2 witnesses; add first-class bracket support in `draw_figure` |
-| `markush` | `cdx.py markush` | R-group labels, variable rings, `MultiAttachment`, CXSMILES + V3000 | 2 witnesses |
+| `markush` | `cdx.py markush` | R-group labels, variable rings, `VariableAttachment`, CXSMILES + V3000 (see [variable-attachment-rules.md](variable-attachment-rules.md)) | 2 witnesses |
 | `graphical_abstract` | `cdx.py draw` (`kind: "panels"`, `toc: true`) | High-contrast focal scheme + ACS TOC size check (`82.5 × 44.5 mm` = `234 × 126 pt`) | Covered (6 witnesses) |
 | `assignment_panel` | `cdx.py scientific nmr` / `compose` | Peak assignment labels, numbered atoms, inset zoom | Covered (4 witnesses) |
 | `biomolecule` / `biosynthesis` | `cdx.py draw` / `build` | Haworth sugars, italic enzyme labels above arrows | 2 + 2 witnesses |

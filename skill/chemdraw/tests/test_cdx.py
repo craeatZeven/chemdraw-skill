@@ -1106,3 +1106,11 @@ def test_broken_venv_is_named(tmp_path, monkeypatch):
     monkeypatch.setattr(cdx, 'default_runtime_dir', lambda: venv)
     broken = cdx.broken_venvs()
     assert [b['venv'] for b in broken] == [str(venv)] and 'Python312' in broken[0]['missing_base_python']
+
+
+def test_scope_schema_documents_ring_r_groups():
+    for kind in ('scope', 'table'):
+        header = cdx._DRAW_SCHEMAS[kind]['schema']['properties']['header']
+        for side in ('substrates', 'products'):
+            entry = header['properties'][side]['items']['properties']['ring_r_groups']['items']
+            assert set(entry['required']) == {'number', 'atoms'}

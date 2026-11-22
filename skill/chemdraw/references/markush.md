@@ -4,10 +4,10 @@ A Markush (generic) structure has variable labels (R^1, X, L^2), variable attach
 
 - `markush.cxsmiles`: CXSMILES with `$...$` atom labels, `m:` variable attachment and `LN:` repeat counts. Code writes this text itself, because RDKit drops `m:` when it writes CXSMILES.
 - `markush.mol`: a V3000 molfile with `ENDPTS` bonds.
-- `markush.cdxml`: an editable ChemDraw drawing with GenericNickname labels, `MultiAttachment` bonds and ring circles. It is for display only.
+- `markush.cdxml`: an editable ChemDraw drawing with GenericNickname labels, `VariableAttachment` nodes for alternative atom sites and ring circles.
 - `markush.png`: the native render.
 
-Take the chemistry from the spec or the CXSMILES, never from reading the CDXML back. Readers turn generic labels into carbon and ignore `MultiAttachment`.
+Use the spec or CXSMILES for chemical readback. Other CDXML readers may lose generic labels and `VariableAttachment` sites.
 
 ## Tools
 

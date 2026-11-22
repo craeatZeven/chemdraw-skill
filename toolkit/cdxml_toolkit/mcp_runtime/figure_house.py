@@ -1201,15 +1201,32 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
 
 def paint_header_marks(cdxml: Any, color: str) -> tuple[Any, int]:
     """Colour the R marks of a scope's general reaction like what varies in the grid below
-    (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents). Marks are generic nodes
-    outside every compound group; the R and its raised number are both painted. Returns the
-    page and how many marks were painted."""
+    (BJOC 22-127 scheme 2: R¹ and R² in red over red substituents, keeping the short ring
+    crossing bonds black). Marks are generic or variable-attachment R nodes outside every
+    compound group. Returns the page and how many marks were painted."""
     root = ET.fromstring(str(cdxml).split("?>", 1)[-1])
     page = root.find("page")
     if page is None:
         return cdxml, 0
     in_cells = {id(n) for g in page.iter("group") for n in g.iter("n")}
-    marks = [n for n in page.iter("n") if n.get("NodeType") == "GenericNickname" and id(n) not in in_cells]
+    var_anchor_ids = {
+        n.get("id") for n in page.iter("n")
+        if n.get("NodeType") == "VariableAttachment" and id(n) not in in_cells
+    }
+    var_label_ids = set()
+    for bond in page.iter("b"):
+        b_id, e_id = bond.get("B"), bond.get("E")
+        if b_id in var_anchor_ids and e_id:
+            var_label_ids.add(e_id)
+        elif e_id in var_anchor_ids and b_id:
+            var_label_ids.add(b_id)
+    marks = [
+        n for n in page.iter("n")
+        if id(n) not in in_cells and (
+            n.get("NodeType") == "GenericNickname"
+            or (n.get("id") in var_label_ids and n.find("t") is not None)
+        )
+    ]
     if not marks:
         return cdxml, 0
     index = _Colors(root).index(color)
