@@ -510,7 +510,7 @@ def cmd_build(ns):
 
 DIAGRAM_OPERATIONS = ('energy_profile', 'energy_cycle', 'jablonski', 'mo_diagram', 'electron_configuration',
                       'crystal_field', 'lewis', 'unit_cell', 'flowchart', 'electrochemical_cell', 'periodic_table',
-                      'huckel_mo', 'phase_diagram', 'binary_phase_diagram',
+                      'huckel_mo', 'frost_circle', 'phase_diagram', 'binary_phase_diagram',
                       'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'tanabe_sugano', 'compose', 'page')
 SCIENTIFIC_OPERATIONS = ('nmr', 'plot', 'tlc', 'apparatus', 'mechanism', 'stack_nmr', 'lcms_plate',
                          *DIAGRAM_OPERATIONS)
@@ -1206,7 +1206,9 @@ def main(argv=None):
     s.set_defaults(fn=cmd_build)
     s = sub.add_parser('scientific', help='scientific figure, spectrum or diagram workflow: '
                                           'cdx.py scientific <nmr|plot|tlc|apparatus|mechanism|stack_nmr|lcms_plate|'
-                                          'energy_profile|mo_diagram|lewis|unit_cell|flowchart|...> SPEC.json OUTPUT')
+                                          'energy_profile|mo_diagram|lewis|unit_cell|flowchart|...> SPEC.json OUTPUT',
+                       description='Scientific workflows. frost: redox diagram (oxidation states and potentials); '
+                                   'frost_circle: cyclic HMO Frost polygon, energy levels and electron filling.')
     s.add_argument('operation', choices=list(SCIENTIFIC_OPERATIONS))
     s.add_argument('spec_pos', nargs='?', metavar='SPEC.json')
     s.add_argument('output_pos', nargs='?', metavar='OUTPUT')

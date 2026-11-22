@@ -160,6 +160,44 @@ Heteroatoms use the Streitwieser parameters (alpha{sub:X} = alpha + h beta, beta
 `furan`; or add `"heteroatoms": [{"index": 0, "type": "N_pyridine"}]` (or `"symbol", "h", "k"`) to
 any chain or ring. The heteroatom is labelled on the lowest orbital.
 
+## frost_circle (cyclic HMO construction)
+
+`{"centres": 6, "electrons": 6, "show_construction": true}` draws a circle of radius
+`2|beta|` and a regular polygon with a vertex at the lowest point. This operation is the
+Huckel molecular orbital (HMO) Frost construction; `frost` below is the redox diagram.
+`centres` is an integer from 3 to 12 and `electrons` from 0 to twice that count.
+
+For beta < 0, levels follow `epsilon_k = alpha + 2 beta cos(2 pi k/n)`.
+The coefficient `x = 2 cos(2 pi k/n)` and degeneracy `d` appear beside each distinct
+horizontal level. A degenerate pair shares one bar with two electron positions;
+Aufbau filling, Pauli pairing and Hund's parallel single spins are computed.
+CDXML uses `y = y(alpha) + radius_pt * x/2`, so the most bonding level lies lowest.
+The radius grows for larger polygons to keep the levels legible without changing
+that linear mapping. The report includes levels, occupations, unpaired count and the
+`huckel_rule` electron-count class (`4q+2`, `4q`, or `other`); these describe an ideal
+planar cyclic model and do not establish the aromaticity of an actual molecule.
+
+`show_construction` defaults to true: horizontal dashed vertex projections lead to the
+energy column; a centre dot, double-headed radius arrow and three construction rules
+are added. Supply `lines: ["...", "...", "..."]` to replace the rules, or `lines: []`
+to omit them. False hides these helpers and retains the circle, polygon and filled levels.
+`title` adds a caption.
+
+`variant: "vertex-up"` (odd polygons only) or `"flat-bottom"` draws an incorrect
+construction with a red cross and warning. Its projected heights are illustrative,
+not HMO predictions, and `huckel_rule` is null. An even polygon with a vertex up also
+has a vertex down, so that misleading error example is rejected. For odd polygons,
+vertex-up and flat-bottom describe the same orientation; the bundled comparison uses
+a five-centre vertex-up example and a four-centre flat-bottom example.
+
+Examples, including four panels for n = 3..6 and a construction/error comparison, ship
+in `toolkit/examples/frost_circle/`. Generate without native rendering:
+
+```bash
+cdx.py scientific frost_circle toolkit/examples/frost_circle/n6.json new.cdxml
+cdx.py check new.cdxml
+```
+
 ## phase_diagram
 
 `{"triple": [T, P], "critical": [T, P], "melting_slope": "negative", "marks": [{"P": 1, "label":

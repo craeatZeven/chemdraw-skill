@@ -84,7 +84,7 @@
 
 ## `scientific.diagrams`
 
-- **function**, line 73: `build(operation: str, spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Run one diagram workflow; the returned report omits the CDXML text when a file was written.
+- **function**, line 75: `build(operation: str, spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Run one diagram workflow; the returned report omits the CDXML text when a file was written.
 
 ## `scientific.elements`
 
@@ -103,6 +103,10 @@
 - **function**, line 196: `energy_profile(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Reaction energy profile (potential energy against reaction coordinate).
 - **function**, line 92: `from_species_spec(spec: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]` - Translate the species-list energy-profile format into this builder's pathway format.
 - **function**, line 737: `jablonski(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Jablonski diagram: electronic states with vibrational levels and their transitions.
+
+## `scientific.frost_circle`
+
+- **function**, line 24: `frost_circle(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Draw a cyclic pi HMO Frost circle, distinct from the redox ``frost`` operation.
 
 ## `scientific.hexagonal`
 
@@ -167,8 +171,8 @@
 
 ## `scientific.redox`
 
-- **function**, line 304: `ellingham(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Ellingham diagram: ``lines``: ``[{"label": "2Mg + O{sub:2} → 2MgO", "dH": -1203.4, "dS": -216.8}]`` (kJ/mol and J/(mol K), both per mole of O2 and taken as constant), optional ``segments`` ``[{"from_T": 1380, "dH": ..., "dS": ...}]`` after a phase change; ``T`` range in K.
-- **function**, line 252: `frost(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Frost diagram (N E° against oxidation state N) from the same spec as :func:`latimer`. Several chains go in ``"series": [{"label", "species", "potentials"}]`` (e.g. acid and base).
+- **function**, line 305: `ellingham(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Ellingham diagram: ``lines``: ``[{"label": "2Mg + O{sub:2} → 2MgO", "dH": -1203.4, "dS": -216.8}]`` (kJ/mol and J/(mol K), both per mole of O2 and taken as constant), optional ``segments`` ``[{"from_T": 1380, "dH": ..., "dS": ...}]`` after a phase change; ``T`` range in K.
+- **function**, line 252: `frost(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Frost diagram (N E° against oxidation state N) from the same spec as :func:`latimer`. Several chains go in ``"series": [{"label", "species", "potentials"}]`` (e.g. acid and base). For the cyclic HMO polygon construction, use ``frost_circle`` instead.
 - **function**, line 209: `latimer(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Latimer diagram: ``{"species": [{"name": "MnO4{sup:−}", "oxidation_state": 7}, ...], "potentials": [0.56, ...], "medium": "acid"}``, highest oxidation state first. ``derived`` lists couples (``[["MnO4{sup:−}", "MnO2"]]``) to add as arcs with their computed E°.
 - **function**, line 27: `pourbaix(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Potential-pH (Pourbaix) diagram of one element.
 

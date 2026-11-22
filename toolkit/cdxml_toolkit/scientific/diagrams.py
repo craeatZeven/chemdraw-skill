@@ -27,6 +27,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
     from .tanabe import tanabe_sugano
     from .energy import energy_cycle, energy_profile, jablonski
     from .huckel import huckel_mo
+    from .frost_circle import frost_circle
     from .lewis import lewis_structure
     from .orbitals import crystal_field, electron_configuration_diagram, mo_diagram
     from .orbital_lobes import orbital_overlap, orbital_shapes
@@ -47,6 +48,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
         'electrochemical_cell': electrochemical_cell,
         'periodic_table': periodic_table,
         'huckel_mo': huckel_mo,
+        'frost_circle': frost_circle,
         'orbital_shapes': orbital_shapes,
         'orbital_overlap': orbital_overlap,
         'phase_diagram': phase_diagram,
@@ -67,7 +69,7 @@ def _load() -> dict[str, Callable[..., dict[str, Any]]]:
 # Names only, so that importing this module stays cheap; ``build`` imports the builder.
 DIAGRAM_OPERATIONS = ('energy_profile', 'energy_cycle', 'jablonski', 'mo_diagram', 'electron_configuration',
                       'crystal_field', 'lewis', 'unit_cell', 'flowchart', 'electrochemical_cell', 'periodic_table',
-                      'huckel_mo', 'orbital_shapes', 'orbital_overlap', 'phase_diagram', 'binary_phase_diagram',
+                      'huckel_mo', 'frost_circle', 'orbital_shapes', 'orbital_overlap', 'phase_diagram', 'binary_phase_diagram',
                       'pourbaix', 'latimer', 'frost', 'ellingham', 'correlation_diagram', 'walsh_diagram', 'potential_surface', 'tanabe_sugano', 'compose', 'page')
 
 def build(operation: str, spec: Mapping[str, Any], output=None) -> dict[str, Any]:

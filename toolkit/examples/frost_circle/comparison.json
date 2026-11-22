@@ -1,0 +1,10 @@
+{
+  "parts": [
+    {"file": "n3.cdxml"},
+    {"file": "n4.cdxml"},
+    {"file": "n5.cdxml"},
+    {"file": "n6.cdxml"}
+  ],
+  "gap": 32,
+  "margin": 12
+}

@@ -34,6 +34,7 @@ OPERATIONS = {
     "pourbaix": ".cdxml",
     "latimer": ".cdxml",
     "frost": ".cdxml",
+    "frost_circle": ".cdxml",
     "ellingham": ".cdxml",
     "correlation_diagram": ".cdxml",
     "walsh_diagram": ".cdxml",
@@ -65,7 +66,8 @@ def scientific_workflow(operation: str, spec_path: str, output_path: str) -> dic
     electrochemical_cell (polarity and electron flow), periodic_table, huckel_mo (pi orbitals,
     HOMO/LUMO, aromaticity), phase_diagram, binary_phase_diagram (fields and the
     lever rule at marked points), pourbaix (stable species from Gibbs energies), latimer and
-    frost (derived couples, disproportionation), ellingham (reduction temperatures),
+    frost (redox: derived couples, disproportionation), frost_circle (cyclic HMO polygon,
+    energy coefficients, degeneracies and Hund filling; distinct from redox frost), ellingham (reduction temperatures),
     correlation_diagram (Woodward-Hoffmann allowed or forbidden), walsh_diagram,
     potential_surface (contours, minima and saddle points), tanabe_sugano (d2-d8 levels from
     the full ligand-field Hamiltonian, spin crossover, Delta and B from two bands) and compose (several

@@ -34,7 +34,7 @@ Each figure has three files:
 | `energy_profile_levels` | Free-energy profile, levels style (journal) | yes |
 | `energy_profile_two_step_cn` | Free-energy profile, two steps | yes |
 | `flowchart` | Flowchart | yes |
-| `frost` | Frost circle (polygon inscribed in a circle) | yes |
+| `frost` | Redox Frost diagram (N E° against oxidation state) | yes |
 | `huckel_mo` | Huckel MO diagram (energy levels from the adjacency matrix) | yes |
 | `huckel_mo_pyridine` | Huckel MO diagram, pyridine (heteroatom parameter) | yes |
 | `jablonski` | Jablonski diagram (S0/S1/S2/T1, A/F/P, IC/ISC) | yes |

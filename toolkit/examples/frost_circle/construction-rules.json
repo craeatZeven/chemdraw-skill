@@ -1,0 +1,9 @@
+{
+  "parts": [
+    {"file": "n5.cdxml"},
+    {"file": "incorrect-vertex-up.cdxml"},
+    {"file": "incorrect-flat-bottom.cdxml"}
+  ],
+  "gap": 32,
+  "margin": 12
+}

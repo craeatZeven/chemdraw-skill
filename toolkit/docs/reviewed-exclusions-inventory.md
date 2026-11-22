@@ -587,7 +587,7 @@
 
 ## `mcp_runtime.scientific_tool`
 
-- **function**, line 47: `scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, Any]` - Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr, plot or a diagram.
+- **function**, line 48: `scientific_workflow(operation: str, spec_path: str, output_path: str) -> dict[str, Any]` - Draw or analyse a scientific figure from a JSON spec file: tlc, apparatus, mechanism, nmr, plot or a diagram.
 
 ## `mcp_runtime.structure_fidelity`
 

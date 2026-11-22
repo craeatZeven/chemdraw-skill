@@ -251,7 +251,8 @@ def latimer(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
 
 def frost(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     """Frost diagram (N E\u00b0 against oxidation state N) from the same spec as :func:`latimer`.
-    Several chains go in ``"series": [{"label", "species", "potentials"}]`` (e.g. acid and base)."""
+    Several chains go in ``"series": [{"label", "species", "potentials"}]`` (e.g. acid and base).
+    For the cyclic HMO polygon construction, use ``frost_circle`` instead."""
     series = spec.get('series') or [spec]
     chains = []
     for i, item in enumerate(series):
