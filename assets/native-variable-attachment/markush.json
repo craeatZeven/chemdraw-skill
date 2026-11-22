@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "fragments": [
+    {
+      "id": "ring",
+      "template": "benzene",
+      "double": [["1", "2"], ["3", "4"], ["5", "6"]]
+    }
+  ],
+  "atoms": [{"id": "fixedBr", "element": "Br"}],
+  "bonds": [["ring:1", "fixedBr"]],
+  "variable_position": [
+    {"group": "Br", "label": "Br", "on": ["ring:2", "ring:3", "ring:4", "ring:5", "ring:6"]}
+  ]
+}

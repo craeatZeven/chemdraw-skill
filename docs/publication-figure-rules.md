@@ -52,6 +52,31 @@ Built-in semantic palettes (`toolkit/cdxml_toolkit/publication/palettes.py`, acc
 4. **Native-save phantom-fragment guard**: every non-atom `<t>` caption (conditions, labels, table cells, footnotes) must carry `InterpretChemically="no"` so ChemDraw's SaveAs never turns a condition label such as `H2O` or `MeOH` into a hidden molecule fragment. Verify with `cdx.py validate FILE.cdxml --native` (`molecule_count_delta == 0`).
 5. **Zero text-over-ink**: rules, arrows, curves, and bounding boxes must keep measurable clearance from every caption box (`cdx.py check --profile <style>` reports `text_over_ink` warnings).
 
+### ChemDraw variable attachment points
+
+A variable attachment draws one substituent that can occupy any one of a set of eligible sites. The dibromobenzene example in the ChemDraw User Guide leaves the fixed bromine on C1 and allows the second bromine at C2 through C6. Those five sites give three distinct positional isomers by ring symmetry. Use **Add Multi-Center Attachment** for a group bonded to several sites together, as in a polyhapto complex. [ChemDraw User Guide, Chapter 9, pp. 172–174](https://chem.beloit.edu/classes/programs/ChemDraw_21_manual.pdf#page=181).
+
+1. Draw bromobenzene, then use a selection tool to select only the five ring carbons that still bear hydrogen. Including C1 would allow a substitution that exceeds its valence.
+2. Choose **Structure → Add Variable Attachment**. ChemDraw places an asterisk at the new attachment point.
+3. Drag a single bond from the asterisk past the ring edge and label the other end `Br`. Hold **Alt** while dragging if **Fixed Lengths** prevents the bond from reaching past the ring. The asterisk disappears once bonded. Hover over the anchor with the bond or selection tool to locate it again.
+4. Save as CDXML. Verify `NodeType="VariableAttachment"` and resolve every ID in `Attachments` to its intended candidate atom. Check the bond from the anchor to the substituent separately, following the endpoints recorded in `B` and `E` when it crosses a ring edge. [CDX Format Specification, `Attachments`](https://chemapps.stolaf.edu/iupac/cdx/sdk/properties/Node_Attachments.htm).
+
+#### Native CDXML comparison
+
+The [native export](../assets/native-variable-attachment/ground-truth.cdxml) was created in a fresh ACS Document 1996 canvas in ChemDraw Professional 26.0.0.6141 on Windows. The COM menu item for **Structure → Add Variable Attachment** ran on the five selected carbons, with the ring, bromine labels and bonds created through ChemDraw COM. ChemDraw saved the resulting canvas directly as CDXML and reported zero chemical warnings. The steps above follow the user guide's mouse workflow.
+
+The [Markush spec](../assets/native-variable-attachment/markush.json) and [layout](../assets/native-variable-attachment/layout.json) preserve the candidate sites, ring bond orders and coordinates. Both toolkit outputs came from `markush_compile`, once using the bundled source at `109bc139b170` and once using the separately installed 0.7.0a3 runtime. Resolving IDs to ring positions and comparing parsed XML gives one fragment, nine nodes, the same eight bond endpoints and orders, and the same five candidate sites in each file.
+
+| Feature | ChemDraw native export | [Bundled toolkit](../assets/native-variable-attachment/toolkit.cdxml) | [Installed runtime](../assets/native-variable-attachment/runtime.cdxml) |
+| --- | --- | --- | --- |
+| Anchor `NodeType` | `VariableAttachment` | `MultiAttachment` | `VariableAttachment` |
+| `Attachments` | `9 11 13 15 17` (C2–C6) | `102 103 104 105 106` (C2–C6) | Same as bundled toolkit |
+| Substituent bond and endpoint | Single bond to elemental `Br` (`Element="35"`) | Single bond to a `GenericNickname` node labelled `Br` in the saved XML | Same as bundled toolkit |
+| `CrossingBonds` | The substituent bond and the two ring bonds at the exit have reciprocal references | Absent | Absent |
+| On reopening in ChemDraw | Variable anchor | Multicenter anchor. ChemDraw warns that it may have been intended as a variable attachment | Variable anchor |
+
+ChemDraw interpreted both toolkit `Br` labels as elemental bromine in its live atom API and still reported two label-interpretation warnings per file. The [native PNG comparison](../assets/native-variable-attachment/comparison.png) shows the fixed `Br` at the top, the variable bond starting inside the ring, and a gap where it crosses the right ring edge. The two toolkit panels have identical pixels even though ChemDraw reads their anchor types differently. Use the node type, resolved candidate atoms and substituent bond to verify the query. Keep the Markush spec as the source for downstream enumeration.
+
 ---
 
 ## 4. Figure-Type Coverage & Automation Matrix (All 23 Declared Types)
