@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 from contextlib import redirect_stdout
 import importlib.metadata
@@ -17,6 +16,7 @@ import tempfile
 import time
 from typing import Any
 
+from ..chemdraw.progid import chemdraw_com_registration
 from .process_control import (
     _assign_kill_job,
     _close_job,
@@ -94,12 +94,12 @@ def _chemdraw_capabilities() -> tuple[dict[str, Any], dict[str, Any]]:
 
     if mac_automation.is_macos():
         return executable, _macos_automation_capability()
-    command = runtime_discovery._registry_local_server_command()
-    registered = bool(command)
+    registration = chemdraw_com_registration()
+    registered = registration is not None
     com = _status(
         registered,
         registered=registered,
-        **({"local_server": command} if command else {}),
+        **({"local_server": registration.command} if registration else {}),
     )
     return executable, com
 
@@ -251,7 +251,7 @@ def _has_windows_office_com() -> dict[str, bool]:
     return {
         "word": _progid_registered("Word.Application"),
         "powerpoint": _progid_registered("PowerPoint.Application"),
-        "chemdraw": _progid_registered(chemdraw_progid()),
+        "chemdraw": chemdraw_com_registration() is not None,
     }
 
 

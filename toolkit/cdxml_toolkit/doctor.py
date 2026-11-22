@@ -6,11 +6,12 @@ Reports dependency availability, runs the test suite, and prints
 ChemScript setup instructions when needed.
 """
 
-from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import os
 import json
 import subprocess
 import sys
+
+from .chemdraw.progid import chemdraw_com_registration
 
 
 # Lowest pythonnet with the ChemScript bridge API the toolkit uses (same floor as pyproject.toml).
@@ -39,14 +40,9 @@ def _check_dependency(name, import_fn):
 
 def _check_chemdraw_com():
     """Check if ChemDraw COM is registered (without launching it)."""
-    try:
-        import winreg
-        key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT,
-                             chemdraw_progid() + "\\CLSID")
-        winreg.CloseKey(key)
+    if chemdraw_com_registration() is not None:
         return True, "registered"
-    except Exception:
-        return False, "not registered"
+    return False, "not registered"
 
 
 def _check_chemdraw_macos():

@@ -131,11 +131,24 @@ function Invoke-PythonCode {
 }
 
 function Get-RegistryDefaultValue {
-    param([Parameter(Mandatory)][string]$LiteralPath)
+    param(
+        [Parameter(Mandatory)][string]$LiteralPath,
+        [Microsoft.Win32.RegistryKey]$BaseKey
+    )
 
     try {
-        $item = Get-Item -LiteralPath $LiteralPath -ErrorAction Stop
-        return $item.GetValue('')
+        $item = if ($null -ne $BaseKey) {
+            $BaseKey.OpenSubKey($LiteralPath)
+        } else {
+            Get-Item -LiteralPath $LiteralPath -ErrorAction Stop
+        }
+        if ($null -ne $item) {
+            try {
+                return $item.GetValue('', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+            } finally {
+                $item.Dispose()
+            }
+        }
     } catch {
         return $null
     }
@@ -146,9 +159,36 @@ function Get-ExecutableFromCommandLine {
 
     if (-not $CommandLine) { return $null }
     $expanded = [Environment]::ExpandEnvironmentVariables($CommandLine).Trim()
-    if ($expanded -match '^"([^"]+\.exe)"') { return $matches[1] }
-    if ($expanded -match '^(.+?\.exe)(?:\s|$)') { return $matches[1].Trim() }
+    if ($expanded -match '^"([^"]+\.exe)"(?:\s|$)') { return $matches[1] }
+    if ($expanded -match '^([^"].*?\.exe)(?:\s|$)') { return $matches[1] }
     return $null
+}
+
+function Get-ChemDrawComRegistration {
+    param([string[]]$ProgIds)
+
+    $alternateView = if ([Environment]::Is64BitProcess) { 'Registry32' } else { 'Registry64' }
+    foreach ($view in @('Default', $alternateView)) {
+        try {
+            $classes = [Microsoft.Win32.RegistryKey]::OpenBaseKey('ClassesRoot', $view)
+        } catch {
+            continue
+        }
+        try {
+            foreach ($progId in $ProgIds) {
+                $clsid = Get-RegistryDefaultValue -BaseKey $classes -LiteralPath "$progId\CLSID"
+                if ($clsid -isnot [string] -or -not $clsid.Trim()) { continue }
+                $command = Get-RegistryDefaultValue -BaseKey $classes -LiteralPath "CLSID\$($clsid.Trim())\LocalServer32"
+                if ($command -isnot [string]) { continue }
+                $exe = Get-ExecutableFromCommandLine $command
+                if ($exe -and (Test-Path -LiteralPath $exe -PathType Leaf -ErrorAction SilentlyContinue)) {
+                    return [pscustomobject]@{ ProgId = $progId; Path = [IO.Path]::GetFullPath($exe) }
+                }
+            }
+        } finally {
+            $classes.Dispose()
+        }
+    }
 }
 
 $isWindowsHost = $env:OS -eq 'Windows_NT'
@@ -440,21 +480,17 @@ if ($SkipChemDraw -or -not $windowsNativeRequested) {
         Add-NextStep 'Install all Windows updates and .NET Framework 4.8 before installing ChemDraw.'
     }
 
-    $clsid = Get-RegistryDefaultValue `
-        'Registry::HKEY_CLASSES_ROOT\ChemDraw.Application\CLSID'
-    if ($clsid) {
-        $serverCommand = Get-RegistryDefaultValue `
-            "Registry::HKEY_CLASSES_ROOT\CLSID\$clsid\LocalServer32"
-        $chemdrawExe = Get-ExecutableFromCommandLine ([string]$serverCommand)
-    }
-    if ($chemdrawExe -and (Test-Path -LiteralPath $chemdrawExe -PathType Leaf)) {
-        $chemdrawExe = [IO.Path]::GetFullPath($chemdrawExe)
+    $override = ([string]$env:CHEMDRAW_PROGID).Trim()
+    $progIds = if ($override) { @($override) } else { @('ChemDraw.Application', 'ChemDraw_x64.Application') }
+    $registration = Get-ChemDrawComRegistration -ProgIds $progIds
+    if ($registration) {
+        $chemdrawExe = $registration.Path
         Add-Check -Name 'chemdraw_com' -Status 'pass' -Required $true `
-            -Detail "ChemDraw.Application is registered: $chemdrawExe" `
+            -Detail "$($registration.ProgId) is registered: $chemdrawExe" `
             -Help 'The Windows desktop edition is required; the browser-only product cannot provide COM automation.'
     } else {
         Add-Check -Name 'chemdraw_com' -Status 'fail' -Required $true `
-            -Detail 'The ChemDraw.Application COM registration was not found or its executable is missing.' `
+            -Detail "No installed COM server was found for $($progIds -join ', ')." `
             -Help 'Install and activate desktop ChemDraw, then repair or reinstall it if COM registration remains absent.'
         Add-NextStep 'Install the licensed Windows desktop edition of ChemDraw and open it once.'
     }

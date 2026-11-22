@@ -109,6 +109,7 @@ class NativeRendererTests(unittest.TestCase):
         application = _Application(_Document())
 
         environment = {key: value for key, value in os.environ.items() if key != "CHEMDRAW_EXE"}
+        environment["CHEMDRAW_PROGID"] = "ChemDraw_x64.Application"
         with mock.patch.dict(os.environ, environment, clear=True), mock.patch(
             "win32com.client.DispatchEx", return_value=application
         ) as dispatch_ex, mock.patch(
@@ -118,7 +119,7 @@ class NativeRendererTests(unittest.TestCase):
 
         self.assertIs(acquired, application)
         self.assertTrue(launched)
-        dispatch_ex.assert_called_once_with("ChemDraw.Application")
+        dispatch_ex.assert_called_once_with("ChemDraw_x64.Application")
         get_active.assert_not_called()
 
     def test_reports_invalid_native_output_with_stable_error_code(self):
