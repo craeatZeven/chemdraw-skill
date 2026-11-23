@@ -93,16 +93,16 @@
 
 ## `chemistry_semantics`
 
-- **function**, line 189: `document_inventory(path, like = None)` - Counter of the semantic keys of a document's molecules (see ``inventory_keys`` for ``like``).
-- **function**, line 103: `inventory_keys(mols, like = None)` - Semantic keys of drawn molecules; with ``like`` (the keys expected), a molecule that is one of them drawn with a geometry its source left open counts as that key.
+- **function**, line 197: `document_inventory(path, like = None)` - Counter of the semantic keys of a document's molecules (see ``inventory_keys`` for ``like``).
+- **function**, line 103: `inventory_keys(mols, like = None)` - Semantic keys of drawn molecules; with ``like`` (the keys expected), a molecule that is one of them drawn with a geometry its source left open counts as that key. A disconnected CDXML fragment counts by component when the expected keys name its components individually.
 - **function**, line 77: `loose_key(mol)` - The semantic key without double-bond geometry (E/Z).
-- **function**, line 120: `read_fragments(value)` - Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order.
-- **function**, line 166: `read_molecules(value)` - No public docstring in the audited version.
+- **function**, line 128: `read_fragments(value)` - Top-level CDXML fragments as ``(fragment_id, mol)`` pairs, in document order.
+- **function**, line 174: `read_molecules(value)` - No public docstring in the audited version.
 - **function**, line 36: `require_supported(mol, *, allow_radicals: bool = False, allow_dative: bool = True, allow_atropisomers: bool = True)` - No public docstring in the audited version.
 - **function**, line 87: `same_compound(source, drawn)` - "exact", "drawn_geometry" or None: whether a drawn molecule is the source compound.
 - **function**, line 10: `semantic_key(mol)` - No public docstring in the audited version.
-- **function**, line 195: `validate_document_preserved(source, output)` - No public docstring in the audited version.
-- **function**, line 170: `validate_fragment(smiles, xml, *, allow_radicals: bool = True)` - No public docstring in the audited version.
+- **function**, line 203: `validate_document_preserved(source, output)` - No public docstring in the audited version.
+- **function**, line 178: `validate_fragment(smiles, xml, *, allow_radicals: bool = True)` - No public docstring in the audited version.
 
 ## `clash_marks`
 
@@ -424,7 +424,7 @@
 
 ## `mcp_runtime.figure_scope`
 
-- **function**, line 585: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
+- **function**, line 613: `draw_scope(brief: dict, output_path: str | None, render: bool) -> dict` - Draw a scope panel; called by draw_figure for ``kind: scope``.
 
 ## `mcp_runtime.figure_table`
 
@@ -432,9 +432,9 @@
 
 ## `mcp_runtime.figure_tools`
 
-- **function**, line 1510: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
-- **function**, line 632: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
-- **function**, line 165: `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict` - Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs, r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like, enumerate_markush.
+- **function**, line 1533: `compare_figure_images(reference_path: str, candidate_path: str, output_path: str) -> dict` - Compare aligned local raster previews without resizing or warping.
+- **function**, line 634: `compose_chemical_figure(manifest_path: str, output_path: str) -> dict` - Compose editable CDXML using explicit point coordinates and grounded molecules.
+- **function**, line 167: `rdkit_workbench(molecules: list[dict] | str | None = None, operation: str = 'inspect', options: dict | None = None, output_path: str | None = None, **kwargs) -> dict` - Analyze and edit grounded molecules: inspect, stereoisomers, tautomers, mcs, r_groups, set_stereo, edit_structure, edit_smarts, read_wedges, depict_like, enumerate_markush.
 
 ## `mcp_runtime.figure_validation`
 
@@ -684,23 +684,24 @@
 
 ## `publication.layout`
 
-- **function**, line 1093: `bounds(node, style)` - No public docstring in the audited version.
+- **function**, line 1196: `bounds(node, style)` - No public docstring in the audited version.
 - **function**, line 187: `caption_runs(text, bold = False)` - (the text as it reads, runs or None) for a caption line.
-- **function**, line 1123: `check_pages(project, roots, spec)` - No public docstring in the audited version.
-- **function**, line 287: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
-- **function**, line 721: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
+- **function**, line 1226: `check_pages(project, roots, spec)` - No public docstring in the audited version.
+- **function**, line 294: `chemical_runs(text)` - Runs for a caption or conditions line whose formula digits are subscripts.
+- **function**, line 809: `create_pages(records, spec, stage, start_index = 0)` - No public docstring in the audited version.
 - **function**, line 29: `font_for(style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 231: `footnote_runs(footer)` - Format multi-line footnotes with italic superscript leading markers and chemical subscripts.
 - **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
-- **function**, line 362: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
-- **function**, line 501: `header_objects(spec, style, left, top, *, bond_scale = 1.7)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, and the products with their labels. Also returns the bounds and the real R attachments to hide behind decorative marks.
+- **function**, line 369: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
+- **function**, line 561: `header_objects(spec, style, left, top, *, bond_scale = 1.7)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, and the products with their labels. Also returns the bounds and the real R attachments to hide behind decorative marks.
 - **function**, line 257: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
-- **function**, line 325: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
+- **function**, line 332: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.
 - **function**, line 66: `node_text(node)` - No public docstring in the audited version.
-- **function**, line 1119: `overlap(a, b)` - No public docstring in the audited version.
-- **function**, line 312: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
-- **function**, line 637: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 1222: `overlap(a, b)` - No public docstring in the audited version.
+- **function**, line 319: `parse_definition(text)` - (label, {element: count}) for a definition such as "Alk = C7H15", else None.
+- **function**, line 720: `prepare(records, spec)` - No public docstring in the audited version.
+- **function**, line 375: `scheme_identities(objects)` - Read the expected molecule components from inline scheme objects.
 - **function**, line 17: `style_settings(spec)` - No public docstring in the audited version.
 - **function**, line 42: `text_width(value, style, size = None, bold = False)` - No public docstring in the audited version.
 - **function**, line 47: `wrap(value, width, style)` - No public docstring in the audited version.
