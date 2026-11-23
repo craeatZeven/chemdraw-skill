@@ -62,6 +62,10 @@ class JournalFidelityTests(unittest.TestCase):
         self.assertEqual(series, [f"2{suffix}" for suffix in "rstuvwx"])
         images = [item for item in spec["footer_scheme"]["objects"] if item["type"] == "image"]
         self.assertEqual([item["id"] for item in images], ["xray-2p", "xray-2q"])
+        product = next(item for item in spec["footer_scheme"]["objects"] if item.get("id") == "2z")
+        self.assertIn("coordinates", product)
+        self.assertTrue(all("\u2091\u2099" in item["values"]["barrier"] for item in spec["species"]
+                            if "barrier" in item["values"]))
 
     def test_hexahelicene_2r_uses_the_supporting_information_graph(self):
         try:
