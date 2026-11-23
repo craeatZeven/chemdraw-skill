@@ -298,7 +298,7 @@ def draw_table(brief: dict, output_path: str | None, render: bool) -> dict:
 
     header_width = 0.0
     if header:
-        drawn_header, header_bottom, header_right, _ = header_objects(
+        drawn_header, header_bottom, header_right, _, _ = header_objects(
             {"header": header}, layout_style, margin, y, bond_scale=1.0)
         objects.extend(drawn_header)
         header_width = header_right - margin

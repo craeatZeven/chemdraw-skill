@@ -102,7 +102,8 @@ def same_compound(source, drawn):
 
 def inventory_keys(mols, like=None):
     """Semantic keys of drawn molecules; with ``like`` (the keys expected), a molecule that is one
-    of them drawn with a geometry its source left open counts as that key."""
+    of them drawn with a geometry its source left open counts as that key. A disconnected CDXML
+    fragment counts by component when the expected keys name its components individually."""
     found = Counter()
     open_keys = {}
     for key in set(like or ()):
@@ -111,6 +112,13 @@ def inventory_keys(mols, like=None):
             open_keys.setdefault(loose_key(mol), key)
     for mol in mols:
         key = semantic_key(mol)
+        if like is not None and key not in like:
+            parts = Chem.GetMolFrags(mol, asMols=True)
+            if len(parts) > 1:
+                keys = [semantic_key(part) for part in parts]
+                if all(part_key in like for part_key in keys):
+                    found.update(keys)
+                    continue
         if like is not None and key not in like and open_keys:
             key = open_keys.get(loose_key(mol), key)
         found[key] += 1

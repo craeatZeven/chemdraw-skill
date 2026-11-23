@@ -30,9 +30,9 @@ from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manif
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
               "highlight_varying", "header", "group_colors", "columns", "row_align", "band_style", "border",
-              "fragment_colors", "depiction_rotation", "rmark_in_ring"}
+              "fragment_colors", "depiction_rotation", "rmark_in_ring", "footer_scheme"}
 HEADER_KEYS = {"substrates", "products", "above", "below"}
-HEADER_ITEM_KEYS = {"smiles", "name", "label", "color", "rotation"}
+HEADER_ITEM_KEYS = {"smiles", "name", "label", "color", "rotation", "variable_label", "attached_label", "counterion"}
 ROW_ALIGNS = ("left", "center", "justify")
 BAND_STYLES = ("rule", "pill")
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
@@ -109,6 +109,16 @@ def _header_errors(header) -> list[str]:
                 isinstance(item["color"], str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", item["color"])
             ):
                 errors.append(f"header {side}[{number}]: color must be a hex colour like #0B4F8A.")
+            else:
+                for key in ("variable_label", "counterion"):
+                    if key in item and not (isinstance(item[key], str) and item[key].strip()):
+                        errors.append(f"header {side}[{number}]: {key} must be non-empty text.")
+                if "attached_label" in item:
+                    attached = item["attached_label"]
+                    if not (isinstance(attached, dict) and set(attached) == {"smarts", "text"}
+                            and all(isinstance(v, str) and v.strip() for v in attached.values())
+                            and Chem.MolFromSmarts(attached["smarts"]) is not None):
+                        errors.append(f"header {side}[{number}]: attached_label needs a valid smarts and label text.")
     for side in ("above", "below"):
         if side in header and not (isinstance(header[side], list) and all(isinstance(t, str) for t in header[side])):
             errors.append(f"header {side} must be a list of condition lines.")
@@ -123,6 +133,15 @@ def _validate(brief: dict) -> list[str]:
     errors += figure_house.record_errors(brief)
     if brief.get("header") is not None:
         errors += _header_errors(brief["header"])
+    if brief.get("footer_scheme") is not None:
+        footer = brief["footer_scheme"]
+        if not (isinstance(footer, dict) and set(footer) == {"width", "height", "objects"}
+                and all(type(footer[k]) in (float, int) and 0 < footer[k] < 1500 for k in ("width", "height"))
+                and isinstance(footer["objects"], list) and footer["objects"]
+                and all(isinstance(obj, dict) and (obj.get("type") != "molecule"
+                        or (isinstance(obj.get("smiles"), str) and Chem.MolFromSmiles(obj["smiles"]) is not None
+                            and not ({"file", "molblock", "align_to"} & obj.keys()))) for obj in footer["objects"])):
+            errors.append("footer_scheme needs a positive width and height in points and inline composition objects; use SMILES for molecules.")
     style_error = style_preset_error(brief.get("style"))
     if style_error:
         errors.append(style_error)
@@ -488,6 +507,9 @@ def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
                     entry["rotation"] = item["rotation"]
                 if item.get("color"):
                     entry["color"] = item["color"].upper()
+                for key in ("variable_label", "attached_label", "counterion"):
+                    if key in item:
+                        entry[key] = item[key]
             elif item not in structural:
                 entry = {"text": item["text"]}
             else:
@@ -554,21 +576,27 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         **({"band_style": brief["band_style"]} if brief.get("band_style") is not None else {}),
         **({"border": brief["border"]} if brief.get("border") else {}),
     }
+    if brief.get("footer_scheme"):
+        diagram = copy.deepcopy(brief["footer_scheme"])
+        for obj in diagram["objects"]:
+            if obj.get("type") == "image" and isinstance(obj.get("file"), str):
+                obj["file"] = str(Path(obj["file"]).expanduser().resolve())
+        spec["footer_scheme"] = diagram
     path = work / "spec.json"
     path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
     return path
 
 
 def _readback(pages: list[Path], grounded: list[dict], header: dict | None = None,
-              drawn_with: set[str] | None = None) -> dict:
+              drawn_with: set[str] | None = None, footer_scheme: dict | None = None) -> dict:
     wanted: Counter = Counter()
     for item in grounded:
         if item["id"] in (drawn_with or set()):
             continue  # shown by the structure it is drawn with
         wanted.update(semantic_key(m) for m in Chem.GetMolFrags(Chem.MolFromSmiles(item["smiles"]), asMols=True))
-    if header:
-        from ..publication.layout import header_identities
-        wanted.update(header_identities({"header": header}))
+    from ..publication.layout import header_identities, scheme_identities
+    wanted.update(header_identities({"header": header}))
+    wanted.update(scheme_identities((footer_scheme or {}).get("objects", [])))
     found: Counter = Counter()
     for page in pages:
         found.update(document_inventory(page, like=wanted))
@@ -679,7 +707,7 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
             checks.setdefault("native_preview", {})["status"] = "rendered_pending_visual_review"
         except Exception as exc:
             checks.setdefault("native_preview", {})["error"] = str(exc)
-    readback = _readback([Path(p["path"]) for p in pages], grounded, header, members)
+    readback = _readback([Path(p["path"]) for p in pages], grounded, header, members, brief.get("footer_scheme"))
 
     notes: list[str] = []
     warnings: list[str] = []

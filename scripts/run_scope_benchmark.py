@@ -57,15 +57,28 @@ def _stitch_side_by_side(
     title: str,
     left_label: str = "Published Original (CC BY 4.0)",
     right_label: str = "ChemDraw Skill Imitation",
+    *,
+    additional_drawn_pngs: tuple[Path, ...] = (),
 ) -> bool:
     try:
         from PIL import Image, ImageDraw
     except ImportError:
         return False
-    if not orig_png.is_file() or not drawn_png.is_file():
+    drawn_pages = (drawn_png, *additional_drawn_pngs)
+    if not all(path.is_file() for path in (orig_png, *drawn_pages)):
         return False
-    left = Image.open(orig_png).convert("RGB")
-    right = Image.open(drawn_png).convert("RGB")
+    with Image.open(orig_png) as original:
+        left = original.convert("RGB")
+    pages = []
+    for path in drawn_pages:
+        with Image.open(path) as page:
+            pages.append(page.convert("RGB"))
+    gap = 24
+    right = Image.new("RGB", (max(p.width for p in pages), sum(p.height for p in pages) + gap * (len(pages) - 1)), "white")
+    y = 0
+    for page in pages:
+        right.paste(page, (0, y))
+        y += page.height + gap
     target_h = max(min(max(left.height, right.height), 1800), 900)
     def _scale(im: Image.Image) -> Image.Image:
         ratio = target_h / max(im.height, 1)
@@ -336,6 +349,9 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
     for idx, case in enumerate(cases, 1):
         slug = case["slug"]
         brief = json.loads((ROOT / case["brief"]).read_text(encoding="utf-8"))
+        for obj in brief.get("footer_scheme", {}).get("objects", []):
+            if obj.get("type") == "image":
+                obj["file"] = str(ROOT / obj["file"])
         case_dir = out_root / slug
         if case_dir.exists():
             shutil.rmtree(case_dir)
@@ -373,7 +389,8 @@ def _run_in_toolkit(args: argparse.Namespace) -> int:
                 if pngs:
                     comp = out_root / "comparisons" / f"{slug}.compare.png"
                     if _stitch_side_by_side(ROOT / case["corpus_png"], Path(pngs[0]), comp,
-                                            f"[{case['journal']}] {slug}"):
+                                            f"[{case['journal']}] {slug}",
+                                            additional_drawn_pngs=tuple(Path(p) for p in pngs[1:])):
                         entry["side_by_side"] = str(comp)
         case_ok = (
             entry["ok"]

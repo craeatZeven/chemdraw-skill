@@ -61,6 +61,8 @@ def publication_figure(operation: str, spec_path: str, output_dir: str) -> dict:
         base_dir=project_file.parent
         settings=deepcopy(project['settings'])
         settings.update(requested)
+        if operation == 'update' and (project['settings'].get('footer_scheme') or settings.get('footer_scheme')):
+            raise ValueError('Updating a footer scheme requires creating a new layout')
         if 'style' in requested:settings['style']={**project['settings'].get('style',{}),**requested['style']}
         # Altering figure-wide policies during a locked update needs a new create.
         for field in ('fields','mode','style','conditions','footnotes','title'):

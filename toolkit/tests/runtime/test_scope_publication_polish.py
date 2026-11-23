@@ -4,6 +4,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 
 import pytest
+from PIL import Image
 
 from cdxml_toolkit.mcp_runtime.figure_draw import draw_figure
 
@@ -218,6 +219,86 @@ def test_footnote_superscripts_subscripts_and_italic_notes(tmp_path):
     assert any("from thymol" in (r.text or "") and (int(r.get("face", "0")) & 2) for r in note_t.findall("s"))
 
 
+def test_scope_preserves_charge_runs_and_italics_at_cell_width(tmp_path):
+    brief = {
+        "kind": "scope",
+        "title": "",
+        "footnotes": ["a With TBA^+ Nu^\u2212 in MeCN."],
+        "species": [{"id": "20", "smiles": "CS", "group": "With TBA^+ Nu^\u2212",
+                     "note": "*From N-Ac-L-cysteine*"}],
+    }
+    report = draw_figure(brief, output_path=str(tmp_path / "charges"))
+    assert report["checks_passed"], report
+    root = _root(report)
+    headings = [t for t in root.iter("t") if "TBA" in "".join(t.itertext())]
+    assert len(headings) == 2
+    for heading in headings:
+        charge_runs = [s for s in heading.findall("s") if s.text in ("+", "\u2212")]
+        assert [s.text for s in charge_runs] == ["+", "\u2212"]
+        assert all(int(s.get("face", "0")) & 64 for s in charge_runs)
+        assert all(not int(s.get("face", "0")) & 2 for s in charge_runs)
+    notes = [t for t in root.iter("t") if "cysteine" in "".join(t.itertext())]
+    assert len(notes) == 1
+    assert "".join(notes[0].itertext()) == "From N-Ac-L-cysteine"
+    assert any(int(s.get("face", "0")) & 2 for s in notes[0].findall("s"))
+
+
+def test_scope_header_labels_and_footer_reaction_preserve_inventory(tmp_path):
+    brief = {
+        "kind": "scope",
+        "title": "",
+        "header": {
+            "substrates": [{"smiles": "CC(=O)Oc1ccccc1", "attached_label": {"smarts": "Oc1ccccc1", "text": "OPh"},
+                            "counterion": "^\u2212OTf"}],
+            "products": [{"smiles": "CC[*:1]", "variable_label": "Nu"}],
+        },
+        "species": [{"id": "1", "smiles": "CCO"}],
+        "footer_scheme": {"width": 220, "height": 65, "objects": [
+            {"type": "molecule", "smiles": "CCCl", "position": [35, 30]},
+            {"type": "arrow", "start": [75, 30], "end": [145, 30]},
+            {"type": "molecule", "smiles": "CCBr", "position": [185, 30]},
+        ]},
+    }
+    report = draw_figure(brief, output_path=str(tmp_path / "reaction"))
+    assert report["ok"], report
+    assert report["checks_passed"], report
+    assert report["readback"]["structures_drawn"] == 5
+    root = _root(report)
+    assert root.find(".//n[@NodeType='Fragment']/fragment") is not None
+    assert any(node.findtext("t/s") == "Nu" for node in root.findall(".//n[@NodeType='GenericNickname']"))
+    assert {"OPh", "Nu", "\u2212OTf"} <= set(_texts(root))
+    assert len(root.findall(".//arrow[@ArrowheadHead='Full']")) == 2
+
+
+def test_scope_counts_disconnected_salt_components(tmp_path):
+    brief = {"kind": "scope", "species": [{"id": "1", "smiles": "C[N+](C)(C)C.[Cl-]"}]}
+    report = draw_figure(brief, output_path=str(tmp_path / "salt"))
+    assert report["ok"], report
+    assert report["checks_passed"], report
+    assert report["readback"]["structures_drawn"] == 2
+
+
+def test_scope_preserves_signed_exponent_and_embeds_a_source_crop(tmp_path):
+    source = tmp_path / "source.png"
+    Image.new("RGB", (50, 40), "white").save(source)
+    brief = {"kind": "scope", "species": [{"id": "1", "smiles": "CC", "note": "35.3 kcal mol^\u22121^a"}],
+             "footer_scheme": {"width": 100, "height": 90, "objects": [
+                 {"type": "image", "file": str(source), "crop": [5, 5, 35, 25],
+                  "start": [20, 20], "end": [80, 60]},
+             ]}}
+    report = draw_figure(brief, output_path=str(tmp_path / "inset"))
+    assert report["ok"] and report["checks_passed"], report
+    assert report["readback"]["structures_drawn"] == 1
+    root = _root(report)
+    exponent = next(run for run in root.iter("s") if run.text == "\u22121")
+    assert int(exponent.get("face", "0")) & 64
+    assert not int(exponent.get("face", "0")) & 2
+    embedded = root.find(".//embeddedobject")
+    from io import BytesIO
+    with Image.open(BytesIO(bytes.fromhex(embedded.get("PNG")))) as crop:
+        assert crop.size == (30, 20)
+
+
 def test_band_style_pill_and_panel_border(tmp_path):
     brief = {
         "kind": "scope",
@@ -241,6 +322,8 @@ def test_band_style_pill_and_panel_border(tmp_path):
 
 
 def test_definition_contracted_group_with_highlight_varying_has_no_bond_warnings(tmp_path):
+    from cdxml_toolkit.cdxml_check import text_over_ink
+
     brief = {
         "kind": "scope",
         "title": "",
@@ -249,12 +332,15 @@ def test_definition_contracted_group_with_highlight_varying_has_no_bond_warnings
             {"id": "3a", "smiles": "Cc1ccc(NC(=O)c2nc3ccccc3s2)cc1", "label": "3a", "values": {"yield": "64%"}},
             {"id": "3p", "smiles": "CCCCCCCNC(=O)c1nc2ccccc2s1", "label": "3p", "definition": "Alk = C7H15",
              "values": {"yield": "63%"}},
+            {"id": "3q", "smiles": "CCCCCCCCCCCCCCCCCCNC(=O)c1nc2ccccc2s1", "label": "3q",
+             "definition": "Alk = C18H37", "drawn_with": "3p", "values": {"yield": "60%"}},
         ],
     }
     report = draw_figure(brief, output_path=str(tmp_path / "def-highlight"))
     assert report["ok"] is True, report.get("errors")
     assert report["checks_passed"] is True
     assert not any("not bonded" in w for w in report["warnings"]), report["warnings"]
+    assert text_over_ink(_root(report)) == []
 
 
 def test_check_cdxml_accepts_scope_caption_size_when_in_allow_sizes(tmp_path):

@@ -120,3 +120,34 @@ with the runtime built from the same checkout as the corpus. From a checkout,
 `scripts/install.py --runtime-only --apply` builds its local `toolkit/`.
 Use `cdx.py doctor` to check the installed fingerprint if the runner reports
 unknown brief fields after a checkout change.
+
+## 6. Checking a redraw against a published figure
+
+Review the published figure and native ChemDraw PNGs together. Keep the original
+on the left and every redraw page on the right, in page order. A passing journal
+benchmark establishes structure readback, data binding and style compliance.
+Review the visual comparison independently for fidelity.
+
+- **Content and provenance.** Check every panel, compound number, formula,
+  condition, yield, exception and referenced footnote against the original and
+  its caption. Resolve structures from the supplementary names or files. For a
+  photographed or raster-only structure, validate any recognition candidate
+  against the printed connectivity and stereochemistry before use.
+- **Geometry.** Compare row and column occupancy, scaffold direction, relative
+  sizes, and the positioning of separated sections and inset graphics. Use a
+  fixed `columns` value by omitting `row_align` when the source requires a fixed
+  grid. Widen the canvas to fit the measured cells at the chosen text size.
+- **Typography.** Inspect the signs in ionic labels, chemical subscripts,
+  raised signed exponents such as `mol^−1`, and footnote marks. Check the actual
+  native render for caption wraps and stray markup.
+- **Colour.** Assign colours by chemical role and check the coupling boundary.
+  An alkyl group carried by an aryl reagent keeps the aryl reagent's colour.
+  Place an entry under the heading that applies to its reagent class when a
+  published row crosses a section boundary.
+- **Nonchemical insets.** Preserve the source image, crop bounds and attribution
+  for raster insets such as crystallographic depictions. Keep the associated
+  structures and captions editable. Check that the image survived the native
+  export and that the crop excludes neighbouring labels.
+
+Keep local `output/journal-*/fix-notes.md` with the comparison links and observations
+for these dimensions. Record unresolved differences alongside verified changes.
