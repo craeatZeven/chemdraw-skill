@@ -28,7 +28,6 @@ Python API:
     cs.convert_file("input.cdx", "output.cdxml")
 """
 
-from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 import json
 import os
@@ -42,6 +41,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..constants import ACS_STYLE
 from . import mac_automation
+from .progid import chemdraw_com_registration
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -75,59 +75,16 @@ def _dll_bitness(path: str) -> Optional[int]:
 
 
 def _find_chemdraw_root() -> Optional[str]:
-    """Find ChemDraw/ChemOffice vendor install root via COM registry.
-
-    Looks up the ChemDraw.Application ProgID → CLSID → LocalServer32 path,
-    then walks up the directory tree to the vendor folder (child of
-    Program Files or Program Files (x86)).
-
-    Returns the vendor root (e.g. ``C:\\Program Files (x86)\\PerkinElmerInformatics``)
-    or None if ChemDraw is not registered.
-    """
-    try:
-        import winreg
-    except ImportError:
+    """Find the vendor root or flat install directory of registered ChemDraw."""
+    registration = chemdraw_com_registration()
+    if registration is None:
         return None
 
-    # Step 1: ProgID → CLSID
-    try:
-        key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT,
-                             chemdraw_progid() + "\\CLSID")
-        clsid = winreg.QueryValue(key, "")
-        winreg.CloseKey(key)
-    except OSError:
-        return None
-
-    # Step 2: CLSID → executable path (try 32-bit and 64-bit registry views)
-    exe_path = None
-    subkey = f"SOFTWARE\\Classes\\CLSID\\{clsid}\\LocalServer32"
-    for access in [winreg.KEY_READ | winreg.KEY_WOW64_32KEY,
-                   winreg.KEY_READ | winreg.KEY_WOW64_64KEY,
-                   winreg.KEY_READ]:
-        try:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, subkey, 0, access)
-            raw = winreg.QueryValue(key, "")
-            winreg.CloseKey(key)
-            # Strip /Automation flags and quotes
-            exe_path = raw.split("/")[0].strip().strip('"')
-            break
-        except OSError:
-            continue
-
-    if not exe_path or not os.path.isfile(exe_path):
-        return None
-
-    # Step 3: walk up to the vendor root (child of Program Files)
-    path = os.path.dirname(exe_path)
-    program_files = {p.lower() for p in ["program files", "program files (x86)"]}
-    while path:
-        parent = os.path.dirname(path)
-        if os.path.basename(parent).lower() in program_files:
-            return path
-        if parent == path:
-            break
-        path = parent
-    return None
+    install_dir = registration.executable.parent
+    for folder in registration.executable.parents:
+        if folder.parent.name.casefold() in {"program files", "program files (x86)"}:
+            return str(folder)
+    return str(install_dir)
 
 
 def _find_chemscript_dlls(root: str) -> Optional[Dict[str, str]]:

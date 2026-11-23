@@ -117,6 +117,8 @@ class DistributionTests(unittest.TestCase):
                 "docs/journal-corpus.md",
                 "docs/journal-figure-parity.md",
                 "docs/textbook-figure-requests.md",
+                "docs/publication-figure-rules.md",
+                "docs/merge-main-2026-11-23.md",
                 "docs/zh-cn.md",
                 "docs/website.md",
             },

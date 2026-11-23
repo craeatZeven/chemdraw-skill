@@ -75,7 +75,8 @@ def test_build_ole_compound_file_large_multi_fat_payload_passes_strict_olefile()
         assert stream_data == payload
 
 
-def test_ole_embedder_batch_convert_uses_dispatchex_not_dispatch(tmp_path):
+def test_ole_embedder_batch_convert_uses_dispatchex_not_dispatch(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHEMDRAW_PROGID", "ChemDraw_x64.Application")
     cdxml_path = tmp_path / "sample.cdxml"
     cdxml_path.write_text("<CDXML/>", encoding="utf-8")
 
@@ -101,7 +102,7 @@ def test_ole_embedder_batch_convert_uses_dispatchex_not_dispatch(tmp_path):
         results = ole_embedder.batch_convert([str(cdxml_path)])
 
     assert fake_win32_client.DispatchEx.call_count == 1
-    fake_win32_client.DispatchEx.assert_called_once_with("ChemDraw.Application")
+    fake_win32_client.DispatchEx.assert_called_once_with("ChemDraw_x64.Application")
     assert fake_win32_client.Dispatch.call_count == 0
     fake_app.Quit.assert_called_once()
     assert len(results) == 1

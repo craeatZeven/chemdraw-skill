@@ -1,0 +1,1287 @@
+{
+  "figure_type": "coverage-render",
+  "corpus": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage",
+  "rendered": true,
+  "dpi": 300,
+  "diff_threshold_grey": 16,
+  "total": 94,
+  "render_failed": 0,
+  "comparisons": 47,
+  "size_match": 46,
+  "size_mismatch": 1,
+  "rmse_median": 0.0,
+  "rmse_worst": 0.08,
+  "output_dir": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark",
+  "cases": [
+    {
+      "name": "apparatus",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\apparatus.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\apparatus.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\apparatus.png",
+      "render_ms": 342.3,
+      "baseline_size": [
+        3500,
+        3732
+      ],
+      "render_size": [
+        3500,
+        3732
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\apparatus.compare.png"
+    },
+    {
+      "name": "apparatus.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\apparatus.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\apparatus.native.png",
+      "render_ms": 277.5,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "binary_phase_diagram",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\binary_phase_diagram.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\binary_phase_diagram.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\binary_phase_diagram.png",
+      "render_ms": 87.0,
+      "baseline_size": [
+        2185,
+        1724
+      ],
+      "render_size": [
+        2185,
+        1724
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\binary_phase_diagram.compare.png"
+    },
+    {
+      "name": "binary_phase_diagram.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\binary_phase_diagram.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\binary_phase_diagram.native.png",
+      "render_ms": 84.5,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "binary_phase_diagram_isomorphous",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\binary_phase_diagram_isomorphous.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\binary_phase_diagram_isomorphous.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\binary_phase_diagram_isomorphous.png",
+      "render_ms": 90.1,
+      "baseline_size": [
+        2364,
+        1723
+      ],
+      "render_size": [
+        2364,
+        1723
+      ],
+      "size_match": true,
+      "rmse": 0.023,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\binary_phase_diagram_isomorphous.compare.png"
+    },
+    {
+      "name": "binary_phase_diagram_isomorphous.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\binary_phase_diagram_isomorphous.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\binary_phase_diagram_isomorphous.native.png",
+      "render_ms": 87.0,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "correlation_diagram",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\correlation_diagram.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\correlation_diagram.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\correlation_diagram.png",
+      "render_ms": 62.4,
+      "baseline_size": [
+        2173,
+        1027
+      ],
+      "render_size": [
+        2173,
+        1027
+      ],
+      "size_match": true,
+      "rmse": 0.08,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\correlation_diagram.compare.png"
+    },
+    {
+      "name": "correlation_diagram.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\correlation_diagram.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\correlation_diagram.native.png",
+      "render_ms": 65.7,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "crystal_field",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\crystal_field.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\crystal_field.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\crystal_field.png",
+      "render_ms": 69.9,
+      "baseline_size": [
+        2933,
+        1046
+      ],
+      "render_size": [
+        2933,
+        1046
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\crystal_field.compare.png"
+    },
+    {
+      "name": "crystal_field.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\crystal_field.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\crystal_field.native.png",
+      "render_ms": 68.9,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "derivatization",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\derivatization.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\derivatization.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\derivatization.png",
+      "render_ms": 203.3,
+      "baseline_size": [
+        2052,
+        3033
+      ],
+      "render_size": [
+        2052,
+        3033
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\derivatization.compare.png"
+    },
+    {
+      "name": "derivatization.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\derivatization.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\derivatization.native.png",
+      "render_ms": 150.7,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "electrochemical_cell",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\electrochemical_cell.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\electrochemical_cell.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\electrochemical_cell.png",
+      "render_ms": 66.6,
+      "baseline_size": [
+        1642,
+        1638
+      ],
+      "render_size": [
+        1642,
+        1638
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\electrochemical_cell.compare.png"
+    },
+    {
+      "name": "electrochemical_cell.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\electrochemical_cell.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\electrochemical_cell.native.png",
+      "render_ms": 72.0,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "electron_configuration",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\electron_configuration.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\electron_configuration.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\electron_configuration.png",
+      "render_ms": 30.5,
+      "baseline_size": [
+        859,
+        264
+      ],
+      "render_size": [
+        859,
+        264
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\electron_configuration.compare.png"
+    },
+    {
+      "name": "electron_configuration.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\electron_configuration.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\electron_configuration.native.png",
+      "render_ms": 27.6,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "ellingham",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\ellingham.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\ellingham.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\ellingham.png",
+      "render_ms": 127.3,
+      "baseline_size": [
+        2909,
+        1915
+      ],
+      "render_size": [
+        2909,
+        1915
+      ],
+      "size_match": true,
+      "rmse": 0.064,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\ellingham.compare.png"
+    },
+    {
+      "name": "ellingham.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\ellingham.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\ellingham.native.png",
+      "render_ms": 136.2,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "energy_cycle",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_cycle.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_cycle.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_cycle.png",
+      "render_ms": 175.5,
+      "baseline_size": [
+        4872,
+        1691
+      ],
+      "render_size": [
+        4872,
+        1691
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\energy_cycle.compare.png"
+    },
+    {
+      "name": "energy_cycle.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_cycle.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_cycle.native.png",
+      "render_ms": 187.9,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "energy_profile",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile.png",
+      "render_ms": 144.9,
+      "baseline_size": [
+        3456,
+        1664
+      ],
+      "render_size": [
+        3456,
+        1664
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\energy_profile.compare.png"
+    },
+    {
+      "name": "energy_profile.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile.native.png",
+      "render_ms": 161.1,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "energy_profile_catalysis_cn",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_catalysis_cn.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_catalysis_cn.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile_catalysis_cn.png",
+      "render_ms": 156.8,
+      "baseline_size": [
+        3259,
+        1681
+      ],
+      "render_size": [
+        3259,
+        1681
+      ],
+      "size_match": true,
+      "rmse": 0.037,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\energy_profile_catalysis_cn.compare.png"
+    },
+    {
+      "name": "energy_profile_catalysis_cn.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_catalysis_cn.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile_catalysis_cn.native.png",
+      "render_ms": 131.6,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "energy_profile_competing",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_competing.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_competing.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile_competing.png",
+      "render_ms": 122.3,
+      "baseline_size": [
+        2901,
+        1690
+      ],
+      "render_size": [
+        2901,
+        1690
+      ],
+      "size_match": true,
+      "rmse": 0.046,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\energy_profile_competing.compare.png"
+    },
+    {
+      "name": "energy_profile_competing.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_competing.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile_competing.native.png",
+      "render_ms": 118.3,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "energy_profile_levels",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_levels.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_levels.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile_levels.png",
+      "render_ms": 122.2,
+      "baseline_size": [
+        2901,
+        1690
+      ],
+      "render_size": [
+        2901,
+        1690
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\energy_profile_levels.compare.png"
+    },
+    {
+      "name": "energy_profile_levels.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_levels.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile_levels.native.png",
+      "render_ms": 116.1,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "energy_profile_two_step_cn",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_two_step_cn.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_two_step_cn.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile_two_step_cn.png",
+      "render_ms": 127.1,
+      "baseline_size": [
+        2809,
+        1698
+      ],
+      "render_size": [
+        2809,
+        1698
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\energy_profile_two_step_cn.compare.png"
+    },
+    {
+      "name": "energy_profile_two_step_cn.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\energy_profile_two_step_cn.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\energy_profile_two_step_cn.native.png",
+      "render_ms": 123.7,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "flowchart",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\flowchart.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\flowchart.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\flowchart.png",
+      "render_ms": 152.0,
+      "baseline_size": [
+        4140,
+        1249
+      ],
+      "render_size": [
+        4140,
+        1249
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\flowchart.compare.png"
+    },
+    {
+      "name": "flowchart.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\flowchart.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\flowchart.native.png",
+      "render_ms": 118.2,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "frost",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\frost.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\frost.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\frost.png",
+      "render_ms": 87.6,
+      "baseline_size": [
+        2201,
+        1806
+      ],
+      "render_size": [
+        2201,
+        1806
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\frost.compare.png"
+    },
+    {
+      "name": "frost.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\frost.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\frost.native.png",
+      "render_ms": 95.4,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "huckel_mo",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\huckel_mo.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\huckel_mo.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\huckel_mo.png",
+      "render_ms": 85.5,
+      "baseline_size": [
+        1700,
+        1684
+      ],
+      "render_size": [
+        1700,
+        1684
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\huckel_mo.compare.png"
+    },
+    {
+      "name": "huckel_mo.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\huckel_mo.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\huckel_mo.native.png",
+      "render_ms": 81.4,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "huckel_mo_pyridine",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\huckel_mo_pyridine.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\huckel_mo_pyridine.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\huckel_mo_pyridine.png",
+      "render_ms": 114.0,
+      "baseline_size": [
+        1465,
+        3448
+      ],
+      "render_size": [
+        1465,
+        3448
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\huckel_mo_pyridine.compare.png"
+    },
+    {
+      "name": "huckel_mo_pyridine.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\huckel_mo_pyridine.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\huckel_mo_pyridine.native.png",
+      "render_ms": 126.0,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "jablonski",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\jablonski.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\jablonski.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\jablonski.png",
+      "render_ms": 103.7,
+      "baseline_size": [
+        1927,
+        2029
+      ],
+      "render_size": [
+        1927,
+        2029
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\jablonski.compare.png"
+    },
+    {
+      "name": "jablonski.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\jablonski.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\jablonski.native.png",
+      "render_ms": 85.8,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "latimer",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\latimer.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\latimer.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\latimer.png",
+      "render_ms": 61.5,
+      "baseline_size": [
+        3174,
+        623
+      ],
+      "render_size": [
+        3174,
+        623
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\latimer.compare.png"
+    },
+    {
+      "name": "latimer.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\latimer.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\latimer.native.png",
+      "render_ms": 61.6,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "lewis",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\lewis.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\lewis.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\lewis.png",
+      "render_ms": 27.1,
+      "baseline_size": [
+        466,
+        187
+      ],
+      "render_size": [
+        466,
+        187
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\lewis.compare.png"
+    },
+    {
+      "name": "lewis.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\lewis.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\lewis.native.png",
+      "render_ms": 29.2,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "lewis_carbonate",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\lewis_carbonate.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\lewis_carbonate.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\lewis_carbonate.png",
+      "render_ms": 32.3,
+      "baseline_size": [
+        634,
+        640
+      ],
+      "render_size": [
+        634,
+        640
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\lewis_carbonate.compare.png"
+    },
+    {
+      "name": "lewis_carbonate.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\lewis_carbonate.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\lewis_carbonate.native.png",
+      "render_ms": 37.4,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "mechanism",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\mechanism.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\mechanism.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\mechanism.png",
+      "render_ms": 75.9,
+      "baseline_size": [
+        3085,
+        897
+      ],
+      "render_size": [
+        3085,
+        897
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\mechanism.compare.png"
+    },
+    {
+      "name": "mechanism.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\mechanism.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\mechanism.native.png",
+      "render_ms": 74.4,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "mo_diagram",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\mo_diagram.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\mo_diagram.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\mo_diagram.png",
+      "render_ms": 146.0,
+      "baseline_size": [
+        3003,
+        2439
+      ],
+      "render_size": [
+        3003,
+        2439
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\mo_diagram.compare.png"
+    },
+    {
+      "name": "mo_diagram.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\mo_diagram.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\mo_diagram.native.png",
+      "render_ms": 145.2,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "nmr",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\nmr.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\nmr.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\nmr.png",
+      "render_ms": 181.9,
+      "baseline_size": [
+        2400,
+        1140
+      ],
+      "render_size": [
+        3664,
+        2271
+      ],
+      "size_match": false,
+      "rmse": null,
+      "diff_pixel_ratio": null,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\nmr.compare.png"
+    },
+    {
+      "name": "nmr.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\nmr.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\nmr.native.png",
+      "render_ms": 162.6,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "optimization_table",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\optimization_table.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\optimization_table.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\optimization_table.png",
+      "render_ms": 70.5,
+      "baseline_size": [
+        1735,
+        917
+      ],
+      "render_size": [
+        1735,
+        917
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\optimization_table.compare.png"
+    },
+    {
+      "name": "optimization_table.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\optimization_table.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\optimization_table.native.png",
+      "render_ms": 67.9,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "periodic_table",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\periodic_table.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\periodic_table.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\periodic_table.png",
+      "render_ms": 117.9,
+      "baseline_size": [
+        3725,
+        1060
+      ],
+      "render_size": [
+        3725,
+        1060
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\periodic_table.compare.png"
+    },
+    {
+      "name": "periodic_table.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\periodic_table.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\periodic_table.native.png",
+      "render_ms": 115.6,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "phase_diagram",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\phase_diagram.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\phase_diagram.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\phase_diagram.png",
+      "render_ms": 80.6,
+      "baseline_size": [
+        1844,
+        1768
+      ],
+      "render_size": [
+        1844,
+        1768
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\phase_diagram.compare.png"
+    },
+    {
+      "name": "phase_diagram.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\phase_diagram.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\phase_diagram.native.png",
+      "render_ms": 91.0,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "potential_surface",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\potential_surface.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\potential_surface.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\potential_surface.png",
+      "render_ms": 142.4,
+      "baseline_size": [
+        2047,
+        1971
+      ],
+      "render_size": [
+        2047,
+        1971
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\potential_surface.compare.png"
+    },
+    {
+      "name": "potential_surface.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\potential_surface.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\potential_surface.native.png",
+      "render_ms": 153.6,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "pourbaix",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\pourbaix.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\pourbaix.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\pourbaix.png",
+      "render_ms": 110.8,
+      "baseline_size": [
+        2342,
+        2054
+      ],
+      "render_size": [
+        2342,
+        2054
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\pourbaix.compare.png"
+    },
+    {
+      "name": "pourbaix.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\pourbaix.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\pourbaix.native.png",
+      "render_ms": 115.7,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "preview_build",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_build.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_build.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_build.png",
+      "render_ms": 89.4,
+      "baseline_size": [
+        2359,
+        940
+      ],
+      "render_size": [
+        2359,
+        940
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\preview_build.compare.png"
+    },
+    {
+      "name": "preview_build.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_build.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_build.native.png",
+      "render_ms": 62.0,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "preview_cycle",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_cycle.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_cycle.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_cycle.png",
+      "render_ms": 186.1,
+      "baseline_size": [
+        3662,
+        2320
+      ],
+      "render_size": [
+        3662,
+        2320
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\preview_cycle.compare.png"
+    },
+    {
+      "name": "preview_cycle.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_cycle.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_cycle.native.png",
+      "render_ms": 173.3,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "preview_energy_profile",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_energy_profile.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_energy_profile.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_energy_profile.png",
+      "render_ms": 109.6,
+      "baseline_size": [
+        2758,
+        1707
+      ],
+      "render_size": [
+        2758,
+        1707
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\preview_energy_profile.compare.png"
+    },
+    {
+      "name": "preview_energy_profile.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_energy_profile.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_energy_profile.native.png",
+      "render_ms": 104.9,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "preview_jacs_house_style",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_jacs_house_style.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_jacs_house_style.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_jacs_house_style.png",
+      "render_ms": 95.1,
+      "baseline_size": [
+        3277,
+        748
+      ],
+      "render_size": [
+        3277,
+        748
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\preview_jacs_house_style.compare.png"
+    },
+    {
+      "name": "preview_jacs_house_style.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_jacs_house_style.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_jacs_house_style.native.png",
+      "render_ms": 69.3,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "preview_levels",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_levels.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_levels.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_levels.png",
+      "render_ms": 109.0,
+      "baseline_size": [
+        3034,
+        1690
+      ],
+      "render_size": [
+        3034,
+        1690
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\preview_levels.compare.png"
+    },
+    {
+      "name": "preview_levels.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_levels.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_levels.native.png",
+      "render_ms": 108.8,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "preview_mechanism",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_mechanism.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_mechanism.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_mechanism.png",
+      "render_ms": 37.0,
+      "baseline_size": [
+        1763,
+        433
+      ],
+      "render_size": [
+        1763,
+        433
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\preview_mechanism.compare.png"
+    },
+    {
+      "name": "preview_mechanism.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_mechanism.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_mechanism.native.png",
+      "render_ms": 42.7,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "preview_scheme",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_scheme.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_scheme.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_scheme.png",
+      "render_ms": 66.7,
+      "baseline_size": [
+        2742,
+        707
+      ],
+      "render_size": [
+        2742,
+        707
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\preview_scheme.compare.png"
+    },
+    {
+      "name": "preview_scheme.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\preview_scheme.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\preview_scheme.native.png",
+      "render_ms": 66.8,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "process_route",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\process_route.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\process_route.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\process_route.png",
+      "render_ms": 138.9,
+      "baseline_size": [
+        3934,
+        1461
+      ],
+      "render_size": [
+        3934,
+        1461
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\process_route.compare.png"
+    },
+    {
+      "name": "process_route.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\process_route.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\process_route.native.png",
+      "render_ms": 152.9,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "sar_table",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\sar_table.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\sar_table.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\sar_table.png",
+      "render_ms": 232.1,
+      "baseline_size": [
+        3100,
+        2758
+      ],
+      "render_size": [
+        3100,
+        2758
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\sar_table.compare.png"
+    },
+    {
+      "name": "sar_table.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\sar_table.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\sar_table.native.png",
+      "render_ms": 237.7,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "stereo_model",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\stereo_model.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\stereo_model.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\stereo_model.png",
+      "render_ms": 140.4,
+      "baseline_size": [
+        1899,
+        1667
+      ],
+      "render_size": [
+        1899,
+        1667
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\stereo_model.compare.png"
+    },
+    {
+      "name": "stereo_model.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\stereo_model.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\stereo_model.native.png",
+      "render_ms": 113.3,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "substrate_scope",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\substrate_scope.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\substrate_scope.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\substrate_scope.png",
+      "render_ms": 235.2,
+      "baseline_size": [
+        3026,
+        2291
+      ],
+      "render_size": [
+        3026,
+        2291
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\substrate_scope.compare.png"
+    },
+    {
+      "name": "substrate_scope.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\substrate_scope.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\substrate_scope.native.png",
+      "render_ms": 250.4,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "tanabe_sugano",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\tanabe_sugano.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\tanabe_sugano.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\tanabe_sugano.png",
+      "render_ms": 254.7,
+      "baseline_size": [
+        2362,
+        2471
+      ],
+      "render_size": [
+        2362,
+        2471
+      ],
+      "size_match": true,
+      "rmse": 0.035,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\tanabe_sugano.compare.png"
+    },
+    {
+      "name": "tanabe_sugano.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\tanabe_sugano.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\tanabe_sugano.native.png",
+      "render_ms": 197.5,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "tlc",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\tlc.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\tlc.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\tlc.png",
+      "render_ms": 150.9,
+      "baseline_size": [
+        1831,
+        2329
+      ],
+      "render_size": [
+        1831,
+        2329
+      ],
+      "size_match": true,
+      "rmse": 0.023,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\tlc.compare.png"
+    },
+    {
+      "name": "tlc.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\tlc.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\tlc.native.png",
+      "render_ms": 117.1,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "total_synthesis",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\total_synthesis.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\total_synthesis.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\total_synthesis.png",
+      "render_ms": 188.3,
+      "baseline_size": [
+        3928,
+        1880
+      ],
+      "render_size": [
+        3928,
+        1880
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\total_synthesis.compare.png"
+    },
+    {
+      "name": "total_synthesis.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\total_synthesis.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\total_synthesis.native.png",
+      "render_ms": 163.5,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "unit_cell",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\unit_cell.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\unit_cell.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\unit_cell.png",
+      "render_ms": 57.7,
+      "baseline_size": [
+        1635,
+        1060
+      ],
+      "render_size": [
+        1635,
+        1060
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\unit_cell.compare.png"
+    },
+    {
+      "name": "unit_cell.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\unit_cell.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\unit_cell.native.png",
+      "render_ms": 58.3,
+      "note": "no committed baseline PNG for this cdxml"
+    },
+    {
+      "name": "walsh_diagram",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\walsh_diagram.cdxml",
+      "baseline_png": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\walsh_diagram.png",
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\walsh_diagram.png",
+      "render_ms": 98.6,
+      "baseline_size": [
+        1980,
+        1822
+      ],
+      "render_size": [
+        1980,
+        1822
+      ],
+      "size_match": true,
+      "rmse": 0.0,
+      "diff_pixel_ratio": 0.0,
+      "compare_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\comparisons\\walsh_diagram.compare.png"
+    },
+    {
+      "name": "walsh_diagram.native",
+      "cdxml": "D:\\Work\\forks\\chemdraw-skill-scope\\assets\\coverage\\walsh_diagram.native.cdxml",
+      "baseline_png": null,
+      "render_png": "D:\\Work\\forks\\chemdraw-skill-scope\\output\\scope-benchmark\\renders\\walsh_diagram.native.png",
+      "render_ms": 93.1,
+      "note": "no committed baseline PNG for this cdxml"
+    }
+  ],
+  "failed": []
+}

@@ -99,10 +99,10 @@
 
 ## `scientific.energy`
 
-- **function**, line 583: `energy_cycle(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Enthalpy-level diagram with stepwise arrows: Born-Haber and Hess cycles.
+- **function**, line 617: `energy_cycle(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Enthalpy-level diagram with stepwise arrows: Born-Haber and Hess cycles.
 - **function**, line 196: `energy_profile(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Reaction energy profile (potential energy against reaction coordinate).
 - **function**, line 92: `from_species_spec(spec: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]` - Translate the species-list energy-profile format into this builder's pathway format.
-- **function**, line 737: `jablonski(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Jablonski diagram: electronic states with vibrational levels and their transitions.
+- **function**, line 771: `jablonski(spec: Mapping[str, Any], output = None) -> dict[str, Any]` - Jablonski diagram: electronic states with vibrational levels and their transitions.
 
 ## `scientific.hexagonal`
 

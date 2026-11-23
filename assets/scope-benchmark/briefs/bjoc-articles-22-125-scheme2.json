@@ -1,0 +1,123 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "beilstein_joc",
+  "width_mm": 180,
+  "columns": 4,
+  "row_align": "center",
+  "fragment_colors": [
+    {
+      "smarts": "C1CC1",
+      "color": "#C2185B"
+    },
+    {
+      "smarts": "C(=O)O",
+      "color": "#D95F02"
+    }
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "C#CCCC(=O)O",
+        "label": "1a–e",
+        "color": "#D95F02"
+      },
+      {
+        "smiles": "[N-]=[N+]=C(C(=O)OC)c1ccccc1",
+        "label": "2a–d",
+        "color": "#1B4D89"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "COC(=O)C1(c2ccccc2)CC12CCC(=O)O2",
+        "label": "3"
+      }
+    ],
+    "above": [
+      "PicAuCl2 (2 mol %)",
+      "Rh2(esp)2 (1 mol %)"
+    ],
+    "below": [
+      "CH2Cl2, rt, 12 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield",
+      "show_label": false
+    },
+    {
+      "key": "dr",
+      "label": "dr",
+      "show_label": false,
+      "optional": true
+    }
+  ],
+  "species": [
+    {
+      "id": "3aa",
+      "smiles": "COC(=O)C1(c2ccccc2)CC12CCC(=O)O2",
+      "label": "3aa",
+      "values": {
+        "yield": "65%",
+        "dr": "*trans*/*cis* 3.9:1"
+      }
+    },
+    {
+      "id": "3ab",
+      "smiles": "COC(=O)C1(c2ccc(C)cc2)CC12CCC(=O)O2",
+      "label": "3ab",
+      "values": {
+        "yield": "61%",
+        "dr": "*trans*/*cis* 4.1:1"
+      }
+    },
+    {
+      "id": "3ac",
+      "smiles": "COC(=O)C1(c2ccc(Br)cc2)CC12CCC(=O)O2",
+      "label": "3ac",
+      "values": {
+        "yield": "58%",
+        "dr": "*trans*/*cis* 3.5:1"
+      }
+    },
+    {
+      "id": "3ad",
+      "smiles": "COC(=O)C1(c2ccc(F)cc2)CC12CCC(=O)O2",
+      "label": "trans-3ad",
+      "values": {
+        "yield": "21%",
+        "dr": "*trans* only"
+      }
+    },
+    {
+      "id": "3ba",
+      "smiles": "COC(=O)C1(c2ccccc2)CC12CCCC(=O)O2",
+      "label": "3ba",
+      "values": {
+        "yield": "54%",
+        "dr": "*trans*/*cis* 2.8:1"
+      }
+    },
+    {
+      "id": "3ca",
+      "smiles": "CCOC(=O)C1(c2ccccc2)CC12CCC(=O)O2",
+      "label": "3ca",
+      "values": {
+        "yield": "62%",
+        "dr": "*trans*/*cis* 3.2:1"
+      }
+    },
+    {
+      "id": "3da",
+      "smiles": "COC(=O)C1(c2ccc(OC)cc2)CC12CCC(=O)O2",
+      "label": "3da",
+      "values": {
+        "yield": "49%",
+        "dr": "*trans*/*cis* 3.0:1"
+      }
+    }
+  ]
+}

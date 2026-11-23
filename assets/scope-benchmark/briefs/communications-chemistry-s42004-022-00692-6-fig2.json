@@ -1,0 +1,173 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 5,
+  "row_align": "left",
+  "fragment_colors": [
+    {
+      "smarts": "NS(=O)(=O)c1ccc(C)cc1",
+      "color": "#1A47B8",
+      "include_attaching_bond": true
+    }
+  ],
+  "group_colors": {
+    "a. Aziridination": "#1A47B8",
+    "b. Allylic C–H amidation": "#1A47B8",
+    "Unsuccessful substrates for C–H amidation": "#7F7F7F"
+  },
+  "header": {
+    "substrates": [
+      {
+        "smiles": "C1=CCCCC1",
+        "label": "5"
+      },
+      {
+        "smiles": "Cc1ccc(S(=O)(=O)N)cc1",
+        "label": "PhI=NTs (1)",
+        "color": "#1A47B8"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "Cc1ccc(S(=O)(=O)N2C3CCCCC23)cc1",
+        "label": "7"
+      }
+    ],
+    "above": [
+      "Blue LED (aziridination) or [Cu(OTf)]2·PhMe / L9 (amidation)"
+    ],
+    "below": [
+      "CH3CN or DCE, r.t."
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "3",
+      "smiles": "Cc1ccc(S(=O)(=O)N2C3CCCCC23)cc1",
+      "label": "3",
+      "group": "a. Aziridination",
+      "values": {
+        "yield": "79%"
+      }
+    },
+    {
+      "id": "8",
+      "smiles": "Cc1ccc(S(=O)(=O)N2C3CCCC23)cc1",
+      "label": "8",
+      "group": "a. Aziridination",
+      "values": {
+        "yield": "65%"
+      }
+    },
+    {
+      "id": "9",
+      "smiles": "Cc1ccc(S(=O)(=O)N2C3CCCCCC23)cc1",
+      "label": "9",
+      "group": "a. Aziridination",
+      "values": {
+        "yield": "54%"
+      }
+    },
+    {
+      "id": "10",
+      "smiles": "Cc1ccc(S(=O)(=O)N2C3C4CCC(C4)C23)cc1",
+      "label": "10",
+      "group": "a. Aziridination",
+      "values": {
+        "yield": "75%"
+      }
+    },
+    {
+      "id": "20",
+      "smiles": "Cc1ccc(S(=O)(=O)N2CC2c2ccccc2)cc1",
+      "label": "20",
+      "group": "a. Aziridination",
+      "values": {
+        "yield": "62%"
+      }
+    },
+    {
+      "id": "4",
+      "smiles": "Cc1ccc(S(=O)(=O)NC2CCCC=C2)cc1",
+      "label": "4",
+      "group": "b. Allylic C–H amidation",
+      "values": {
+        "yield": "61%"
+      }
+    },
+    {
+      "id": "28",
+      "smiles": "Cc1ccc(S(=O)(=O)NC2CCC=C2)cc1",
+      "label": "28",
+      "group": "b. Allylic C–H amidation",
+      "values": {
+        "yield": "47%"
+      }
+    },
+    {
+      "id": "29",
+      "smiles": "Cc1ccc(S(=O)(=O)NC2CCCCC=C2)cc1",
+      "label": "29",
+      "group": "b. Allylic C–H amidation",
+      "values": {
+        "yield": "32%"
+      }
+    },
+    {
+      "id": "30",
+      "smiles": "Cc1ccc(S(=O)(=O)NC(/C=C/c2ccccc2)c2ccccc2)cc1",
+      "label": "30",
+      "group": "b. Allylic C–H amidation",
+      "values": {
+        "yield": "59%"
+      }
+    },
+    {
+      "id": "31",
+      "smiles": "Cc1ccc(S(=O)(=O)NC(/C=C/c2ccc(Cl)cc2)c2ccc(Cl)cc2)cc1",
+      "label": "31",
+      "group": "b. Allylic C–H amidation",
+      "values": {
+        "yield": "66%"
+      }
+    },
+    {
+      "id": "39",
+      "smiles": "C=CCCCCC",
+      "label": "39",
+      "group": "Unsuccessful substrates for C–H amidation",
+      "note": "*aziridination only*",
+      "values": {
+        "yield": "0%"
+      }
+    },
+    {
+      "id": "40",
+      "smiles": "C=CCCBr",
+      "label": "40",
+      "group": "Unsuccessful substrates for C–H amidation",
+      "note": "*aziridination only*",
+      "values": {
+        "yield": "0%"
+      }
+    },
+    {
+      "id": "41",
+      "smiles": "C1=Cc2ccccc2CC1",
+      "label": "41",
+      "group": "Unsuccessful substrates for C–H amidation",
+      "note": "*aziridination only*",
+      "values": {
+        "yield": "0%"
+      }
+    }
+  ]
+}

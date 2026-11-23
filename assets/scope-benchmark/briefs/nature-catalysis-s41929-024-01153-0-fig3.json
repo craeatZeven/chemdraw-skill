@@ -1,0 +1,160 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 230,
+  "columns": 4,
+  "row_align": "left",
+  "band_style": "pill",
+  "border": "#CCCCCC",
+  "group_colors": {
+    "Aryl bromides": "#2B4C8C",
+    "Heteroaryl bromides": "#2B4C8C",
+    "Alkenyl bromides": "#2B4C8C",
+    "Compatibility with bioactive motifs": "#2B4C8C"
+  },
+  "highlight_varying": "#2B4C8C",
+  "footnotes": [
+    "a Using L1 (15 mol%) at 5 °C.",
+    "b Using L2 (15 mol%) for enhanced enantioselectivity."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "C1CCCCC1",
+        "label": "cyclohexane"
+      },
+      {
+        "smiles": "C=CC(=O)OC(C)(C)C",
+        "label": "acrylate"
+      },
+      {
+        "smiles": "Brc1ccccc1",
+        "label": "Ar-Br",
+        "color": "#2B4C8C"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccccc1",
+        "label": "1–45"
+      }
+    ],
+    "above": [
+      "TBADT (2 mol%), NiBr2·DME (10 mol%), L1 (15 mol%)"
+    ],
+    "below": [
+      "K3PO4 (2 equiv.), acetone/PhCF3 (1:1), 390 nm, 5 °C, 18 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "perf",
+      "label": "",
+      "show_label": false
+    }
+  ],
+  "species": [
+    {
+      "id": "1",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccc(C#N)cc1",
+      "label": "1",
+      "group": "Aryl bromides",
+      "values": {
+        "perf": "80% (96:4 e.r.)^a"
+      }
+    },
+    {
+      "id": "3",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccc(S(C)(=O)=O)cc1",
+      "label": "3",
+      "group": "Aryl bromides",
+      "values": {
+        "perf": "92% (94:6 e.r.)^a"
+      }
+    },
+    {
+      "id": "5",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccc(C(C)=O)cc1",
+      "label": "5",
+      "group": "Aryl bromides",
+      "values": {
+        "perf": "70% (95:5 e.r.)^a"
+      }
+    },
+    {
+      "id": "24",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccc2ccccc2c1",
+      "label": "24",
+      "group": "Aryl bromides",
+      "values": {
+        "perf": "61% (95:5 e.r.)^a"
+      }
+    },
+    {
+      "id": "29",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1csc(C(=O)OC)c1",
+      "label": "29",
+      "group": "Heteroaryl bromides",
+      "values": {
+        "perf": "63% (88:12 e.r.)^a"
+      }
+    },
+    {
+      "id": "30",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccc2sccc2c1",
+      "label": "30",
+      "group": "Heteroaryl bromides",
+      "values": {
+        "perf": "60% (93:7 e.r.)^a"
+      }
+    },
+    {
+      "id": "35",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccnc(Cl)c1",
+      "label": "35",
+      "group": "Heteroaryl bromides",
+      "values": {
+        "perf": "73% (87:13 e.r.)^a"
+      }
+    },
+    {
+      "id": "37",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccc2cccnc2c1",
+      "label": "37",
+      "group": "Heteroaryl bromides",
+      "values": {
+        "perf": "65% (96:4 e.r.)^a"
+      }
+    },
+    {
+      "id": "39",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)C1=Cc2ccccc2C1",
+      "label": "39",
+      "group": "Alkenyl bromides",
+      "values": {
+        "perf": "40% (83:17 e.r.)^a"
+      }
+    },
+    {
+      "id": "40",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)/C=C/c1ccccc1",
+      "label": "40",
+      "group": "Alkenyl bromides",
+      "values": {
+        "perf": "50% (75:25 e.r.)^a"
+      }
+    },
+    {
+      "id": "43",
+      "smiles": "CC(C)(C)OC(=O)[C@@H](CC1CCCCC1)c1ccc(C(=O)O[C@@H]2C[C@@H](C)CC[C@H]2C(C)C)cc1",
+      "label": "43",
+      "group": "Compatibility with bioactive motifs",
+      "note": "*(-)-Menthol derivative*",
+      "values": {
+        "perf": "70% (d.r. > 20:1)^a"
+      }
+    }
+  ],
+  "height_mm": 340
+}

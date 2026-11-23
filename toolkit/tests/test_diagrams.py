@@ -281,18 +281,6 @@ def test_checker_finds_what_chemdraw_drops():
         e['code'] for e in check_cdxml(bad, ignore=['setting'])['errors']}
 
 
-# ---------------------------------------------------------------- ProgID
-def test_progid_override_and_fallback(monkeypatch):
-    from cdxml_toolkit.chemdraw import progid
-    monkeypatch.setenv('CHEMDRAW_PROGID', 'ChemDraw_x64.Application')
-    assert progid.chemdraw_progid() == 'ChemDraw_x64.Application'
-    monkeypatch.delenv('CHEMDRAW_PROGID')
-    progid._detected.cache_clear()
-    monkeypatch.setattr(progid, 'registered', lambda name: name == 'ChemDraw_x64.Application')
-    assert progid.chemdraw_progid() == 'ChemDraw_x64.Application'
-    progid._detected.cache_clear()
-
-
 # ---------------------------------------------------------------- Huckel and phase diagrams
 @pytest.mark.parametrize('system,energies,rule', [
     ('butadiene', [1.618, 0.618, -0.618, -1.618], None), ('benzene', [2, 1, 1, -1, -1, -2], 'aromatic (4n+2)'),

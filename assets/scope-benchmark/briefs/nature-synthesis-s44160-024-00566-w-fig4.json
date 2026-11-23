@@ -1,0 +1,159 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 4,
+  "row_align": "center",
+  "group_colors": {
+    "a  Pyrrolidines & lactones (n = 2)": "#C2591A",
+    "b  Piperidines & δ-lactones (n = 3)": "#0072B2"
+  },
+  "fragment_colors": [
+    {
+      "smarts": "NS(=O)=O",
+      "color": "#C2591A",
+      "include_attaching_bond": true
+    },
+    {
+      "smarts": "C(=O)O",
+      "color": "#C2591A"
+    }
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "Cc1ccc(S(=O)(=O)NCCC(C)(C)Cc2ccccc2)cc1",
+        "label": "1i–1av"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "Cc1ccc(S(=O)(=O)N2CC(C)(C)CC2c2ccccc2)cc1",
+        "label": "2i–2av"
+      }
+    ],
+    "above": [
+      "PIFA (1.2 equiv.)"
+    ],
+    "below": [
+      "HFIP (0.03 M), Ar, 14 h, blue LEDs (465 nm)"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "2j",
+      "smiles": "Cc1ccc(S(=O)(=O)N2CC(C)(C)CC2c2ccccc2)cc1",
+      "label": "2j",
+      "group": "a  Pyrrolidines & lactones (n = 2)",
+      "values": {
+        "yield": "86%"
+      }
+    },
+    {
+      "id": "2m",
+      "smiles": "CS(=O)(=O)N1CC(C)(C)CC1c1ccccc1",
+      "label": "2m",
+      "group": "a  Pyrrolidines & lactones (n = 2)",
+      "values": {
+        "yield": "84%"
+      }
+    },
+    {
+      "id": "2x",
+      "smiles": "Cc1ccc(S(=O)(=O)N2CC3(CCCCC3)CC2c2ccccc2)cc1",
+      "label": "2x",
+      "group": "a  Pyrrolidines & lactones (n = 2)",
+      "values": {
+        "yield": "86%"
+      }
+    },
+    {
+      "id": "2z",
+      "smiles": "Cc1ccc(S(=O)(=O)N2CCCC2c2ccccc2)cc1",
+      "label": "2z",
+      "group": "a  Pyrrolidines & lactones (n = 2)",
+      "values": {
+        "yield": "72%"
+      }
+    },
+    {
+      "id": "2aa",
+      "smiles": "Cc1ccc(S(=O)(=O)N2CC(C)(C)CC2(c2ccccc2)c2ccccc2)cc1",
+      "label": "2aa",
+      "group": "a  Pyrrolidines & lactones (n = 2)",
+      "values": {
+        "yield": "88%"
+      }
+    },
+    {
+      "id": "2ac",
+      "smiles": "CCN1C(c2ccccc2)c2ccccc2S1(=O)=O",
+      "label": "2ac",
+      "group": "a  Pyrrolidines & lactones (n = 2)",
+      "values": {
+        "yield": "85%"
+      }
+    },
+    {
+      "id": "2ag",
+      "smiles": "O=C1CCC(c2ccccc2)O1",
+      "label": "2ag",
+      "group": "a  Pyrrolidines & lactones (n = 2)",
+      "values": {
+        "yield": "80%"
+      }
+    },
+    {
+      "id": "2ah",
+      "smiles": "c1ccc(C2CCCO2)cc1",
+      "label": "2ah",
+      "group": "a  Pyrrolidines & lactones (n = 2)",
+      "values": {
+        "yield": "37%"
+      }
+    },
+    {
+      "id": "2ai",
+      "smiles": "Cc1ccc(S(=O)(=O)N2CC(C)(C)CCC2c2ccccc2)cc1",
+      "label": "2ai",
+      "group": "b  Piperidines & δ-lactones (n = 3)",
+      "values": {
+        "yield": "76%"
+      }
+    },
+    {
+      "id": "2at",
+      "smiles": "Cc1ccc(S(=O)(=O)N2CC3(CCCCC3)CCC2c2ccccc2)cc1",
+      "label": "2at",
+      "group": "b  Piperidines & δ-lactones (n = 3)",
+      "values": {
+        "yield": "68%"
+      }
+    },
+    {
+      "id": "2au",
+      "smiles": "Cc1ccc(C2c3ccccc3CCN2S(=O)(=O)c2ccc(C)cc2)cc1",
+      "label": "2au",
+      "group": "b  Piperidines & δ-lactones (n = 3)",
+      "values": {
+        "yield": "79%"
+      }
+    },
+    {
+      "id": "2av",
+      "smiles": "O=C1CCCC(c2ccccc2)O1",
+      "label": "2av",
+      "group": "b  Piperidines & δ-lactones (n = 3)",
+      "values": {
+        "yield": "72%"
+      }
+    }
+  ]
+}

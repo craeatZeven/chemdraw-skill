@@ -1,0 +1,74 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "beilstein_joc",
+  "width_mm": 170,
+  "columns": 4,
+  "row_align": "center",
+  "highlight_varying": "#1B4D89",
+  "header": {
+    "substrates": [
+      {
+        "smiles": "C#CCn1c(C(=O)O)cc2ccccc21",
+        "label": "27"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "C[C@H]1COc2c(c3ccccc3n2C1=O)",
+        "label": "(R)-28"
+      }
+    ],
+    "above": [
+      "[NHC]-AuCl (2 mol %), AgNTf2 (2 mol %)"
+    ],
+    "below": [
+      "CH2Cl2, rt"
+    ]
+  },
+  "fields": [
+    {
+      "key": "perf",
+      "label": "Yield/ee",
+      "show_label": false
+    }
+  ],
+  "species": [
+    {
+      "id": "28a",
+      "smiles": "C[C@H]1COc2c3ccccc3n(C1=O)c2",
+      "label": "(R)-28a",
+      "group": "selected examples",
+      "values": {
+        "perf": "91%, 94% ee"
+      }
+    },
+    {
+      "id": "28b",
+      "smiles": "C[C@H]1COc2c3ccc(C)cc3n(C1=O)c2",
+      "label": "(R)-28b",
+      "group": "selected examples",
+      "values": {
+        "perf": "88%, 92% ee"
+      }
+    },
+    {
+      "id": "28c",
+      "smiles": "C[C@H]1COc2c3ccc(OC)cc3n(C1=O)c2",
+      "label": "(R)-28c",
+      "group": "selected examples",
+      "values": {
+        "perf": "85%, 95% ee"
+      }
+    },
+    {
+      "id": "28d",
+      "smiles": "C[C@H]1COc2c3ccc(Cl)cc3n(C1=O)c2",
+      "label": "(R)-28d",
+      "group": "selected examples",
+      "values": {
+        "perf": "82%, 90% ee"
+      }
+    }
+  ]
+}

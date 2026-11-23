@@ -1,0 +1,161 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 4,
+  "row_align": "left",
+  "band_style": "pill",
+  "group_colors": {
+    "Acidic (+ HBF4·Et2O)": "#D95F02",
+    "Neutral": "#2B7BBA"
+  },
+  "highlight_varying": "#D95F02",
+  "footnotes": [
+    "a Isolated yield on 0.4 mmol scale.",
+    "b 5 mol% Pd(tBu3P)2 in MeOH at 60 °C."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "[*:1]c1ccc(I)cc1",
+        "label": "Ar-TT+ BF4-"
+      },
+      {
+        "smiles": "OB(O)[*:2]",
+        "label": "Ar'-B(OH)2",
+        "color": "#D95F02"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "[*:1]c1ccc([*:2])cc1",
+        "label": "6–34"
+      }
+    ],
+    "above": [
+      "Pd(tBu3P)2 (1–5 mol%), w or w/o HBF4·Et2O"
+    ],
+    "below": [
+      "MeOH, 60 °C, 10 min to 12 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "6",
+      "smiles": "FC(F)(F)c1ccc(-c2ccccn2)cc1",
+      "label": "6",
+      "group": "Acidic (+ HBF4·Et2O)",
+      "values": {
+        "yield": "85%^a,b"
+      }
+    },
+    {
+      "id": "7",
+      "smiles": "Cc1cccc(-c2ccc(C3CC3)cc2)n1",
+      "label": "7",
+      "group": "Acidic (+ HBF4·Et2O)",
+      "values": {
+        "yield": "90%^a,b"
+      }
+    },
+    {
+      "id": "8",
+      "smiles": "O=c1c2ccccc2oc2ccc(-c3ccccn3)cc12",
+      "label": "8",
+      "group": "Acidic (+ HBF4·Et2O)",
+      "values": {
+        "yield": "88%^a,b"
+      }
+    },
+    {
+      "id": "10",
+      "smiles": "COc1ccc(-c2ccncc2)cc1F",
+      "label": "10",
+      "group": "Acidic (+ HBF4·Et2O)",
+      "values": {
+        "yield": "96%^a,b"
+      }
+    },
+    {
+      "id": "11",
+      "smiles": "c1ccc(-c2ccc(-c3cccnc3)cc2)cc1",
+      "label": "11",
+      "group": "Acidic (+ HBF4·Et2O)",
+      "values": {
+        "yield": "92%^a,b"
+      }
+    },
+    {
+      "id": "14",
+      "smiles": "c1ccc(-n2cc(-c3ccco3)cn2)cc1",
+      "label": "14",
+      "group": "Acidic (+ HBF4·Et2O)",
+      "note": "*Previous SMC, 17%*",
+      "values": {
+        "yield": "98%^a,b"
+      }
+    },
+    {
+      "id": "18",
+      "smiles": "N#Cc1ccc(-c2ccc(N3CCOCC3)cc2)s1",
+      "label": "18",
+      "group": "Neutral",
+      "values": {
+        "yield": "95%^a"
+      }
+    },
+    {
+      "id": "19",
+      "smiles": "CCN(CC)CC(=O)Nc1c(C)cc(-c2ccco2)cc1C",
+      "label": "19",
+      "group": "Neutral",
+      "note": "*from lidocaine*",
+      "values": {
+        "yield": "90%^a"
+      }
+    },
+    {
+      "id": "22",
+      "smiles": "COc1ncc(-c2ccc(F)cc2)cn1",
+      "label": "22",
+      "group": "Neutral",
+      "values": {
+        "yield": "72%^a"
+      }
+    },
+    {
+      "id": "28",
+      "smiles": "COc1ccc(-c2cc3ccccc3o2)cn1",
+      "label": "28",
+      "group": "Neutral",
+      "values": {
+        "yield": "95%^a"
+      }
+    },
+    {
+      "id": "29",
+      "smiles": "Oc1ccc(-c2ccc(Oc3ccc(Br)cc3)cc2)cc1",
+      "label": "29",
+      "group": "Neutral",
+      "values": {
+        "yield": "82%^a"
+      }
+    },
+    {
+      "id": "31",
+      "smiles": "N#Cc1c(F)cccc1Oc1ccc(-c2ccc(F)cc2F)cc1",
+      "label": "31",
+      "group": "Neutral",
+      "values": {
+        "yield": "98%^a"
+      }
+    }
+  ]
+}

@@ -26,7 +26,7 @@ def test_a_panels_brief_is_checked():
     assert figure_panels._validate(_brief(legend=["R1 = H, MeO", [{"text": "R2", "color": "#1F4E9E"}, {"text": " = CF3"}]])) == []
     for brief, message in ((_brief(panels=[]), "panels"),
                            ({"kind": "panels", "panels": [{"brief": SCHEME}]}, "title"),
-                           ({"kind": "panels", "panels": [{"title": "x", "brief": {"kind": "scope"}}]}, "scheme or a mechanism"),
+                           ({"kind": "panels", "panels": [{"title": "x", "brief": {"kind": "scope"}}]}, "scheme, mechanism, table or energy_profile"),
                            (_brief(legend="R1 = H"), "legend"),
                            (_brief(colour="red"), "Unknown brief keys")):
         assert any(message in e for e in figure_panels._validate(brief)), brief
@@ -82,7 +82,7 @@ def test_gallery_and_sections_panels_are_checked():
                            ({"title": "x", "gallery": [{"id": "g", "smiles": "C", "colour": "red"}]}, "unknown keys"),
                            ({"title": "x", "gallery": [{"id": "g"}]}, "smiles or a name"),
                            ({"title": "x", "sections": [{"brief": SCHEME}]}, "title"),
-                           ({"title": "x", "sections": [{"title": "s", "brief": {"kind": "scope"}}]}, "scheme or a mechanism")):
+                           ({"title": "x", "sections": [{"title": "s", "brief": {"kind": "scope"}}]}, "scheme, mechanism, table or energy_profile")):
         errors = figure_panels._validate({"kind": "panels", "panels": [panel]})
         assert any(message in e for e in errors), (panel, errors)
 

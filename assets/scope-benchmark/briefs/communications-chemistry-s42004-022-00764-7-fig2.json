@@ -1,0 +1,127 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "acs1996",
+  "width_mm": 170,
+  "columns": 3,
+  "row_align": "center",
+  "header": {
+    "substrates": [
+      {
+        "smiles": "Cc1ccc(S(=O)(=O)N=C2C=CC(OC)(OC)C=C2)cc1",
+        "label": "1"
+      },
+      {
+        "smiles": "Oc1ccc2ccccc2c1",
+        "label": "2 (3.0 equiv.)"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "COc1ccc(NS(=O)(=O)c2ccc(C)cc2)c(-c2c(O)ccc3ccccc23)c1",
+        "label": "3"
+      }
+    ],
+    "above": [
+      "TfOH (1.5 mol%), Comet X microreactor"
+    ],
+    "below": [
+      "Flow rate 0.08 mL/min, 25 °C"
+    ]
+  },
+  "fields": [
+    {
+      "key": "yield",
+      "label": "Yield"
+    }
+  ],
+  "species": [
+    {
+      "id": "3a",
+      "smiles": "COc1ccc(NS(=O)(=O)c2ccc(C)cc2)c(-c2c(O)ccc3ccccc23)c1",
+      "label": "3a",
+      "definition": "R = Me",
+      "values": {
+        "yield": "93%"
+      }
+    },
+    {
+      "id": "3b",
+      "smiles": "COc1ccc(NS(=O)(=O)c2ccc(OC)cc2)c(-c2c(O)ccc3ccccc23)c1",
+      "label": "3b",
+      "definition": "R = OMe",
+      "drawn_with": "3a",
+      "values": {
+        "yield": "93%"
+      }
+    },
+    {
+      "id": "3c",
+      "smiles": "COc1ccc(NS(=O)(=O)c2ccc(Cl)cc2)c(-c2c(O)ccc3ccccc23)c1",
+      "label": "3c",
+      "definition": "R = Cl",
+      "drawn_with": "3a",
+      "values": {
+        "yield": "86%"
+      }
+    },
+    {
+      "id": "3d",
+      "smiles": "COc1ccc(NS(=O)(=O)c2ccc([N+](=O)[O-])cc2)c(-c2c(O)ccc3ccccc23)c1",
+      "label": "3d",
+      "definition": "R = NO2",
+      "drawn_with": "3a",
+      "values": {
+        "yield": "91%"
+      }
+    },
+    {
+      "id": "3e",
+      "smiles": "COc1ccc(NS(C)(=O)=O)c(-c2c(O)ccc3ccccc23)c1",
+      "label": "3e",
+      "values": {
+        "yield": "92%"
+      }
+    },
+    {
+      "id": "3g",
+      "smiles": "COC(=O)Nc1ccc(OC)cc1-c1c(O)ccc2ccccc12",
+      "label": "3g",
+      "values": {
+        "yield": "76%"
+      }
+    },
+    {
+      "id": "3h",
+      "smiles": "COc1cc(C)c(NS(=O)(=O)c2ccc(C)cc2)cc1-c1c(O)ccc2ccccc12",
+      "label": "3h",
+      "values": {
+        "yield": "95%"
+      }
+    },
+    {
+      "id": "3i",
+      "smiles": "COc1cc(OC)c(NS(=O)(=O)c2ccc(C)cc2)cc1-c1c(O)ccc2ccccc12",
+      "label": "3i",
+      "values": {
+        "yield": "96%"
+      }
+    },
+    {
+      "id": "3k",
+      "smiles": "CCOc1ccc(NS(=O)(=O)c2ccc(C)cc2)c(-c2c(O)ccc3ccccc23)c1",
+      "label": "3k",
+      "values": {
+        "yield": "71%"
+      }
+    },
+    {
+      "id": "3t",
+      "smiles": "COc1ccc(NS(=O)(=O)c2ccc(C)cc2)c(-c2c(O)cc(O)cc2Br)c1",
+      "label": "3t",
+      "values": {
+        "yield": "67%"
+      }
+    }
+  ]
+}

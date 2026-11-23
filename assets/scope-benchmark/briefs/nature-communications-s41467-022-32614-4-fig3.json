@@ -1,0 +1,152 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 230,
+  "columns": 4,
+  "row_align": "center",
+  "band_style": "pill",
+  "group_colors": {
+    "Aromatic aldehydes": "#8B1E24",
+    "Aliphatic aldehydes": "#1B4D89",
+    "Chiral aldehydes": "#2E7D32"
+  },
+  "fragment_colors": [
+    {
+      "smarts": "C=C=C",
+      "color": "#000000"
+    },
+    {
+      "smarts": "[CH](C)C",
+      "color": "#2E7D32"
+    }
+  ],
+  "highlight_varying": "#8B1E24",
+  "header": {
+    "substrates": [
+      {
+        "smiles": "[*:1]C=O",
+        "label": "R-CHO",
+        "color": "#8B1E24"
+      },
+      {
+        "smiles": "C=CC#C[Si](C(C)C)(C(C)C)C(C)C",
+        "label": "1 (1.5 equiv)"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "[*:1][C@H](O)C(=C=CC(C)C)[Si](C(C)C)(C(C)C)C(C)C",
+        "label": "3–51"
+      }
+    ],
+    "above": [
+      "10 mol% CrCl2, 12 mol% (S,R)-L1, 2 mol% 4-CzIPN"
+    ],
+    "below": [
+      "blue LED, THF (0.05 M), rt, 12 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "perf",
+      "label": "",
+      "show_label": false
+    }
+  ],
+  "species": [
+    {
+      "id": "3",
+      "smiles": "CC(C)CC=C=C([C@H](O)c1ccccc1)[Si](C)(C)C",
+      "label": "3",
+      "group": "Aromatic aldehydes",
+      "values": {
+        "perf": "92%, 20:1 dr, 94% ee"
+      }
+    },
+    {
+      "id": "4",
+      "smiles": "CC(C)CC=C=C([C@H](O)c1ccccc1C)[Si](C)(C)C",
+      "label": "4",
+      "group": "Aromatic aldehydes",
+      "values": {
+        "perf": "95%, >20:1 dr, 96% ee"
+      }
+    },
+    {
+      "id": "10",
+      "smiles": "CC(C)CC=C=C([C@H](O)c1ccc(OC)cc1)[Si](C)(C)C",
+      "label": "10",
+      "group": "Aromatic aldehydes",
+      "values": {
+        "perf": "84%, >20:1 dr, 95% ee"
+      }
+    },
+    {
+      "id": "14",
+      "smiles": "CC(C)CC=C=C([C@H](O)c1cccs1)[Si](C)(C)C",
+      "label": "14",
+      "group": "Aromatic aldehydes",
+      "values": {
+        "perf": "87%, >20:1 dr, 97% ee"
+      }
+    },
+    {
+      "id": "27",
+      "smiles": "CC(C)CC=C=C([C@H](O)CCCOc1ccccc1)[Si](C)(C)C",
+      "label": "27",
+      "group": "Aliphatic aldehydes",
+      "values": {
+        "perf": "82%, 6:1 dr, 81% ee"
+      }
+    },
+    {
+      "id": "33",
+      "smiles": "CC(C)CC=C=C([C@H](O)C1CCCCC1)[Si](C)(C)C",
+      "label": "33",
+      "group": "Aliphatic aldehydes",
+      "values": {
+        "perf": "85%, >20:1 dr, 94% ee"
+      }
+    },
+    {
+      "id": "34",
+      "smiles": "CC(C)CC=C=C([C@H](O)C1CCOCC1)[Si](C)(C)C",
+      "label": "34",
+      "group": "Aliphatic aldehydes",
+      "values": {
+        "perf": "80%, >20:1 dr, 93% ee"
+      }
+    },
+    {
+      "id": "39",
+      "smiles": "CC(C)CC=C=C([C@H](O)C1CC1)[Si](C)(C)C",
+      "label": "39",
+      "group": "Aliphatic aldehydes",
+      "values": {
+        "perf": "70%, 20:1 dr, 90% ee"
+      }
+    },
+    {
+      "id": "40",
+      "smiles": "CC(C)CC=C=C([C@H](O)[C@H](Cc1ccccc1)NC(=O)OC(C)(C)C)[Si](C)(C)C",
+      "label": "40",
+      "group": "Chiral aldehydes",
+      "note": "*from L-Phenylalanine*",
+      "values": {
+        "perf": "62%, 1:99 dr"
+      }
+    },
+    {
+      "id": "48",
+      "smiles": "CC(C)CC=C=C([C@H](O)[C@@H]1CCCN1C(=O)OC(C)(C)C)[Si](C)(C)C",
+      "label": "48",
+      "group": "Chiral aldehydes",
+      "note": "*from L-Proline*",
+      "values": {
+        "perf": "45%, 1:99 dr"
+      }
+    }
+  ],
+  "height_mm": 340
+}

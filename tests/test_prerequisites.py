@@ -28,7 +28,7 @@ class PrerequisiteCheckerTests(unittest.TestCase):
         if cls.shell is None:
             raise unittest.SkipTest("PowerShell is required to test the supplied checker")
 
-    def _run(self, *arguments: str) -> subprocess.CompletedProcess[str]:
+    def _run(self, *arguments: str, env: dict | None = None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [
                 str(self.shell),
@@ -43,6 +43,7 @@ class PrerequisiteCheckerTests(unittest.TestCase):
             capture_output=True,
             text=True,
             encoding="utf-8-sig",
+            env=env,
         )
 
     def _assert_host_python_verdict(self, completed: subprocess.CompletedProcess[str]) -> dict:
@@ -135,6 +136,17 @@ class PrerequisiteCheckerTests(unittest.TestCase):
                               "-SkipChemDraw", "-SkipPythonPackages")
         self.assertNotEqual(completed.returncode, 0)
         self.assertIn("bogus", completed.stdout + completed.stderr)
+
+    def test_native_check_uses_the_explicit_prog_id(self) -> None:
+        progid = "AbsentChemDrawForPrerequisiteTest.Application"
+        completed = self._run(
+            "-Capabilities", "native", "-Python", sys.executable, "-SkipPythonPackages",
+            env=dict(os.environ, CHEMDRAW_PROGID=f" {progid} "),
+        )
+        checks = {item["name"]: item for item in json.loads(completed.stdout)["checks"]}
+        com = checks["chemdraw_com"]
+        self.assertEqual(com["status"], "fail", com["detail"])
+        self.assertIn(progid, com["detail"])
 
     def test_documented_command_lines_use_the_supported_capability_form(self) -> None:
         for name in ("docs/guide.md", "docs/guide.zh-cn.md"):

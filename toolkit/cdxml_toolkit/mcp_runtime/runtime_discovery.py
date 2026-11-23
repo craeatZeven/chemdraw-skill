@@ -2,22 +2,17 @@
 
 from __future__ import annotations
 
-from cdxml_toolkit.chemdraw.progid import chemdraw_progid
 import argparse
 from dataclasses import asdict, dataclass
 import json
 import os
 from pathlib import Path
-import re
 import shutil
 import subprocess
 import sys
 from typing import Iterable
 
-try:
-    import winreg
-except ImportError:  # pragma: no cover - Windows is the supported platform.
-    winreg = None
+from ..chemdraw.progid import chemdraw_com_registration
 
 
 # Native/Office dependencies are checked only when those capabilities are requested.
@@ -207,39 +202,6 @@ def find_skill_root(explicit: str | None = None) -> Discovery:
     raise RuntimeError("ChemDraw Skill root not found. Set CHEMDRAW_SKILL_ROOT.")
 
 
-def _extract_local_server_executable(command: str | None) -> str | None:
-    """Extract an executable from a COM LocalServer32 command line."""
-    if not command:
-        return None
-    value = os.path.expandvars(str(command)).strip()
-    if not value:
-        return None
-    if value.startswith('"'):
-        closing_quote = value.find('"', 1)
-        if closing_quote < 0:
-            return None
-        return value[1:closing_quote].strip() or None
-    match = re.match(r"^(.+?\.exe)(?:\s+.*)?$", value, flags=re.IGNORECASE)
-    return match.group(1).strip() if match else None
-
-
-def _registry_local_server_command() -> str | None:
-    """Read HKCR ChemDraw.Application -> CLSID -> LocalServer32."""
-    if winreg is None:
-        return None
-    try:
-        with winreg.OpenKey(
-            winreg.HKEY_CLASSES_ROOT, chemdraw_progid() + "\\CLSID"
-        ) as clsid_key:
-            clsid = winreg.QueryValueEx(clsid_key, "")[0]
-        with winreg.OpenKey(
-            winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}\LocalServer32"
-        ) as server_key:
-            return str(winreg.QueryValueEx(server_key, "")[0])
-    except (OSError, TypeError, ValueError):
-        return None
-
-
 def _common_chemdraw_candidates() -> list[Path]:
     bases: list[Path] = []
     for variable in ("ProgramW6432", "ProgramFiles", "ProgramFiles(x86)"):
@@ -322,12 +284,9 @@ def find_chemdraw(explicit: str | None = None) -> Discovery:
             "ChemDraw for macOS not found. Install it in /Applications or set CHEMDRAW_EXE."
         )
 
-    registry_value = _extract_local_server_executable(
-        _registry_local_server_command()
-    )
-    registry_path = _existing_file(registry_value)
-    if registry_path:
-        return Discovery(str(registry_path), "registry-HKCR")
+    registration = chemdraw_com_registration()
+    if registration:
+        return Discovery(str(registration.executable), "registry-HKCR")
 
     for candidate in _common_chemdraw_candidates():
         path = _existing_file(candidate)

@@ -475,12 +475,13 @@ def apply_house_conventions(cdxml: Any, brief: Mapping, grounded: list[dict],
     return wrapped, applied, skipped, warnings
 
 
-SPECIES_STYLE_KEYS = ("color", "atom_colors", "bond_colors", "abbreviate")
+SPECIES_STYLE_KEYS = ("color", "atom_colors", "bond_colors", "abbreviate", "disconnections")
+DISCONNECTION_STYLES = ("wavy", "dashed", "colored")
 FACE_BITS = {"bold": 1, "italic": 2}
 
 
 def species_style_errors(entry: Mapping) -> list[str]:
-    """Problems with a species' colour and abbreviation keys, for the brief check."""
+    """Problems with a species' colour, abbreviation and disconnection keys, for the brief check."""
     ident = entry.get("id")
     errors: list[str] = []
 
@@ -503,6 +504,18 @@ def species_style_errors(entry: Mapping) -> list[str]:
             if not ok:
                 shape = "atom indices" if item_key == "atoms" else "[i, j] pairs of atom indices"
                 errors.append(f"Species {ident}: {key}.{item_key} must be a list of {shape} (SMILES order, from 0).")
+    if "disconnections" in entry:
+        for item in _as_list(entry.get("disconnections")):
+            if not isinstance(item, Mapping):
+                errors.append(f"Species {ident}: every disconnections entry must be an object {{bond: [i, j], color?, style?}}.")
+                continue
+            pair = item.get("bond")
+            if not (isinstance(pair, list) and len(pair) == 2 and all(isinstance(i, int) for i in pair)):
+                errors.append(f"Species {ident}: disconnections.bond must be a pair [i, j] of atom indices.")
+            if item.get("color") is not None and bad_color(item["color"]):
+                errors.append(f"Species {ident}: disconnections.color must be a hex colour like #DC3220.")
+            if item.get("style") is not None and item["style"] not in DISCONNECTION_STYLES:
+                errors.append(f"Species {ident}: disconnections.style must be one of {list(DISCONNECTION_STYLES)}.")
     if "abbreviate" in entry:
         groups = entry["abbreviate"]
         if not isinstance(groups, list):
@@ -593,9 +606,66 @@ def _style_text_span(t: ET.Element, run: Mapping, colors: "_Colors", done: set) 
     return False
 
 
+def _add_disconnection_mark(
+    page: ET.Element,
+    p1: tuple[float, float],
+    p2: tuple[float, float],
+    color_idx: str,
+    style: str,
+    ids: renderer._IDGen,
+    line_width: str | None = None,
+) -> None:
+    """Draw a wavy or dashed retrosynthesis disconnection mark perpendicularly across bond p1-p2."""
+    mx, my = (p1[0] + p2[0]) / 2.0, (p1[1] + p2[1]) / 2.0
+    dx, dy = p2[0] - p1[0], p2[1] - p1[1]
+    blen = math.hypot(dx, dy) or 14.4
+    ux, uy = dx / blen, dy / blen        # along bond
+    nx, ny = -uy, ux                     # perpendicular to bond
+    half = max(5.5, min(9.0, blen * 0.45))
+    amp = 2.2
+    if style == "dashed":
+        x0, y0 = mx - nx * half, my - ny * half
+        x1, y1 = mx + nx * half, my + ny * half
+        attrs = {
+            "id": str(ids.next()),
+            "Z": str(ids.next()),
+            "GraphicType": "Line",
+            "LineType": "Dashed",
+            "color": color_idx,
+            "BoundingBox": f"{x0:.2f} {y0:.2f} {x1:.2f} {y1:.2f}",
+        }
+        if line_width:
+            attrs["LineWidth"] = line_width
+        ET.SubElement(page, "graphic", attrs)
+        return
+    # Native wavy S-curve: 3 anchor triples = 9 (x, y) points = 18 floats (multiple of 6)
+    a0 = (mx - nx * half, my - ny * half)
+    a1 = (mx, my)
+    a2 = (mx + nx * half, my + ny * half)
+    h0_out = (mx - nx * (half * 0.5) + ux * amp, my - ny * (half * 0.5) + uy * amp)
+    h1_in = (mx - nx * (half * 0.25) + ux * amp, my - ny * (half * 0.25) + uy * amp)
+    h1_out = (mx + nx * (half * 0.25) - ux * amp, my + ny * (half * 0.25) - uy * amp)
+    h2_in = (mx + nx * (half * 0.5) - ux * amp, my + ny * (half * 0.5) - uy * amp)
+    triples = [a0, a0, h0_out, h1_in, a1, h1_out, h2_in, a2, a2]
+    xs = [pt[0] for pt in triples]
+    ys = [pt[1] for pt in triples]
+    pts_str = " ".join(f"{x:.2f} {y:.2f}" for x, y in triples)
+    attrs = {
+        "id": str(ids.next()),
+        "Z": str(ids.next()),
+        "CurveType": "0",
+        "color": color_idx,
+        "BoundingBox": f"{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}",
+        "CurvePoints": pts_str,
+    }
+    if line_width:
+        attrs["LineWidth"] = line_width
+    ET.SubElement(page, "curve", attrs)
+
+
 def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
                           house: HouseStyle | None = None) -> tuple[Any, list[str], list[str]]:
-    """The brief's own colours, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
+    """The brief's own colours, disconnections, abbreviations and condition-text runs; returns (cdxml, applied, warnings).
 
     Runs after the house conventions so a colour the brief asks for wins over the card's.
     Abbreviations come last because they replace atoms that were painted: a species'
@@ -604,7 +674,8 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
     species = {str(sp.get("id")): sp for sp in brief.get("species") or [] if isinstance(sp, Mapping)}
     card_groups = list(house.convention("abbreviate_groups") or []) if house is not None else []
     styled_runs = _styled_runs(brief)
-    wants_paint = any(any(k in sp for k in ("color", "atom_colors", "bond_colors")) for sp in species.values())
+    wants_paint = any(any(k in sp for k in ("color", "atom_colors", "bond_colors", "disconnections"))
+                      for sp in species.values())
     wants_abbrev = bool(card_groups) or any("abbreviate" in sp for sp in species.values())
     if not (wants_paint or wants_abbrev or styled_runs):
         return cdxml, [], []
@@ -618,21 +689,30 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
     used_ids = [int(v) for el in root.iter() for v in [el.get("id")] if v and v.isdigit()]
     ids = renderer._IDGen(max(used_ids, default=1000) + 1)
 
+    hs_disc_color = house.figure_convention("retrosynthesis", "disconnection_color") if house is not None else None
+    hs_disc_mark = house.figure_convention("retrosynthesis", "disconnection_mark") if house is not None else None
+    default_disc_style = {"wavy_line": "wavy", "dashed_line": "dashed", "colored_bond": "colored"}.get(
+        str(hs_disc_mark or ""), "wavy"
+    )
+    default_disc_color = str(hs_disc_color or "#DC3220")
+    doc_lw = root.get("LineWidth")
+
     painted = 0
+    disconnections_drawn = 0
     for sp_id, frag_el, frag_mol in drawn:
         sp = species.get(sp_id) or {}
-        if not any(k in sp for k in ("color", "atom_colors", "bond_colors")):
+        if not any(k in sp for k in ("color", "atom_colors", "bond_colors", "disconnections")):
             continue
         if sp.get("color"):
             index = colors.index(sp["color"])
             for el in list(frag_el.findall("n")) + list(frag_el.findall("b")):
                 _paint(el, index)
-        if sp.get("atom_colors") or sp.get("bond_colors"):
+        if sp.get("atom_colors") or sp.get("bond_colors") or sp.get("disconnections"):
             src = Chem.MolFromSmiles(smiles[sp_id] or "")
             nodes = _atom_nodes(frag_el, frag_mol, src)
             if nodes is None:
-                warnings.append(f"Species {sp_id}: the drawn structure could not be matched, so atom_colors "
-                                "and bond_colors were not applied.")
+                warnings.append(f"Species {sp_id}: the drawn structure could not be matched, so atom_colors, "
+                                "bond_colors and disconnections were not applied.")
             else:
                 bonds = _bond_elements(frag_el)
                 n_atoms = len(nodes)
@@ -658,9 +738,28 @@ def apply_species_styling(cdxml: Any, brief: Mapping, grounded: list[dict],
                             warnings.append(f"Species {sp_id}: atoms {i} and {j} are not bonded.")
                             continue
                         _paint(b, index)
-        painted += 1
+                for item in _as_list(sp.get("disconnections")):
+                    i, j = item["bond"]
+                    b = None
+                    if 0 <= i < n_atoms and 0 <= j < n_atoms:
+                        b = bonds.get(frozenset((nodes[i].get("id"), nodes[j].get("id"))))
+                    if b is None:
+                        warnings.append(f"Species {sp_id}: disconnection bond {i}-{j} was not found.")
+                        continue
+                    dcolor = item.get("color") or default_disc_color
+                    dstyle = item.get("style") or default_disc_style
+                    cidx = colors.index(dcolor)
+                    if dstyle == "colored":
+                        _paint(b, cidx)
+                    else:
+                        _add_disconnection_mark(page, _point(nodes[i]), _point(nodes[j]), cidx, dstyle, ids, doc_lw)
+                    disconnections_drawn += 1
+        if any(k in sp for k in ("color", "atom_colors", "bond_colors")):
+            painted += 1
     if painted:
         applied.append(f"species colours ({painted} structures)")
+    if disconnections_drawn:
+        applied.append(f"retrosynthesis.disconnection_mark ({disconnections_drawn})")
 
     if styled_runs:
         texts = list(page.findall("t"))
@@ -1248,7 +1347,7 @@ def apply_generic_rings(cdxml: Any, brief: Mapping, grounded: list[dict]) -> tup
 
 
 def merge_duplicate_fonts(page_text: str) -> tuple[str, int]:
-    """Point every run at one declaration per face, so the page does not declare Arial twice.
+    """Point document defaults and runs at one declaration per face.
 
     Two drawing paths in the toolkit each declare the font they use, which leaves a page with two
     identical Arial entries. ChemDraw keeps both; the file is cleaner with one.
@@ -1271,6 +1370,10 @@ def merge_duplicate_fonts(page_text: str) -> tuple[str, int]:
         font_table.remove(font)
     if not dropped:
         return page_text, 0
+    for attr in ("LabelFont", "CaptionFont"):
+        replacement = dropped.get(root.get(attr))
+        if replacement:
+            root.set(attr, replacement)
     for run in root.iter("s"):
         replacement = dropped.get(run.get("font"))
         if replacement:

@@ -546,8 +546,15 @@ def cmd_check(ns):
     from cdxml_toolkit.cdxml_check import check_cdxml
     palette = 'profile'
     if ns.palette:
-        palette = None if ns.palette.strip().lower() == 'any' else [c for c in re.split(r'[,\s]+', ns.palette) if c]
+        raw = ns.palette.strip()
+        if raw.lower() == 'any':
+            palette = None
+        elif ',' not in raw and ' ' not in raw and not raw.startswith('#'):
+            palette = raw
+        else:
+            palette = [c for c in re.split(r'[,\s]+', raw) if c]
     sizes = [float(v) for v in re.split(r'[,\s]+', ns.allow_sizes) if v] if ns.allow_sizes else []
+    profile = getattr(ns, 'profile', None) or 'acs1996'
     status = 0
     for name in ns.files:
         if not Path(name).is_file():
@@ -556,13 +563,347 @@ def cmd_check(ns):
             status = 1
             continue
         try:
-            result = check_cdxml(str(Path(name).resolve()), palette=palette, allow_sizes=sizes,
+            result = check_cdxml(str(Path(name).resolve()), profile=profile, palette=palette, allow_sizes=sizes,
                                  ignore=ns.ignore or ())
         except ValueError as exc:
             raise SystemExit(f'check: {exc}') from None
         print(json.dumps(result, ensure_ascii=False, indent=2))
         status |= 0 if result['ok'] else 1
     return status
+
+
+def cmd_validate(ns):
+    """Saved-file structural validation, with optional native save-cycle and cross-reader checks."""
+    from cdxml_toolkit.mcp_runtime.figure_validation import validate_figure
+    source = Path(ns.source).resolve()
+    if not source.is_file():
+        raise SystemExit(f'validate: file not found: {source}')
+    if ns.output_dir:
+        out_dir = str(Path(ns.output_dir).resolve())
+    else:
+        base = Path(tempfile.gettempdir()) / f'{source.stem}_validation'
+        candidate, idx = base, 2
+        while candidate.exists():
+            candidate = base.with_name(f'{base.name}_{idx}')
+            idx += 1
+        out_dir = str(candidate)
+    try:
+        result = validate_figure(
+            str(source),
+            out_dir,
+            native=bool(ns.native),
+            cross_reader=bool(ns.cross_reader),
+        )
+    except ValueError as exc:
+        raise SystemExit(f'validate: {exc}') from None
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if result.get('ok') else 1
+
+
+_DRAW_SCHEMAS = {
+    'scheme': {
+        'entry': 'cdx.py draw brief.json out.cdxml --render',
+        'schema': {
+            'type': 'object',
+            'required': ['species', 'steps'],
+            'properties': {
+                'kind': {'const': 'scheme'},
+                'style': {'type': 'string', 'description': 'Preset or house style (see cdx.py styles)'},
+                'layout': {'enum': ['linear', 'sequential', 'convergent', 'divergent', 'fan', 'catalytic-cycle']},
+                'wrap': {'enum': ['continue', 'repeat', 'serpentine']},
+                'max_width': {'type': 'number', 'default': 504},
+                'title': {'type': 'string'},
+                'panel_label': {'type': 'string'},
+                'species': {
+                    'type': 'array',
+                    'items': {
+                        'required': ['id'],
+                        'properties': {
+                            'id': {'type': 'string'},
+                            'smiles': {'type': 'string'},
+                            'name': {'type': 'string'},
+                            'label': {'type': 'string'},
+                            'caption': {'type': 'string'},
+                            'color': {'type': 'string'},
+                            'atom_colors': {'type': 'array'},
+                            'bond_colors': {'type': 'array'},
+                            'abbreviate': {'type': 'array'},
+                            'orientation': {'enum': ['flip_horizontal', 'flip_vertical', 'rotate_180']},
+                            'box': {'type': ['boolean', 'object']},
+                            'generic_rings': {'type': 'array'},
+                            'disconnections': {'type': 'array', 'description': '[{bond: [i, j], color?, style?: wavy|dashed|colored}]'},
+                        },
+                    },
+                },
+                'steps': {
+                    'type': 'array',
+                    'items': {
+                        'required': ['substrates', 'products'],
+                        'properties': {
+                            'substrates': {'type': 'array', 'items': {'type': 'string'}},
+                            'products': {'type': 'array', 'items': {'type': 'string'}},
+                            'above': {'type': 'array'},
+                            'below': {'type': 'array'},
+                            'yield': {'type': 'string'},
+                            'arrow': {'enum': ['solid', 'dashed', 'failed', 'reversible', 'resonance', 'retro']},
+                        },
+                    },
+                },
+                'overlays': {'type': 'array'},
+            },
+        },
+        'example': {
+            'style': 'acs_jacs',
+            'species': [
+                {'id': 'A', 'smiles': 'Brc1ccccc1', 'label': '1'},
+                {'id': 'B', 'smiles': 'OB(O)c1ccc(C)cc1', 'label': '2'},
+                {'id': 'P', 'smiles': 'Cc1ccc(-c2ccccc2)cc1', 'label': '3'},
+            ],
+            'steps': [
+                {'substrates': ['A', 'B'], 'products': ['P'],
+                 'above': ['Pd(PPh3)4 (5 mol %)'], 'below': ['K2CO3, DMF, 80 °C'], 'yield': '88%'},
+            ],
+        },
+    },
+    'scope': {
+        'entry': 'cdx.py draw brief.json out_dir --render',
+        'schema': {
+            'type': 'object',
+            'required': ['kind', 'species'],
+            'properties': {
+                'kind': {'const': 'scope'},
+                'title': {'type': 'string', 'description': 'Pass "" to omit the top title when starting with a general reaction header'},
+                'style': {'type': 'string'},
+                'conditions': {'type': 'string'},
+                'footnotes': {'type': 'array', 'items': {'type': 'string'}},
+                'header': {'type': 'object', 'properties': {'substrates': {'description': '[{smiles|name, label?, color?}]'}, 'products': {'description': '[{smiles|name, label?, color?}]'}, 'above': {}, 'below': {}}},
+                'columns': {'type': 'integer', 'minimum': 1, 'maximum': 10,
+                            'description': '1–8 fixed columns without row_align; with row_align, up to 10 cells per row'},
+                'row_align': {'enum': ['left', 'center', 'justify']},
+                'band_style': {'enum': ['rule', 'pill']},
+                'border': {'type': ['boolean', 'string'], 'description': 'true or #RRGGBB outer rounded panel frame'},
+                'fragment_colors': {'type': 'array', 'description': 'SMARTS-based synthon provenance: [{smarts, color, include_attaching_bond?}]'},
+                'highlight_varying': {'type': ['boolean', 'string']},
+                'group_colors': {'type': ['string', 'object'], 'description': '"auto" or {group: "#RRGGBB"}'},
+                'fields': {'type': 'array'},
+                'species': {
+                    'type': 'array',
+                    'items': {
+                        'required': ['id'],
+                        'properties': {
+                            'id': {'type': 'string'}, 'smiles': {'type': 'string'}, 'name': {'type': 'string'},
+                            'label': {'type': 'string'}, 'group': {'type': 'string'}, 'values': {'type': 'object'},
+                            'definition': {'type': 'string'}, 'note': {'type': 'string', 'description': 'Supports *italic* spans such as "*from thymol*"'},
+                            'secondary_of': {'type': 'string'}, 'drawn_with': {'type': 'string'},
+                            'color': {'type': 'string'}, 'atom_colors': {'type': 'array'}, 'bond_colors': {'type': 'array'},
+                        },
+                    },
+                },
+            },
+        },
+        'example': {
+            'kind': 'scope',
+            'title': '',
+            'columns': 4,
+            'row_align': 'center',
+            'band_style': 'pill',
+            'highlight_varying': True,
+            'group_colors': {'para substituents': '#0078B2', 'C-nucleophiles': '#D55E00'},
+            'fields': [{'key': 'yield', 'label': 'Yield'}],
+            'species': [
+                {'id': '3a', 'smiles': 'Cc1ccc(C(=O)N)cc1', 'label': '3a',
+                 'group': 'para substituents', 'values': {'yield': '88%'}},
+                {'id': '3b', 'smiles': 'COc1ccc(C(=O)N)cc1', 'label': '3b',
+                 'group': 'para substituents', 'values': {'yield': '91%'}},
+            ],
+        },
+    },
+    'table': {
+        'entry': 'cdx.py draw brief.json out.cdxml --render',
+        'schema': {
+            'type': 'object',
+            'required': ['kind', 'columns', 'rows'],
+            'properties': {
+                'kind': {'const': 'table'},
+                'title': {'type': 'string'},
+                'style': {'type': 'string'},
+                'table_style': {'enum': ['horizontal_rules', 'grid', 'none']},
+                'highlight_color': {'type': 'string', 'pattern': '^#[0-9A-Fa-f]{6}$'},
+                'max_width': {'type': 'number', 'default': 504},
+                'header': {'type': 'object', 'properties': {'substrates': {}, 'products': {}, 'above': {}, 'below': {}}},
+                'columns': {'type': 'array', 'items': {'oneOf': [{'type': 'string'}, {'type': 'object'}]}},
+                'rows': {'type': 'array', 'description': 'Objects keyed by column key (+ optional highlight: true|bold|color|shaded|boxed|#RRGGBB)'},
+                'footnotes': {'type': 'array', 'items': {'type': 'string'}},
+            },
+        },
+        'example': {
+            'kind': 'table',
+            'title': 'Optimization of reaction conditions',
+            'columns': ['Entry', 'Base', 'Solvent', 'T (°C)', 'Yield (%)^a'],
+            'rows': [
+                {'Entry': '1', 'Base': 'K2CO3', 'Solvent': 'DMF', 'T (°C)': '80', 'Yield (%)^a': '62'},
+                {'Entry': '2', 'Base': 'Cs2CO3', 'Solvent': '1,4-dioxane', 'T (°C)': '100',
+                 'Yield (%)^a': '94^b', 'highlight': True},
+            ],
+            'footnotes': ['^a NMR yield.', '^b Isolated yield.'],
+        },
+    },
+    'energy_profile': {
+        'entry': 'cdx.py draw brief.json out.cdxml --render',
+        'schema': {
+            'type': 'object',
+            'required': ['kind', 'pathways'],
+            'properties': {
+                'kind': {'const': 'energy_profile'},
+                'style': {'type': 'string', 'description': 'Preset or house style (supplies pathway_colors, unit, level_style)'},
+                'palette': {'type': 'string', 'description': 'Named semantic palette (okabe_ito, nature, acs_jacs, ...)'},
+                'profile_style': {'enum': ['levels', 'smooth']},
+                'unit': {'type': 'string', 'description': 'kcal/mol, kJ/mol, eV'},
+                'title': {'type': 'string'},
+                'pathways': {
+                    'type': 'array',
+                    'items': {
+                        'required': ['points'],
+                        'properties': {
+                            'label': {'type': 'string'},
+                            'color': {'type': 'string'},
+                            'dashed': {'type': 'boolean'},
+                            'points': {'type': 'array'},
+                        },
+                    },
+                },
+                'arrows': {'type': 'array'},
+            },
+        },
+        'example': {
+            'kind': 'energy_profile',
+            'palette': 'okabe_ito',
+            'profile_style': 'levels',
+            'unit': 'kcal/mol',
+            'pathways': [
+                {'label': 'Catalysed', 'points': [
+                    {'id': 'R', 'label': '1', 'energy': 0.0},
+                    {'id': 'TS', 'label': 'TS1', 'energy': 15.2, 'kind': 'ts'},
+                    {'id': 'P', 'label': '2', 'energy': -8.4},
+                ]},
+            ],
+        },
+    },
+    'mechanism': {
+        'entry': 'cdx.py draw brief.json out.cdxml --render',
+        'schema': {
+            'type': 'object',
+            'required': ['kind', 'species', 'steps'],
+            'properties': {
+                'kind': {'const': 'mechanism'},
+                'style': {'type': 'string'},
+                'show_atom_numbers': {'type': 'boolean'},
+                'species': {'type': 'array'},
+                'steps': {
+                    'type': 'array',
+                    'items': {
+                        'required': ['substrates', 'products', 'moves'],
+                        'properties': {
+                            'substrates': {'type': 'array'}, 'products': {'type': 'array'},
+                            'above': {'type': 'array'}, 'below': {'type': 'array'},
+                            'arrow': {'enum': ['solid', 'dashed', 'failed', 'reversible', 'resonance']},
+                            'moves': {'type': 'array', 'items': {'required': ['from', 'to']}},
+                        },
+                    },
+                },
+            },
+        },
+        'example': {
+            'kind': 'mechanism',
+            'species': [
+                {'id': 'A', 'smiles': 'CC=O', 'label': '1'},
+                {'id': 'OH', 'smiles': '[OH-]'},
+                {'id': 'P', 'smiles': 'CC([O-])O', 'label': '2'},
+            ],
+            'steps': [{
+                'substrates': ['A', 'OH'], 'products': ['P'], 'above': ['H2O'],
+                'moves': [
+                    {'from': {'species': 'OH', 'atom': 0}, 'to': {'species': 'A', 'atom': 1}},
+                    {'from': {'species': 'A', 'bond': [1, 2]}, 'to': {'species': 'A', 'atom': 2}},
+                ],
+            }],
+        },
+    },
+    'panels': {
+        'entry': 'cdx.py draw brief.json out.cdxml --render',
+        'schema': {
+            'type': 'object',
+            'required': ['kind', 'panels'],
+            'properties': {
+                'kind': {'const': 'panels'},
+                'style': {'type': 'string'},
+                'layout': {'enum': ['stacked', 'side_by_side']},
+                'columns': {'type': 'integer', 'minimum': 1, 'maximum': 4},
+                'title_style': {'enum': ['box', 'rule', 'plain']},
+                'toc': {'type': 'boolean', 'description': 'Check canvas against ACS TOC 82.5 x 44.5 mm limit'},
+                'max_width': {'type': 'number'},
+                'panels': {'type': 'array', 'items': {'required': ['title'], 'properties': {
+                    'title': {'type': 'string'}, 'accent': {'type': 'boolean'}, 'color': {'type': 'string'},
+                    'brief': {'type': 'object', 'description': 'scheme, mechanism, table, or energy_profile brief'},
+                    'gallery': {'type': 'array'}, 'sections': {'type': 'array'},
+                }}},
+                'legend': {'type': 'array'},
+            },
+        },
+        'example': {
+            'kind': 'panels',
+            'layout': 'side_by_side',
+            'title_style': 'rule',
+            'panels': [
+                {'title': '(a) Representative cores', 'gallery': [
+                    {'id': 'g1', 'smiles': 'c1ccncc1', 'caption': ['pyridine']},
+                ]},
+                {'title': '(b) This work', 'accent': True, 'brief': {
+                    'species': [{'id': 'A', 'smiles': 'CCO', 'label': '1'}, {'id': 'B', 'smiles': 'CC=O', 'label': '2'}],
+                    'steps': [{'substrates': ['A'], 'products': ['B'], 'above': ['[O]']}],
+                }},
+            ],
+        },
+    },
+    'build': {
+        'entry': 'cdx.py build spec.json out.cdxml --render',
+        'schema': {
+            'type': 'object',
+            'required': ['objects'],
+            'properties': {
+                'style': {'type': 'string'},
+                'objects': {
+                    'type': 'array',
+                    'description': 'Typed objects placed with "at" / "from"+"to": molecule, conformer, text, arrow, curved_arrow, line, circle, box, label_box, ts_bracket, polymer_bracket, orbital, interaction, symbol',
+                },
+            },
+        },
+        'example': {
+            'objects': [
+                {'type': 'molecule', 'smiles': '[*:1]C(=O)O', 'at': [80, 60], 'labels': {'1': 'C10H21'}},
+                {'type': 'label_box', 'at': [80, 100], 'text': 'A'},
+                {'type': 'arrow', 'from': [150, 60], 'to': [220, 60]},
+                {'type': 'text', 'at': [185, 48], 'text': 'H{sub:2}, Pd/C'},
+            ],
+        },
+    },
+}
+
+
+def cmd_schema(ns):
+    """Print the JSON schema and minimal example for a drawing kind (works without a runtime)."""
+    kind = getattr(ns, 'kind', None)
+    if not kind:
+        payload = {
+            'kinds': {k: v['entry'] for k, v in _DRAW_SCHEMAS.items()},
+            'usage': 'cdx.py schema <kind>',
+        }
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+    if kind not in _DRAW_SCHEMAS:
+        raise SystemExit(f'Unknown schema kind {kind!r}; available: {", ".join(_DRAW_SCHEMAS)}')
+    print(json.dumps({'kind': kind, **_DRAW_SCHEMAS[kind]}, ensure_ascii=False, indent=2))
+    return 0
 
 
 def cmd_circles(ns):
@@ -1158,8 +1499,8 @@ def _tolerant_console():
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else list(argv)
     _tolerant_console()
-    # `sig` reads a generated reference and help is static: both work before a runtime exists.
-    if argv[:1] not in (['sig'], ['-h'], ['--help'], []):
+    # `sig` and `schema` are static: both work before a runtime exists.
+    if argv[:1] not in (['sig'], ['schema'], ['-h'], ['--help'], []):
         _ensure_runtime(argv)
     if argv[:1] == ['py']:  # pass everything through untouched (argparse would eat -m/-c)
         return cmd_py(argparse.Namespace(rest=argv[1:]))
@@ -1218,12 +1559,25 @@ def main(argv=None):
     s = sub.add_parser('check', help='house-rule check of saved CDXML: settings, fonts, text sizes, palette, '
                                      'bond length, references (no ChemDraw needed; does not judge chemistry)')
     s.add_argument('files', nargs='+')
-    s.add_argument('--palette', help='allowed colours as #RRGGBB,#RRGGBB,... or "any" '
-                                     '(default: black, white, #FF6600, #336699)')
-    s.add_argument('--allow-sizes', help='text sizes accepted besides 10 pt, e.g. "8,6"')
+    s.add_argument('--profile', default='acs1996',
+                   help='acs1996 (default), a measurement preset (wiley, nature, rsc, ...), or a house style (acs_jacs, ...)')
+    s.add_argument('--palette', help='allowed colours as #RRGGBB,#RRGGBB,..., a named palette (okabe_ito, nature, acs_jacs, ...), '
+                                     'or "any" (default: the profile palette)')
+    s.add_argument('--allow-sizes', help='text sizes accepted besides the profile size, e.g. "8,6"')
     s.add_argument('--ignore', action='append', metavar='CODE',
                    help='skip one issue code (repeatable), e.g. bond_length for a Newman projection')
     s.set_defaults(fn=cmd_check)
+    s = sub.add_parser('validate', help='saved-file structural validation, with optional native save-cycle and '
+                                        'cross-reader checks: cdx.py validate FILE.cdxml [--output-dir DIR] [--native] [--cross-reader]')
+    s.add_argument('source', help='saved .cdxml file to validate')
+    s.add_argument('--output-dir', help='new diagnostic folder (default: fresh folder in temp)')
+    s.add_argument('--native', action='store_true', help='also run CDXML -> CDX -> CDXML native save-cycle check')
+    s.add_argument('--cross-reader', action='store_true', help='also compare saved fragments across ChemScript and RDKit (requires --native)')
+    s.set_defaults(fn=cmd_validate)
+    s = sub.add_parser('schema', help='print the JSON schema and minimal working example for a drawing kind: '
+                                      'cdx.py schema [scheme|scope|mechanism|panels|table|build]')
+    s.add_argument('kind', nargs='?', help='drawing kind (omit to list all kinds)')
+    s.set_defaults(fn=cmd_schema)
     s = sub.add_parser('circles', help='redraw Kekule aromatic rings with circles: cdx.py circles IN.cdxml OUT.cdxml')
     s.add_argument('source')
     s.add_argument('output')

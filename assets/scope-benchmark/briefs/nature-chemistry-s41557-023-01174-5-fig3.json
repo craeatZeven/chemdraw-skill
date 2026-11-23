@@ -1,0 +1,144 @@
+{
+  "kind": "scope",
+  "title": "",
+  "style": "nature_portfolio",
+  "width_mm": 180,
+  "columns": 4,
+  "row_align": "left",
+  "highlight_varying": "#008080",
+  "group_colors": {
+    "[4]Helicenes (L1, 120 °C)": "#8B1E24",
+    "[5]Helicenes (L1, 140 °C)": "#008080"
+  },
+  "footnotes": [
+    "a Enantiomerization barrier ΔG‡ determined by dynamic HPLC."
+  ],
+  "header": {
+    "substrates": [
+      {
+        "smiles": "Brc1cccc2ccc(C=Cc3ccc4ccccc4c3)cc12",
+        "label": "1"
+      }
+    ],
+    "products": [
+      {
+        "smiles": "c1ccc2c(c1)ccc1ccc3ccccc3c12",
+        "label": "2 Carbo[n]helicenes"
+      }
+    ],
+    "above": [
+      "Pd2dba3 (5 mol%), L* (20 mol%), Cs2CO3 (0.5 equiv.)"
+    ],
+    "below": [
+      "CPME, T °C, 24 h"
+    ]
+  },
+  "fields": [
+    {
+      "key": "perf",
+      "label": "",
+      "show_label": false
+    },
+    {
+      "key": "barrier",
+      "label": "",
+      "show_label": false,
+      "optional": true
+    }
+  ],
+  "species": [
+    {
+      "id": "2a",
+      "smiles": "COc1cc2ccc3ccc4c(C)cccc4c3c2c(OC)c1",
+      "label": "2a",
+      "group": "[4]Helicenes (L1, 120 °C)",
+      "values": {
+        "perf": "93%, e.r. 93:7",
+        "barrier": "*ΔG*‡ = 35.3 kcal mol-1^a"
+      }
+    },
+    {
+      "id": "2b",
+      "smiles": "COc1cc2ccc3ccc4c(OC(C)C)cccc4c3c2c(OC)c1",
+      "label": "2b",
+      "group": "[4]Helicenes (L1, 120 °C)",
+      "values": {
+        "perf": "92%, e.r. 96:4"
+      }
+    },
+    {
+      "id": "2c",
+      "smiles": "COc1cc2ccc3ccc4c(C)cc(F)cc4c3c2c(OC)c1",
+      "label": "2c",
+      "group": "[4]Helicenes (L1, 120 °C)",
+      "values": {
+        "perf": "94%, e.r. 95:5"
+      }
+    },
+    {
+      "id": "2d",
+      "smiles": "COc1cc2ccc3ccc4c(C)cc(C)cc4c3c2c(OC)c1",
+      "label": "2d",
+      "group": "[4]Helicenes (L1, 120 °C)",
+      "values": {
+        "perf": "95%, e.r. 95:5",
+        "barrier": "*ΔG*‡ = 34.8 kcal mol-1"
+      }
+    },
+    {
+      "id": "2e",
+      "smiles": "COc1cc2ccc3ccc4c(C)cc(OC)cc4c3c2c(OC)c1",
+      "label": "2e",
+      "group": "[4]Helicenes (L1, 120 °C)",
+      "values": {
+        "perf": "90%, e.r. 95:5"
+      }
+    },
+    {
+      "id": "2f",
+      "smiles": "COc1cc2ccc3ccc4c(C)cc(C#N)cc4c3c2c(OC)c1",
+      "label": "2f",
+      "group": "[4]Helicenes (L1, 120 °C)",
+      "values": {
+        "perf": "95%, e.r. 95:5"
+      }
+    },
+    {
+      "id": "2h",
+      "smiles": "Cc1cccc2c1c1c(ccc3c1c1ccccc1cc3)cc2",
+      "label": "2h",
+      "group": "[5]Helicenes (L1, 140 °C)",
+      "values": {
+        "perf": "85%, e.r. 95:5",
+        "barrier": "*ΔG*‡ = 40.1 kcal mol-1^a"
+      }
+    },
+    {
+      "id": "2j",
+      "smiles": "COc1ccc2ccc3c(c2c1)c1c(ccc2cccc(C)c12)cc3",
+      "label": "2j",
+      "group": "[5]Helicenes (L1, 140 °C)",
+      "values": {
+        "perf": "92%, e.r. 94:6"
+      }
+    },
+    {
+      "id": "2k",
+      "smiles": "N#Cc1ccc2ccc3c(c2c1)c1c(ccc2cccc(C)c12)cc3",
+      "label": "2k",
+      "group": "[5]Helicenes (L1, 140 °C)",
+      "values": {
+        "perf": "88%, e.r. 95:5"
+      }
+    },
+    {
+      "id": "2l",
+      "smiles": "Fc1ccc2ccc3c(c2c1)c1c(ccc2cccc(C)c12)cc3",
+      "label": "2l",
+      "group": "[5]Helicenes (L1, 140 °C)",
+      "values": {
+        "perf": "92%, e.r. 95:5"
+      }
+    }
+  ]
+}

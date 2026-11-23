@@ -43,23 +43,23 @@
 
 ## `chemdraw.chemscript_bridge`
 
-- **class**, line 293: `ChemScriptBridge` - High-level Python interface to ChemScript via a 32-bit subprocess server.
-- **method**, line 464: `ChemScriptBridge.cleanup(input_path: str, output: str = None) -> str` - Clean up a structure file — normalize coordinates, bond lengths, etc.
-- **method**, line 382: `ChemScriptBridge.close()` - Shut down the server.
-- **method**, line 519: `ChemScriptBridge.contains_substructure(target: str, query: str) -> bool` - Check if target contains query as a substructure.
-- **method**, line 408: `ChemScriptBridge.convert_file(input_path: str, output_path: str) -> dict` - Convert a chemistry file between formats.
-- **method**, line 495: `ChemScriptBridge.get_formula(source: str) -> str` - Get molecular formula for a structure file or SMILES string.
-- **method**, line 505: `ChemScriptBridge.get_info(source: str) -> dict` - Get full chemical info: name, formula, SMILES, InChI, atom/bond count.
-- **method**, line 485: `ChemScriptBridge.get_name(source: str) -> str` - Get IUPAC name for a structure file or SMILES string.
-- **method**, line 574: `ChemScriptBridge.largest_common_substructure(mol1: str, mol2: str) -> dict` - Find the largest common substructure between two molecules.
-- **method**, line 553: `ChemScriptBridge.load_reaction(source: str, include_cdxml: bool = False) -> dict` - Load a reaction file and return component information.
-- **method**, line 745: `ChemScriptBridge.mimetypes() -> List[str]` - List all supported mimetypes.
-- **method**, line 424: `ChemScriptBridge.name_to_cdxml(name: str, output: str = None) -> str` - Convert a chemical name to CDXML string.
-- **method**, line 595: `ChemScriptBridge.overlay(source: str, target: str, source_format: str = None, target_format: str = None) -> Tuple[str, bool]` - Overlay (2D-align) a molecule onto a reference molecule.
-- **method**, line 444: `ChemScriptBridge.smiles_to_cdxml(smiles: str, output: str = None) -> str` - Convert a SMILES string to CDXML.
-- **method**, line 623: `ChemScriptBridge.substructure_align(query: str, target: str, query_format: str = None, target_format: str = None) -> Optional[List]` - Align a small molecule (query) to its substructure match in a larger molecule (target).
-- **method**, line 536: `ChemScriptBridge.substructure_search(target: str, query: str) -> dict` - Perform atom-by-atom substructure search.
-- **method**, line 720: `ChemScriptBridge.write_data(source: str, target_format: str, source_format: str = None) -> str` - Convert a structure to a specific format string.
+- **class**, line 250: `ChemScriptBridge` - High-level Python interface to ChemScript via a 32-bit subprocess server.
+- **method**, line 421: `ChemScriptBridge.cleanup(input_path: str, output: str = None) -> str` - Clean up a structure file — normalize coordinates, bond lengths, etc.
+- **method**, line 339: `ChemScriptBridge.close()` - Shut down the server.
+- **method**, line 476: `ChemScriptBridge.contains_substructure(target: str, query: str) -> bool` - Check if target contains query as a substructure.
+- **method**, line 365: `ChemScriptBridge.convert_file(input_path: str, output_path: str) -> dict` - Convert a chemistry file between formats.
+- **method**, line 452: `ChemScriptBridge.get_formula(source: str) -> str` - Get molecular formula for a structure file or SMILES string.
+- **method**, line 462: `ChemScriptBridge.get_info(source: str) -> dict` - Get full chemical info: name, formula, SMILES, InChI, atom/bond count.
+- **method**, line 442: `ChemScriptBridge.get_name(source: str) -> str` - Get IUPAC name for a structure file or SMILES string.
+- **method**, line 531: `ChemScriptBridge.largest_common_substructure(mol1: str, mol2: str) -> dict` - Find the largest common substructure between two molecules.
+- **method**, line 510: `ChemScriptBridge.load_reaction(source: str, include_cdxml: bool = False) -> dict` - Load a reaction file and return component information.
+- **method**, line 702: `ChemScriptBridge.mimetypes() -> List[str]` - List all supported mimetypes.
+- **method**, line 381: `ChemScriptBridge.name_to_cdxml(name: str, output: str = None) -> str` - Convert a chemical name to CDXML string.
+- **method**, line 552: `ChemScriptBridge.overlay(source: str, target: str, source_format: str = None, target_format: str = None) -> Tuple[str, bool]` - Overlay (2D-align) a molecule onto a reference molecule.
+- **method**, line 401: `ChemScriptBridge.smiles_to_cdxml(smiles: str, output: str = None) -> str` - Convert a SMILES string to CDXML.
+- **method**, line 580: `ChemScriptBridge.substructure_align(query: str, target: str, query_format: str = None, target_format: str = None) -> Optional[List]` - Align a small molecule (query) to its substructure match in a larger molecule (target).
+- **method**, line 493: `ChemScriptBridge.substructure_search(target: str, query: str) -> dict` - Perform atom-by-atom substructure search.
+- **method**, line 677: `ChemScriptBridge.write_data(source: str, target_format: str, source_format: str = None) -> str` - Convert a structure to a specific format string.
 
 ## `chemdraw.chemscript_mac`
 
@@ -129,8 +129,10 @@
 
 ## `chemdraw.progid`
 
-- **function**, line 36: `chemdraw_progid() -> str` - The ProgID to dispatch: ``$CHEMDRAW_PROGID``, else the first registered one.
-- **function**, line 15: `registered(progid: str) -> bool` - Whether ``progid`` has a CLSID under HKEY_CLASSES_ROOT (always False off Windows).
+- **function**, line 72: `chemdraw_com_registration() -> ChemDrawComRegistration | None` - Find a registered server, checking the process registry view first.
+- **function**, line 78: `chemdraw_progid() -> str` - Use the configured ProgID, a registered server, or the legacy default.
+- **class**, line 15: `ChemDrawComRegistration` - The ProgID, LocalServer32 command, and resolved executable.
+- **function**, line 67: `registered(progid: str) -> bool` - Whether the ProgID resolves to an installed ChemDraw COM server.
 
 ## `chemdraw.stoichiometry_grid`
 
