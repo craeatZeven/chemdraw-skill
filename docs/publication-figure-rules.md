@@ -113,3 +113,10 @@ python scripts/run_scope_benchmark.py --corpus journal --render --side-by-side
 # 6. Audit corpus licence discipline and coverage across all 23 types
 python scripts/audit_corpus.py --markdown
 ```
+
+The journal runner uses the scope entry point for scope briefs so that options
+such as `row_align` and `fragment_colors` are validated as scope settings. Run it
+with the runtime built from the same checkout as the corpus. From a checkout,
+`scripts/install.py --runtime-only --apply` builds its local `toolkit/`.
+Use `cdx.py doctor` to check the installed fingerprint if the runner reports
+unknown brief fields after a checkout change.
