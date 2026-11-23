@@ -45,7 +45,7 @@
   "species": [
     {
       "id": "3a",
-      "smiles": "c1(NC(=O)c2nc3c(s2)cccc3)ccc(C)cc1",
+      "smiles": "Cc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
       "label": "3a",
       "values": {
         "yield": "64%"
@@ -300,5 +300,5 @@
     }
   ],
   "height_mm": 275,
-  "depiction_rotation": 10
+  "depiction_rotation": 180
 }

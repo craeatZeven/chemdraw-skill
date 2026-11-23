@@ -18,7 +18,7 @@ class JournalFidelityTests(unittest.TestCase):
         spec = brief("bjoc-articles-22-127-scheme2")
         self.assertEqual(spec["columns"], 4)
         self.assertNotIn("row_align", spec)
-        self.assertIn("depiction_rotation", spec)
+        self.assertEqual(spec["depiction_rotation"], 180)
         self.assertEqual([entry["id"] for entry in spec["species"]], [f"3{letter}" for letter in "abcdefghijklmnopqrst"])
 
     def test_helicenes_include_the_six_ring_series_and_two_source_insets(self):
