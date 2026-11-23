@@ -154,7 +154,7 @@ BAND_GAP = 4.0
 LINE_JOIN = ', '   # "3a, 64%": the number and the values that share its line
 
 
-_FOOTNOTE = re.compile(r'\^([A-Za-z0-9*\u2020\u2021\u00a7]+)')
+_FOOTNOTE = re.compile(r'\^([+\-\u2212][0-9]*|[A-Za-z0-9*\u2020\u2021\u00a7]+)')
 _ITALIC_SPAN = re.compile(r'\*([^*\s][^*\n]*?[^*\s]|[^*\s])\*')
 _FOOTNOTE_LEAD = re.compile(r'^(?:\^([A-Za-z0-9*\u2020\u2021\u00a7]+)|([a-z])(?=\s+[A-Z0-9(\[]))(\s+.*)$')
 _LOCANT = re.compile(r'(?:(?<=^)|(?<=[\s(]))(?:(ortho|meta|para|ipso|cis|trans|syn|anti|endo|exo|tert|sec)(?=[-\s])'
@@ -205,7 +205,7 @@ def caption_runs(text, bold=False):
             continue
         if mark:
             plain_parts.append(piece)
-            runs.append({'text': piece, 'superscript': True, 'italic': True})
+            runs.append({'text': piece, 'superscript': True, 'italic': piece[0] not in '+-\u2212'})
         elif bold and is_formula_label(piece):
             plain_parts.append(piece)
             runs += [{**r, 'bold': True} for r in chemical_runs(piece)]
@@ -256,18 +256,25 @@ def footnote_runs(footer):
 
 def heading_runs(text):
     """A group's name with only its locants in italic: *para* substituents, *N*-heterocycles."""
-    runs, offset = [], 0
-    for m in _LOCANT.finditer(text):
-        if m.start() > offset:
-            runs.append({'text': text[offset:m.start()]})
-        runs.append({'text': m.group(0), 'italic': True})
-        offset = m.end()
-    if offset < len(text):
-        runs.append({'text': text[offset:]})
+    _, formatted = caption_runs(text)
+    runs = []
+    for run in formatted or [{'text': text}]:
+        if set(run) != {'text'}:
+            runs.append(run)
+            continue
+        part = run['text']
+        offset = 0
+        for m in _LOCANT.finditer(part):
+            if m.start() > offset:
+                runs.append({'text': part[offset:m.start()]})
+            runs.append({'text': m.group(0), 'italic': True})
+            offset = m.end()
+        if offset < len(part):
+            runs.append({'text': part[offset:]})
     return runs
 
 
-SCRIPT_SCALE = 0.7   # a sub- or superscript is drawn this much smaller than its line
+SCRIPT_SCALE = 0.75   # match the script scale of the native caption-box measurements
 
 
 def _runs_width(runs, style):
@@ -361,14 +368,19 @@ def label_group(mol, definition):
 
 def header_identities(spec):
     """What the header scheme draws, as the page check counts structures (R numbers removed)."""
+    if diagram := spec.get('header_scheme'):
+        return scheme_identities(diagram['objects'])
     header = spec.get('header') or {}
+    return scheme_identities([*header.get('substrates', []), *header.get('products', [])])
+
+
+def scheme_identities(objects):
+    """Read the expected molecule components from inline scheme objects."""
     found = []
-    for item in [*header.get('substrates', []), *header.get('products', [])]:
+    for item in objects:
         if not item.get('smiles'):
             continue  # a reagent written as its abbreviation carries no structure
         mol = Chem.MolFromSmiles(item['smiles'])
-        for atom in mol.GetAtoms():
-            atom.SetAtomMapNum(0)
         found += [semantic_key(m) for m in Chem.GetMolFrags(mol, asMols=True)]
     return found
 
@@ -498,6 +510,56 @@ def _shift_obj_x(obj, dx):
         obj['end'] = [obj['end'][0] + dx, obj['end'][1]]
 
 
+def _placed_scheme_object(item, dx, dy):
+    """Translate a scheme object from its local point coordinates to the page."""
+    obj = deepcopy(item)
+    for key in ('position', 'start', 'end'):
+        if key in obj:
+            x, y = obj[key]
+            obj[key] = [x + dx, y + dy]
+    for key in ('coordinates', 'points'):
+        if key in obj:
+            obj[key] = [[x + dx, y + dy] for x, y in obj[key]]
+    return obj
+
+
+def _header_labels(item, mol):
+    labels = {}
+    if 'variable_label' in item:
+        dummy = [atom.GetIdx() for atom in mol.GetAtoms() if atom.GetAtomicNum() == 0]
+        if len(dummy) != 1:
+            raise ValueError('variable_label needs exactly one variable atom in the header molecule')
+        labels['variable'] = (dummy[0], item['variable_label'])
+    if 'attached_label' in item:
+        label = item['attached_label']
+        candidates = []
+        for match in mol.GetSubstructMatches(Chem.MolFromSmarts(label['smarts'])):
+            boundary = [(i, a.GetIdx()) for i in match for a in mol.GetAtomWithIdx(i).GetNeighbors()
+                        if a.GetIdx() not in match]
+            if len(boundary) == 1 and boundary[0][0] == match[0]:
+                candidates.append({'atoms': match, 'outside': boundary[0][1], 'label': label['text']})
+        if len(candidates) != 1:
+            raise ValueError('attached_label must match one group with its single attachment atom first')
+        labels['attached'] = candidates[0]
+    return labels
+
+
+def _apply_header_labels(page, object_ids, labels):
+    next_id = max(int(node.get('id', '0')) for node in page.iter()) + 1
+    for key, (smiles, edits) in labels.items():
+        fragment = page.find(f"fragment[@id='{object_ids[key]}']")
+        if 'variable' in edits:
+            index, label = edits['variable']
+            node = fragment.findall('n')[index]
+            run = node.find('t/s')
+            run.text = label
+        if 'attached' in edits:
+            following_id = _draw_as_label(fragment, smiles, edits['attached'], next_id, fixed_display=True)
+            if following_id == next_id:
+                raise ValueError('The attached label could not be bound to the drawn header molecule')
+            next_id = following_id
+
+
 def header_objects(spec, style, left, top, *, bond_scale=1.7):
     """The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined
     by "+", the arrow with its conditions, and the products with their labels. Also returns
@@ -527,24 +589,41 @@ def header_objects(spec, style, left, top, *, bond_scale=1.7):
         if marks:
             xy = _upright_ring(xy, marks)
             marks = _ring_edge_marks(xy, mol, header_bond, style)
-        xs, ys = [p[0] for p in xy], [p[1] for p in xy]
+        labels = _header_labels(item, mol)
+        attached = labels.get('attached')
+        omitted = set(attached['atoms'][1:]) if attached else set()
+        xs, ys = zip(*(point for i, point in enumerate(xy) if i not in omitted))
+        xs, ys = list(xs), list(ys)
+        if attached:
+            head = attached['atoms'][0]
+            x, y = xy[head]
+            direction = 1 if x >= xy[attached['outside']][0] else -1
+            xs.append(x + direction * text_width(attached['label'], style))
+        if 'variable' in labels:
+            index, label = labels['variable']
+            xs.append(xy[index][0] + text_width(label, style))
         for _, start, end, (tx, ty), align, label, _edge in marks.values():
             label_width = text_width(label, style)
             lx = tx - {'Right': label_width, 'Center': label_width / 2, 'Left': 0}[align]
             xs.extend([start[0], end[0], lx, lx + label_width]); ys.extend([start[1], end[1], ty - size, ty])
-        return {'item': item, 'xy': xy, 'marks': marks, 'w': max(xs) - min(xs), 'h': max(ys) - min(ys),
+        return {'item': item, 'xy': xy, 'marks': marks, 'labels': labels,
+                'w': max(xs) - min(xs), 'h': max(ys) - min(ys),
                 'x0': min(xs), 'y0': min(ys)}
     subs = [shape(i, 'substrates') for i in header.get('substrates', [])]
     prods = [shape(i, 'products') for i in header.get('products', [])]
-    above = [caption_runs(t) for t in header.get('above', [])]
-    below = [caption_runs(t) for t in header.get('below', [])]
+    def condition(line):
+        return caption_runs(line) if isinstance(line, str) else (''.join(run['text'] for run in line), line)
+
+    above = [condition(t) for t in header.get('above', [])]
+    below = [condition(t) for t in header.get('below', [])]
     line = size * 1.2
     above_h = len(above) * line + 4
     tallest = max(s['h'] for s in subs + prods)
     mid = top + max(tallest / 2 + gap, above_h + 4)
-    arrow_len = max([text_width(p, style) for p, _ in above + below] + [6 * style['bond_length']]) + 16
+    arrow_len = max([_runs_width(runs, style) if runs else text_width(plain, style)
+                     for plain, runs in above + below] + [6 * style['bond_length']]) + 16
     objects = []; x = left; bottom = mid
-    hidden_marks = {}
+    hidden_marks, labels = {}, {}
     def molecule(s, key):
         nonlocal x, bottom
         dx = x + gap - s['x0']; dy = mid - s['y0'] - s['h'] / 2
@@ -566,7 +645,15 @@ def header_objects(spec, style, left, top, *, bond_scale=1.7):
                    'coordinates': [[px + dx, py + dy] for px, py in s['xy']]}
         if s['item'].get('color'):
             mol_obj['color'] = s['item']['color']
+        if variable_color := s['item'].get('variable_label_color'):
+            variable, _ = s['labels']['variable']
+            mol = Chem.MolFromSmiles(s['item']['smiles'])
+            mol_obj['atom_label_colors'] = {str(variable): variable_color}
+            mol_obj['highlight_bonds'] = [bond.GetIdx() for bond in mol.GetAtomWithIdx(variable).GetBonds()]
+            mol_obj['highlight_color'] = variable_color
         objects.append(mol_obj)
+        if s['labels']:
+            labels[key] = (s['item']['smiles'], s['labels'])
         for index, (nickname, start, end, position, align, label, _edge) in s['marks'].items():
             hidden_marks.setdefault(key, {})[index] = nickname
             objects.append({'type': 'line', 'start': [start[0] + dx, start[1] + dy],
@@ -590,8 +677,16 @@ def header_objects(spec, style, left, top, *, bond_scale=1.7):
                             **({'runs': runs} if runs else {})})
             bottom = max(bottom, mid + s['h'] / 2 + gap + size * 1.3)
         x += s['w'] + 2 * gap
+        if s['item'].get('counterion'):
+            plain, runs = caption_runs(s['item']['counterion'])
+            objects.append({'type': 'text', 'position': [x, mid + size * 0.35], 'size': size,
+                            **({'runs': runs} if runs else {'text': plain})})
+            x += text_width(plain, style) + gap
     for i, s in enumerate(subs):
         if i:
+            # A terminal atom label can extend beyond the last atom coordinate.
+            # Leave space between it and the standalone reagent separator.
+            x += gap
             objects.append({'type': 'text', 'text': '+', 'align': 'Center', 'size': size,
                             'position': [x, mid + size * 0.35]})
             x += gap
@@ -608,7 +703,7 @@ def header_objects(spec, style, left, top, *, bond_scale=1.7):
     x = end + gap * 0.5
     for i, s in enumerate(prods):
         molecule(s, f'header_p{i}')
-    return objects, bottom, x, hidden_marks
+    return objects, bottom, x, hidden_marks, labels
 
 
 def _hide_header_attachments(page, object_ids, hidden_marks):
@@ -644,8 +739,21 @@ def prepare(records,spec):
         if group not in refs and ref_id:
             if ref_id not in by_id: raise ValueError(f'Unknown reference compound: {ref_id}')
             ref=Chem.MolFromSmiles(by_id[ref_id]['smiles']); rdDepictor.Compute2DCoords(ref); refs[group]=ref
-        mol,xy,warning=molecule_coordinates(Chem.MolFromSmiles(record['smiles']),style['bond_length'],refs.get(group))
-        if group not in refs and float(spec.get('depiction_rotation') or 0):
+        explicit = spec.get('coordinates_by_id', {}).get(record['compound_id'])
+        molecule = Chem.MolFromSmiles(record['smiles'])
+        if explicit is not None:
+            if len(explicit) != molecule.GetNumAtoms():
+                raise ValueError(f"Structure {record['compound_id']} needs one coordinate per input atom")
+            conformer = Chem.Conformer(molecule.GetNumAtoms())
+            conformer.Set3D(False)
+            scale = 1.5 / float(style['bond_length'])
+            for i, (x, y) in enumerate(explicit):
+                conformer.SetAtomPosition(i, (x * scale, -y * scale, 0))
+            molecule.AddConformer(conformer)
+            mol, xy, warning = molecule, explicit, None
+        else:
+            mol, xy, warning = molecule_coordinates(molecule, style['bond_length'], refs.get(group))
+        if explicit is None and group not in refs and float(spec.get('depiction_rotation') or 0):
             # The first compound of a table fixes the orientation every later cell is aligned to, so
             # turning it turns the whole table: 180 puts a benzothiazole on the left where the source
             # figure has it, instead of the right where RDKit's own depiction does. Both the points
@@ -698,9 +806,14 @@ def prepare(records,spec):
         elif len(inline)>1:
             inline=['label']  # too long for one line: each value on its own line
         joined=inline if len(inline)>1 else []
-        raw={k:(v if k in joined else wrap(v,width-12,style)) for k,v in raw.items()}
-        texts={k:caption_runs(v,bold=k=='label')[0] for k,v in raw.items()}
-        runs={k:caption_runs(v,bold=k=='label')[1] for k,v in raw.items()}
+        texts, runs = {}, {}
+        for key, value in raw.items():
+            formatted = first_runs[key]
+            measured = _runs_width(formatted, style) if formatted else text_width(plain[key], style)
+            if key in joined or measured <= width - 12:
+                texts[key], runs[key] = plain[key], formatted
+            else:
+                texts[key], runs[key] = caption_runs(wrap(value, width - 12, style), bold=key == 'label')
         lines=((_caption_advance('',size) if joined else 0)
                +sum(_caption_advance(v,size) for k,v in texts.items() if k not in joined)
                -size*CELL['line_advance']-CELL['line_gap'])
@@ -769,17 +882,25 @@ def create_pages(records,spec,stage,start_index=0):
             right=max(right,margin+max((text_width(line,style) for line in conditions.splitlines()),default=0))
         rules=[]
         header_info=None
-        hidden_marks={}
+        hidden_marks, header_labels = {}, {}
         if index==0 and spec.get('header'):
             # The general reaction stands over the first page's grid, a rule under it.
-            drawn,header_bottom,header_right,hidden_marks=header_objects(spec,style,margin,top)
+            drawn,header_bottom,header_right,hidden_marks,header_labels=header_objects(spec,style,margin,top)
             objects+=drawn; right=max(right,header_right)
             header_info=(drawn,header_right)
             rule={'type':'line','start':[margin,header_bottom+4],'end':[width-margin,header_bottom+4],'style':'line'}
             objects.append(rule); rules.append(rule)
             top=header_bottom+4+size+4
+        elif index == 0 and (diagram := spec.get('header_scheme')):
+            if diagram['width'] > width - 2 * margin or top + diagram['height'] > bottom:
+                raise ValueError('header_scheme does not fit above the grid at the requested dimensions')
+            dx = (width - diagram['width']) / 2
+            objects.extend(_placed_scheme_object(obj, dx, top) for obj in diagram['objects'])
+            top += diagram['height'] + gap
+            right = width - margin
         current={'index':index,'objects':objects,'entries':[],'top':top,'bottom':top,'rules':rules,
-                 'right':right,'header':header_info,'hidden_marks':hidden_marks,'rows':[],'group':None}
+                 'right':right,'header':header_info,'hidden_marks':hidden_marks,'header_labels':header_labels,
+                 'rows':[],'group':None}
         manifests.append(current)
         return current,margin,top
     group_colors = spec.get('group_colors') or {}
@@ -804,7 +925,7 @@ def create_pages(records,spec,stage,start_index=0):
             tail = {'type': 'line', 'start': [after, rule_y], 'end': [width - margin, rule_y],
                     'style': 'line', **color_opt}
             current['objects'] += [pill, tail,
-                                   {'type': 'text', 'text': heading, 'runs': runs,
+                                   {'type': 'text', 'runs': runs,
                                     'position': [label_x, baseline], 'size': size}]
             current['rules'].append(tail)
             current['right'] = max(current['right'], after)
@@ -817,7 +938,7 @@ def create_pages(records,spec,stage,start_index=0):
         tail={'type':'line','start':[after,rule_y],'end':[width-margin,rule_y],'style':'line',**color_opt}
         current['objects'] += [{'type':'line','start':[margin,rule_y],'end':[margin+BAND_LEAD,rule_y],'style':'line',**color_opt},
                                tail,
-                               {'type':'text','text':heading,'runs':runs,
+                               {'type':'text','runs':runs,
                                 'position':[label_x,baseline],'size':size}]
         current['rules'].append(tail)
         current['right']=max(current['right'],after)
@@ -984,6 +1105,18 @@ def create_pages(records,spec,stage,start_index=0):
         row_buffer.append((cell, cell_width))
         remaining_width -= cell_width + gap
     flush_row()
+    if diagram := spec.get('footer_scheme'):
+        if diagram['width'] > width - 2 * margin or diagram['height'] > bottom - margin:
+            raise ValueError('footer_scheme does not fit the page at the requested dimensions')
+        top = current['bottom'] + gap
+        if top + diagram['height'] > bottom:
+            current, _, top = new_page()
+            if top + diagram['height'] > bottom:
+                raise ValueError('footer_scheme does not fit below the page heading')
+        dx = (width - diagram['width']) / 2
+        current['objects'].extend(_placed_scheme_object(obj, dx, top) for obj in diagram['objects'])
+        current['bottom'] = top + diagram['height']
+        current['right'] = width - margin
     # Crop pages to their actual rows, headers and footnotes.
     for page in manifests:
         if columns:
@@ -1049,6 +1182,8 @@ def create_pages(records,spec,stage,start_index=0):
         native_page.set('WidthPages','1');native_page.set('HeightPages','1')
         ids=result['metadata']['object_ids']
         _hide_header_attachments(native_page, ids, page['hidden_marks'])
+        if page['header_labels']:
+            _apply_header_labels(native_page, ids, page['header_labels'])
         next_id=max(int(n.get('id','0')) for n in root.iter())+1
         for entry in page['entries']:
             record=compounds[entry['cid']]; key=entry['key']
@@ -1074,7 +1209,7 @@ def create_pages(records,spec,stage,start_index=0):
 ACS_LABEL_SIZE_FALLBACK = 10.0
 
 
-def _draw_as_label(fragment, smiles, named, next_id):
+def _draw_as_label(fragment, smiles, named, next_id, *, fixed_display=False):
     """Contract a named substituent into one labelled node that keeps it whole (ChemDraw's
     NodeType="Fragment" abbreviation), as house-style abbreviations are drawn."""
     from ..mcp_runtime.figure_house import _atom_nodes, _contract
@@ -1086,7 +1221,8 @@ def _draw_as_label(fragment, smiles, named, next_id):
     root = named['atoms'][0]
     expansion = Chem.MolFragmentToSmiles(src, atomsToUse=list(named['atoms']), rootedAtAtom=root, canonical=False)
     ids = _IDGen(next_id)
-    _contract(fragment, nodes, named['atoms'], named['outside'], expansion, named['label'], named['label'], ids)
+    _contract(fragment, nodes, named['atoms'], named['outside'], expansion, named['label'], named['label'], ids,
+              fixed_display=fixed_display)
     return max(int(n.get('id')) for n in fragment.iter() if n.get('id') and n.get('id').isdigit()) + 1
 
 
@@ -1123,8 +1259,10 @@ def overlap(a,b):
 def check_pages(project, roots, spec):
     style=style_settings(spec); issues=[]; errors=[]
     expected=[Counter() for _ in roots]; boxes=[[] for _ in roots]
-    if roots and spec.get('header'):
+    if roots and (spec.get('header') or spec.get('header_scheme')):
         expected[0].update(header_identities(spec))  # the general reaction over the first grid
+    if roots and spec.get('footer_scheme'):
+        expected[-1].update(scheme_identities(spec['footer_scheme']['objects']))
     for cid,record in project['compounds'].items():
         index=record['page']; root=roots[index]; ids=record['objects']
         group=root.find(f".//group[@id='{ids['group']}']")

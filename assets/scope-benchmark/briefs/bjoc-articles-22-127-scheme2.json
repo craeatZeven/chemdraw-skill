@@ -2,30 +2,36 @@
   "kind": "scope",
   "title": "",
   "style": "beilstein_joc",
-  "width_mm": 180,
+  "width_mm": 310,
   "columns": 4,
-  "row_align": "center",
   "highlight_varying": "#C81E1E",
   "header": {
     "substrates": [
       {
         "smiles": "Nc1ccc([*:1])cc1I",
-        "label": "1a–d"
+        "label": "1a–d",
+        "rotation": 160
       },
       {
         "smiles": "ClCC(=O)N[*:2]",
-        "label": "2a,c–r"
+        "label": "2a,c–r",
+        "rotation": 180
+      },
+      {
+        "text": "S8"
       }
     ],
     "products": [
       {
-        "smiles": "O=C(N[*:2])c1nc2cc([*:1])ccc2s1",
-        "label": "3a–t"
+        "smiles": "[*:1]c1cc2nc(C(=O)N[*:2])sc2cc1",
+        "label": "3a–t",
+        "rotation": 0
       }
     ],
     "above": [
-      "Cu(OAc)2 (20 mol %), bipy (20 mol %)",
-      "DIPEA (3.0 equiv), S8 (6.0 equiv)"
+      "Cu(OAc)2 (20 mol %)",
+      "bipy (20 mol %)",
+      "DIPEA (3.0 equiv)"
     ],
     "below": [
       "H2O, 100 °C, 24 h"
@@ -44,7 +50,31 @@
       "label": "3a",
       "values": {
         "yield": "64%"
-      }
+      },
+      "abbreviate": [
+        "Me"
+      ],
+      "coordinates": [
+        [68.918, 9.518],
+        [58.373, 9.518],
+        [52.972, 0.255],
+        [42.172, 0.255],
+        [36.773, 9.518],
+        [21.6, 9.518],
+        [11.055, 0.0],
+        [16.718, -9.518],
+        [0.0, 0.0],
+        [-6.173, 8.745],
+        [-16.455, 5.655],
+        [-25.973, 11.317],
+        [-35.483, 5.655],
+        [-35.483, -5.4],
+        [-25.973, -11.055],
+        [-16.455, -5.4],
+        [-6.173, -9.0],
+        [42.172, 19.282],
+        [52.972, 19.282]
+      ]
     },
     {
       "id": "3b",
@@ -52,7 +82,10 @@
       "label": "3b",
       "values": {
         "yield": "64%"
-      }
+      },
+      "abbreviate": [
+        "Me"
+      ]
     },
     {
       "id": "3c",
@@ -60,15 +93,21 @@
       "label": "3c",
       "values": {
         "yield": "51%"
-      }
+      },
+      "abbreviate": [
+        "Me"
+      ]
     },
     {
       "id": "3d",
-      "smiles": "Cc1ccc(C)c(NC(=O)c2nc3ccccc3s2)c1",
+      "smiles": "Cc1cc(C)cc(NC(=O)c2nc3ccccc3s2)c1",
       "label": "3d",
       "values": {
-        "yield": "59%"
-      }
+        "yield": "57%"
+      },
+      "abbreviate": [
+        "Me"
+      ]
     },
     {
       "id": "3e",
@@ -76,31 +115,54 @@
       "label": "3e",
       "values": {
         "yield": "63%"
-      }
+      },
+      "abbreviate": [
+        "OMe"
+      ]
     },
     {
       "id": "3f",
-      "smiles": "Fc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+      "smiles": "O=C(Nc1ccccc1)c1nc2ccccc2s1",
       "label": "3f",
       "values": {
-        "yield": "62%"
-      }
+        "yield": "66%"
+      },
+      "abbreviate": [
+        "Me"
+      ]
     },
     {
       "id": "3g",
-      "smiles": "Clc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+      "smiles": "O=C(Nc1cccc(F)c1)c1nc2ccccc2s1",
       "label": "3g",
       "values": {
-        "yield": "58%"
-      }
+        "yield": "50%"
+      },
+      "abbreviate": [
+        "Me"
+      ]
     },
     {
       "id": "3h",
-      "smiles": "Brc1ccc(NC(=O)c2nc3ccccc3s2)cc1",
+      "smiles": "O=C(Nc1ccc(Cl)cc1)c1nc2ccccc2s1",
       "label": "3h",
       "values": {
-        "yield": "54%"
-      }
+        "yield": "39%"
+      },
+      "abbreviate": [
+        "Me"
+      ]
+    },
+    {
+      "id": "3i",
+      "label": "3i",
+      "smiles": "O=C(Nc1ccc(Br)cc1)c1nc2ccccc2s1",
+      "values": {
+        "yield": "59%"
+      },
+      "abbreviate": [
+        "Me"
+      ]
     },
     {
       "id": "3j",
@@ -108,15 +170,65 @@
       "label": "3j",
       "values": {
         "yield": "0%"
-      }
+      },
+      "abbreviate": [
+        "Me"
+      ]
     },
     {
       "id": "3k",
-      "smiles": "O=C(Nc1ccc([N+](=O)[O-])cc1)c1nc2ccccc2s1",
+      "smiles": "O=C(Nc1ccccc1C(F)(F)F)c1nc2ccccc2s1",
       "label": "3k",
       "values": {
-        "yield": "48%"
-      }
+        "yield": "63%"
+      },
+      "abbreviate": [
+        "CF3"
+      ]
+    },
+    {
+      "id": "3l",
+      "label": "3l",
+      "smiles": "O=C(Nc1ccc(C(F)(F)F)cc1)c1nc2ccccc2s1",
+      "values": {
+        "yield": "58%"
+      },
+      "abbreviate": [
+        "CF3"
+      ]
+    },
+    {
+      "id": "3m",
+      "label": "3m",
+      "smiles": "O=C(Nc1ccccc1-c1ccccc1)c1nc2ccccc2s1",
+      "values": {
+        "yield": "61%"
+      },
+      "abbreviate": [
+        "Ph"
+      ]
+    },
+    {
+      "id": "3n",
+      "label": "3n",
+      "smiles": "O=C(NCc1ccccc1)c1nc2ccccc2s1",
+      "values": {
+        "yield": "74%"
+      },
+      "abbreviate": [
+        "Ph"
+      ]
+    },
+    {
+      "id": "3o",
+      "label": "3o",
+      "smiles": "O=C(NCCc1ccccc1)c1nc2ccccc2s1",
+      "values": {
+        "yield": "57%"
+      },
+      "abbreviate": [
+        "Ph"
+      ]
     },
     {
       "id": "3p",
@@ -139,27 +251,65 @@
     },
     {
       "id": "3r",
-      "smiles": "O=C(NCc1ccccc1)c1nc2ccccc2s1",
+      "smiles": "Cc1ccc(NC(=O)c2nc3ccc(Cl)cc3s2)cc1",
       "label": "3r",
       "values": {
-        "yield": "67%"
-      }
+        "yield": "62%"
+      },
+      "abbreviate": [
+        "Me"
+      ],
+      "atom_colors": [
+        {
+          "atoms": [14],
+          "color": "#C81E1E"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [14, 13]
+          ],
+          "color": "#C81E1E"
+        }
+      ]
     },
     {
       "id": "3s",
-      "smiles": "Cc1ccc2sc(C(=O)Nc3ccc(C)cc3)nc2c1",
+      "smiles": "Cc1ccc(NC(=O)c2nc3ccc(Br)cc3s2)cc1",
       "label": "3s",
       "values": {
-        "yield": "57%"
-      }
+        "yield": "66%"
+      },
+      "abbreviate": [
+        "Me"
+      ],
+      "atom_colors": [
+        {
+          "atoms": [14],
+          "color": "#C81E1E"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [14, 13]
+          ],
+          "color": "#C81E1E"
+        }
+      ]
     },
     {
       "id": "3t",
-      "smiles": "Clc1ccc2sc(C(=O)Nc3ccc(C)cc3)nc2c1",
+      "smiles": "Cc1ccc(NC(=O)c2nc3ccc4ccccc4c3s2)cc1",
       "label": "3t",
       "values": {
-        "yield": "52%"
-      }
+        "yield": "33%"
+      },
+      "abbreviate": [
+        "Me"
+      ]
     }
-  ]
+  ],
+  "height_mm": 275
 }

@@ -30,15 +30,16 @@ from ..chemdraw.style_presets import DEFAULT_STYLE_PRESET, style_preset_as_manif
 
 SCOPE_KEYS = {"kind", "species", "fields", "conditions", "footnotes", "title", "style", "width_mm", "height_mm",
               "highlight_varying", "header", "group_colors", "columns", "row_align", "band_style", "border",
-              "fragment_colors", "depiction_rotation", "rmark_in_ring"}
+              "fragment_colors", "depiction_rotation", "rmark_in_ring", "header_scheme", "footer_scheme"}
 HEADER_KEYS = {"substrates", "products", "above", "below"}
-HEADER_ITEM_KEYS = {"smiles", "name", "label", "color", "rotation"}
+HEADER_ITEM_KEYS = {"smiles", "name", "label", "color", "rotation", "variable_label", "variable_label_color",
+                    "attached_label", "counterion"}
 ROW_ALIGNS = ("left", "center", "justify")
 BAND_STYLES = ("rule", "pill")
 HIGHLIGHT = "#FF6600"  # the house orange, already in the default check palette
 SPECIES_STYLE = ("color", "atom_colors", "bond_colors", "abbreviate")
 SPECIES_KEYS = {"id", "smiles", "name", "label", "group", "values", "note", "definition", "secondary_of",
-                "drawn_with", *SPECIES_STYLE}
+                "drawn_with", "coordinates", *SPECIES_STYLE}
 NOTE_COLUMN = "note"
 # A line naming what a structure stands for ("Alk = C7H15"), drawn under its number.
 DEFINITION_COLUMN = "definition"
@@ -109,9 +110,26 @@ def _header_errors(header) -> list[str]:
                 isinstance(item["color"], str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", item["color"])
             ):
                 errors.append(f"header {side}[{number}]: color must be a hex colour like #0B4F8A.")
+            else:
+                for key in ("variable_label", "counterion"):
+                    if key in item and not (isinstance(item[key], str) and item[key].strip()):
+                        errors.append(f"header {side}[{number}]: {key} must be non-empty text.")
+                if "variable_label_color" in item and not (item.get("variable_label")
+                        and isinstance(item["variable_label_color"], str)
+                        and re.fullmatch(r"#[0-9A-Fa-f]{6}", item["variable_label_color"])):
+                    errors.append(f"header {side}[{number}]: variable_label_color needs a variable label and hex colour.")
+                if "attached_label" in item:
+                    attached = item["attached_label"]
+                    if not (isinstance(attached, dict) and set(attached) == {"smarts", "text"}
+                            and all(isinstance(v, str) and v.strip() for v in attached.values())
+                            and Chem.MolFromSmarts(attached["smarts"]) is not None):
+                        errors.append(f"header {side}[{number}]: attached_label needs a valid smarts and label text.")
     for side in ("above", "below"):
-        if side in header and not (isinstance(header[side], list) and all(isinstance(t, str) for t in header[side])):
-            errors.append(f"header {side} must be a list of condition lines.")
+        if side in header and not (isinstance(header[side], list) and all(
+                isinstance(line, str) or (isinstance(line, list) and line and all(
+                    isinstance(run, dict) and isinstance(run.get("text"), str) for run in line))
+                for line in header[side])):
+            errors.append(f"header {side} must be a list of condition lines or styled runs.")
     return errors
 
 
@@ -123,6 +141,19 @@ def _validate(brief: dict) -> list[str]:
     errors += figure_house.record_errors(brief)
     if brief.get("header") is not None:
         errors += _header_errors(brief["header"])
+    if brief.get("header") is not None and brief.get("header_scheme") is not None:
+        errors.append("Use either header or header_scheme.")
+    for key in ("header_scheme", "footer_scheme"):
+        diagram = brief.get(key)
+        if diagram is None:
+            continue
+        if not (isinstance(diagram, dict) and set(diagram) == {"width", "height", "objects"}
+                and all(type(diagram[k]) in (float, int) and 0 < diagram[k] < 1500 for k in ("width", "height"))
+                and isinstance(diagram["objects"], list) and diagram["objects"]
+                and all(isinstance(obj, dict) and (obj.get("type") != "molecule"
+                        or (isinstance(obj.get("smiles"), str) and Chem.MolFromSmiles(obj["smiles"]) is not None
+                            and not ({"file", "molblock", "align_to"} & obj.keys()))) for obj in diagram["objects"])):
+            errors.append(f"{key} needs a positive width and height in points and inline composition objects; use SMILES for molecules.")
     style_error = style_preset_error(brief.get("style"))
     if style_error:
         errors.append(style_error)
@@ -200,6 +231,14 @@ def _validate(brief: dict) -> list[str]:
             errors.append(f"Species {ident}: unknown keys {extra}.")
         if not entry.get("smiles") and not entry.get("name"):
             errors.append(f"Species {ident} needs a smiles or a name.")
+        if "coordinates" in entry:
+            points = entry["coordinates"]
+            mol = Chem.MolFromSmiles(entry["smiles"]) if isinstance(entry.get("smiles"), str) else None
+            if mol is None or not (isinstance(points, list) and len(points) == mol.GetNumAtoms()
+                    and all(isinstance(point, list) and len(point) == 2
+                            and all(type(n) in (float, int) and math.isfinite(n) for n in point)
+                            for point in points)):
+                errors.append(f"Species {ident}: coordinates require one finite [x, y] point per input SMILES atom.")
         if not isinstance(entry.get("values") or {}, dict):
             errors.append(f"Species {ident}: values must be an object of field -> value.")
         if entry.get("secondary_of") is not None:
@@ -488,6 +527,9 @@ def _ground_header(header: dict | None) -> tuple[dict | None, list[str]]:
                     entry["rotation"] = item["rotation"]
                 if item.get("color"):
                     entry["color"] = item["color"].upper()
+                for key in ("variable_label", "variable_label_color", "attached_label", "counterion"):
+                    if key in item:
+                        entry[key] = item[key]
             elif item not in structural:
                 entry = {"text": item["text"]}
             else:
@@ -554,21 +596,33 @@ def _write_inputs(work: Path, brief: dict, grounded: list[dict], fields: list[di
         **({"band_style": brief["band_style"]} if brief.get("band_style") is not None else {}),
         **({"border": brief["border"]} if brief.get("border") else {}),
     }
+    coordinates = {ident: entry["coordinates"] for ident, entry in by_id.items() if "coordinates" in entry}
+    if coordinates:
+        spec["coordinates_by_id"] = coordinates
+    for key in ("header_scheme", "footer_scheme"):
+        if not brief.get(key):
+            continue
+        diagram = copy.deepcopy(brief[key])
+        for obj in diagram["objects"]:
+            if obj.get("type") == "image" and isinstance(obj.get("file"), str):
+                obj["file"] = str(Path(obj["file"]).expanduser().resolve())
+        spec[key] = diagram
     path = work / "spec.json"
     path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
     return path
 
 
 def _readback(pages: list[Path], grounded: list[dict], header: dict | None = None,
-              drawn_with: set[str] | None = None) -> dict:
+              drawn_with: set[str] | None = None, *, header_scheme: dict | None = None,
+              footer_scheme: dict | None = None) -> dict:
     wanted: Counter = Counter()
     for item in grounded:
         if item["id"] in (drawn_with or set()):
             continue  # shown by the structure it is drawn with
         wanted.update(semantic_key(m) for m in Chem.GetMolFrags(Chem.MolFromSmiles(item["smiles"]), asMols=True))
-    if header:
-        from ..publication.layout import header_identities
-        wanted.update(header_identities({"header": header}))
+    from ..publication.layout import header_identities, scheme_identities
+    wanted.update(header_identities({"header": header, "header_scheme": header_scheme}))
+    wanted.update(scheme_identities((footer_scheme or {}).get("objects", [])))
     found: Counter = Counter()
     for page in pages:
         found.update(document_inventory(page, like=wanted))
@@ -679,7 +733,8 @@ def draw_scope(brief: dict, output_path: str | None, render: bool) -> dict:
             checks.setdefault("native_preview", {})["status"] = "rendered_pending_visual_review"
         except Exception as exc:
             checks.setdefault("native_preview", {})["error"] = str(exc)
-    readback = _readback([Path(p["path"]) for p in pages], grounded, header, members)
+    readback = _readback([Path(p["path"]) for p in pages], grounded, header, members,
+                         header_scheme=brief.get("header_scheme"), footer_scheme=brief.get("footer_scheme"))
 
     notes: list[str] = []
     warnings: list[str] = []

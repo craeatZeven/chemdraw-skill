@@ -94,13 +94,20 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(root_markdown, {"README.md", "README.zh-cn.md", "AGENTS.md"})
 
     def test_repository_documentation_is_consolidated(self) -> None:
+        # Local review notes live in the ignored output tree. A tracked copy
+        # there is repository documentation and must still fail this check.
+        tracked_output = set(subprocess.check_output(
+            ["git", "ls-files", "-z", "--", "output"], cwd=ROOT
+        ).decode("utf-8").split("\0"))
+        markdown_paths = (path.relative_to(ROOT) for path in ROOT.rglob("*.md"))
         repository_markdown = {
-            path.relative_to(ROOT).as_posix()
-            for path in ROOT.rglob("*.md")
-            if path.relative_to(ROOT).parts[0] not in {
+            path.as_posix()
+            for path in markdown_paths
+            if path.parts[0] not in {
                 ".git", "skill", "toolkit",
             }
-            and not any(p.startswith(".") and p != ".github" for p in path.relative_to(ROOT).parts)
+            and not any(p.startswith(".") and p != ".github" for p in path.parts)
+            and (path.parts[0] != "output" or path.as_posix() in tracked_output)
         }
         self.assertEqual(
             repository_markdown,

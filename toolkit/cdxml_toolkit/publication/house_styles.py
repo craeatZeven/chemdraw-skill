@@ -176,6 +176,7 @@ ABBREVIATIONS: Mapping[str, tuple[str, str, str, str]] = {
     "OCF3": ("[OX2][CX4](F)(F)F", "OC(F)(F)F", "OCF3", "F3CO"),
     "CN": ("[CX2]#[NX1]", "C#N", "CN", "NC"),
     "N3": ("[NX2]=[NX2+]=[NX1-]", "N=[N+]=[N-]", "N3", "N3"),
+    "NCS": ("[NX2]=[CX2]=[SX1]", "N=C=S", "NCS", "NCS"),
     "OTMS": ("[OX2][Si]([CH3])([CH3])[CH3]", "O[Si](C)(C)C", "OTMS", "TMSO"),
     "OTf": ("[OX2][SX4](=[OX1])(=[OX1])[CX4](F)(F)F", "OS(=O)(=O)C(F)(F)F", "OTf", "TfO"),
     "Tf": ("[SX4](=[OX1])(=[OX1])[CX4](F)(F)F", "S(=O)(=O)C(F)(F)F", "Tf", "Tf"),

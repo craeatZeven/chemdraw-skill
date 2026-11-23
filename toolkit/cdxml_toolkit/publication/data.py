@@ -136,13 +136,17 @@ def load_records(spec, base):
             require_supported(mol)
         except Exception as exc:
             raise ValueError(f'row {row_number} ({cid}): {exc}') from exc
+        identity = semantic_key(mol)
+        # Explicit depiction coordinates are indexed in input SMILES order.
+        coordinates = spec.get('coordinates_by_id', {}).get(cid)
+        smiles = row[structure.get('column', 'smiles')] if coordinates is not None and fmt == 'smiles' else identity
         records.append({'compound_id':cid, 'row':row_number,
                         'label':row.get(spec.get('label_column','label'), '') or cid,
                         'group':row.get(spec.get('group_column',''), ''),
                         'secondary_of':(row.get(spec['secondary_column']) or '').strip() if spec.get('secondary_column') else '',
                         'drawn_with':(row.get(spec['drawn_with_column']) or '').strip() if spec.get('drawn_with_column') else '',
                         # New layout must not import old CX coordinates/wedge directives.
-                        'smiles':semantic_key(mol), 'identity':semantic_key(mol),
+                        'smiles':smiles, 'identity':identity,
                         'values':{f['column']:row[f['column']] for f in fields}})
     _check_secondaries(records)
     _check_drawn_with(records)

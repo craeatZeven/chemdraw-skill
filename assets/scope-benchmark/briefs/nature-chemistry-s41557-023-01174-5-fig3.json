@@ -2,16 +2,19 @@
   "kind": "scope",
   "title": "",
   "style": "nature_portfolio",
-  "width_mm": 180,
+  "width_mm": 300,
   "columns": 4,
   "row_align": "left",
-  "highlight_varying": "#008080",
   "group_colors": {
-    "[4]Helicenes (L1, 120 °C)": "#8B1E24",
-    "[5]Helicenes (L1, 140 °C)": "#008080"
+    "[4]Helicenes (L¹, 120 °C)": "#252525",
+    "[5]Helicenes": "#252525",
+    "[6]Helicenes": "#252525"
   },
   "footnotes": [
-    "a Enantiomerization barrier ΔG‡ determined by dynamic HPLC."
+    "a Computed enantiomerization free energy at the B3LYP-D3(BJ)/6-311G(d,p) level.",
+    "b Experimental enantiomerization barrier measured at 120 °C.",
+    "c Thermal ellipsoids at 50% probability.",
+    "d Thermal ellipsoids at 20% probability."
   ],
   "header": {
     "substrates": [
@@ -49,96 +52,764 @@
   "species": [
     {
       "id": "2a",
-      "smiles": "COc1cc2ccc3ccc4c(C)cccc4c3c2c(OC)c1",
       "label": "2a",
-      "group": "[4]Helicenes (L1, 120 °C)",
+      "smiles": "COc1cc2cccc(OC)c2c2c1ccc1cccc(C)c12",
+      "group": "[4]Helicenes (L¹, 120 °C)",
       "values": {
         "perf": "93%, e.r. 93:7",
-        "barrier": "*ΔG*‡ = 35.3 kcal mol-1^a"
+        "barrier": "*ΔG*‡ = 35.3 kcal mol^−1^a"
       }
     },
     {
       "id": "2b",
-      "smiles": "COc1cc2ccc3ccc4c(OC(C)C)cccc4c3c2c(OC)c1",
       "label": "2b",
-      "group": "[4]Helicenes (L1, 120 °C)",
+      "smiles": "COc1cc2cccc(OC)c2c2c1ccc1cccc(OC(C)C)c12",
+      "group": "[4]Helicenes (L¹, 120 °C)",
       "values": {
         "perf": "92%, e.r. 96:4"
       }
     },
     {
       "id": "2c",
-      "smiles": "COc1cc2ccc3ccc4c(C)cc(F)cc4c3c2c(OC)c1",
       "label": "2c",
-      "group": "[4]Helicenes (L1, 120 °C)",
+      "smiles": "COc1cc2cccc(OC)c2c2c1ccc1cc(F)cc(C)c12",
+      "group": "[4]Helicenes (L¹, 120 °C)",
       "values": {
         "perf": "94%, e.r. 95:5"
       }
     },
     {
       "id": "2d",
-      "smiles": "COc1cc2ccc3ccc4c(C)cc(C)cc4c3c2c(OC)c1",
       "label": "2d",
-      "group": "[4]Helicenes (L1, 120 °C)",
+      "smiles": "COc1cc2cccc(OC)c2c2c1ccc1cc(C)cc(C)c12",
+      "group": "[4]Helicenes (L¹, 120 °C)",
       "values": {
         "perf": "95%, e.r. 95:5",
-        "barrier": "*ΔG*‡ = 34.8 kcal mol-1"
+        "barrier": "*ΔG*‡ = 34.8 kcal mol^−1^b"
       }
     },
     {
       "id": "2e",
-      "smiles": "COc1cc2ccc3ccc4c(C)cc(OC)cc4c3c2c(OC)c1",
       "label": "2e",
-      "group": "[4]Helicenes (L1, 120 °C)",
+      "smiles": "COc1cc(C)c2c(ccc3c(OC)cc4cccc(OC)c4c32)c1",
+      "group": "[4]Helicenes (L¹, 120 °C)",
       "values": {
         "perf": "90%, e.r. 95:5"
       }
     },
     {
       "id": "2f",
-      "smiles": "COc1cc2ccc3ccc4c(C)cc(C#N)cc4c3c2c(OC)c1",
       "label": "2f",
-      "group": "[4]Helicenes (L1, 120 °C)",
+      "smiles": "COc1cc2cccc(OC)c2c2c1ccc1cc(C#N)cc(C)c12",
+      "group": "[4]Helicenes (L¹, 120 °C)",
       "values": {
         "perf": "95%, e.r. 95:5"
       }
     },
     {
-      "id": "2h",
-      "smiles": "Cc1cccc2c1c1c(ccc3c1c1ccccc1cc3)cc2",
-      "label": "2h",
-      "group": "[5]Helicenes (L1, 140 °C)",
+      "id": "2g",
+      "label": "2g",
+      "smiles": "Cc1cccc2cc3c(ccc4cccc(C)c43)cc12",
+      "group": "[4]Helicenes (L¹, 120 °C)",
       "values": {
-        "perf": "85%, e.r. 95:5",
-        "barrier": "*ΔG*‡ = 40.1 kcal mol-1^a"
+        "perf": "85%"
+      }
+    },
+    {
+      "id": "2h",
+      "label": "2h",
+      "smiles": "Cc1cccc2ccc3c(F)c(F)c4ccc5ccccc5c4c3c12",
+      "group": "[5]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C\n85%, e.r. 95:5",
+        "barrier": "*ΔG*‡ = 40.1 kcal mol^−1^a"
+      }
+    },
+    {
+      "id": "2i",
+      "label": "2i",
+      "smiles": "CC(C)Oc1cccc2ccc3c(F)c(F)c4ccc5ccccc5c4c3c12",
+      "group": "[5]Helicenes",
+      "values": {
+        "perf": "L², 140 °C, 13.5 h\n91%, e.r. 97:3"
       }
     },
     {
       "id": "2j",
-      "smiles": "COc1ccc2ccc3c(c2c1)c1c(ccc2cccc(C)c12)cc3",
       "label": "2j",
-      "group": "[5]Helicenes (L1, 140 °C)",
+      "smiles": "COc1ccc2c(ccc3c(F)c(F)c4ccc5cccc(C)c5c4c32)c1",
+      "group": "[5]Helicenes",
       "values": {
-        "perf": "92%, e.r. 94:6"
+        "perf": "L¹, 140 °C\n92%, e.r. 94:6"
       }
     },
     {
       "id": "2k",
-      "smiles": "N#Cc1ccc2ccc3c(c2c1)c1c(ccc2cccc(C)c12)cc3",
       "label": "2k",
-      "group": "[5]Helicenes (L1, 140 °C)",
+      "smiles": "Cc1cccc2ccc3c(F)c(F)c4ccc5cc(C#N)ccc5c4c3c12",
+      "group": "[5]Helicenes",
       "values": {
-        "perf": "88%, e.r. 95:5"
+        "perf": "L¹, 140 °C\n88%, e.r. 95:5"
       }
     },
     {
       "id": "2l",
-      "smiles": "Fc1ccc2ccc3c(c2c1)c1c(ccc2cccc(C)c12)cc3",
       "label": "2l",
-      "group": "[5]Helicenes (L1, 140 °C)",
+      "smiles": "Cc1cccc2ccc3c(F)c(F)c4ccc5cc(F)ccc5c4c3c12",
+      "group": "[5]Helicenes",
       "values": {
-        "perf": "92%, e.r. 95:5"
+        "perf": "L¹, 140 °C\n92%, e.r. 95:5"
       }
+    },
+    {
+      "id": "2m",
+      "label": "2m",
+      "smiles": "Cc1ccc2c(ccc3c(F)c(F)c4ccc5cccc(C)c5c4c32)c1",
+      "group": "[5]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C\n91%, e.r. 94:6"
+      }
+    },
+    {
+      "id": "2n",
+      "label": "2n",
+      "smiles": "Cc1cccc2ccc3c(F)c(F)c4ccc5ccc(F)cc5c4c3c12",
+      "group": "[5]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C\n81%, e.r. 92:8"
+      }
+    },
+    {
+      "id": "2o",
+      "label": "2o",
+      "smiles": "Cc1ccc2c(ccc3c4c(c5c(c32)-c2ccccc2CC5)OC=CO4)c1",
+      "group": "[5]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C\n94%, e.r. 91:9\n>99.5:0.5 after recrystallization"
+      }
+    },
+    {
+      "id": "2p",
+      "label": "2p",
+      "smiles": "Cc1ccc2c(ccc3c4c(c5ccc6ccccc6c5c32)OCO4)c1",
+      "group": "[5]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C\n95%, e.r. n.d.\n>99.5:0.5 after recrystallization"
+      }
+    },
+    {
+      "id": "2q",
+      "label": "2q",
+      "smiles": "COc1cc2cccc(OC)c2c2c1ccc1ccc3ccccc3c12",
+      "group": "[5]Helicenes",
+      "values": {
+        "perf": "L¹, 120 °C, 9 h\n91%, e.r. 93:7\n>99.5:0.5 after recrystallization",
+        "barrier": "*ΔG*‡ = 33.7 kcal mol^−1^b"
+      }
+    },
+    {
+      "id": "2r",
+      "label": "2r",
+      "smiles": "c1(F)c(F)c2c(c3c1ccc1ccc4c(cccc4)c31)c1c(cc2)cccc1",
+      "group": "[6]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C, 84%, e.r. 91:9\nL², 140 °C, 45%, e.r. 98:2",
+        "barrier": "*ΔG*‡ = 38.0 kcal mol^−1^a"
+      },
+      "coordinates": [
+        [-29.97, -0.27],
+        [-40.5, -3.78],
+        [-29.7, 9.72],
+        [-39.15, 15.66],
+        [-20.25, 14.85],
+        [-9.45, 9.99],
+        [-9.99, 0.0],
+        [-19.44, -5.13],
+        [-19.17, -14.04],
+        [-9.99, -19.98],
+        [0.0, -16.47],
+        [10.8, -22.41],
+        [21.6, -19.44],
+        [21.6, -11.07],
+        [11.07, -4.59],
+        [11.61, 4.32],
+        [22.95, 7.29],
+        [33.48, 1.08],
+        [32.94, -8.91],
+        [0.0, -7.56],
+        [1.62, 14.85],
+        [1.08, 25.11],
+        [-9.72, 29.97],
+        [-19.17, 25.92],
+        [11.88, 29.97],
+        [22.14, 25.11],
+        [22.41, 14.85],
+        [12.15, 9.72]
+      ],
+      "atom_colors": [
+        {
+          "atoms": [1, 3],
+          "color": "#387B80"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [6, 19]
+          ],
+          "color": "#AE1E2B"
+        },
+        {
+          "bonds": [
+            [0, 1],
+            [2, 3]
+          ],
+          "color": "#387B80"
+        }
+      ]
+    },
+    {
+      "id": "2s",
+      "label": "2s",
+      "smiles": "c1(OC)c(OC)c2c(c3c1ccc1ccc4c(cccc4)c31)c1c(cc2)cccc1",
+      "group": "[6]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C\n70%, e.r. 92:8"
+      },
+      "coordinates": [
+        [-29.97, -0.27],
+        [-39.42, -3.51],
+        [-46.98, -8.1],
+        [-29.7, 9.72],
+        [-38.88, 15.12],
+        [-46.17, 21.33],
+        [-20.25, 14.85],
+        [-9.45, 9.99],
+        [-9.99, 0.0],
+        [-19.44, -5.13],
+        [-19.17, -14.04],
+        [-9.99, -19.98],
+        [0.0, -16.47],
+        [10.8, -22.41],
+        [21.6, -19.44],
+        [21.6, -11.07],
+        [11.07, -4.59],
+        [11.61, 4.32],
+        [22.95, 7.29],
+        [33.48, 1.08],
+        [32.94, -8.91],
+        [0.0, -7.56],
+        [1.62, 14.85],
+        [1.08, 25.11],
+        [-9.72, 29.97],
+        [-19.17, 25.92],
+        [11.88, 29.97],
+        [22.14, 25.11],
+        [22.41, 14.85],
+        [12.15, 9.72]
+      ],
+      "atom_colors": [
+        {
+          "atoms": [1, 2, 4, 5],
+          "color": "#387B80"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [8, 21]
+          ],
+          "color": "#AE1E2B"
+        },
+        {
+          "bonds": [
+            [0, 1],
+            [3, 4],
+            [1, 2],
+            [4, 5]
+          ],
+          "color": "#387B80"
+        }
+      ]
+    },
+    {
+      "id": "2t",
+      "label": "2t",
+      "smiles": "c12c(c3c(c4c1ccc1ccc5c(cccc5)c41)c1c(cc3)cccc1)OCCO2",
+      "group": "[6]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C\n73%, e.r. 90:10"
+      },
+      "coordinates": [
+        [-29.97, -0.27],
+        [-29.7, 9.72],
+        [-20.25, 14.85],
+        [-9.45, 9.99],
+        [-9.99, 0.0],
+        [-19.44, -5.13],
+        [-19.17, -14.04],
+        [-9.99, -19.98],
+        [0.0, -16.47],
+        [10.8, -22.41],
+        [21.6, -19.44],
+        [21.6, -11.07],
+        [11.07, -4.59],
+        [11.61, 4.32],
+        [22.95, 7.29],
+        [33.48, 1.08],
+        [32.94, -8.91],
+        [0.0, -7.56],
+        [1.62, 14.85],
+        [1.08, 25.11],
+        [-9.72, 29.97],
+        [-19.17, 25.92],
+        [11.88, 29.97],
+        [22.14, 25.11],
+        [22.41, 14.85],
+        [12.15, 9.72],
+        [-38.88, 15.66],
+        [-48.6, 10.53],
+        [-48.6, -0.54],
+        [-38.61, -5.4]
+      ],
+      "atom_colors": [
+        {
+          "atoms": [26, 27, 28, 29],
+          "color": "#387B80"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [4, 17]
+          ],
+          "color": "#AE1E2B"
+        },
+        {
+          "bonds": [
+            [0, 29],
+            [1, 26],
+            [29, 28],
+            [26, 27],
+            [28, 27]
+          ],
+          "color": "#387B80"
+        }
+      ]
+    },
+    {
+      "id": "2u",
+      "label": "2u",
+      "smiles": "c1(F)c(F)c2c(c3c1ccc1ccc4c(cccc4)c31)c1c(cc2)ccc(F)c1",
+      "group": "[6]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C, 68%, e.r. 88:12\n>99.5:0.5 after recrystallization\nL², 140 °C, 42%, e.r. 97:3"
+      },
+      "coordinates": [
+        [-29.97, -0.27],
+        [-40.5, -3.78],
+        [-29.7, 9.72],
+        [-39.15, 15.66],
+        [-20.25, 14.85],
+        [-9.45, 9.99],
+        [-9.99, 0.0],
+        [-19.44, -5.13],
+        [-19.17, -14.04],
+        [-9.99, -19.98],
+        [0.0, -16.47],
+        [10.8, -22.41],
+        [21.6, -19.44],
+        [21.6, -11.07],
+        [11.07, -4.59],
+        [11.61, 4.32],
+        [22.95, 7.29],
+        [33.48, 1.08],
+        [32.94, -8.91],
+        [0.0, -7.56],
+        [1.62, 14.85],
+        [1.08, 25.11],
+        [-9.72, 29.97],
+        [-19.17, 25.92],
+        [11.88, 29.97],
+        [22.14, 25.11],
+        [22.41, 14.85],
+        [32.4, 9.45],
+        [12.15, 9.72]
+      ],
+      "atom_colors": [
+        {
+          "atoms": [27],
+          "color": "#387B80"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [6, 19]
+          ],
+          "color": "#AE1E2B"
+        },
+        {
+          "bonds": [
+            [26, 27]
+          ],
+          "color": "#387B80"
+        }
+      ]
+    },
+    {
+      "id": "2v",
+      "label": "2v",
+      "smiles": "c1(F)c(F)c2c(c3c1ccc1ccc4c(cccc4)c31)c1c(cc2)cc(F)cc1",
+      "group": "[6]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C, 91%, e.r. 93:7\nL², 140 °C, 39%, e.r. 94:6"
+      },
+      "coordinates": [
+        [-29.97, -0.27],
+        [-40.5, -3.78],
+        [-29.7, 9.72],
+        [-39.15, 15.66],
+        [-20.25, 14.85],
+        [-9.45, 9.99],
+        [-9.99, 0.0],
+        [-19.44, -5.13],
+        [-19.17, -14.04],
+        [-9.99, -19.98],
+        [0.0, -16.47],
+        [10.8, -22.41],
+        [21.6, -19.44],
+        [21.6, -11.07],
+        [11.07, -4.59],
+        [11.61, 4.32],
+        [22.95, 7.29],
+        [33.48, 1.08],
+        [32.94, -8.91],
+        [0.0, -7.56],
+        [1.62, 14.85],
+        [1.08, 25.11],
+        [-9.72, 29.97],
+        [-19.17, 25.92],
+        [11.88, 29.97],
+        [22.14, 25.11],
+        [31.86, 30.78],
+        [22.41, 14.85],
+        [12.15, 9.72]
+      ],
+      "atom_colors": [
+        {
+          "atoms": [26],
+          "color": "#387B80"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [6, 19]
+          ],
+          "color": "#AE1E2B"
+        },
+        {
+          "bonds": [
+            [25, 26]
+          ],
+          "color": "#387B80"
+        }
+      ]
+    },
+    {
+      "id": "2w",
+      "label": "2w",
+      "smiles": "c1(F)c(F)c2c(c3c1ccc1ccc4c(cccc4)c31)c1c(cc2)cc(OC)cc1",
+      "group": "[6]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C, 93%, e.r. 93:7\nL², 140 °C, 40%, e.r. 94:6"
+      },
+      "coordinates": [
+        [-29.97, -0.27],
+        [-40.5, -3.78],
+        [-29.7, 9.72],
+        [-39.15, 15.66],
+        [-20.25, 14.85],
+        [-9.45, 9.99],
+        [-9.99, 0.0],
+        [-19.44, -5.13],
+        [-19.17, -14.04],
+        [-9.99, -19.98],
+        [0.0, -16.47],
+        [10.8, -22.41],
+        [21.6, -19.44],
+        [21.6, -11.07],
+        [11.07, -4.59],
+        [11.61, 4.32],
+        [22.95, 7.29],
+        [33.48, 1.08],
+        [32.94, -8.91],
+        [0.0, -7.56],
+        [1.62, 14.85],
+        [1.08, 25.11],
+        [-9.72, 29.97],
+        [-19.17, 25.92],
+        [11.88, 29.97],
+        [22.14, 25.11],
+        [32.13, 30.78],
+        [41.04, 25.11],
+        [22.41, 14.85],
+        [12.15, 9.72]
+      ],
+      "atom_colors": [
+        {
+          "atoms": [26, 27],
+          "color": "#387B80"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [6, 19]
+          ],
+          "color": "#AE1E2B"
+        },
+        {
+          "bonds": [
+            [25, 26],
+            [26, 27]
+          ],
+          "color": "#387B80"
+        }
+      ]
+    },
+    {
+      "id": "2x",
+      "label": "2x",
+      "smiles": "c1(F)c(F)c2c(c3c1ccc1ccc4c(cccn4)c31)c1c(cc2)cccc1",
+      "group": "[6]Helicenes",
+      "values": {
+        "perf": "L¹, 140 °C\n75%, e.r. 90:10\n>99.5:0.5 after recrystallization"
+      },
+      "coordinates": [
+        [-29.97, -0.27],
+        [-40.5, -3.78],
+        [-29.7, 9.72],
+        [-39.15, 15.66],
+        [-20.25, 14.85],
+        [-9.45, 9.99],
+        [-9.99, 0.0],
+        [-19.44, -5.13],
+        [-19.17, -14.04],
+        [-9.99, -19.98],
+        [0.0, -16.47],
+        [10.8, -22.41],
+        [21.6, -19.44],
+        [21.6, -11.07],
+        [11.07, -4.59],
+        [11.61, 4.32],
+        [22.95, 7.29],
+        [33.48, 1.08],
+        [32.94, -8.91],
+        [0.0, -7.56],
+        [1.62, 14.85],
+        [1.08, 25.11],
+        [-9.72, 29.97],
+        [-19.17, 25.92],
+        [11.88, 29.97],
+        [22.14, 25.11],
+        [22.41, 14.85],
+        [12.15, 9.72]
+      ],
+      "atom_colors": [
+        {
+          "atoms": [18],
+          "color": "#387B80"
+        }
+      ],
+      "bond_colors": [
+        {
+          "bonds": [
+            [6, 19]
+          ],
+          "color": "#AE1E2B"
+        }
+      ]
     }
-  ]
+  ],
+  "height_mm": 490,
+  "footer_scheme": {
+    "width": 801,
+    "height": 266,
+    "objects": [
+      {
+        "type": "line",
+        "start": [0, 12],
+        "end": [801, 12],
+        "color": "#BFBFBF"
+      },
+      {
+        "type": "image",
+        "id": "xray-2p",
+        "file": "assets/journal-corpus/nature-chemistry-s41557-023-01174-5-fig3.png",
+        "crop": [326, 1906, 625, 2165],
+        "start": [8, 45],
+        "end": [157.5, 174.5]
+      },
+      {
+        "type": "image",
+        "id": "xray-2q",
+        "file": "assets/journal-corpus/nature-chemistry-s41557-023-01174-5-fig3.png",
+        "crop": [977, 1905, 1310, 2165],
+        "start": [175, 44.5],
+        "end": [341.5, 174.5]
+      },
+      {
+        "type": "text",
+        "position": [83, 188],
+        "align": "Center",
+        "runs": [
+          {
+            "text": "X-ray structure"
+          },
+          {
+            "text": "c",
+            "superscript": true,
+            "italic": true
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "position": [83, 204],
+        "align": "Center",
+        "text": "2p"
+      },
+      {
+        "type": "text",
+        "position": [258, 188],
+        "align": "Center",
+        "runs": [
+          {
+            "text": "X-ray structure"
+          },
+          {
+            "text": "d",
+            "superscript": true,
+            "italic": true
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "position": [258, 204],
+        "align": "Center",
+        "text": "2q"
+      },
+      {
+        "type": "text",
+        "position": [575, 28],
+        "align": "Center",
+        "text": "(b) Double C–H arylation"
+      },
+      {
+        "type": "text",
+        "position": [575, 44],
+        "align": "Center",
+        "runs": [
+          {
+            "text": "Pd"
+          },
+          {
+            "text": "2",
+            "subscript": true
+          },
+          {
+            "text": "dba"
+          },
+          {
+            "text": "3",
+            "subscript": true
+          },
+          {
+            "text": " (10 mol%), L¹ (40 mol%), Cs"
+          },
+          {
+            "text": "2",
+            "subscript": true
+          },
+          {
+            "text": "CO"
+          },
+          {
+            "text": "3",
+            "subscript": true
+          },
+          {
+            "text": " (1.0 equiv.)"
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "position": [575, 58],
+        "align": "Center",
+        "text": "CPME, 140 °C, 24 h"
+      },
+      {
+        "type": "molecule",
+        "id": "3y",
+        "smiles": "Cc1cccc(/C=C\\c2ccc(/C=C\\c3cc(Cl)ccc3Br)c(F)c2F)c1Br",
+        "position": [432, 108]
+      },
+      {
+        "type": "arrow",
+        "start": [528, 108],
+        "end": [621, 108]
+      },
+      {
+        "type": "molecule",
+        "id": "2y",
+        "smiles": "Cc1cccc2ccc3c(F)c(F)c4ccc5cc(Cl)ccc5c4c3c12",
+        "position": [717, 108]
+      },
+      {
+        "type": "text",
+        "position": [432, 151],
+        "align": "Center",
+        "text": "3y"
+      },
+      {
+        "type": "text",
+        "position": [717, 151],
+        "align": "Center",
+        "text": "2y, 30%, e.r. 97:3"
+      },
+      {
+        "type": "molecule",
+        "id": "3z",
+        "smiles": "Fc1c(/C=C\\c2cc(Cl)ccc2Br)ccc(/C=C\\c2ccc3ccccc3c2Br)c1F",
+        "position": [432, 205]
+      },
+      {
+        "type": "arrow",
+        "start": [528, 205],
+        "end": [621, 205]
+      },
+      {
+        "type": "molecule",
+        "id": "2z",
+        "smiles": "Fc1ccc2c(ccc3ccc4ccc5ccc6ccc(Cl)cc6c5c4c32)c1F",
+        "position": [717, 205]
+      },
+      {
+        "type": "text",
+        "position": [432, 248],
+        "align": "Center",
+        "text": "3z"
+      },
+      {
+        "type": "text",
+        "position": [717, 248],
+        "align": "Center",
+        "text": "2z, 28%, e.r. 92:8"
+      }
+    ]
+  }
 }

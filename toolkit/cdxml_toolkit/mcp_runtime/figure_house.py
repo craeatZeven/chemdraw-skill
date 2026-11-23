@@ -1530,13 +1530,13 @@ def _abbreviate(frag_el: ET.Element, src: Any, nodes: list[ET.Element], groups: 
                 continue
             used |= group
             _contract(frag_el, nodes, match, external[0][1], expansion,
-                      left_label, right_label, ids)
+                      left_label, right_label, ids, fixed_display=name in {"CN", "NCS"})
             count += 1
     return count
 
 
 def _contract(frag_el: ET.Element, nodes: list[ET.Element], match: tuple, outside: int,
-              expansion: str, left_label: str, right_label: str, ids) -> None:
+              expansion: str, left_label: str, right_label: str, ids, *, fixed_display: bool = False) -> None:
     head = nodes[match[0]]
     ax, ay = _point(head)
     nx, ny = _point(nodes[outside])
@@ -1556,6 +1556,9 @@ def _contract(frag_el: ET.Element, nodes: list[ET.Element], match: tuple, outsid
     head.append(ET.fromstring(_inner_fragment(expansion, (ax, ay), (nx, ny), ids)))
     rest_on_left = nx <= ax
     text = left_label if rest_on_left else right_label
+    if fixed_display:
+        # Preserve an explicitly ordered label when ChemDraw would reverse its components.
+        head.set("LabelDisplay", "Right" if rest_on_left else "Left")
     width = _label_width(text)
     # The attachment character (first for a right-flowing label, last for a
     # left-flowing one) is centred on the node. No LabelDisplay attribute is

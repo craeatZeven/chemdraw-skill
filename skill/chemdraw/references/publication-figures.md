@@ -54,6 +54,7 @@ Stereo AND/OR/ABS attributes are retained and round-trip checked. Native ChemDra
 - `curve`: the same four Bezier points without an arrowhead.
 - `symbol`: native ChemDraw electron/charge symbol, with native bounding coordinates `start` and `end`, optional `color`, and `symbol` chosen from `LonePair`, `Electron`, `RadicalCation`, `RadicalAnion`, `CirclePlus`, `CircleMinus`, `Dagger`, `DoubleDagger`, `Plus`, or `Minus`. Prefer these native objects to text dots or a drawn circle. They annotate the figure; a molecular formal charge must also be present in the grounded molecule graph. Symbol anchors vary with native type; inspect the native preview for placement, size and arrow clearance. For circled charges, follow the native save-cycle verification in [scientific workflows](scientific-workflows.md).
 - `rectangle`, `ellipse`, `bracket`: upper-left `start`, lower-right `end`, optional `color`; bracket may include a `label` such as `n`. This is a **visual bracket**, not a machine-readable polymer SRU graph. Preserve a native polymer template when SRU semantics matter.
+- `image`: a PNG `file` relative to the composition manifest or an absolute path, with upper-left `start` and lower-right `end` in points. Optional `crop` is a four-integer pixel box `[left, top, right, bottom]` inside the PNG. The file is embedded as a raster graphic in the CDXML.
 
 Place rich chemical conditions with explicit runs when typography matters:
 

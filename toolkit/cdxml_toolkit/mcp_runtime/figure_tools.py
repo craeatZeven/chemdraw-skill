@@ -6,9 +6,11 @@ import math
 import hashlib
 from collections import Counter
 from copy import deepcopy
+from io import BytesIO
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+from PIL import Image
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdCIPLabeler, rdDepictor
 
@@ -931,9 +933,11 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 'smiles', 'molblock', 'file', 'fragment_index', 'position', 'coordinates', 'rotation', 'label',
                 'preserve_coordinates', 'align_to', 'alignment_mode', 'bond_length', 'cip_labels', 'atom_numbers',
                 'annotation_offsets', 'highlight_atoms', 'highlight_bonds', 'highlight_color', 'color', 'bond_displays',
+                'atom_label_colors', 'bond_colors',
                 'ring_fills', 'atom_halos', 'multi_attachments', 'crossings', 'ts_bracket',
             },
             'text': {'position', 'text', 'runs', 'size', 'align', 'color'},
+            'image': {'file', 'crop', 'start', 'end'},
             'arrow': {'start', 'end', 'style', 'color'},
             'line': {'start', 'end', 'style', 'color'},
             'curve': {'points', 'color'},
@@ -1040,6 +1044,13 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             fragment.set('color', color(item.get('color')))
             for run in fragment.iter('s'):
                 run.set('color', color(item.get('color')))
+            for index, shade in item.get('atom_label_colors', {}).items():
+                if int(index) not in range(len(atoms)):
+                    raise ValueError('Invalid atom_label_colors atom index')
+                atom_node = fragment.find(f"n[@id='{atom_map[int(index) + 1]}']")
+                atom_node.set('color', color(shade))
+                for run in atom_node.iter('s'):
+                    run.set('color', color(shade))
 
             # Validate fragment BEFORE appending MultiAttachment nodes and coordination bonds
             validations.append(validate_fragment(source, ET.tostring(fragment, encoding='unicode')))
@@ -1170,6 +1181,10 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 if int(i) not in range(mol.GetNumBonds()):
                     raise ValueError('Invalid highlight bond index')
                 fragment.findall('b')[int(i)].set('color', color(item.get('highlight_color', '#cc3333')))
+            for index, shade in item.get('bond_colors', {}).items():
+                if int(index) not in range(mol.GetNumBonds()):
+                    raise ValueError('Invalid bond_colors bond index')
+                fragment.findall('b')[int(index)].set('color', color(shade))
             rdCIPLabeler.AssignCIPLabels(mol)
             for i, a in enumerate(atoms):
                 labels = []
@@ -1206,6 +1221,26 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
                 )
         elif kind == 'text':
             text(page, item)
+        elif kind == 'image':
+            left, top = _point(item['start'])
+            right, bottom = _point(item['end'])
+            if not left < right or not top < bottom:
+                raise ValueError('Image bounds need start above and to the left of end')
+            with Image.open(local_path(item['file'])) as source:
+                if source.format != 'PNG':
+                    raise ValueError('Image objects require a PNG file')
+                crop = item.get('crop', [0, 0, source.width, source.height])
+                if not (isinstance(crop, list) and len(crop) == 4 and all(type(n) is int for n in crop)
+                        and 0 <= crop[0] < crop[2] <= source.width and 0 <= crop[1] < crop[3] <= source.height):
+                    raise ValueError('Image crop must be an integer pixel box inside the PNG')
+                with BytesIO() as buffer:
+                    source.crop(crop).save(buffer, format='PNG')
+                    data_hex = buffer.getvalue().hex().upper()
+            bbox = (left, top, right, bottom)
+            node = ET.SubElement(page, 'embeddedobject', {
+                'id': uid(), 'BoundingBox': ' '.join(f'{point:g}' for point in bbox), 'PNG': data_hex,
+            })
+            remember(item, node, bbox)
         elif kind in ('arrow', 'line'):
             start, end = _point(item['start']), _point(item['end'])
             style_name = item.get('style', 'forward' if kind == 'arrow' else 'line')
