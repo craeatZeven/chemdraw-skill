@@ -693,7 +693,7 @@
 - **function**, line 231: `footnote_runs(footer)` - Format multi-line footnotes with italic superscript leading markers and chemical subscripts.
 - **function**, line 59: `fragment_mol(fragment)` - No public docstring in the audited version.
 - **function**, line 362: `header_identities(spec)` - What the header scheme draws, as the page check counts structures (R numbers removed).
-- **function**, line 501: `header_objects(spec, style, left, top)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, and the products with their labels. Also returns the bounds and the real R attachments to hide behind decorative marks.
+- **function**, line 501: `header_objects(spec, style, left, top, *, bond_scale = 1.7)` - The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined by "+", the arrow with its conditions, and the products with their labels. Also returns the bounds and the real R attachments to hide behind decorative marks.
 - **function**, line 257: `heading_runs(text)` - A group's name with only its locants in italic: *para* substituents, *N*-heterocycles.
 - **function**, line 325: `label_group(mol, definition)` - The substituent a definition names, to be drawn as its label: {label, atoms, outside}.
 - **function**, line 70: `molecule_coordinates(mol, bond_length, reference = None)` - No public docstring in the audited version.

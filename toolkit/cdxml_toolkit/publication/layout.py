@@ -498,7 +498,7 @@ def _shift_obj_x(obj, dx):
         obj['end'] = [obj['end'][0] + dx, obj['end'][1]]
 
 
-def header_objects(spec, style, left, top):
+def header_objects(spec, style, left, top, *, bond_scale=1.7):
     """The general reaction drawn over a scope grid (BJOC 22-127 scheme 2): substrates joined
     by "+", the arrow with its conditions, and the products with their labels. Also returns
     the bounds and the real R attachments to hide behind decorative marks."""
@@ -508,7 +508,7 @@ def header_objects(spec, style, left, top):
             return {'item': item, 'text': True, 'w': text_width(item['text'], style),
                     'h': size * 1.6, 'x0': 0.0, 'y0': -size * 0.8, 'dropped': []}
         # The general reaction is drawn larger than the grid below it, as journal figures do.
-        header_bond = float(style['bond_length']) * 1.7
+        header_bond = float(style['bond_length']) * bond_scale
         mol, xy, _ = molecule_coordinates(Chem.MolFromSmiles(item['smiles']), header_bond)
         if spec.get('rmark_in_ring'):
             xy = _shorten_ring_r_bonds(xy, mol, header_bond)

@@ -39,4 +39,5 @@ def test_a_numbered_r_group_is_drawn_as_r_with_its_number_raised():
     xml, _, _ = R._build_fragment(atoms, bonds, R._IDGen(10))
     node = ET.fromstring(xml).find("n")
     assert node.get("GenericNickname") == "R2"
-    assert [(s.text, s.get("face")) for s in node.iter("s")][-1] == ("2", "64")
+    # ChemDraw renders the literal superscript in a generic atom label.
+    assert [(s.text, s.get("face")) for s in node.iter("s")] == [("R\u00b2", "96")]
