@@ -125,93 +125,28 @@ unknown brief fields after a checkout change.
 
 ## 6. Hard Rules Distilled from an 83-Figure Textbook Run (2026-11-24)
 
-> Source: a full textbook illustration run (83 figures, 12 iterative rounds, cross-model split:
-> one model draws, another reviews). Every rule below is **measured**, not inferred;
-> the long form with symptoms/root causes lives in [`lessons-2026-11-24-figures.md`](./lessons-2026-11-24-figures.md).
+A full textbook illustration run (83 figures, 12 rounds, one model drawing and another reviewing) produced the
+rules below. They are policy; the measurable checks live in the Skill references, so this section stays short.
 
-### 6.1 Round-trip "matched" is not render equivalence
+1. **Readback is not a render.** A CDXML can parse back complete and still lose an element when ChemDraw draws
+   it — decorative `<graphic Oval>` marks and text glyphs used as marks are not drawn. Accept a figure only on
+   the native render of the *delivered* CDXML, and tag patched rasters (`render_source: patch`).
+   → [figure validation](../skill/chemdraw/references/figure-validation.md#render-path)
+2. **Marks and arrows are chemistry.** A radical/charge marker keeps ≥ `radius + 0.6` units to every bond and
+   ≥ `radius + 1.5` to every caption; an arrow head lands within 2 units of its target with the tail at the
+   electron source. Existence checks pass chemically wrong figures.
+   → [figure validation](../skill/chemdraw/references/figure-validation.md#mark-geometry)
+3. **Resolution has two controls.** `Preferences.PNGResolution` + `Document.SaveAs` honour 300/600 dpi; an MCP
+   `export_image(dpi=…)` may stay fixed. `SaveAs` writes nothing, silently, for formats it does not support.
+4. **Regeneration must be idempotent.** A pixel repair not mirrored into the CDXML is lost on the next render;
+   repairing inside the target radius only avoids erasing neighbouring ink.
+5. **Audit ledgers need a fixed schema and a monotonicity gate.** One round rewrote the table header and the
+   "OK" count fell from 51 to 34, after which every round rebuilt from the worse baseline. Assert
+   `OK_count` and `artifact_count` never decrease, restore from the reference branch, and record the evidence
+   class per row (`basis: readback+caption | readback-only | carried | unresolved`).
+6. **Silent failures are the norm.** Worktree creation, unsupported save formats, artifact-list gaps and
+   encoding mismatches all exit 0 while doing nothing. Assert the artifact exists and is non-empty after every
+   external call; never trust the exit code.
 
-A CDXML can parse back with every atom, bond, text and symbol present, and still **lose an element when
-ChemDraw renders it**. In that run a radical dot lived in a `<graphic GraphicType="Oval">` node: readback
-said "present", ChemDraw drew nothing, and 12 rounds of review never noticed.
-
-**Check before sign-off**: render the *delivered* CDXML with ChemDraw itself and diff the ink against the
-delivered PNG (per-element bounding boxes, not just file existence). If a PNG was produced by a built-in
-or patched renderer, tag it (`render_source: chemdraw|builtin|patch`) and never mix sources inside one set.
-
-### 6.2 Decorative `<graphic>` primitives that ChemDraw does not draw
-
-- **Free radical dot** → use the atom property `<n Radical="doublet"/>`; ChemDraw positions the dot itself.
-  Do **not** synthesise it from an Oval graphic or a text glyph.
-- **Formal charge** → `<graphic GraphicType="Symbol" SymbolType="CirclePlus|CircleMinus">`.
-- **Text glyphs as marks are unreliable**: `·` in Arial renders as a tofu square, `·` in SimSun explodes in
-  size at larger point sizes; `•` renders but its size/baseline follow the font.
-- Adopt a **native-object allowlist** (atoms, bonds, `<arrow>`, `<bracket>`, `<graphic SymbolType=...>`,
-  orbitals). Schematics built from bare lines + text look right but are invisible to ChemDraw's chemical
-  model and to every readback check.
-
-### 6.3 Export resolution has two different controls
-
-| Path | Behaviour |
-| --- | --- |
-| `export_image(dpi=…)` (MCP connector) | fixed 820×388 @144 dpi — the `dpi` argument has no effect |
-| `app.Preferences.PNGResolution` + `Document.SaveAs("x.png")` (COM) | honoured: 300 → 3417×1613, 600 → 6834×3224 |
-
-Also: `SaveAs` supports `cdxml / svg / emf / tif / eps / png` and **silently produces nothing for `pdf`**.
-A ready-made wrapper lives in the authoring repo as `render_cdxml.py` (ChemDraw COM, resolution as a flag).
-
-### 6.4 Marker clearance, not just proximity to the atom
-
-A radical/charge marker must clear **everything**, not merely sit near its atom:
-
-- distance to any straight bond segment ≥ `radius + 0.6` units
-- distance to any text anchor ≥ `radius + 1.5` units
-- exclude large ovals (orbital lobes) from the check, or every orbital figure becomes a false positive
-  (first implementation flagged 18 of 83 figures that way)
-
-Placement recipe that worked: enumerate candidate points in the upper half-plane around the atom, keep those
-with ≥ 11 px clearance at 300 dpi, then take the smallest radius (closest to the atom). The conventional
-"upper-right superscript" position is often **occupied by the C–H bond** — if so, go directly above the atom.
-
-### 6.5 Schematic arrows: verify direction and landing, not existence
-
-Measured defects from that run:
-
-- an electron-push arrow drawn **bond → lone pair** instead of lone pair → bond (tail was on the C–Cl bond
-  midpoint, head pointed at the lone-pair symbol)
-- an arrow whose head landed on the ring centre, 5.6 units away from the intended ortho carbon
-- rotation arrows faked with `<curve>` objects instead of `<arrow>` (so they carry no arrowhead semantics)
-
-**Checks**: arrow head within **2 units** of the target atom/bond midpoint; tail at the electron source;
-conrotatory/disrotatory sense derived from the arc geometry, not from the label text.
-
-### 6.6 Regeneration must be idempotent; PNG edits must be written back
-
-- Any pixel-level repair of a PNG **must** be mirrored into the CDXML, otherwise the next re-render silently
-  reverts it. Tag such figures `render_source: patch` and downgrade their audit row.
-- Repair only inside the target radius (paint white, redraw). A full-region paste once erased the atom glyph
-  and parts of two bonds without any error.
-- Re-rendering the same CDXML twice must be byte-comparable; if it is not, the pipeline is nondeterministic.
-
-### 6.7 Audit ledgers need a fixed schema and a monotonicity gate
-
-In that run a later round rewrote `audit/summary.csv` with a **new header**, populated only its own rows,
-and the "OK" count fell from 51 to 34 — every later round then rebuilt from the worse baseline.
-
-- Fix the schema (version it); schema changes ship with a migration.
-- After every round assert `OK_count >= previous` and `artifact_count >= previous`; on regression, restore the
-  missing rows/files from the reference branch and fail the round.
-- Track the evidence class per row (`basis: readback+caption | readback-only | carried | unresolved`);
-  only `readback+caption` may be reported as OK.
-
-### 6.8 Silent-failure list (exit 0, nothing done)
-
-Observed in one session, all with exit code 0:
-
-1. `worktree add` failed (dir exists / branch in use) and the script continued → every later path was missing
-2. `SaveAs` to an unsupported format produced no file and no exception
-3. the reviewer had no declared-artifact list, so it scanned `docs/` before/after images and passed a figure
-   whose real PNG had never been regenerated
-4. logs written as UTF-16 by `Tee-Object` were read as UTF-8, so a completion marker never matched (2 h idle)
-
-**Rule**: after every external call, assert *the artifact exists and is non-empty*; never trust the exit code.
+Symptom-level fixes for the first two items are kept with the other observed failures in
+[lesson rows](../skill/chemdraw/references/lessons.md).

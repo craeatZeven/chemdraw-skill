@@ -24,6 +24,11 @@ Observed failures and the fix that worked. Read only the relevant row.
 | A diagram generator refused the spec | It found a contradiction (a transition state below its neighbours, a cycle that breaks Hess's law, electrons that do not add up). Fix the numbers; see [chemistry diagrams](diagrams.md). |
 | The house-rule check passed but the figure is chemically wrong | `cdx.py check` sees settings, fonts, colours and references only. Ring sizes, electron counts and isomers need a person to look at the native render. |
 
+| A mark (radical dot, charge, stereo symbol) sits on a bond or drifts in blank space | A decorative `<graphic GraphicType="Oval">` is not drawn by ChemDraw at all, and a text glyph used as the mark (`·` in Arial renders as a tofu square) has no stable size. Put the radical on the atom (`Radical="doublet"`) and charges on `GraphicType="Symbol"`; when a mark must be free-standing, keep ≥ `radius + 0.6` units to every bond and ≥ `radius + 1.5` to every caption, and prefer directly above the atom because upper-right is often occupied by a C–H bond. |
+| "Round-trip matched" but the native render is missing an element | Readback only proves the node exists in XML, not that ChemDraw draws it. Accept a figure only on the native render of the *delivered* CDXML, diffed against the delivered PNG; tag any patched raster (`render_source: patch`). |
+| A 300 dpi PNG cannot be re-exported at print size | The image export path and the resolution setting are different controls: an MCP `export_image(dpi=…)` may stay at a fixed size while `Preferences.PNGResolution` + `Document.SaveAs("x.png")` honours 300/600. `SaveAs` also produces nothing, without error, for formats it does not support (`pdf`). |
+| An electron-push arrow points the wrong way or lands in empty space | Check the geometry, not the label: head within 2 units of the intended atom or bond midpoint, tail at the electron source; a rotation arrow built from `<curve>` carries no arrowhead semantics. |
+
 ## Reconstruction
 
 | Symptom | Fix |
