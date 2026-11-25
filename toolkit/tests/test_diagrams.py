@@ -339,6 +339,52 @@ def test_huckel_levels_ordered_by_energy():
     assert head_y < tail_y                                    # E arrow points up the page
 
 
+def test_huckel_hetero_labels_clear_orbital_graphics():
+    """Heteroatom labels sit outside the orbital ink of their own and neighbouring levels.
+
+    The report only exposes energy ordering, so this parses the drawn CDXML: each size-8
+    caption (the heteroatom symbol) must stay at least half a font size (4 pt) clear of every
+    orbital circle and curve bounding box, for every hetero preset.
+    """
+    from cdxml_toolkit.scientific.huckel import huckel_mo, HETERO_SYSTEMS
+    from cdxml_toolkit.scientific.canvas import caption_box
+
+    def gap(a, b):
+        dx = max(a[0] - b[2], b[0] - a[2], 0.0)
+        dy = max(a[1] - b[3], b[1] - a[3], 0.0)
+        return math.hypot(dx, dy)
+
+    for name in HETERO_SYSTEMS:
+        root = ET.fromstring(huckel_mo({'system': name})['cdxml'].split('\n', 2)[2])
+        labels, graphics = [], []
+        for t in root.iter('t'):
+            if not t.get('p'):
+                continue
+            size = max((float(s.get('size', 10) or 10) for s in t.iter('s')), default=10.0)
+            if size != 8:
+                continue
+            x, y = (float(v) for v in t.get('p').split()[:2])
+            markup = ''.join((s.text or '') for s in t.iter('s'))
+            labels.append((markup, caption_box(x, y, markup, size, t.get('Justification', 'Left'))))
+        for g in root.iter('graphic'):
+            if g.get('BoundingBox') and g.get('OvalType') in ('Circle', 'Circle Filled'):
+                v = [float(q) for q in g.get('BoundingBox').split()[:4]]
+                graphics.append((min(v[0], v[2]), min(v[1], v[3]), max(v[0], v[2]), max(v[1], v[3])))
+        for c in root.iter('curve'):
+            v = [float(q) for q in c.get('CurvePoints', '').split()]
+            if len(v) < 6:
+                continue
+            xs, ys = v[0::2], v[1::2]
+            graphics.append((min(xs), min(ys), max(xs), max(ys)))
+        assert labels, f'{name}: no heteroatom label found'
+        for markup, box in labels:
+            for gb in graphics:
+                assert gap(box, gb) >= 4.0, (
+                    f'{name}: {markup!r} label {tuple(round(v, 2) for v in box)} is '
+                    f'{gap(box, gb):.2f} pt from orbital graphic {tuple(round(v, 2) for v in gb)}; '
+                    'need >= 4')
+
+
 def test_phase_diagram_orders_its_points():
     from cdxml_toolkit.scientific.phase import phase_diagram
     result = phase_diagram({'triple': [216.6, 5.1], 'critical': [304, 73], 'marks': [{'P': 1, 'label': '1 atm'}]})

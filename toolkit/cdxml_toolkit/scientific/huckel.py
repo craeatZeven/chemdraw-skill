@@ -156,15 +156,15 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             left = x0 + 6.0
             if cyclic:
                 cx0 = left + lobe + ring_r
-                corners = [(cx0 + ring_r * math.cos(-math.pi / 2 + 2 * math.pi * i / atoms),
-                            y + ring_r * math.sin(-math.pi / 2 + 2 * math.pi * i / atoms)) for i in range(atoms)]
+                corners = [(cx0 + ring_r * math.cos(math.pi / 6 + 2 * math.pi * i / atoms),
+                            y + ring_r * math.sin(math.pi / 6 + 2 * math.pi * i / atoms)) for i in range(atoms)]
                 c.path(corners, closed=True)
                 if psi == 1:
                     for index, info in hetero.items():
                         hx, hy = corners[index]
                         ox, oy = hx - cx0, hy - y
                         norm = math.hypot(ox, oy) or 1.0
-                        c.label((hx + ox / norm * (lobe + 6.0), hy + oy / norm * (lobe + 6.0)), info['symbol'],
+                        c.label((hx + ox / norm * (lobe + 11.0), hy + oy / norm * (lobe + 11.0)), info['symbol'],
                                 align='Center', valign='middle', size=8)
                 for (px, py), coefficient in zip(corners, vector):
                     radius = abs(coefficient) * lobe
@@ -182,11 +182,12 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                         continue
                     _p_orbital(c, cx, y, size, coefficient > 0)
             widest = max(widest, x0 + block_w + 6.0)
-            report_orbitals.append({'psi': psi, 'x': round(group['x'], 4) + 0.0, 'y': round(y, 2),
+            report_orbitals.append({'psi': psi, 'x': round(group['x'], 4) + 0.0,
                                     'energy': 'alpha ' + _energy_text(group['x'], 'b'),
                                     'electrons': len(occupation),
                                     'nodes_between_atoms': sum(1 for a, b in pairs if vector[a] * vector[b] < -TOL),
-                                    'coefficients': [round(v, 3) for v in vector]})
+                                    'coefficients': [round(v, 3) for v in vector],
+                                    'y': round(y, 2)})
             psi += 1
         label = '\u03c8{sub:%d}' % (psi - count) + ('' if count == 1 else ', \u03c8{sub:%d}' % (psi - 1))
         c.label((22.0, y), label, align='Right', valign='middle')
