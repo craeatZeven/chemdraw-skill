@@ -372,22 +372,48 @@ def _hetero_label_gaps(cdxml):
     return labels, gaps
 
 
+def _ring_center(cdxml):
+    """The centre of the most bonding (page-bottom) ring, from its closed outline curve."""
+    root = ET.fromstring(cdxml.split('\n', 2)[2])
+    centres = []
+    for c in root.iter('curve'):
+        if c.get('Closed') != 'yes' or c.get('FillType') != 'None':
+            continue
+        v = [float(q) for q in c.get('CurvePoints', '').split()]
+        if len(v) < 12:
+            continue
+        xs, ys = v[0::6], v[1::6]
+        centres.append((sum(xs) / len(xs), sum(ys) / len(ys)))
+    return max(centres, key=lambda p: p[1])
+
+
 def test_huckel_hetero_labels_clear_orbital_graphics():
     """Heteroatom labels sit outside the orbital ink of their own and neighbouring levels.
 
-    The report only exposes energy ordering, so this parses the drawn CDXML. It first checks the
-    size-8 captions are exactly the declared heteroatom symbols (count included), then that each
-    stays at least half a font size (4 pt) clear of every orbital circle and curve box.
+    The report only exposes energy ordering, so this parses the drawn CDXML. It checks the size-8
+    captions are exactly the declared heteroatom symbols (count included) and, for rings, that
+    each label sits along its declared atom's radial direction (a bijection, not just a count);
+    then it checks each label stays at least 4 pt clear of every orbital circle and curve box.
     """
     from cdxml_toolkit.scientific.huckel import huckel_mo, HETERO_SYSTEMS, HETEROATOMS
 
     for name in HETERO_SYSTEMS:
         result = huckel_mo({'system': name})
+        atoms, cyclic, kinds = HETERO_SYSTEMS[name]
         labels, gaps = _hetero_label_gaps(result['cdxml'])
-        _, _, kinds = HETERO_SYSTEMS[name]
         expected = sorted(HETEROATOMS[kind]['symbol'] for kind in kinds.values())
         found = sorted(markup for markup, _ in labels)
         assert found == expected, f'{name}: heteroatom labels {found} != declared {expected}'
+        if cyclic:
+            cx, cy = _ring_center(result['cdxml'])
+            expected_dir = sorted(
+                math.atan2(math.sin(-math.pi / 2 + 2 * math.pi * int(i) / atoms),
+                           math.cos(-math.pi / 2 + 2 * math.pi * int(i) / atoms)) for i in kinds)
+            actual_dir = sorted(
+                math.atan2((b[1] + b[3]) / 2 - cy, (b[0] + b[2]) / 2 - cx) for _m, b in labels)
+            for a, e in zip(actual_dir, expected_dir):
+                assert abs((a - e + math.pi) % (2 * math.pi) - math.pi) < 0.05, (
+                    f'{name}: label directions {actual_dir} do not match declared atoms {expected_dir}')
         for gap in gaps:
             assert gap >= 4.0, f'{name}: a heteroatom label is {gap:.2f} pt from orbital ink; need >= 4'
 
@@ -405,6 +431,29 @@ def test_huckel_custom_heteroatom_index_clears_graphics():
     labels, gaps = _hetero_label_gaps(result['cdxml'])
     assert [markup for markup, _ in labels] == ['N']
     assert gaps and min(gaps) >= 4.0, f'index-4 label gaps {[round(g, 2) for g in gaps]} need >= 4'
+
+
+def test_huckel_single_degenerate_level_builds():
+    """A cyclic system whose only level is degenerate must not trip the psi1 shift (no xs[-2])."""
+    from cdxml_toolkit.scientific.huckel import huckel_mo
+
+    result = huckel_mo({'atoms': 3, 'cyclic': True, 'electrons': 2, 'heteroatoms': [
+        {'index': 0, 'h': 0.5, 'k': 0, 'symbol': 'N'},
+        {'index': 1, 'h': 0.5, 'k': 0, 'symbol': 'N'},
+        {'index': 2, 'h': 0.5, 'k': 0, 'symbol': 'N'}]})
+    assert len(result['orbitals']) == 3
+    assert check_cdxml(result['cdxml'])['ok']
+
+
+def test_huckel_nine_ring_same_level_label_gap():
+    """A nine-membered ring's heteroatom label must clear its own-level orbital disc by >= 4 pt."""
+    from cdxml_toolkit.scientific.huckel import huckel_mo
+
+    result = huckel_mo({'atoms': 9, 'cyclic': True, 'electrons': 10,
+                        'heteroatoms': [{'index': 1, 'type': 'O_furan'}]})
+    labels, gaps = _hetero_label_gaps(result['cdxml'])
+    assert [markup for markup, _ in labels] == ['O']
+    assert gaps and min(gaps) >= 4.0, f'nine-ring label gaps {[round(g, 2) for g in gaps]} need >= 4'
 
 
 def test_phase_diagram_orders_its_points():

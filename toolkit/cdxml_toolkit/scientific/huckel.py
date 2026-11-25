@@ -130,6 +130,7 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     c = Canvas()
     spacing = float(spec.get('level_spacing', 40.0 if cyclic else 34.0))
     lobe = float(spec.get('lobe', 11.0))
+    label_offset = lobe + 15.0
     ring_r = 9.0 + 2.2 * atoms
     block_w = (atoms - 1) * 2.2 * lobe + 2 * lobe if not cyclic else 2 * ring_r + 2 * lobe
     xs = sorted({round(g['x'], 6) for g in groups})
@@ -142,7 +143,7 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             for x in xs:
                 if x >= upper:
                     y_of[x] += shift
-    if cyclic and hetero:
+    if cyclic and hetero and len(xs) >= 2:
         # Heteroatom labels sit on the radial outward side of their corner. At the most bonding
         # (page-bottom) ring, the label of a top corner points up into the next level's ring, so
         # push that level down just enough for every heteroatom label to clear the adjacent ring.
@@ -151,7 +152,7 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         label_tops = []
         for index, info in hetero.items():
             angle = -math.pi / 2 + 2 * math.pi * int(index) / atoms
-            radius = ring_r + lobe + 11.0
+            radius = ring_r + label_offset
             box = c.measure((radius * math.cos(angle), radius * math.sin(angle)), info['symbol'],
                             size=8, align='Center', valign='middle')
             label_tops.append(box[1])
@@ -180,7 +181,7 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                         hx, hy = corners[index]
                         ox, oy = hx - cx0, hy - y
                         norm = math.hypot(ox, oy) or 1.0
-                        c.label((hx + ox / norm * (lobe + 11.0), hy + oy / norm * (lobe + 11.0)), info['symbol'],
+                        c.label((hx + ox / norm * label_offset, hy + oy / norm * label_offset), info['symbol'],
                                 align='Center', valign='middle', size=8)
                 for (px, py), coefficient in zip(corners, vector):
                     radius = abs(coefficient) * lobe
