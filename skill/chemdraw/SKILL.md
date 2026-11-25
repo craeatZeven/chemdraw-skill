@@ -7,6 +7,16 @@ description: Use ChemDraw and cdxml-toolkit for editable chemical structures, re
 
 Editable chemistry via bundled `cdxml_toolkit` and licensed native ChemDraw (COM on Windows, AppleScript on macOS; see [operations](references/operations.md#macos)). Report chemical identity, reader consistency, native compatibility and visual fidelity separately.
 
+> **红线五条（编辑 CDXML 前必读；违反任何一条交付即不合格）**
+>
+> 1. **箭头不许手写 XML** —— 交给 `acs_builder.Fig.curved_arrow()` 或 figure_mechanism 生成器；
+>    `CurvePoints` 必须是完整 (handle, point, handle) 三元组。
+> 2. **弯箭头对象类型** `CurveType="8"`（双钩）或 `"32"`（单电子钩）；写成 0 或省略，
+>    在 ChemDraw 界面里会退化成折线、手柄拖不动。
+> 3. **标记用原生对象**：自由基 `<n Radical="doublet">`、电荷 Symbol `CirclePlus`/`CircleMinus`；
+>    装饰性 `<graphic GraphicType="Oval">` 不被绘制，不能当标记。
+> 4. **括号** `BoundingBox` 的两个 x 必须相等，否则竖边被拉斜。
+> 5. **交付前必跑** `python scripts/check_native.py <figures_final>` —— 0 违规才允许装配。
 ## Quick start (command line)
 
 `<skill>` is this folder; `python` is any host Python 3.9+ (`python3` on macOS/Linux, `python` or `py` on Windows). `cdx.py` re-launches inside the toolkit runtime (Python 3.10–3.13); below, `cdx.py` means `python <skill>/scripts/cdx.py`.
