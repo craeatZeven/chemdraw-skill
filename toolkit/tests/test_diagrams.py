@@ -340,7 +340,7 @@ def test_huckel_levels_ordered_by_energy():
 
 
 def _hetero_label_gaps(cdxml):
-    """Size-8 captions (heteroatom symbols) and their min gaps to every orbital circle/curve box."""
+    """Size-8 captions and gaps to circle, curve, level-line and arrow bounding boxes."""
     from cdxml_toolkit.scientific.canvas import caption_box
     root = ET.fromstring(cdxml.split('\n', 2)[2])
     labels, graphics = [], []
@@ -354,9 +354,15 @@ def _hetero_label_gaps(cdxml):
         markup = ''.join((s.text or '') for s in t.iter('s'))
         labels.append((markup, caption_box(x, y, markup, size, t.get('Justification', 'Left'))))
     for g in root.iter('graphic'):
-        if g.get('BoundingBox') and g.get('OvalType') in ('Circle', 'Circle Filled'):
+        if g.get('BoundingBox') and (g.get('GraphicType') == 'Line' or
+                                     g.get('OvalType') in ('Circle', 'Circle Filled')):
             v = [float(q) for q in g.get('BoundingBox').split()[:4]]
             graphics.append((min(v[0], v[2]), min(v[1], v[3]), max(v[0], v[2]), max(v[1], v[3])))
+    for arrow in root.iter('arrow'):
+        head = [float(q) for q in arrow.get('Head3D').split()[:2]]
+        tail = [float(q) for q in arrow.get('Tail3D').split()[:2]]
+        graphics.append((min(head[0], tail[0]) - 2, min(head[1], tail[1]) - 2,
+                         max(head[0], tail[0]) + 2, max(head[1], tail[1]) + 2))
     for c in root.iter('curve'):
         v = [float(q) for q in c.get('CurvePoints', '').split()]
         if len(v) < 6:
@@ -372,18 +378,20 @@ def _hetero_label_gaps(cdxml):
     return labels, gaps
 
 
-def _ring_center(cdxml):
-    """The centre of the most bonding (page-bottom) ring, from its closed outline curve."""
+def _ring_center(cdxml, atoms):
+    """Validate complete degenerate-handle triples, then locate the page-bottom ring."""
     root = ET.fromstring(cdxml.split('\n', 2)[2])
     centres = []
     for c in root.iter('curve'):
         if c.get('Closed') != 'yes' or c.get('FillType') != 'None':
             continue
         v = [float(q) for q in c.get('CurvePoints', '').split()]
-        if len(v) < 12:
-            continue
+        assert len(v) == atoms * 6, f'incomplete ring control points: {len(v)} != {atoms * 6}'
+        for i in range(0, len(v), 6):
+            assert v[i:i + 2] == v[i + 2:i + 4] == v[i + 4:i + 6], 'invalid ring control points'
         xs, ys = v[0::6], v[1::6]
         centres.append((sum(xs) / len(xs), sum(ys) / len(ys)))
+    assert centres, 'missing ring control points'
     return max(centres, key=lambda p: p[1])
 
 
@@ -393,7 +401,7 @@ def test_huckel_hetero_labels_clear_orbital_graphics():
     The report only exposes energy ordering, so this parses the drawn CDXML. It checks the size-8
     captions are exactly the declared heteroatom symbols (count included) and, for rings, that
     each label sits along its declared atom's radial direction (a bijection, not just a count);
-    then it checks each label stays at least 4 pt clear of every orbital circle and curve box.
+    then it checks each label stays at least 4 pt clear of circles, curves, level lines and arrows.
     """
     from cdxml_toolkit.scientific.huckel import huckel_mo, HETERO_SYSTEMS, HETEROATOMS
 
@@ -405,7 +413,7 @@ def test_huckel_hetero_labels_clear_orbital_graphics():
         found = sorted(markup for markup, _ in labels)
         assert found == expected, f'{name}: heteroatom labels {found} != declared {expected}'
         if cyclic:
-            cx, cy = _ring_center(result['cdxml'])
+            cx, cy = _ring_center(result['cdxml'], atoms)
             expected_dir = sorted(
                 math.atan2(math.sin(-math.pi / 2 + 2 * math.pi * int(i) / atoms),
                            math.cos(-math.pi / 2 + 2 * math.pi * int(i) / atoms)) for i in kinds)
@@ -442,7 +450,37 @@ def test_huckel_single_degenerate_level_builds():
         {'index': 1, 'h': 0.5, 'k': 0, 'symbol': 'N'},
         {'index': 2, 'h': 0.5, 'k': 0, 'symbol': 'N'}]})
     assert len(result['orbitals']) == 3
+    labels, gaps = _hetero_label_gaps(result['cdxml'])
+    assert [text for text, _ in labels] == ['N', 'N', 'N']
+    assert gaps and min(gaps) >= 4.0
     assert check_cdxml(result['cdxml'])['ok']
+
+
+@pytest.mark.parametrize('primitive', ['circle', 'curve', 'line', 'spin'])
+def test_huckel_label_gap_checks_every_primitive(primitive):
+    from cdxml_toolkit.scientific.canvas import Canvas
+    from cdxml_toolkit.scientific.orbitals import _spin_arrows
+
+    canvas = Canvas()
+    canvas.label((40, 40), 'O', size=8, align='Center', valign='middle')
+    if primitive == 'circle':
+        canvas.circle((40, 40), 2)
+    elif primitive == 'curve':
+        canvas.path([(38, 38), (42, 42)])
+    elif primitive == 'line':
+        canvas.segment((38, 40), (42, 40))
+    else:
+        _spin_arrows(canvas, 40, 40, 'u')
+    labels, gaps = _hetero_label_gaps(canvas.to_string())
+    assert len(labels) == 1 and gaps and min(gaps) == 0
+
+
+def test_huckel_opposite_nitrogens_clear_all_graphics():
+    result = build('huckel_mo', {'atoms': 6, 'cyclic': True, 'electrons': 6,
+                               'heteroatoms': [{'index': i, 'type': 'N_pyridine'} for i in (1, 4)]})
+    labels, gaps = _hetero_label_gaps(result['cdxml'])
+    assert [text for text, _ in labels] == ['N', 'N']
+    assert gaps and min(gaps) >= 4.0
 
 
 def test_huckel_nine_ring_same_level_label_gap():
@@ -454,6 +492,62 @@ def test_huckel_nine_ring_same_level_label_gap():
     labels, gaps = _hetero_label_gaps(result['cdxml'])
     assert [markup for markup, _ in labels] == ['O']
     assert gaps and min(gaps) >= 4.0, f'nine-ring label gaps {[round(g, 2) for g in gaps]} need >= 4'
+
+
+@pytest.mark.parametrize('spec', [
+    {'atoms': 8, 'cyclic': True, 'electrons': 10, 'lobe': 14,
+     'heteroatoms': [{'index': 1, 'symbol': 'O', 'h': 3, 'k': 0}]},
+    {'atoms': 8, 'cyclic': True, 'electrons': 8,
+     'heteroatoms': [{'index': 1, 'symbol': 'Se', 'h': 3, 'k': 0}]},
+    {'atoms': 12, 'cyclic': True, 'electrons': 2,
+     'heteroatoms': [{'index': i, 'symbol': 'O', 'h': 4, 'k': 0} for i in (3, 5)]},
+], ids=['large-lobe-oxygen', 'wide-selenium', 'degenerate-spin-arrows'])
+def test_huckel_adaptive_labels_clear_all_graphics(spec):
+    result = build('huckel_mo', spec)
+    labels, gaps = _hetero_label_gaps(result['cdxml'])
+    assert sorted(text for text, _ in labels) == sorted(h['symbol'] for h in spec['heteroatoms'])
+    assert gaps and min(gaps) >= 4.0, f'minimum label gap: {min(gaps):.4f} pt'
+    check = check_cdxml(result['cdxml'], allow_sizes=[8])
+    assert check['ok'], check['errors']
+    assert check['warnings'] == []
+
+
+def test_huckel_ring_center_rejects_truncated_control_points():
+    result = build('huckel_mo', {'system': 'pyrimidine'})
+    assert len(_ring_center(result['cdxml'], 6)) == 2
+    root = ET.fromstring(result['cdxml'].split('\n', 2)[2])
+    ring = next(root.iter('curve'))
+    ring.set('CurvePoints', ' '.join(ring.get('CurvePoints').split()[:-1]))
+    text = '\n'.join(result['cdxml'].split('\n', 2)[:2]) + '\n' + ET.tostring(root, encoding='unicode')
+    assert any(e['code'] == 'curve_points' for e in check_cdxml(text)['errors'])
+    with pytest.raises(AssertionError, match='control points'):
+        _ring_center(text, 6)
+
+
+def test_huckel_all_presets_have_no_layout_warnings():
+    from cdxml_toolkit.scientific.huckel import SYSTEMS, HETERO_SYSTEMS
+
+    for name in (*SYSTEMS, *HETERO_SYSTEMS):
+        check = check_cdxml(build('huckel_mo', {'system': name})['cdxml'], allow_sizes=[8])
+        assert check['ok'], (name, check['errors'])
+        assert check['warnings'] == [], (name, check['warnings'])
+
+
+def test_huckel_cyclic_renumberings_clear_all_graphics():
+    from cdxml_toolkit.scientific.huckel import HETERO_SYSTEMS
+
+    for name in ('pyridine', 'pyrrole', 'furan', 'pyrimidine'):
+        atoms, _, kinds = HETERO_SYSTEMS[name]
+        for shift in range(atoms):
+            spec = {'atoms': atoms, 'cyclic': True, 'electrons': 6,
+                    'heteroatoms': [{'index': (i + shift) % atoms, 'type': kind}
+                                   for i, kind in kinds.items()]}
+            result = build('huckel_mo', spec)
+            labels, gaps = _hetero_label_gaps(result['cdxml'])
+            assert len(labels) == len(kinds)
+            assert gaps and min(gaps) >= 4.0, (name, shift, min(gaps))
+            check = check_cdxml(result['cdxml'], allow_sizes=[8])
+            assert check['ok'] and not check['warnings'], (name, shift, check)
 
 
 def test_phase_diagram_orders_its_points():

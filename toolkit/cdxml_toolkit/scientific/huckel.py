@@ -130,7 +130,6 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     c = Canvas()
     spacing = float(spec.get('level_spacing', 40.0 if cyclic else 34.0))
     lobe = float(spec.get('lobe', 11.0))
-    label_offset = lobe + 15.0
     ring_r = 9.0 + 2.2 * atoms
     block_w = (atoms - 1) * 2.2 * lobe + 2 * lobe if not cyclic else 2 * ring_r + 2 * lobe
     xs = sorted({round(g['x'], 6) for g in groups})
@@ -143,19 +142,12 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             for x in xs:
                 if x >= upper:
                     y_of[x] += shift
+    ring_labels = _ring_labels(groups[0], atoms, lobe, ring_r, block_w, hetero) if cyclic and hetero else {}
     if cyclic and hetero and len(xs) >= 2:
-        # Heteroatom labels sit on the radial outward side of their corner. At the most bonding
-        # (page-bottom) ring, the label of a top corner points up into the next level's ring, so
-        # push that level down just enough for every heteroatom label to clear the adjacent ring.
         y1 = y_of[xs[-1]]
         y2 = y_of[xs[-2]]
-        label_tops = []
-        for index, info in hetero.items():
-            angle = -math.pi / 2 + 2 * math.pi * int(index) / atoms
-            radius = ring_r + label_offset
-            box = c.measure((radius * math.cos(angle), radius * math.sin(angle)), info['symbol'],
-                            size=8, align='Center', valign='middle')
-            label_tops.append(box[1])
+        label_tops = [c.measure(xy, hetero[index]['symbol'], size=8, align='Center', valign='middle')[1]
+                      for index, xy in ring_labels.items()]
         floor = y2 + ring_r + lobe + 4.1 - min(label_tops)
         if floor > y1:
             y_of[xs[-1]] = floor
@@ -167,28 +159,18 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
         count = len(group['vectors'])
         for k, (vector, occupation) in enumerate(zip(group['vectors'], group['occupation'])):
             x0 = 40.0 + k * (block_w + 30.0)
-            c.segment((x0 - 14.0, y), (x0 - 2.0, y))
-            if occupation:
-                _spin_arrows(c, x0 - 8.0, y, occupation)
-            left = x0 + 6.0
             if cyclic:
-                cx0 = left + lobe + ring_r
-                corners = [(cx0 + ring_r * math.cos(-math.pi / 2 + 2 * math.pi * i / atoms),
-                            y + ring_r * math.sin(-math.pi / 2 + 2 * math.pi * i / atoms)) for i in range(atoms)]
-                c.path(corners, closed=True)
+                _ring_orbital(c, x0, y, atoms, lobe, ring_r, vector, occupation)
                 if psi == 1:
-                    for index, info in hetero.items():
-                        hx, hy = corners[index]
-                        ox, oy = hx - cx0, hy - y
-                        norm = math.hypot(ox, oy) or 1.0
-                        c.label((hx + ox / norm * label_offset, hy + oy / norm * label_offset), info['symbol'],
-                                align='Center', valign='middle', size=8)
-                for (px, py), coefficient in zip(corners, vector):
-                    radius = abs(coefficient) * lobe
-                    if radius < 0.8:
-                        continue                                            # a node at this atom
-                    c.circle((px, py), radius, fill='#000000' if coefficient > 0 else '#FFFFFF')
+                    for index, (lx, ly) in ring_labels.items():
+                        box = c.label((lx, y + ly), hetero[index]['symbol'],
+                                      align='Center', valign='middle', size=8)
+                        widest = max(widest, box[2])
             else:
+                c.segment((x0 - 14.0, y), (x0 - 2.0, y))
+                if occupation:
+                    _spin_arrows(c, x0 - 8.0, y, occupation)
+                left = x0 + 6.0
                 for i, coefficient in enumerate(vector):
                     cx = left + lobe + i * 2.2 * lobe
                     if psi == 1 and i in hetero:
@@ -242,6 +224,78 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                                  else 'antiaromatic (4n)' if electrons % 4 == 0 else 'neither')
     report['warnings'] = []
     return _result(c, output, report)
+
+
+def _ring_orbital(c, x0, y, atoms, lobe, ring_r, vector, occupation):
+    c.segment((x0 - 14.0, y), (x0 - 2.0, y))
+    if occupation:
+        _spin_arrows(c, x0 - 8.0, y, occupation)
+    cx0 = x0 + 6.0 + lobe + ring_r
+    corners = [(cx0 + ring_r * math.cos(-math.pi / 2 + 2 * math.pi * i / atoms),
+                y + ring_r * math.sin(-math.pi / 2 + 2 * math.pi * i / atoms)) for i in range(atoms)]
+    c.path(corners, closed=True)
+    for (px, py), coefficient in zip(corners, vector):
+        radius = abs(coefficient) * lobe
+        if radius >= 0.8:
+            c.circle((px, py), radius, fill='#000000' if coefficient > 0 else '#FFFFFF')
+    return corners
+
+
+def _radial_label_position(origin, direction, label_box, obstacles, gap=4.2):
+    intervals = []
+    for box in obstacles:
+        lower = (box[0] - gap - label_box[2], box[1] - gap - label_box[3])
+        upper = (box[2] + gap - label_box[0], box[3] + gap - label_box[1])
+        start, end = 0.0, math.inf
+        for i in (0, 1):
+            if abs(direction[i]) < 1e-12:
+                if not lower[i] <= origin[i] <= upper[i]:
+                    break
+            else:
+                crossings = sorted(((lower[i] - origin[i]) / direction[i],
+                                    (upper[i] - origin[i]) / direction[i]))
+                start, end = max(start, crossings[0]), min(end, crossings[1])
+        else:
+            if start <= end:
+                intervals.append((start, end))
+    distance = 0.0
+    for start, end in sorted(intervals):
+        if start > distance:
+            break
+        if end >= distance:
+            distance = end + 0.05
+    return tuple(origin[i] + distance * direction[i] for i in (0, 1))
+
+
+def _ring_labels(group, atoms, lobe, ring_r, block_w, hetero):
+    layout = Canvas()
+    first_corners = None
+    for k, (vector, occupation) in enumerate(zip(group['vectors'], group['occupation'])):
+        corners = _ring_orbital(layout, 40.0 + k * (block_w + 30.0), 0.0,
+                                atoms, lobe, ring_r, vector, occupation)
+        if k == 0:
+            first_corners = corners
+    obstacles = []
+    for node in layout.page:
+        if node.get('BoundingBox'):
+            v = [float(q) for q in node.get('BoundingBox').split()]
+            pad = 2.0 if node.tag == 'arrow' else 0.0
+            obstacles.append((min(v[0], v[2]) - pad, min(v[1], v[3]) - pad,
+                              max(v[0], v[2]) + pad, max(v[1], v[3]) + pad))
+        elif node.get('CurvePoints'):
+            v = [float(q) for q in node.get('CurvePoints').split()]
+            obstacles.append((min(v[0::2]), min(v[1::2]), max(v[0::2]), max(v[1::2])))
+    count = len(group['vectors'])
+    psi_label = '\u03c8{sub:1}' + (', \u03c8{sub:%d}' % count if count > 1 else '')
+    obstacles.append(layout.measure((22.0, 0.0), psi_label, align='Right', valign='middle'))
+    positions = {}
+    for index, info in sorted(hetero.items()):
+        angle = -math.pi / 2 + 2 * math.pi * index / atoms
+        box = layout.measure((0.0, 0.0), info['symbol'], size=8, align='Center', valign='middle')
+        xy = _radial_label_position(first_corners[index], (math.cos(angle), math.sin(angle)), box, obstacles)
+        positions[index] = xy
+        obstacles.append(layout.measure(xy, info['symbol'], size=8, align='Center', valign='middle'))
+    return positions
 
 
 def _energy_text(x, beta):
