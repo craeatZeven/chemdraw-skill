@@ -521,6 +521,7 @@ class Fig:
         self._bb(x, y)
         base = 1 if bold else 0
         j = f' Justification="{align}" CaptionJustification="{align}"' if align != 'Left' else ''
+        ct_attr = '32' if electrons == 1 else '8'
         c_idx = self.resolve_color(color)
         c_attr = f' color="{c_idx}"' if c_idx is not None else ''
         # Captions are annotations; without this ChemDraw reads codes such as "B" as atoms on CDX conversion.
@@ -635,6 +636,7 @@ class Fig:
         samples = [tuple(((1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t ** 2 * c + t ** 3 * d)
                          for a, b, c, d in zip(*pts)) for t in (k / 24 for k in range(25))]
         xs, ys = [q[0] for q in samples], [q[1] for q in samples]
+        ct_attr = '32' if electrons == 1 else '8'
         c_idx = self.resolve_color(color)
         c_attr = f' color="{c_idx}"' if c_idx is not None else ''
         gid = self._id()
@@ -642,7 +644,7 @@ class Fig:
             f'<curve id="{gid}" BoundingBox="{min(xs):.2f} {min(ys):.2f} {max(xs):.2f} {max(ys):.2f}" '
             f'CurvePoints="{" ".join(f"{px:.2f} {py:.2f}" for px, py in native)}" FillType="None" LineWidth="0.6" '
             f'ArrowheadHead="{"HalfLeft" if electrons == 1 else "Full"}" ArrowheadType="Solid" HeadSize="1000" '
-            f'ArrowheadCenterSize="875" ArrowheadWidth="250"{c_attr}/>')
+            f'ArrowheadCenterSize="875" ArrowheadWidth="250"{c_attr} CurveType="{ct_attr}"/>')
         return gid
 
     def add_bracket(self, box, label='n', bracket_type='Square', lip_size=5.0):
