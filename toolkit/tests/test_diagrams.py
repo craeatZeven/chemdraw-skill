@@ -339,50 +339,72 @@ def test_huckel_levels_ordered_by_energy():
     assert head_y < tail_y                                    # E arrow points up the page
 
 
+def _hetero_label_gaps(cdxml):
+    """Size-8 captions (heteroatom symbols) and their min gaps to every orbital circle/curve box."""
+    from cdxml_toolkit.scientific.canvas import caption_box
+    root = ET.fromstring(cdxml.split('\n', 2)[2])
+    labels, graphics = [], []
+    for t in root.iter('t'):
+        if not t.get('p'):
+            continue
+        size = max((float(s.get('size', 10) or 10) for s in t.iter('s')), default=10.0)
+        if size != 8:
+            continue
+        x, y = (float(v) for v in t.get('p').split()[:2])
+        markup = ''.join((s.text or '') for s in t.iter('s'))
+        labels.append((markup, caption_box(x, y, markup, size, t.get('Justification', 'Left'))))
+    for g in root.iter('graphic'):
+        if g.get('BoundingBox') and g.get('OvalType') in ('Circle', 'Circle Filled'):
+            v = [float(q) for q in g.get('BoundingBox').split()[:4]]
+            graphics.append((min(v[0], v[2]), min(v[1], v[3]), max(v[0], v[2]), max(v[1], v[3])))
+    for c in root.iter('curve'):
+        v = [float(q) for q in c.get('CurvePoints', '').split()]
+        if len(v) < 6:
+            continue
+        xs, ys = v[0::2], v[1::2]
+        graphics.append((min(xs), min(ys), max(xs), max(ys)))
+    gaps = []
+    for _markup, box in labels:
+        for gb in graphics:
+            dx = max(box[0] - gb[2], gb[0] - box[2], 0.0)
+            dy = max(box[1] - gb[3], gb[1] - box[3], 0.0)
+            gaps.append(math.hypot(dx, dy))
+    return labels, gaps
+
+
 def test_huckel_hetero_labels_clear_orbital_graphics():
     """Heteroatom labels sit outside the orbital ink of their own and neighbouring levels.
 
-    The report only exposes energy ordering, so this parses the drawn CDXML: each size-8
-    caption (the heteroatom symbol) must stay at least half a font size (4 pt) clear of every
-    orbital circle and curve bounding box, for every hetero preset.
+    The report only exposes energy ordering, so this parses the drawn CDXML. It first checks the
+    size-8 captions are exactly the declared heteroatom symbols (count included), then that each
+    stays at least half a font size (4 pt) clear of every orbital circle and curve box.
     """
-    from cdxml_toolkit.scientific.huckel import huckel_mo, HETERO_SYSTEMS
-    from cdxml_toolkit.scientific.canvas import caption_box
-
-    def gap(a, b):
-        dx = max(a[0] - b[2], b[0] - a[2], 0.0)
-        dy = max(a[1] - b[3], b[1] - a[3], 0.0)
-        return math.hypot(dx, dy)
+    from cdxml_toolkit.scientific.huckel import huckel_mo, HETERO_SYSTEMS, HETEROATOMS
 
     for name in HETERO_SYSTEMS:
-        root = ET.fromstring(huckel_mo({'system': name})['cdxml'].split('\n', 2)[2])
-        labels, graphics = [], []
-        for t in root.iter('t'):
-            if not t.get('p'):
-                continue
-            size = max((float(s.get('size', 10) or 10) for s in t.iter('s')), default=10.0)
-            if size != 8:
-                continue
-            x, y = (float(v) for v in t.get('p').split()[:2])
-            markup = ''.join((s.text or '') for s in t.iter('s'))
-            labels.append((markup, caption_box(x, y, markup, size, t.get('Justification', 'Left'))))
-        for g in root.iter('graphic'):
-            if g.get('BoundingBox') and g.get('OvalType') in ('Circle', 'Circle Filled'):
-                v = [float(q) for q in g.get('BoundingBox').split()[:4]]
-                graphics.append((min(v[0], v[2]), min(v[1], v[3]), max(v[0], v[2]), max(v[1], v[3])))
-        for c in root.iter('curve'):
-            v = [float(q) for q in c.get('CurvePoints', '').split()]
-            if len(v) < 6:
-                continue
-            xs, ys = v[0::2], v[1::2]
-            graphics.append((min(xs), min(ys), max(xs), max(ys)))
-        assert labels, f'{name}: no heteroatom label found'
-        for markup, box in labels:
-            for gb in graphics:
-                assert gap(box, gb) >= 4.0, (
-                    f'{name}: {markup!r} label {tuple(round(v, 2) for v in box)} is '
-                    f'{gap(box, gb):.2f} pt from orbital graphic {tuple(round(v, 2) for v in gb)}; '
-                    'need >= 4')
+        result = huckel_mo({'system': name})
+        labels, gaps = _hetero_label_gaps(result['cdxml'])
+        _, _, kinds = HETERO_SYSTEMS[name]
+        expected = sorted(HETEROATOMS[kind]['symbol'] for kind in kinds.values())
+        found = sorted(markup for markup, _ in labels)
+        assert found == expected, f'{name}: heteroatom labels {found} != declared {expected}'
+        for gap in gaps:
+            assert gap >= 4.0, f'{name}: a heteroatom label is {gap:.2f} pt from orbital ink; need >= 4'
+
+
+def test_huckel_custom_heteroatom_index_clears_graphics():
+    """A public ``heteroatoms`` spec (not a preset name) must avoid the same overlap.
+
+    Regresses the index-4 pyridine case, where text_over_ink reports zero while the label truly
+    overlaps an orbital disc; the assertion therefore goes through the geometric boxes.
+    """
+    from cdxml_toolkit.scientific.huckel import huckel_mo
+
+    result = huckel_mo({'atoms': 6, 'cyclic': True, 'electrons': 6,
+                        'heteroatoms': [{'index': 4, 'type': 'N_pyridine'}]})
+    labels, gaps = _hetero_label_gaps(result['cdxml'])
+    assert [markup for markup, _ in labels] == ['N']
+    assert gaps and min(gaps) >= 4.0, f'index-4 label gaps {[round(g, 2) for g in gaps]} need >= 4'
 
 
 def test_phase_diagram_orders_its_points():

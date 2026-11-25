@@ -142,6 +142,22 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             for x in xs:
                 if x >= upper:
                     y_of[x] += shift
+    if cyclic and hetero:
+        # Heteroatom labels sit on the radial outward side of their corner. At the most bonding
+        # (page-bottom) ring, the label of a top corner points up into the next level's ring, so
+        # push that level down just enough for every heteroatom label to clear the adjacent ring.
+        y1 = y_of[xs[-1]]
+        y2 = y_of[xs[-2]]
+        label_tops = []
+        for index, info in hetero.items():
+            angle = -math.pi / 2 + 2 * math.pi * int(index) / atoms
+            radius = ring_r + lobe + 11.0
+            box = c.measure((radius * math.cos(angle), radius * math.sin(angle)), info['symbol'],
+                            size=8, align='Center', valign='middle')
+            label_tops.append(box[1])
+        floor = y2 + ring_r + lobe + 4.1 - min(label_tops)
+        if floor > y1:
+            y_of[xs[-1]] = floor
     report_orbitals = []
     psi = 1
     widest = 0.0
@@ -156,8 +172,8 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
             left = x0 + 6.0
             if cyclic:
                 cx0 = left + lobe + ring_r
-                corners = [(cx0 + ring_r * math.cos(math.pi / 6 + 2 * math.pi * i / atoms),
-                            y + ring_r * math.sin(math.pi / 6 + 2 * math.pi * i / atoms)) for i in range(atoms)]
+                corners = [(cx0 + ring_r * math.cos(-math.pi / 2 + 2 * math.pi * i / atoms),
+                            y + ring_r * math.sin(-math.pi / 2 + 2 * math.pi * i / atoms)) for i in range(atoms)]
                 c.path(corners, closed=True)
                 if psi == 1:
                     for index, info in hetero.items():
