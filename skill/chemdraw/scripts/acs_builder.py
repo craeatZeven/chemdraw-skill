@@ -521,7 +521,6 @@ class Fig:
         self._bb(x, y)
         base = 1 if bold else 0
         j = f' Justification="{align}" CaptionJustification="{align}"' if align != 'Left' else ''
-        ct_attr = '32' if electrons == 1 else '8'
         c_idx = self.resolve_color(color)
         c_attr = f' color="{c_idx}"' if c_idx is not None else ''
         # Captions are annotations; without this ChemDraw reads codes such as "B" as atoms on CDX conversion.
