@@ -133,15 +133,15 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
     ring_r = 9.0 + 2.2 * atoms
     block_w = (atoms - 1) * 2.2 * lobe + 2 * lobe if not cyclic else 2 * ring_r + 2 * lobe
     xs = sorted({round(g['x'], 6) for g in groups})
-    y_of = {x: -(x - xs[0]) / ((xs[-1] - xs[0]) or 1) * spacing * (len(xs) - 1) for x in xs}
+    y_of = {x: (x - xs[0]) / ((xs[-1] - xs[0]) or 1) * spacing * (len(xs) - 1) for x in xs}
     # Keep the order but never let two drawn levels overlap (energies are then not to scale).
     room = 2 * ring_r * 0.95 + 14.0 if cyclic else 2 * 1.6 * lobe * 0.62 + 20.0
     for lower, upper in zip(xs, xs[1:]):
-        if y_of[lower] - y_of[upper] < room:
-            shift = room - (y_of[lower] - y_of[upper])
+        if y_of[upper] - y_of[lower] < room:
+            shift = room - (y_of[upper] - y_of[lower])
             for x in xs:
                 if x >= upper:
-                    y_of[x] -= shift
+                    y_of[x] += shift
     report_orbitals = []
     psi = 1
     widest = 0.0
@@ -182,7 +182,8 @@ def huckel_mo(spec: Mapping[str, Any], output=None) -> dict[str, Any]:
                         continue
                     _p_orbital(c, cx, y, size, coefficient > 0)
             widest = max(widest, x0 + block_w + 6.0)
-            report_orbitals.append({'psi': psi, 'x': round(group['x'], 4) + 0.0, 'energy': 'alpha ' + _energy_text(group['x'], 'b'),
+            report_orbitals.append({'psi': psi, 'x': round(group['x'], 4) + 0.0, 'y': round(y, 2),
+                                    'energy': 'alpha ' + _energy_text(group['x'], 'b'),
                                     'electrons': len(occupation),
                                     'nodes_between_atoms': sum(1 for a, b in pairs if vector[a] * vector[b] < -TOL),
                                     'coefficients': [round(v, 3) for v in vector]})

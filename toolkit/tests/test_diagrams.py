@@ -305,6 +305,40 @@ def test_huckel_frontier_orbitals_and_nodes():
         huckel_mo({'atoms': 2, 'electrons': 5})
 
 
+def _e_axis_arrow_head_tail_y(cdxml):
+    """The ``y`` of the energy-axis arrow's head and tail, from the finished CDXML text."""
+    root = ET.fromstring(cdxml.split('\n', 2)[2])
+    for node in root.iter('arrow'):
+        if node.get('ArrowheadHead') == 'Full':
+            return (float(node.get('Head3D').split()[1]), float(node.get('Tail3D').split()[1]))
+    raise AssertionError('no E-axis arrow with a full head found')
+
+
+def test_huckel_levels_ordered_by_energy():
+    """Drawn levels must obey the energy axis: the most bonding level sits at the page bottom.
+
+    The report exposes the drawn ``y`` (page coordinates, ``y`` down), so these assert physical
+    ordering — not snapshot values — and lock the fix for the inverted-level bug.
+    """
+    from cdxml_toolkit.scientific.huckel import huckel_mo
+
+    butadiene = huckel_mo({'system': 'butadiene'})['orbitals']
+    assert [o['x'] for o in butadiene] == pytest.approx([1.618, 0.618, -0.618, -1.618], abs=1e-3)
+    assert all(a['y'] > b['y'] for a, b in zip(butadiene, butadiene[1:]))
+
+    benzene = huckel_mo({'system': 'benzene'})['orbitals']
+    assert benzene[0]['y'] > benzene[1]['y'] == benzene[2]['y'] > benzene[3]['y'] == benzene[4]['y'] > benzene[5]['y']
+
+    cyclobutadiene = huckel_mo({'system': 'cyclobutadiene'})['orbitals']
+    assert cyclobutadiene[0]['y'] > cyclobutadiene[1]['y'] == cyclobutadiene[2]['y'] > cyclobutadiene[3]['y']
+
+    pyridine = huckel_mo({'system': 'pyridine'})['orbitals']
+    assert all(a['y'] >= b['y'] for a, b in zip(pyridine, pyridine[1:]))
+
+    head_y, tail_y = _e_axis_arrow_head_tail_y(huckel_mo({'system': 'butadiene'})['cdxml'])
+    assert head_y < tail_y                                    # E arrow points up the page
+
+
 def test_phase_diagram_orders_its_points():
     from cdxml_toolkit.scientific.phase import phase_diagram
     result = phase_diagram({'triple': [216.6, 5.1], 'critical': [304, 73], 'marks': [{'P': 1, 'label': '1 atm'}]})
